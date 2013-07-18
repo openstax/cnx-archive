@@ -10,26 +10,6 @@ CREATE FUNCTION "semicomma_cat" (text,text) RETURNS text AS 'select case WHEN $2
 
 CREATE AGGREGATE semilist ( BASETYPE = text, SFUNC = semicomma_cat, STYPE = text, INITCOND = '' );
 
-
-CREATE TABLE "persons" (
-	"personid" text PRIMARY KEY,
-	"honorific" text,
-	"firstname" text,
-	"othername" text,
-	"surname" text,
-	"lineage" text,
-        "fullname" text,
-	"email" text,
-	"homepage" text,
-	"comment" text
-);
-
-CREATE INDEX person_firstname_upper_idx on persons (upper(firstname));
-CREATE INDEX person_surname_upper_idx on persons (upper(surname));
-CREATE INDEX person_personid_upper_idx on persons (upper(personid));
-CREATE INDEX person_email_upper_idx on persons (upper(email));
-
-
 CREATE TABLE roles (
     roleid serial PRIMARY KEY,
     roleparam text,
@@ -51,12 +31,15 @@ CREATE TABLE "abstracts" (
 );
 
 CREATE TABLE "modulestates" (
+        -- Example:  statename = 'current'
 	"stateid"    serial PRIMARY KEY,
 	"statename"  text
 );
 
 
 CREATE TABLE "licenses" (
+       -- Example:  code = 'by'; version = '1.0'; name = 'Attribution';
+       --           url = 'http://creativecommons.org/licenses/by/1.0'
        "licenseid"	serial PRIMARY KEY,
        "code"		text,
        "version"	text,
@@ -86,8 +69,8 @@ CREATE TABLE "modules" (
 	"licensors" text[],
 	"parentauthors" text[],
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
-	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE, 
-	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE, 
+	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
+	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
 	FOREIGN KEY (licenseid) REFERENCES "licenses" DEFERRABLE
 );
 
@@ -130,12 +113,12 @@ CREATE OR REPLACE FUNCTION update_latest() RETURNS trigger AS '
 BEGIN
   IF TG_OP = ''INSERT'' THEN
       DELETE FROM latest_modules WHERE moduleid = NEW.moduleid;
-      INSERT into latest_modules ( module_ident,portal_type,moduleid, version, name, 
-  		created, revised, abstractid, stateid, doctype, licenseid, 
+      INSERT into latest_modules ( module_ident,portal_type,moduleid, version, name,
+  		created, revised, abstractid, stateid, doctype, licenseid,
   		submitter,submitlog, parent, language,
-		authors, maintainers, licensors, parentauthors) 
+		authors, maintainers, licensors, parentauthors)
   	VALUES ( NEW.module_ident,NEW.portal_type,NEW.moduleid, NEW.version, NEW.name,
-  	 NEW.created, NEW.revised, NEW.abstractid, NEW.stateid, NEW.doctype, NEW.licenseid, 
+  	 NEW.created, NEW.revised, NEW.abstractid, NEW.stateid, NEW.doctype, NEW.licenseid,
   	 NEW.submitter, NEW.submitlog, NEW.parent, NEW.language,
 	 NEW.authors, NEW.maintainers, NEW.licensors, NEW.parentauthors );
   END IF;
@@ -159,7 +142,7 @@ BEGIN
 	authors=NEW.authors,
 	maintainers=NEW.maintainers,
 	licensors=NEW.licensors,
-	parentauthors=NEW.parentauthors 
+	parentauthors=NEW.parentauthors
         WHERE module_ident=NEW.module_ident;
   END IF;
 
@@ -170,40 +153,40 @@ END;
 
 CREATE OR REPLACE FUNCTION delete_from_latest() RETURNS trigger AS '
 BEGIN
-  DELETE FROM  latest_modules 
+  DELETE FROM  latest_modules
     WHERE module_ident=OLD.module_ident;
   IF FOUND THEN
     INSERT into latest_modules select * from current_modules where moduleid=OLD.moduleid;
   END IF;
   RETURN OLD;
-END;	
+END;
 ' LANGUAGE 'plpgsql';
 
-CREATE TRIGGER update_latest_version 
-  BEFORE INSERT OR UPDATE ON modules FOR EACH ROW 
+CREATE TRIGGER update_latest_version
+  BEFORE INSERT OR UPDATE ON modules FOR EACH ROW
   EXECUTE PROCEDURE update_latest();
 
-CREATE TRIGGER delete_from_latest_version 
-  AFTER DELETE ON modules FOR EACH ROW 
+CREATE TRIGGER delete_from_latest_version
+  AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
 
-CREATE VIEW all_modules as 
-	SELECT module_ident,portal_type,moduleid, version, name, 
-			created, revised, abstractid, stateid, doctype, licenseid, 
+CREATE VIEW all_modules as
+	SELECT module_ident,portal_type,moduleid, version, name,
+			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors
 	FROM modules
 	UNION ALL
-	SELECT module_ident,portal_type,moduleid, 'latest', name, 
-			created, revised, abstractid, stateid, doctype, licenseid, 
+	SELECT module_ident,portal_type,moduleid, 'latest', name,
+			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors
 	FROM latest_modules;
 
-CREATE VIEW current_modules AS 
-       SELECT * FROM modules m 
-	      WHERE module_ident = 
-		    (SELECT max(module_ident) FROM modules 
+CREATE VIEW current_modules AS
+       SELECT * FROM modules m
+	      WHERE module_ident =
+		    (SELECT max(module_ident) FROM modules
 			    WHERE m.moduleid = moduleid );
 
 CREATE TABLE "modulefti" (
@@ -216,7 +199,7 @@ CREATE INDEX fti_idx ON modulefti USING gist (module_idx);
 CREATE TABLE "keywords" (
 	"keywordid" serial PRIMARY KEY,
 	"word" text NOT NULL
-); 
+);
 
 CREATE INDEX keywords_upword_idx ON keywords  (upper(word));
 CREATE INDEX keywords_word_idx ON keywords  (word);
@@ -230,7 +213,7 @@ CREATE TABLE "modulekeywords" (
 
 CREATE INDEX modulekeywords_module_ident_idx ON modulekeywords (module_ident );
 CREATE INDEX modulekeywords_keywordid_idx ON modulekeywords (keywordid);
-CREATE UNIQUE INDEX modulekeywords_module_ident_keywordid_idx ON 
+CREATE UNIQUE INDEX modulekeywords_module_ident_keywordid_idx ON
     modulekeywords (module_ident, keywordid );
 
 CREATE TABLE files (
@@ -256,7 +239,7 @@ CREATE TRIGGER update_file_md5
     EXECUTE PROCEDURE update_md5();
 
 CREATE TABLE module_files (
-    module_ident integer references modules, 
+    module_ident integer references modules,
     fileid integer references files,
     filename text,
     mimetype text
@@ -268,7 +251,7 @@ CREATE UNIQUE INDEX module_files_idx ON module_files (module_ident, filename);
 
 
 CREATE TABLE modulecounts (
-	countdate date, 
+	countdate date,
 	modcount int);
 
 CREATE TABLE similarities (
@@ -315,7 +298,7 @@ BEGIN
 END;
 ';
 
-CREATE OR REPLACE FUNCTION array_position (ANYARRAY, ANYARRAY) 
+CREATE OR REPLACE FUNCTION array_position (ANYARRAY, ANYARRAY)
 RETURNS INTEGER
 IMMUTABLE STRICT
 LANGUAGE PLPGSQL
@@ -331,36 +314,6 @@ BEGIN
   RETURN NULL;
 END;
 ';
-
-CREATE OR REPLACE FUNCTION fullname (text)
-RETURNS TEXT
-IMMUTABLE STRICT
-LANGUAGE SQL
-AS 'SELECT fullname FROM persons WHERE personid = $1;';
-
-CREATE OR REPLACE FUNCTION fullnames (ANYARRAY)
-RETURNS TEXT
-IMMUTABLE STRICT
-LANGUAGE PLPGSQL
-AS $$ 
-DECLARE 
-  name text;
-  names text;
-  id text;
-BEGIN
-  FOR i IN array_lower($1,1) .. array_upper($1,1)
-  LOOP
-    IF  i = 1
-    THEN
-      names = fullname($1[i]);
-    ELSE
-      names := names ||', ' ||  fullname($1[i]);
-    END IF;
-  END LOOP;
-RETURN names;
-END;
-$$;
-
 
 CREATE TABLE tags (
     tagid serial PRIMARY KEY,
@@ -384,35 +337,5 @@ CREATE TABLE moduletags (
     FOREIGN KEY (module_ident) REFERENCES modules(module_ident) DEFERRABLE,
     FOREIGN KEY (tagid) REFERENCES tags(tagid) DEFERRABLE
 );
-
-CREATE TABLE moduleratings(
-    module_ident integer,
-    totalrating integer,
-    votes integer,
-    FOREIGN KEY (module_ident) REFERENCES modules(module_ident) ON DELETE CASCADE
-);
-
-CREATE OR REPLACE FUNCTION register_rating(integer, integer) RETURNS boolean AS '
-DECLARE
-    id ALIAS FOR $1;
-    rating ALIAS FOR $2;
-BEGIN
-    UPDATE moduleratings SET totalrating=totalrating+rating,votes=votes+1 WHERE module_ident=id;
-    IF NOT FOUND THEN
-        INSERT INTO moduleratings (module_ident,totalrating,votes) VALUES (id, rating, 1);
-    END IF;
-    RETURN FOUND;
-END
-' LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION deregister_rating(integer, integer) RETURNS boolean AS '
-DECLARE
-    id ALIAS FOR $1;
-    rating ALIAS FOR $2;
-BEGIN
-    UPDATE moduleratings SET totalrating=totalrating-rating,votes=votes-1 WHERE module_ident=id;
-    RETURN FOUND;
-END
-' LANGUAGE plpgsql;
 
 COMMIT;
