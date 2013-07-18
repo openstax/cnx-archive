@@ -1,4 +1,5 @@
 BEGIN WORK;
+CREATE EXTENSION "uuid-ossp";
 CREATE SEQUENCE "moduleid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
 
 
@@ -52,6 +53,7 @@ CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
 	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
+        "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"version" text default '1.1',
 	"name" text NOT NULL,
 	"created" timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
@@ -85,6 +87,7 @@ CREATE TABLE "latest_modules" (
 	"module_ident" integer,
 	"portal_type" text,
 	"moduleid" text,
+        "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"version" text,
 	"name" text NOT NULL,
 	"created" timestamp with time zone NOT NULL,
@@ -240,6 +243,7 @@ CREATE TRIGGER update_file_md5
 
 CREATE TABLE module_files (
     module_ident integer references modules,
+    "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
     fileid integer references files,
     filename text,
     mimetype text
