@@ -16,6 +16,12 @@ here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA = os.path.join(SQL_DIRECTORY, 'schema.sql')
 
+def _read_sql_file(name):
+    path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
+    with open(path, 'r') as fp:
+        return fp.read()
+SQL = {'get-module': _read_sql_file('get-module')}
+
 
 def initdb(settings):
     """Initialize the database from the given settings.
