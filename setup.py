@@ -21,6 +21,10 @@ setup(
     install_requires=install_requires,
     include_package_data=True,
     entry_points="""\
+    [paste.app_factory]
+    main = cnxarchive:main
+    [console_scripts]
+    initialize_cnx-archive_db = cnxarchive.scripts.initializedb:main
     """,
     test_suite='cnxarchive.tests'
     )

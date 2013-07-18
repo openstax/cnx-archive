@@ -5,7 +5,9 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import os
 import uuid
+from paste.deploy import appconfig
 
 
 class IdentHashSyntaxError(Exception):
@@ -32,3 +34,11 @@ def split_ident_hash(ident_hash):
     # None'ify the version on empty string.
     version = version and version or None
     return id, version
+
+
+def parse_app_settings(config_uri):
+    """Parse the settings from the config file for the application.
+    Assumes that application section is name 'main'.
+    """
+    config_path = os.path.abspath(config_uri)
+    return appconfig("config:{}".format(config_path), name='main')
