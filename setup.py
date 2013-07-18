@@ -3,6 +3,8 @@ from setuptools import setup, find_packages
 
 
 install_requires = (
+    'PasteDeploy',
+    'psycopg2',
     )
 description = "An archive for Connexions documents."
 
