@@ -7,6 +7,19 @@
 # ###
 """Document and collection archive web application."""
 
+
+_settings = None
+
+def get_settings():
+    """Retrieve the application settings"""
+    global _settings
+    return _settings
+def _set_settings(settings):
+    """Assign the application settings."""
+    global _settings
+    _settings = settings
+
+
 def main(global_config, **settings):
     """Main WSGI application function."""
     pass
