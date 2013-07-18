@@ -1,0 +1,13 @@
+# Development #
+###############
+*.pyc
+*.pyo
+*.egg-info
+.tox
+*.log
+*.*~
+
+# Build file #
+##############
+build/
+dist/
