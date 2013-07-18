@@ -7,6 +7,7 @@
 # ###
 import os
 import unittest
+from wsgiref.util import setup_testing_defaults
 
 import psycopg2
 from paste.deploy import appconfig
@@ -133,10 +134,48 @@ class ViewsTestCase(unittest.TestCase):
         cls.db_connection.close()
 
     def setUp(self):
+        from . import _set_settings
+        _set_settings(self.settings)
         self.fixture.setUp()
 
     def tearDown(self):
+        from . import _set_settings
+        _set_settings(None)
         self.fixture.tearDown()
 
-    def test_something(self):
-        pass
+    def _make_environ(self):
+        environ = {}
+        setup_testing_defaults(environ)
+        return environ
+
+    def _start_response(self, status, headers=[]):
+        """Used to capture the WSGI 'start_response'."""
+        self.captured_response = {'status': status, 'headers': headers}
+
+    def test_contents(self):
+        # Test for retrieving a piece of content.
+        # Insert an abstract and module.
+        abstract_row = (1, "an abstract",)
+        module_row = ('smoo', 1, '', abstract_row[0],)
+        with self.db_connection.cursor() as cursor:
+            cursor.execute("INSERT INTO abstracts (abstractid, abstract) "
+                           "VALUES (%s, %s);", abstract_row)
+            self.db_connection.commit()
+            cursor.execute("INSERT INTO modules (name, licenseid, doctype, abstractid)"
+                           "VALUES (%s, %s, %s, %s);", module_row)
+            self.db_connection.commit()
+            cursor.execute("SELECT uuid, version FROM modules;")
+            uuid, version = cursor.fetchone()
+        self.db_connection.commit()
+
+        # Build the request environment.
+        environ = self._make_environ()
+        environ['app.matchdict'] = {'ident-hash': "{}@{}".format(uuid, version)}
+
+        # Call the view.
+        from .views import get_content
+        content = get_content(environ, self._start_response)[0]
+
+        self.assertEqual(content['name'], module_row[0])
+        self.assertEqual(content['abstract'], abstract_row[1])
+        self.fail("Not complete... still need the content in the results.")
