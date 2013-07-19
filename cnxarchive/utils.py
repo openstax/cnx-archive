@@ -6,6 +6,8 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import sys
+import re
 import uuid
 from paste.deploy import appconfig
 
@@ -42,3 +44,36 @@ def parse_app_settings(config_uri):
     """
     config_path = os.path.abspath(config_uri)
     return appconfig("config:{}".format(config_path), name='main')
+
+
+# The import_function and template_to_regex functions are derived from
+#   a WebOb documentation example.
+
+def import_function(import_line):
+    """imports a controller function using the ``<module-path>:<function>``
+    syntax."""
+    module_name, func_name = import_line.split(':', 1)
+    __import__(module_name)
+    module = sys.modules[module_name]
+    func = getattr(module, func_name)
+    return func
+
+var_regex = re.compile(r'''
+    \{          # The exact character "{"
+    (\w+)       # The variable name (restricted to a-z, 0-9, _)
+    (?::([^}]+))? # The optional :regex part
+    \}          # The exact character "}"
+    ''', re.VERBOSE)
+def template_to_regex(template):
+    regex = ''
+    last_pos = 0
+    for match in var_regex.finditer(template):
+        regex += re.escape(template[last_pos:match.start()])
+        var_name = match.group(1)
+        expr = match.group(2) or '[^/]+'
+        expr = '(?P<%s>%s)' % (var_name, expr)
+        regex += expr
+        last_pos = match.end()
+    regex += re.escape(template[last_pos:])
+    regex = '^%s$' % regex
+    return regex
