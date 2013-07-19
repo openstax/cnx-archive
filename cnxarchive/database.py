@@ -20,7 +20,10 @@ def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
     with open(path, 'r') as fp:
         return fp.read()
-SQL = {'get-module': _read_sql_file('get-module')}
+SQL = {
+    'get-module': _read_sql_file('get-module'),
+    'get-resource': _read_sql_file('get-resource'),
+    }
 
 
 def initdb(settings):

@@ -29,3 +29,24 @@ def get_content(environ, start_response):
     headers = [('Content-type', 'application/json',)]
     start_response(status, headers)
     return [result]
+
+
+def get_resource(environ, start_response):
+    """Retrieve a file's data."""
+    settings = get_settings()
+    id = environ['app.matchdict']['id']
+
+    # Do the module lookup
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            args = dict(id=id)
+            cursor.execute(SQL['get-resource'], args)
+            filename, mimetype, file = cursor.fetchone()
+
+    status = "200 OK"
+    headers = [('Content-type', mimetype,),
+               ('Content-disposition',
+                "attached; filename={}".format(filename),),
+               ]
+    start_response(status, headers)
+    return [file]

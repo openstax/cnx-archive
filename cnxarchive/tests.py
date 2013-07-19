@@ -179,3 +179,33 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content['name'], module_row[0])
         self.assertEqual(content['abstract'], abstract_row[1])
         self.fail("Not complete... still need the content in the results.")
+
+    def test_resources(self):
+        # Test the retrieval of resources contained in content.
+        # Insert a resource. In this case the resource does not need to
+        #   be attatched to a module.
+        file_row = (1, b'dingo-ate-my-baby')
+        module_file_row = (file_row[0], 'image.jpg', 'image/jpeg')
+        with self.db_connection.cursor() as cursor:
+            cursor.execute("INSERT INTO files (fileid, file) VALUES (%s, %s);",
+                           file_row)
+            cursor.execute("INSERT INTO module_files (fileid, filename, mimetype) "
+                           "VALUES (%s, %s, %s);", module_file_row)
+            self.db_connection.commit()
+            cursor.execute("SELECT uuid FROM module_files;")
+            uuid = cursor.fetchone()[0]
+        self.db_connection.commit()
+
+        # Build the request.
+        environ = self._make_environ()
+        environ['app.matchdict'] = {'id': uuid}
+
+        # Call the view.
+        from .views import get_resource
+        resource = get_resource(environ, self._start_response)[0]
+
+        # Check the response body.
+        self.assertEqual(bytes(resource), file_row[1])
+
+        # Check for response headers, specifically the content-disposition.
+        # self.fail()
