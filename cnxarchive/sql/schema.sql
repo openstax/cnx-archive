@@ -243,7 +243,7 @@ CREATE TRIGGER update_file_md5
 
 CREATE TABLE module_files (
     module_ident integer references modules,
-    "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
+    "uuid" uuid UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
     fileid integer references files,
     filename text,
     mimetype text
