@@ -1,2 +1,3 @@
 include *.rst *.txt
 recursive-include cnxarchive/sql *
+recursive-include cnxarchive/test-data *

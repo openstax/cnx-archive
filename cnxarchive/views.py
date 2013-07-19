@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import os
 import psycopg2
 
 from . import get_settings
@@ -50,3 +51,30 @@ def get_resource(environ, start_response):
                ]
     start_response(status, headers)
     return [file]
+
+
+TYPE_INFO = {
+    # <type-name>: (<file-extension>, <mimetype>,),
+    'pdf': ('pdf', 'application/pdf',),
+    'epub': ('epub', 'application/epub+zip',),
+    }
+
+def get_export(environ, start_response):
+    """Retrieve an export file."""
+    exports_dir = get_settings()['exports-directory']
+    args = environ['wsgiorg.routing_args']
+    ident_hash, type = args['ident_hash'], args['type']
+    id, version = split_ident_hash(ident_hash)
+
+
+    file_extension, mimetype = TYPE_INFO[type]
+    filename = '{}-{}.{}'.format(id, version, file_extension)
+
+    status = "200 OK"
+    headers = [('Content-type', mimetype,),
+               ('Content-disposition',
+                'attached; filename={}'.format(filename),),
+               ]
+    start_response(status, headers)
+    with open(os.path.join(exports_dir, filename), 'r') as file:
+        return [file.read()]

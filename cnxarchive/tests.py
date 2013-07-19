@@ -13,6 +13,8 @@ import psycopg2
 from paste.deploy import appconfig
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+TEST_DATA = os.path.join(here, 'test-data')
 try:
     TESTING_CONFIG = os.environ['TESTING_CONFIG']
 except KeyError as exc:
@@ -262,3 +264,31 @@ class ViewsTestCase(unittest.TestCase):
 
         # Check for response headers, specifically the content-disposition.
         # self.fail()
+
+    def test_exports(self):
+        # Test for the retrieval of exports (e.g. pdf files).
+        id = '8415caa0-2cf8-43d8-a073-05e41df8059c'
+        version = '1.21'
+        type = 'pdf'
+        ident_hash = '{}@{}'.format(id, version)
+        # Link up the exports directory, which is only done in dev-mode,
+        #   because the web server will be doing this in production.
+        exports_dir = os.path.join(TEST_DATA, 'exports')
+        filename = "{}-{}.{}".format(id, version, type)
+        self.settings['exports-directory'] = exports_dir
+
+        # Build the request.
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
+                                           'type': type,
+                                           }
+
+        from .views import get_export
+        export = get_export(environ, self._start_response)[0]
+
+        headers = self.captured_response['headers']
+        headers = {x[0].lower(): x[1] for x in headers}
+        self.assertEqual(headers['content-disposition'],
+                         "attached; filename={}".format(filename))
+        with open(os.path.join(exports_dir, filename), 'r') as file:
+            self.assertEqual(export, file.read())
