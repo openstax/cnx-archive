@@ -15,7 +15,7 @@ from .database import CONNECTION_SETTINGS_KEY, SQL
 def get_content(environ, start_response):
     """Retrieve a piece of content using the ident-hash (uuid@version)."""
     settings = get_settings()
-    ident_hash = environ['app.matchdict']['ident-hash']
+    ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
     # Do the module lookup
@@ -34,7 +34,7 @@ def get_content(environ, start_response):
 def get_resource(environ, start_response):
     """Retrieve a file's data."""
     settings = get_settings()
-    id = environ['app.matchdict']['id']
+    id = environ['wsgiorg.routing_args']['id']
 
     # Do the module lookup
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:

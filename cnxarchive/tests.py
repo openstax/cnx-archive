@@ -223,7 +223,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         environ = self._make_environ()
-        environ['app.matchdict'] = {'ident-hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = {'ident_hash': "{}@{}".format(uuid, version)}
 
         # Call the view.
         from .views import get_content
@@ -251,7 +251,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request.
         environ = self._make_environ()
-        environ['app.matchdict'] = {'id': uuid}
+        environ['wsgiorg.routing_args'] = {'id': uuid}
 
         # Call the view.
         from .views import get_resource
