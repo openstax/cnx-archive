@@ -6,6 +6,13 @@
 .tox
 *.log
 *.*~
+.*
+
+# Virtualenv #
+##############
+bin
+lib
+include
 
 # Build file #
 ##############
