@@ -6,6 +6,13 @@
 .tox
 *.log
 *.*~
+.DS_Store
+
+# Virtualenv #
+##############
+bin
+lib
+include
 
 # Build file #
 ##############
