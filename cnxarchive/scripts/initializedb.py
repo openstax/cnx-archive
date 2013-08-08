@@ -24,6 +24,8 @@ def main(argv=sys.argv):
     if len(argv) != 2:
         usage(argv)
     config_uri = argv[1]
-    settings = parse_app_settings(config_uri)
-
+    try:
+        settings = parse_app_settings(config_uri)
+    except:
+        usage(argv)
     initdb(settings)
