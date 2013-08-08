@@ -16,3 +16,4 @@ CREATE TABLE trees (
 );
 
 CREATE INDEX trees_nodeid_idx ON trees USING btree (nodeid);
+CREATE UNIQUE INDEX trees_unique_doc_idx on trees(document_id) where parent_id is null;
