@@ -21,7 +21,7 @@ ns = { "cnx":"http://cnx.rice.edu/cnxml",
        "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 }
 
-NODE_INS=plpy.prepare("INSERT INTO trees (parent_id,document_id,childorder) SELECT $1, module_ident, $2 from modules where moduleid = $3 and version = $4 returning nodeid", ("int","int","text","text"))
+NODE_INS=plpy.prepare("INSERT INTO trees (parent_id,documentid,childorder) SELECT $1, module_ident, $2 from modules where moduleid = $3 and version = $4 returning nodeid", ("int","int","text","text"))
 NODE_NODOC_INS=plpy.prepare("INSERT INTO trees (parent_id,childorder) VALUES ($1, $2) returning nodeid", ("int","int"))
 NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 where nodeid = $2",("text","int"))
 

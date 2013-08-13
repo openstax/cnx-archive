@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# ###
+# Copyright (c) 2013, Rice University
+# This software is subject to the provisions of the GNU Affero General
+# Public License version 3 (AGPLv3).
+# See LICENCE.txt for details.
+# ###
+
 from xml import sax
 import sys
 import psycopg2
@@ -21,7 +28,7 @@ ns = { "cnx":"http://cnx.rice.edu/cnxml",
        "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 }
 
-NODE_INS="INSERT INTO trees (parent_id,document_id,childorder) SELECT %s, module_ident, %s from modules where moduleid = %s and version = %s returning nodeid"
+NODE_INS="INSERT INTO trees (parent_id,documentid,childorder) SELECT %s, module_ident, %s from modules where moduleid = %s and version = %s returning nodeid"
 NODE_NODOC_INS="INSERT INTO trees (parent_id,childorder) VALUES (%s, %s) returning nodeid"
 NODE_TITLE_UPD="UPDATE trees set title = %s where nodeid = %s" 
 

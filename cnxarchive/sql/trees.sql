@@ -1,4 +1,4 @@
-
+-- Trees table contains structure of a collection, with pointers into the documents table
 CREATE SEQUENCE nodeid_seq
     START WITH 1
     INCREMENT BY 1
@@ -9,11 +9,13 @@ CREATE SEQUENCE nodeid_seq
 CREATE TABLE trees (
     nodeid integer DEFAULT nextval('nodeid_seq'::regclass) NOT NULL,
     parent_id integer,
-    document_id integer,
-    title text,
-    childorder integer,
-    latest boolean
+    documentid integer, -- foreign key documents (documentid),
+    title text, -- override title
+    childorder integer, -- position within parent node
+    latest boolean, -- is this node supposed to track upstream changes
+    PRIMARY KEY (nodeid),
+    FOREIGN KEY (parent_id) REFERENCES trees (nodeid)
 );
 
-CREATE INDEX trees_nodeid_idx ON trees USING btree (nodeid);
-CREATE UNIQUE INDEX trees_unique_doc_idx on trees(document_id) where parent_id is null;
+-- the unique index insures only one top-level tree per document metadata
+CREATE UNIQUE INDEX trees_unique_doc_idx on trees(documentid) where parent_id is null;
