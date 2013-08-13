@@ -106,7 +106,10 @@ parser = sax.make_parser()
 parser.setFeature(sax.handler.feature_namespaces, 1)
 parser.setContentHandler(ModuleHandler())
 
-from StringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 parser.parse(StringIO(doc))
 $$
 language plpythonu;
