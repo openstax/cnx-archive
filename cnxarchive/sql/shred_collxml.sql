@@ -1,0 +1,115 @@
+create  or replace function shred_collxml (doc text) returns void
+as $$
+
+from xml import sax
+
+# While the collxml files we process potentially contain many of these
+# namespaces, I take advantage of the fact that almost none of the 
+# localnames (tags names) acutally overlap. The one case that does (title)
+# actually works in our favor, since we want to treat it the same anyway.
+
+ns = { "cnx":"http://cnx.rice.edu/cnxml",
+       "cnxorg":"http://cnx.rice.edu/system-info",
+       "md":"http://cnx.rice.edu/mdml",
+       "col":"http://cnx.rice.edu/collxml",
+       "cnxml":"http://cnx.rice.edu/cnxml",
+       "m":"http://www.w3.org/1998/Math/MathML",
+       "q":"http://cnx.rice.edu/qml/1.0",
+       "xhtml":"http://www.w3.org/1999/xhtml",
+       "bib":"http://bibtexml.sf.net/",
+       "cc":"http://web.resource.org/cc/",
+       "rdf":"http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+}
+
+NODE_INS=plpy.prepare("INSERT INTO trees (parent_id,documentid,childorder) SELECT $1, module_ident, $2 from modules where moduleid = $3 and version = $4 returning nodeid", ("int","int","text","text"))
+NODE_NODOC_INS=plpy.prepare("INSERT INTO trees (parent_id,childorder) VALUES ($1, $2) returning nodeid", ("int","int"))
+NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 where nodeid = $2",("text","int"))
+
+def _do_insert(pid,cid,oid=0,ver=0):
+    if oid:
+        res = plpy.execute(NODE_INS,(pid,cid,oid,ver))
+        if res.nrows() == 0: # no documentid found
+            plpy.execute(NODE_NODOC_INS,(pid,cid))
+    else:
+        res = plpy.execute(NODE_NODOC_INS,(pid,cid))
+    if res.nrows():
+        nodeid=res[0]["nodeid"]
+    else:
+        nodeid = None
+    return nodeid
+
+def _do_update(title,nid):
+    # FIXME Check and only store if this is an actual override 
+    # title (diff than what is in modules/documents table )
+    plpy.execute(NODE_TITLE_UPD, (title,nid))
+
+class ModuleHandler(sax.ContentHandler):
+    def __init__(self):
+        self.parents = [None]
+        self.childorder = 0
+        self.map = {}
+        self.tag = u''
+        self.contentid = u''
+        self.version = u''
+        self.title = u''
+        self.nodeid = 0
+        
+    def startElementNS(self, (uri, localname), qname, attrs):
+        self.map[localname] = u''
+        self.tag = localname
+
+        if localname == 'module':
+            self.childorder[-1] += 1
+            nodeid = _do_insert(self.parents[-1],self.childorder[-1],attrs[(None,"document")],attrs[(ns["cnxorg"],"version-at-this-collection-version")])
+            if nodeid:
+                self.nodeid = nodeid
+
+        elif localname == 'subcollection':
+            # TODO insert a metadata record into modules table for subcol.
+            self.childorder[-1] += 1
+            nodeid = _do_insert(self.parents[-1],self.childorder[-1])
+            if nodeid:
+                self.nodeid = nodeid
+                self.parents.append(self.nodeid)
+            self.childorder.append(1)
+
+
+    def characters(self,content):
+        self.map[self.tag] += content
+
+    def endElementNS(self, (uris, localname), qname):
+        if localname == 'content-id':
+            self.contentid = self.map[localname]
+        elif localname == 'version':
+            self.version = self.map[localname]
+        elif localname == 'title':
+            self.title = self.map[localname]
+            if self.parents[-1]: # current node is a subcollection or module 
+               _do_update(self.title.encode('utf-8'), self.nodeid)
+
+        elif localname == 'metadata':
+            # We know that at end of metadata, we have got the collection info
+            self.childorder = [0]
+            nodeid = _do_insert(None,self.childorder[-1], self.contentid, self.version)
+            if nodeid:
+                self.nodeid = nodeid
+                self.parents.append(self.nodeid)
+            self.childorder.append(1)
+
+        elif localname == 'content':
+            #this occurs at the end of each container class: collection or sub.
+            self.parents.pop()
+            self.childorder.pop()
+
+
+parser = sax.make_parser()
+parser.setFeature(sax.handler.feature_namespaces, 1)
+parser.setContentHandler(ModuleHandler())
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+parser.parse(StringIO(doc))
+$$
+language plpythonu;

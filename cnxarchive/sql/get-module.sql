@@ -1,5 +1,5 @@
 -- arguments: id:string; version:string
-SELECT row_to_json(combined_rows)
+SELECT row_to_json(combined_rows) as module
 FROM (SELECT
   m.uuid AS id, m.version, m.name, m.created as _created, m.revised as _revised,
   abstract, m.stateid, m.doctype,l.url AS license, m.module_ident AS ident, m.submitter, m.submitlog,
@@ -16,4 +16,4 @@ m.uuid = %(id)s AND
 m.version = %(version)s
 GROUP BY
 m.moduleid, m.portal_type, m.version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype, l.url, m.module_ident, m.submitter, m.submitlog, p.moduleid, p.version, m.authors, m.licensors, m.maintainers, m.parentauthors, m.language
-) combined_rows;
+) combined_rows ;
