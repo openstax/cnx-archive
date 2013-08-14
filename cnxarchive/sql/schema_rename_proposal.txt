@@ -1,0 +1,66 @@
+Table actions:
+
+Current Name              | Action      |   Changes
+---------------------------------------------------
+ abandoned_content        | delete      | 
+ abstracts                | keep        |
+ collection_modules       | rename/view | containedby (view or func. on trees)
+ collections              | rename      | trees
+ deleted_modules          | delete      |
+ files                    | alter       | add sha1 hash 
+ files_bad                | delete      |
+ keywords                 | keep        |
+ latest_modules           | rename      | latest_documents
+ latest_sims              | deprecate   |
+ licenses                 | keep        |
+ modlinkurls              | delete      |
+ module_files             | rename      | document_files
+ module_link_urls         | delete      |
+ module_math_single_apply | delete      |
+ modulecounts             | delete      |
+ modulefti                | rename      | document_fti
+ modulekeywords           | rename      | document_keywords
+ moduleoptionalroles      | rename      | document_optional_roles
+ moduleratings            | deprecate   |
+ modules                  | rename      | documents
+ modulestates             | deprecate   |
+ moduletags               | rename      | document_tags
+ mtable_errors            | delete      |
+ note_class_title         | delete      |
+ note_class_xml           | delete      |
+ note_xml                 | delete      |
+ persons                  | keep/alter  | Only track info for published
+ pg_ts_cfg                | keep        |
+ pg_ts_cfgmap             | keep        |
+ published_authors        | delete      |
+ roles                    | keep        |
+ sim_array                | deprecate   |
+ similarities             | deprecate   |
+ sims                     | deprecate   |
+ tags                     | keep        |
+
+
+Per table schema Column changes:
+
+modules -> documents
+
+ documentid    | integer                  | not null default nextval('documents_dole_ident_seq'::regclass)
+ uuid          | text                     | default uuid_generate_v4()
+ version       | text                     | default '1.1'::text
+ title         | text                     | not null
+ created       | timestamp with time zone | not null default ('now'::text)::timestamp(6) with time zone
+ abstractid    | integer                  | 
+ licenseid     | integer                  | not null default 7
+ submitter     | text                     | 
+ submitlog     | text                     | 
+ stateid       | integer                  | 
+ parent        | integer                  | 
+ language      | text                     | 
+ authors       | text[]                   | 
+ maintainers   | text[]                   | 
+ licensors     | text[]                   | 
+ parentauthors | text[]                   | 
+ type          | text                     | 
+
+
+[to be continued]
