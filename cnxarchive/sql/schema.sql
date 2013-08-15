@@ -1,6 +1,6 @@
 BEGIN WORK;
 
-CREATE EXTENSION plpythonu;
+CREATE EXTENSION IF NOT EXISTS plpythonu;
 CREATE FUNCTION uuid_generate_v4 () RETURNS uuid LANGUAGE plpythonu AS $$ import uuid; return uuid.uuid4() $$ ;
 
 CREATE SEQUENCE "moduleid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
