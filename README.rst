@@ -9,10 +9,11 @@ from an unpublished repository (e.g. ``rhaptos2.repo``).
 Getting started
 ---------------
 
-This will require a 'Postgres' version 9.3 install. If you are using the
-``development.ini`` configuration file, you'll want to set up a
-``cnxarchive`` database for user ``cnxarchive`` with the password
-``cnxarchive``.
+This will require a 'Postgres' version 9.3 install
+and the 'plpythonu' extension.
+If you are using the ``development.ini`` configuration file,
+you'll want to set up a ``cnxarchive`` database for user ``cnxarchive``
+with the password ``cnxarchive``.
 
 The application is built in Python and can be installed using the
 typical Python distribution installation procedure, as follows::
