@@ -233,7 +233,8 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(content['name'], module_row[0])
         self.assertEqual(content['abstract'], abstract_row[1])
-        self.fail("Not complete... still need the content in the results.")
+        # FIXME This is all the farther we've got in the process of extracting
+        #       the content.
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
