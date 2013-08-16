@@ -14,7 +14,12 @@ CONNECTION_SETTINGS_KEY = 'db-connection-string'
 
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
-DB_SCHEMA = os.path.join(SQL_DIRECTORY, 'schema.sql')
+DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
+DB_SCHEMA_FILES = (
+    os.path.join(DB_SCHEMA_DIRECTORY, 'main.sql'),
+    os.path.join(DB_SCHEMA_DIRECTORY, 'trees.sql'),
+    )
+
 
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
@@ -32,10 +37,11 @@ def initdb(settings):
     """
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            with open(DB_SCHEMA, 'r') as f:
-                cursor.execute(f.read())
-            sql_constants = [os.path.join(SQL_DIRECTORY, filename)
-                             for filename in os.listdir(SQL_DIRECTORY)
+            for schema_filepath in DB_SCHEMA_FILES:
+                with open(schema_filepath, 'r') as f:
+                    cursor.execute(f.read())
+            sql_constants = [os.path.join(DB_SCHEMA_DIRECTORY, filename)
+                             for filename in os.listdir(DB_SCHEMA_DIRECTORY)
                              if filename.startswith('constant-')]
             for filepath in sql_constants:
                 with open(filepath, 'r') as f:
