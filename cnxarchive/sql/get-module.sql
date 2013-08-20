@@ -21,7 +21,7 @@ LEFT JOIN moduletags mt on m.module_ident = mt.module_ident NATURAL LEFT JOIN ta
 WHERE
 m.uuid = %(id)s AND
 m.version = %(version)s AND
-mf.filename = %(filename)
+mf.filename = %(filename)s
 GROUP BY
 m.uuid, m.portal_type, m.version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype,
 l.url, m.module_ident, m.submitter, m.submitlog, p.uuid, p.version, m.authors, m.licensors,
