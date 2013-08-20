@@ -10,6 +10,7 @@ import json
 import psycopg2
 
 from . import get_settings
+from . import httpexceptions
 from .utils import split_ident_hash
 from .database import CONNECTION_SETTINGS_KEY, SQL
 
@@ -25,7 +26,10 @@ def get_content(environ, start_response):
         with db_connection.cursor() as cursor:
             args = dict(id=id, version=version)
             cursor.execute(SQL['get-module'], args)
-            result = cursor.fetchone()[0]
+            try:
+                result = cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                raise httpexceptions.HTTPNotFound()
 
     result = json.dumps(result)
     status = "200 OK"
@@ -44,7 +48,10 @@ def get_resource(environ, start_response):
         with db_connection.cursor() as cursor:
             args = dict(id=id)
             cursor.execute(SQL['get-resource'], args)
-            filename, mimetype, file = cursor.fetchone()
+            try:
+                filename, mimetype, file = cursor.fetchone()
+            except TypeError:  # None returned
+                raise httpexceptions.HTTPNotFound()
 
     status = "200 OK"
     headers = [('Content-type', mimetype,),
