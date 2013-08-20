@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import json
 import psycopg2
 
 from . import get_settings
@@ -26,6 +27,7 @@ def get_content(environ, start_response):
             cursor.execute(SQL['get-module'], args)
             result = cursor.fetchone()[0]
 
+    result = json.dumps(result)
     status = "200 OK"
     headers = [('Content-type', 'application/json',)]
     start_response(status, headers)

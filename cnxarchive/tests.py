@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import json
 import unittest
 from wsgiref.util import setup_testing_defaults
 
@@ -231,6 +232,7 @@ class ViewsTestCase(unittest.TestCase):
         from .views import get_content
         content = get_content(environ, self._start_response)[0]
 
+        content = json.loads(content)
         self.assertEqual(content['name'], module_row[0])
         self.assertEqual(content['abstract'], abstract_row[1])
         # FIXME This is all the farther we've got in the process of extracting
