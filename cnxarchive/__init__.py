@@ -7,6 +7,9 @@
 # ###
 """Document and collection archive web application."""
 import re
+
+
+from . import httpexceptions
 from .utils import import_function, template_to_regex
 
 
@@ -25,12 +28,6 @@ def _setting_to_bool(value):
     if value.startswith('t') or value == '1':
         return True
     return False
-
-
-def not_found(environ, start_response):
-    """404 Not Found"""
-    start_response('404 Not Found', headers=[('Content-type', 'text/plain')])
-    return ["Not Found"]
 
 
 class Application:
@@ -65,8 +62,14 @@ class Application:
     def __call__(self, environ, start_response):
         controller = self.route(environ)
         if controller is not None:
-            return controller(environ, start_response)
-        return not_found(environ, start_response)
+            try:
+                return controller(environ, start_response)
+            except httpexceptions.HTTPException as exc:
+                return exc(environ, start_response)
+            except:
+                server_error = httpexceptions.HTTPInternalServerError()
+                return server_error(environ, start_response)
+        return httpexceptions.HTTPNotFound()(environ, start_response)
 
 
 def main(global_config, **settings):
