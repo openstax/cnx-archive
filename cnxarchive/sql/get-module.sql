@@ -1,4 +1,4 @@
--- arguments: id:string; version:string
+-- arguments: id:string; version:string filename:string
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
   m.uuid AS id, m.version, m.name, m.created as _created, m.revised as _revised,
@@ -20,7 +20,8 @@ LEFT JOIN modules p on m.parent = p.module_ident
 LEFT JOIN moduletags mt on m.module_ident = mt.module_ident NATURAL LEFT JOIN tags
 WHERE
 m.uuid = %(id)s AND
-m.version = %(version)s
+m.version = %(version)s AND
+mf.filename = %(filename)
 GROUP BY
 m.uuid, m.portal_type, m.version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype,
 l.url, m.module_ident, m.submitter, m.submitlog, p.uuid, p.version, m.authors, m.licensors,
