@@ -177,13 +177,13 @@ CREATE TRIGGER delete_from_latest_version
   EXECUTE PROCEDURE delete_from_latest();
 
 CREATE VIEW all_modules as
-	SELECT module_ident,portal_type,moduleid, version, name,
+	SELECT module_ident, uuid, portal_type, moduleid, version, name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors
 	FROM modules
 	UNION ALL
-	SELECT module_ident,portal_type,moduleid, 'latest', name,
+	SELECT module_ident, uuid, portal_type, moduleid, 'latest', name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors
