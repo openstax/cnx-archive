@@ -25,11 +25,25 @@ def get_content(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             args = dict(id=id, version=version)
-            cursor.execute(SQL['get-module'], args)
+            # FIXME We are doing two queries here that can hopefully be
+            #       condensed into one.
+            cursor.execute(SQL['get-module-metadata'], args)
             try:
                 result = cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned
                 raise httpexceptions.HTTPNotFound()
+            if result['type'] == 'Collection':
+                # Grab the collection tree.
+                result['tree'] = None  # TODO
+            else:
+                # Grab the html content.
+                args = dict(id=id, filename='index.html')
+                cursor.execute(SQL['get-resource-by-filename'], args)
+                try:
+                    content = cursor.fetchone()[0]
+                except (TypeError, IndexError,):  # None returned
+                    raise httpexceptions.HTTPNotFound()
+                result['content'] = content[:]
 
     result = json.dumps(result)
     status = "200 OK"
