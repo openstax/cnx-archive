@@ -64,6 +64,7 @@ class ModuleHandler(sax.ContentHandler):
         self.version = u''
         self.title = u''
         self.nodeid = 0
+        self.derivedfrom = [None]
         
     def startElementNS(self, (uri, localname), qname, attrs):
         self.map[localname] = u''
@@ -84,19 +85,25 @@ class ModuleHandler(sax.ContentHandler):
                 self.parents.append(self.nodeid)
             self.childorder.append(1)
 
+        elif localname == 'derived-from':
+            self.derivedfrom.append(True)
+
 
     def characters(self,content):
         self.map[self.tag] += content
 
     def endElementNS(self, (uris, localname), qname):
-        if localname == 'content-id':
+        if localname == 'content-id' and not self.derivedfrom[-1]:
             self.contentid = self.map[localname]
-        elif localname == 'version':
+        elif localname == 'version' and not self.derivedfrom[-1]:
             self.version = self.map[localname]
-        elif localname == 'title':
+        elif localname == 'title' and not self.derivedfrom[-1]:
             self.title = self.map[localname]
             if self.parents[-1]: # current node is a subcollection or module 
                _do_update(self.title.encode('utf-8'), self.nodeid)
+
+        elif localname == 'derived-from':
+            self.derivedfrom.pop()
 
         elif localname == 'metadata':
             # We know that at end of metadata, we've got the collection info
