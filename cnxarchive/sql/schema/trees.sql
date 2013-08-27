@@ -14,7 +14,7 @@ CREATE TABLE trees (
     childorder integer, -- position within parent node
     latest boolean, -- is this node supposed to track upstream changes
     PRIMARY KEY (nodeid),
-    FOREIGN KEY (parent_id) REFERENCES trees (nodeid)
+    FOREIGN KEY (parent_id) REFERENCES trees (nodeid) ON DELETE CASCADE
 );
 
 -- the unique index insures only one top-level tree per document metadata

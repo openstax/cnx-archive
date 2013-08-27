@@ -127,3 +127,20 @@ except ImportError:
 parser.parse(StringIO(doc))
 $$
 language plpythonu;
+
+create or replace function shred_collxml (fid int)  returns void as
+$$ 
+select shred_collxml(encode(file,'escape')) from files where fileid = fid
+$$
+language sql;
+
+create or replace function shred_collxml_trigger () returns trigger as $$
+BEGIN
+PERFORM shred_collxml(NEW.fileid);
+RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+create trigger shred_collxml BEFORE INSERT on module_files
+for each row when (NEW.filename = 'collection.xml') execute procedure shred_collxml_trigger ();
