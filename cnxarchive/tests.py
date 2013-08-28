@@ -43,7 +43,7 @@ COLLECTION_METADATA = {
     u'stateid': None,
     u'submitlog': u'',
     u'submitter': u'',
-    u'type': u'Collection',
+    u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'1.7',
     }
 MODULE_METADATA = {
@@ -66,7 +66,7 @@ MODULE_METADATA = {
     u'stateid': None,
     u'submitlog': u'',
     u'submitter': u'',
-    u'type': u'Module',
+    u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'1.8',
     }
 

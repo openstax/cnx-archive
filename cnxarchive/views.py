@@ -11,7 +11,7 @@ import psycopg2
 
 from . import get_settings
 from . import httpexceptions
-from .utils import split_ident_hash
+from .utils import split_ident_hash, portaltype_to_mimetype
 from .database import CONNECTION_SETTINGS_KEY, SQL
 
 
@@ -32,7 +32,9 @@ def get_content(environ, start_response):
                 result = cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned
                 raise httpexceptions.HTTPNotFound()
-            if result['type'] == 'Collection':
+            # FIXME The 'mediaType' value will be changing to mimetypes
+            #       in the near future.
+            if result['mediaType'] == 'Collection':
                 # Grab the collection tree.
                 result['tree'] = None  # TODO
             else:
@@ -44,6 +46,12 @@ def get_content(environ, start_response):
                 except (TypeError, IndexError,):  # None returned
                     raise httpexceptions.HTTPNotFound()
                 result['content'] = content[:]
+
+    # FIXME We currently have legacy 'portal_type' names in the database.
+    #       Future upgrades should replace the portal type with a mimetype
+    #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
+    #       Until then we will do the replacement here.
+    result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
 
     result = json.dumps(result)
     status = "200 OK"

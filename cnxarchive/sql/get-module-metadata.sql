@@ -12,7 +12,7 @@ FROM (SELECT
   m.created as created, m.revised as revised,
   m.stateid, m.doctype,
   l.url AS license,
-  m.submitter, m.submitlog, m.portal_type as type,
+  m.submitter, m.submitlog, m.portal_type as "mediaType",
   a.abstract,
   p.uuid AS "parentId", p.version AS "parentVersion",
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
