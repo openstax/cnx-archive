@@ -14,7 +14,7 @@ FROM (SELECT
   l.url AS license,
   m.submitter, m.submitlog, m.portal_type as type,
   a.abstract,
-  p.moduleid AS parent_id, p.version AS parent_version,
+  p.moduleid AS "parentId", p.version AS "parentVersion",
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
   COALESCE(m.parentauthors,
            ARRAY(select ''::text where false)) as "parentAuthors",
