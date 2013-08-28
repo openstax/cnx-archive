@@ -14,7 +14,7 @@ FROM (SELECT
   l.url AS license,
   m.submitter, m.submitlog, m.portal_type as type,
   a.abstract,
-  p.moduleid AS "parentId", p.version AS "parentVersion",
+  p.uuid AS "parentId", p.version AS "parentVersion",
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
   COALESCE(m.parentauthors,
            ARRAY(select ''::text where false)) as "parentAuthors",
@@ -33,6 +33,6 @@ WHERE
 GROUP BY
   m.moduleid, m.portal_type, m.version, m.name, m.created, m.revised,
   a.abstract, m.stateid, m.doctype, l.url, m.module_ident, m.submitter,
-  m.submitlog, p.moduleid, p.version, m.authors, m.licensors, m.maintainers,
+  m.submitlog, p.uuid, p.version, m.authors, m.licensors, m.maintainers,
   m.parentauthors, m.language
 ) combined_rows ;
