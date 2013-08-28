@@ -16,6 +16,7 @@ from paste.deploy import appconfig
 
 here = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(here, 'test-data')
+TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA, 'data.sql')
 try:
     TESTING_CONFIG = os.environ['TESTING_CONFIG']
 except KeyError as exc:
@@ -182,17 +183,22 @@ class ViewsTestCase(unittest.TestCase):
         from .utils import parse_app_settings
         cls.settings = parse_app_settings(TESTING_CONFIG)
         from .database import CONNECTION_SETTINGS_KEY
-        connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
-        cls.db_connection = psycopg2.connect(connection_string)
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
 
     @classmethod
     def tearDownClass(cls):
-        cls.db_connection.close()
+        cls._db_connection.close()
 
     def setUp(self):
         from . import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+        self._db_connection.commit()
 
     def tearDown(self):
         from . import _set_settings
