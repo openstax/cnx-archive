@@ -19,8 +19,8 @@ FROM (SELECT
   COALESCE(m.parentauthors,
            ARRAY(select ''::text where false)) as "parentAuthors",
   m.language as language,
-  (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as _roles,
-  list(tag) as _subject
+  (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as roles,
+  list(tag) as subject
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
   LEFT JOIN modules p on m.parent = p.module_ident

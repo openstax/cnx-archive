@@ -24,8 +24,8 @@ except KeyError as exc:
     raise exc
 
 COLLECTION_METADATA = {
-    u'_roles': None,
-    u'_subject': u'',
+    u'roles': None,
+    u'subject': u'',
     u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
     u'authors': [],
     u'created': u'2013-07-31 12:07:20.342798-07',
@@ -47,8 +47,8 @@ COLLECTION_METADATA = {
     u'version': u'1.7',
     }
 MODULE_METADATA = {
-    u'_roles': None,
-    u'_subject': u'',
+    u'roles': None,
+    u'subject': u'',
     u'abstract': None,
     u'authors': [],
     u'created': u'2013-07-31 12:07:24.856663-07',
