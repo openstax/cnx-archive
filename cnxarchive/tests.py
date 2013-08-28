@@ -23,6 +23,31 @@ except KeyError as exc:
     print("*** Missing 'TESTING_CONFIG' environment variable ***")
     raise exc
 
+COLLECTION_METADATA = {
+    u'_roles': None,
+    u'_subject': u'',
+    u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
+    u'authors': [],
+    u'created': u'2013-07-31 12:07:20.342798-07',
+    u'doctype': u'',
+    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    u'ident': 1,
+    u'language': u'en',
+    u'license': u'http://creativecommons.org/licenses/by/3.0/',
+    u'licensors': [],
+    u'maintainers': [],
+    u'name': u'College Physics',
+    u'parentAuthors': [],
+    u'parent_id': None,
+    u'parent_version': None,
+    u'revised': u'2013-07-31 12:07:20.342798-07',
+    u'stateid': None,
+    u'submitlog': u'',
+    u'submitter': u'',
+    u'type': u'Collection',
+    u'version': u'1.7',
+    }
+
 
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
@@ -214,51 +239,32 @@ class ViewsTestCase(unittest.TestCase):
         """Used to capture the WSGI 'start_response'."""
         self.captured_response = {'status': status, 'headers': headers}
 
-    def test_contents(self):
+    def test_collection_content(self):
         # Test for retrieving a piece of content.
-        # Insert an abstract and module.
-        abstract_row = (1, "an abstract",)
-        module_row = ('smoo', 1, '', abstract_row[0],)
-        with self.db_connection.cursor() as cursor:
-            cursor.execute("INSERT INTO abstracts (abstractid, abstract) "
-                           "VALUES (%s, %s);", abstract_row)
-            self.db_connection.commit()
-            cursor.execute("INSERT INTO modules (name, licenseid, doctype, abstractid)"
-                           "VALUES (%s, %s, %s, %s);", module_row)
-            self.db_connection.commit()
-            cursor.execute("SELECT uuid, version FROM modules;")
-            uuid, version = cursor.fetchone()
-        self.db_connection.commit()
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
 
         # Build the request environment.
         environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': "{}@{}".format(uuid, version)}
+        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
 
         # Call the view.
         from .views import get_content
         content = get_content(environ, self._start_response)[0]
-
         content = json.loads(content)
-        self.assertEqual(content['name'], module_row[0])
-        self.assertEqual(content['abstract'], abstract_row[1])
-        # FIXME This is all the farther we've got in the process of extracting
-        #       the content.
+
+        # Remove the 'tree' from the content for separate testing.
+        content_tree = content.pop('tree')
+        # Check the metadata for correctness.
+        self.assertEqual(content, COLLECTION_METADATA)
+        # Check the tree for accuracy.
+        # FIXME ...incomplete implementation...
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
         # Insert a resource. In this case the resource does not need to
         #   be attatched to a module.
-        file_row = (1, b'dingo-ate-my-baby')
-        module_file_row = (file_row[0], 'image.jpg', 'image/jpeg')
-        with self.db_connection.cursor() as cursor:
-            cursor.execute("INSERT INTO files (fileid, file) VALUES (%s, %s);",
-                           file_row)
-            cursor.execute("INSERT INTO module_files (fileid, filename, mimetype) "
-                           "VALUES (%s, %s, %s);", module_file_row)
-            self.db_connection.commit()
-            cursor.execute("SELECT uuid FROM module_files;")
-            uuid = cursor.fetchone()[0]
-        self.db_connection.commit()
 
         # Build the request.
         environ = self._make_environ()
