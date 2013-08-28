@@ -8,7 +8,7 @@
 -- arguments: id:string; version:string
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
-  m.uuid AS id, m.version, m.name,
+  m.uuid AS id, m.version, m.name as title,
   m.created as created, m.revised as revised,
   m.stateid, m.doctype,
   l.url AS license,
