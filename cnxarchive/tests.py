@@ -16,12 +16,59 @@ from paste.deploy import appconfig
 
 here = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(here, 'test-data')
+TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA, 'data.sql')
 try:
     TESTING_CONFIG = os.environ['TESTING_CONFIG']
 except KeyError as exc:
     print("*** Missing 'TESTING_CONFIG' environment variable ***")
     raise exc
 
+COLLECTION_METADATA = {
+    u'roles': None,
+    u'subject': u'',
+    u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
+    u'authors': [],
+    u'created': u'2013-07-31 12:07:20.342798-07',
+    u'doctype': u'',
+    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    u'language': u'en',
+    u'license': u'http://creativecommons.org/licenses/by/3.0/',
+    u'licensors': [],
+    u'maintainers': [],
+    u'title': u'College Physics',
+    u'parentAuthors': [],
+    u'parentId': None,
+    u'parentVersion': None,
+    u'revised': u'2013-07-31 12:07:20.342798-07',
+    u'stateid': None,
+    u'submitlog': u'',
+    u'submitter': u'',
+    u'mediaType': u'application/vnd.org.cnx.collection',
+    u'version': u'1.7',
+    }
+MODULE_METADATA = {
+    u'roles': None,
+    u'subject': u'',
+    u'abstract': None,
+    u'authors': [],
+    u'created': u'2013-07-31 12:07:24.856663-07',
+    u'doctype': u'',
+    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
+    u'language': u'en',
+    u'license': u'http://creativecommons.org/licenses/by/3.0/',
+    u'licensors': [],
+    u'maintainers': [],
+    u'title': u'Elasticity: Stress and Strain',
+    u'parentAuthors': [],
+    u'parentId': None,
+    u'parentVersion': None,
+    u'revised': u'2013-07-31 12:07:24.856663-07',
+    u'stateid': None,
+    u'submitlog': u'',
+    u'submitter': u'',
+    u'mediaType': u'application/vnd.org.cnx.module',
+    u'version': u'1.8',
+    }
 
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
@@ -182,17 +229,22 @@ class ViewsTestCase(unittest.TestCase):
         from .utils import parse_app_settings
         cls.settings = parse_app_settings(TESTING_CONFIG)
         from .database import CONNECTION_SETTINGS_KEY
-        connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
-        cls.db_connection = psycopg2.connect(connection_string)
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
 
     @classmethod
     def tearDownClass(cls):
-        cls.db_connection.close()
+        cls._db_connection.close()
 
     def setUp(self):
         from . import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+        self._db_connection.commit()
 
     def tearDown(self):
         from . import _set_settings
@@ -208,51 +260,53 @@ class ViewsTestCase(unittest.TestCase):
         """Used to capture the WSGI 'start_response'."""
         self.captured_response = {'status': status, 'headers': headers}
 
-    def test_contents(self):
+    def test_collection_content(self):
         # Test for retrieving a piece of content.
-        # Insert an abstract and module.
-        abstract_row = (1, "an abstract",)
-        module_row = ('smoo', 1, '', abstract_row[0],)
-        with self.db_connection.cursor() as cursor:
-            cursor.execute("INSERT INTO abstracts (abstractid, abstract) "
-                           "VALUES (%s, %s);", abstract_row)
-            self.db_connection.commit()
-            cursor.execute("INSERT INTO modules (name, licenseid, doctype, abstractid)"
-                           "VALUES (%s, %s, %s, %s);", module_row)
-            self.db_connection.commit()
-            cursor.execute("SELECT uuid, version FROM modules;")
-            uuid, version = cursor.fetchone()
-        self.db_connection.commit()
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
 
         # Build the request environment.
         environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': "{}@{}".format(uuid, version)}
+        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
 
         # Call the view.
         from .views import get_content
         content = get_content(environ, self._start_response)[0]
-
         content = json.loads(content)
-        self.assertEqual(content['name'], module_row[0])
-        self.assertEqual(content['abstract'], abstract_row[1])
-        # FIXME This is all the farther we've got in the process of extracting
-        #       the content.
+
+        # Remove the 'tree' from the content for separate testing.
+        content_tree = content.pop('tree')
+        # Check the metadata for correctness.
+        self.assertEqual(content, COLLECTION_METADATA)
+        # Check the tree for accuracy.
+        # FIXME ...incomplete implementation...
+
+    def test_module_content(self):
+        # Test for retreiving a module.
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = '1.8'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from .views import get_content
+        content = get_content(environ, self._start_response)[0]
+        content = json.loads(content)
+
+        # Remove the 'content' text from the content for separate testing.
+        content_text = content.pop('content')
+        # Check the metadata for correctness.
+        self.assertEqual(content, MODULE_METADATA)
+        # Check the content is the html file.
+        self.assertTrue(content_text.find('<html') >= 0)
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
-        # Insert a resource. In this case the resource does not need to
-        #   be attatched to a module.
-        file_row = (1, b'dingo-ate-my-baby')
-        module_file_row = (file_row[0], 'image.jpg', 'image/jpeg')
-        with self.db_connection.cursor() as cursor:
-            cursor.execute("INSERT INTO files (fileid, file) VALUES (%s, %s);",
-                           file_row)
-            cursor.execute("INSERT INTO module_files (fileid, filename, mimetype) "
-                           "VALUES (%s, %s, %s);", module_file_row)
-            self.db_connection.commit()
-            cursor.execute("SELECT uuid FROM module_files;")
-            uuid = cursor.fetchone()[0]
-        self.db_connection.commit()
+        uuid = 'f45f8378-92db-40ae-ba58-648130038e4b'
 
         # Build the request.
         environ = self._make_environ()
@@ -262,11 +316,18 @@ class ViewsTestCase(unittest.TestCase):
         from .views import get_resource
         resource = get_resource(environ, self._start_response)[0]
 
+        expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
         # Check the response body.
-        self.assertEqual(bytes(resource), file_row[1])
+        self.assertEqual(bytes(resource)[:len(expected_bits)],
+                         expected_bits)
 
         # Check for response headers, specifically the content-disposition.
-        # self.fail()
+        headers = self.captured_response['headers']
+        expected_headers = [
+            ('Content-type', 'image/png',),
+            ('Content-disposition', "attached; filename=PhET_Icon.png",),
+            ]
+        self.assertEqual(headers, expected_headers)
 
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
