@@ -47,7 +47,30 @@ COLLECTION_METADATA = {
     u'type': u'Collection',
     u'version': u'1.7',
     }
-
+MODULE_METADATA = {
+    u'_roles': None,
+    u'_subject': u'',
+    u'abstract': None,
+    u'authors': [],
+    u'created': u'2013-07-31 12:07:24.856663-07',
+    u'doctype': u'',
+    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
+    u'ident': 11,
+    u'language': u'en',
+    u'license': u'http://creativecommons.org/licenses/by/3.0/',
+    u'licensors': [],
+    u'maintainers': [],
+    u'name': u'Elasticity: Stress and Strain',
+    u'parentAuthors': [],
+    u'parent_id': None,
+    u'parent_version': None,
+    u'revised': u'2013-07-31 12:07:24.856663-07',
+    u'stateid': None,
+    u'submitlog': u'',
+    u'submitter': u'',
+    u'type': u'Module',
+    u'version': u'1.8',
+    }
 
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
@@ -260,6 +283,28 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content, COLLECTION_METADATA)
         # Check the tree for accuracy.
         # FIXME ...incomplete implementation...
+
+    def test_module_content(self):
+        # Test for retreiving a module.
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = '1.8'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from .views import get_content
+        content = get_content(environ, self._start_response)[0]
+        content = json.loads(content)
+
+        # Remove the 'content' text from the content for separate testing.
+        content_text = content.pop('content')
+        # Check the metadata for correctness.
+        self.assertEqual(content, MODULE_METADATA)
+        # Check the content is the html file.
+        self.assertTrue(content_text.find('<html') >= 0)
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
