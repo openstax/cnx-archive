@@ -11,7 +11,7 @@ FROM (SELECT
   m.uuid AS id, m.version, m.name,
   m.created as created, m.revised as revised,
   m.stateid, m.doctype,
-  l.url AS license, m.module_ident AS ident,
+  l.url AS license,
   m.submitter, m.submitlog, m.portal_type as type,
   a.abstract,
   p.moduleid AS parent_id, p.version AS parent_version,
