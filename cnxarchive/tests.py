@@ -308,8 +308,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
-        # Insert a resource. In this case the resource does not need to
-        #   be attatched to a module.
+        uuid = 'f45f8378-92db-40ae-ba58-648130038e4b'
 
         # Build the request.
         environ = self._make_environ()
@@ -319,11 +318,18 @@ class ViewsTestCase(unittest.TestCase):
         from .views import get_resource
         resource = get_resource(environ, self._start_response)[0]
 
+        expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
         # Check the response body.
-        self.assertEqual(bytes(resource), file_row[1])
+        self.assertEqual(bytes(resource)[:len(expected_bits)],
+                         expected_bits)
 
         # Check for response headers, specifically the content-disposition.
-        # self.fail()
+        headers = self.captured_response['headers']
+        expected_headers = [
+            ('Content-type', 'image/png',),
+            ('Content-disposition', "attached; filename=PhET_Icon.png",),
+            ]
+        self.assertEqual(headers, expected_headers)
 
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
