@@ -77,3 +77,17 @@ def template_to_regex(template):
     regex += re.escape(template[last_pos:])
     regex = '^%s$' % regex
     return regex
+
+
+MODULE_MIMETYPE = 'application/vnd.org.cnx.module'
+COLLECTION_MIMETYPE = 'application/vnd.org.cnx.collection'
+FOLDER_MIMETYPE = 'application/vnd.org.cnx.folder'
+MIMETYPES = (MODULE_MIMETYPE, COLLECTION_MIMETYPE, FOLDER_MIMETYPE,)
+PORTALTYPE_TO_MIMETYPE_MAPPING = {
+    'Module': MODULE_MIMETYPE,
+    'Collection': COLLECTION_MIMETYPE,
+    }
+
+def portaltype_to_mimetype(portal_type):
+    """Map the given ``portal_type`` to a mimetype"""
+    return PORTALTYPE_TO_MIMETYPE_MAPPING[portal_type]
