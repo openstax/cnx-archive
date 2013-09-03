@@ -78,9 +78,7 @@ def main(global_config, **settings):
     app = Application()
     app.add_route('/contents/{ident_hash}', 'cnxarchive.views:get_content')
     app.add_route('/resources/{id}', 'cnxarchive.views:get_resource')
-    dev_mode = _setting_to_bool(settings.get('dev-mode', False))
-    if dev_mode:
-        if not settings.get('exports-directory', None):
-            raise ValueError("Missing exports-directory configuration setting.")
-        app.add_route('/exports/{ident_hash}/{type}', 'cnxarchive.views:get_export')
+    if not settings.get('exports-directory', None):
+        raise ValueError("Missing exports-directory configuration setting.")
+    app.add_route('/exports/{ident_hash}/{type}', 'cnxarchive.views:get_export')
     return app

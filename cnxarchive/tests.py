@@ -368,8 +368,6 @@ class ViewsTestCase(unittest.TestCase):
         version = '1.21'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
-        # Link up the exports directory, which is only done in dev-mode,
-        #   because the web server will be doing this in production.
         exports_dir = os.path.join(TEST_DATA, 'exports')
         filename = "{}-{}.{}".format(id, version, type)
         self.settings['exports-directory'] = exports_dir
