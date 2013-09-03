@@ -32,6 +32,7 @@ SQL = {
     'get-module-metadata': _read_sql_file('get-module-metadata'),
     'get-resource': _read_sql_file('get-resource'),
     'get-resource-by-filename': _read_sql_file('get-resource-by-filename'),
+    'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
     }
 
 
