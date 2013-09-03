@@ -12,7 +12,7 @@ UNION ALL
     WHERE not nodeid = any (t.path)
 )
 SELECT
-    REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(lm.uuid,'subcol') ||COALESCE('@'||lm.version,'') ||'",' ||
+    REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(lm.uuid::text,'subcol') ||COALESCE('@'||lm.version,'') ||'",' ||
       '"title":"'||COALESCE(title,name)||'"' ||
       CASE WHEN (depth < lead(depth,1,0) over(w)) THEN ', "contents":['
            WHEN (depth > lead(depth,1,0) over(w) AND depth > 2 ) THEN '}]},'
