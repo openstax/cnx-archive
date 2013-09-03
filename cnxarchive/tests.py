@@ -14,6 +14,10 @@ import psycopg2
 from paste.deploy import appconfig
 
 
+# Set the timezone for the postgresql client so that we get the times in the
+# right timezone (America/Whitehorse is -07 in summer and -08 in winter)
+os.environ['PGTZ'] = 'America/Whitehorse'
+
 here = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = os.path.join(here, 'test-data')
 TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA, 'data.sql')
@@ -277,8 +281,14 @@ class ViewsTestCase(unittest.TestCase):
 
         # Remove the 'tree' from the content for separate testing.
         content_tree = content.pop('tree')
+
         # Check the metadata for correctness.
-        self.assertEqual(content, COLLECTION_METADATA)
+        self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
+        for key in content:
+            self.assertEqual(content[key], COLLECTION_METADATA[key],
+                    'content[{key}] = {v1} but COLLECTION_METADATA[{key}] = {v2}'.format(
+                        key=key, v1=content[key], v2=COLLECTION_METADATA[key]))
+
         # Check the tree for accuracy.
         # FIXME ...incomplete implementation...
 
@@ -299,8 +309,14 @@ class ViewsTestCase(unittest.TestCase):
 
         # Remove the 'content' text from the content for separate testing.
         content_text = content.pop('content')
+
         # Check the metadata for correctness.
-        self.assertEqual(content, MODULE_METADATA)
+        self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
+        for key in content:
+            self.assertEqual(content[key], MODULE_METADATA[key],
+                    'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
+                        key=key, v1=content[key], v2=MODULE_METADATA[key]))
+
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
