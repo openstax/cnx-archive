@@ -100,6 +100,8 @@ def get_export(environ, start_response):
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
 
+    if type not in TYPE_INFO:
+        raise httpexceptions.HTTPNotFound()
 
     file_extension, mimetype = TYPE_INFO[type]
     filename = '{}-{}.{}'.format(id, version, file_extension)
@@ -109,6 +111,9 @@ def get_export(environ, start_response):
                ('Content-disposition',
                 'attached; filename={}'.format(filename),),
                ]
-    start_response(status, headers)
-    with open(os.path.join(exports_dir, filename), 'r') as file:
-        return [file.read()]
+    try:
+        with open(os.path.join(exports_dir, filename), 'r') as file:
+            start_response(status, headers)
+            return [file.read()]
+    except IOError:
+        raise httpexceptions.HTTPNotFound()

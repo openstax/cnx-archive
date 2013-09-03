@@ -13,6 +13,8 @@ from wsgiref.util import setup_testing_defaults
 import psycopg2
 from paste.deploy import appconfig
 
+from . import httpexceptions
+
 
 # Set the timezone for the postgresql client so that we get the times in the
 # right timezone (America/Whitehorse is -07 in summer and -08 in winter)
@@ -387,3 +389,34 @@ class ViewsTestCase(unittest.TestCase):
                          "attached; filename={}".format(filename))
         with open(os.path.join(exports_dir, filename), 'r') as file:
             self.assertEqual(export, file.read())
+
+    def test_exports_type_not_supported(self):
+        self.settings['exports-directories'] = ' '.join([
+                os.path.join(TEST_DATA, 'exports'),
+                os.path.join(TEST_DATA, 'exports2')
+                ])
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                'type': 'txt'
+                }
+
+        from .views import get_export
+        self.assertRaises(httpexceptions.HTTPNotFound,
+                get_export, environ, self._start_response)
+
+    def test_exports_404(self):
+        self.settings['exports-directory'] = os.path.join(TEST_DATA, 'exports')
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '24184288-14b9-11e3-86ac-207c8f4fa432@0',
+                'type': 'pdf'
+                }
+
+        from .views import get_export
+        self.assertRaises(httpexceptions.HTTPNotFound,
+                get_export, environ, self._start_response)
