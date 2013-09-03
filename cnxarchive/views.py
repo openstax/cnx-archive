@@ -95,7 +95,7 @@ TYPE_INFO = {
 
 def get_export(environ, start_response):
     """Retrieve an export file."""
-    exports_dir = get_settings()['exports-directory']
+    exports_dirs = get_settings()['exports-directories'].split()
     args = environ['wsgiorg.routing_args']
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
@@ -111,9 +111,15 @@ def get_export(environ, start_response):
                ('Content-disposition',
                 'attached; filename={}'.format(filename),),
                ]
-    try:
-        with open(os.path.join(exports_dir, filename), 'r') as file:
-            start_response(status, headers)
-            return [file.read()]
-    except IOError:
+
+    for exports_dir in exports_dirs:
+        try:
+            with open(os.path.join(exports_dir, filename), 'r') as file:
+                start_response(status, headers)
+                return [file.read()]
+        except IOError:
+            # to be handled by the else part below if unable to find file in
+            # any of the export dirs
+            pass
+    else:
         raise httpexceptions.HTTPNotFound()

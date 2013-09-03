@@ -370,9 +370,11 @@ class ViewsTestCase(unittest.TestCase):
         version = '1.21'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
-        exports_dir = os.path.join(TEST_DATA, 'exports')
         filename = "{}-{}.{}".format(id, version, type)
-        self.settings['exports-directory'] = exports_dir
+        self.settings['exports-directories'] = ' '.join([
+                os.path.join(TEST_DATA, 'exports'),
+                os.path.join(TEST_DATA, 'exports2')
+                ])
 
         # Build the request.
         environ = self._make_environ()
@@ -387,7 +389,20 @@ class ViewsTestCase(unittest.TestCase):
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
                          "attached; filename={}".format(filename))
-        with open(os.path.join(exports_dir, filename), 'r') as file:
+        with open(os.path.join(TEST_DATA, 'exports', filename), 'r') as file:
+            self.assertEqual(export, file.read())
+
+        # Test exports can access the other exports directory
+        id = '50de27d8-14e6-11e3-a7e2-207c8f4fa432'
+        version = '3.2'
+        ident_hash = '{}@{}'.format(id, version)
+        filename = '{}-{}.pdf'.format(id, version)
+        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
+                                           'type': 'pdf'
+                                           }
+
+        export = get_export(environ, self._start_response)[0]
+        with open(os.path.join(TEST_DATA, 'exports2', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
     def test_exports_type_not_supported(self):
@@ -408,7 +423,10 @@ class ViewsTestCase(unittest.TestCase):
                 get_export, environ, self._start_response)
 
     def test_exports_404(self):
-        self.settings['exports-directory'] = os.path.join(TEST_DATA, 'exports')
+        self.settings['exports-directories'] = ' '.join([
+                os.path.join(TEST_DATA, 'exports'),
+                os.path.join(TEST_DATA, 'exports2')
+                ])
 
         # Build the request
         environ = self._make_environ()
