@@ -371,8 +371,8 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
-        id = '8415caa0-2cf8-43d8-a073-05e41df8059c'
-        version = '1.21'
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
         filename = "{}-{}.{}".format(id, version, type)
@@ -393,13 +393,13 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
-                         "attached; filename={}".format(filename))
+                         "attached; filename=college-physics.pdf")
         with open(os.path.join(TEST_DATA, 'exports', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
         # Test exports can access the other exports directory
-        id = '50de27d8-14e6-11e3-a7e2-207c8f4fa432'
-        version = '3.2'
+        id = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = '1.8'
         ident_hash = '{}@{}'.format(id, version)
         filename = '{}-{}.pdf'.format(id, version)
         environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
@@ -407,6 +407,10 @@ class ViewsTestCase(unittest.TestCase):
                                            }
 
         export = get_export(environ, self._start_response)[0]
+        headers = self.captured_response['headers']
+        headers = {x[0].lower(): x[1] for x in headers}
+        self.assertEqual(headers['content-disposition'],
+                         "attached; filename=elasticity-stress-and-strain.pdf")
         with open(os.path.join(TEST_DATA, 'exports2', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
@@ -472,3 +476,30 @@ class ViewsTestCase(unittest.TestCase):
                 'user_friendly_name': 'ZIP archive',
                 },
             })
+
+
+class SlugifyTestCase(unittest.TestCase):
+
+    def test_ascii(self):
+        from .utils import slugify
+        self.assertEqual(slugify('How to Work for Yourself: 100 Ways'),
+                'how-to-work-for-yourself-100-ways')
+
+    def test_hyphen(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Any Red-Blooded Girl'),
+                'any-red-blooded-girl')
+
+    def test_underscore(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Underscores _hello_'),
+                'underscores-_hello_')
+
+    def test_unicode(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Radioactive (Die Verstoßenen)'),
+                u'radioactive-die-verstoßenen')
+
+        self.assertEqual(slugify(u'40文字でわかる！'
+            u'　知っておきたいビジネス理論'),
+            u'40文字でわかる-知っておきたいビジネス理論')

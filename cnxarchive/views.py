@@ -11,9 +11,23 @@ import psycopg2
 
 from . import get_settings
 from . import httpexceptions
-from .utils import split_ident_hash, portaltype_to_mimetype
+from .utils import split_ident_hash, portaltype_to_mimetype, slugify
 from .database import CONNECTION_SETTINGS_KEY, SQL
 
+
+def get_content_metadata(id, version, cursor):
+    """Return metadata related to the content from the database
+    """
+    # Do the module lookup
+    args = dict(id=id, version=version)
+    # FIXME We are doing two queries here that can hopefully be
+    #       condensed into one.
+    cursor.execute(SQL['get-module-metadata'], args)
+    try:
+        result = cursor.fetchone()[0]
+        return result
+    except (TypeError, IndexError,):  # None returned
+        raise httpexceptions.HTTPNotFound()
 
 def get_content(environ, start_response):
     """Retrieve a piece of content using the ident-hash (uuid@version)."""
@@ -21,17 +35,9 @@ def get_content(environ, start_response):
     ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
-    # Do the module lookup
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            args = dict(id=id, version=version)
-            # FIXME We are doing two queries here that can hopefully be
-            #       condensed into one.
-            cursor.execute(SQL['get-module-metadata'], args)
-            try:
-                result = cursor.fetchone()[0]
-            except (TypeError, IndexError,):  # None returned
-                raise httpexceptions.HTTPNotFound()
+            result = get_content_metadata(id, version, cursor)
             # FIXME The 'mediaType' value will be changing to mimetypes
             #       in the near future.
             if result['mediaType'] == 'Collection':
@@ -112,7 +118,8 @@ def get_export_allowable_types(environ, start_response):
 
 def get_export(environ, start_response):
     """Retrieve an export file."""
-    exports_dirs = get_settings()['exports-directories'].split()
+    settings = get_settings()
+    exports_dirs = settings['exports-directories'].split()
     args = environ['wsgiorg.routing_args']
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
@@ -124,11 +131,15 @@ def get_export(environ, start_response):
     file_extension = TYPE_INFO[type]['file_extension']
     mimetype = TYPE_INFO[type]['mimetype']
     filename = '{}-{}.{}'.format(id, version, file_extension)
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            result = get_content_metadata(id, version, cursor)
 
     status = "200 OK"
     headers = [('Content-type', mimetype,),
                ('Content-disposition',
-                'attached; filename={}'.format(filename),),
+                'attached; filename={}.{}'.format(slugify(result['title']),
+                    file_extension),),
                ]
 
     for exports_dir in exports_dirs:
