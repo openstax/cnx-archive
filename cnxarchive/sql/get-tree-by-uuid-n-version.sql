@@ -6,10 +6,4 @@
 -- ###
 
 -- arguments: id:string; version:string
-SELECT tree_to_json(moduleid)
-FROM modules
-WHERE
-  uuid = %(id)s
-  AND
-  version = %(version)s
-;
+SELECT tree_to_json(%(id)s, %(version)s);
