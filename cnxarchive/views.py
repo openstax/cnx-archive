@@ -116,6 +116,11 @@ def get_export_allowable_types(environ, start_response):
     start_response('200 OK', headers)
     return [json.dumps(TYPE_INFO)]
 
+def redirect(url):
+    status = '302 Found'
+    headers = [('Location', url)]
+    return status, headers
+
 def get_export(environ, start_response):
     """Retrieve an export file."""
     settings = get_settings()
@@ -128,12 +133,22 @@ def get_export(environ, start_response):
     if type not in TYPE_INFO:
         raise httpexceptions.HTTPNotFound()
 
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            if not version:
+                cursor.execute(SQL['get-module-versions'], {'id': id})
+                try:
+                    latest_version = cursor.fetchone()[0]
+                    start_response(*redirect('/exports/{}@{}.{}'.format(
+                        id, latest_version, type)))
+                    return []
+                except (TypeError, IndexError,): # None returned
+                    raise httpexceptions.HTTPNotFound()
+            result = get_content_metadata(id, version, cursor)
+
     file_extension = TYPE_INFO[type]['file_extension']
     mimetype = TYPE_INFO[type]['mimetype']
     filename = '{}-{}.{}'.format(id, version, file_extension)
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
-        with db_connection.cursor() as cursor:
-            result = get_content_metadata(id, version, cursor)
 
     status = "200 OK"
     headers = [('Content-type', mimetype,),

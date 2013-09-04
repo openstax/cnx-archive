@@ -19,6 +19,8 @@ class IdentHashSyntaxError(Exception):
 
 def split_ident_hash(ident_hash):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
+    if '@' not in ident_hash:
+        ident_hash = '{}@'.format(ident_hash)
     split_value = ident_hash.split('@')
     if split_value[0] == '':
         raise ValueError("Missing values")

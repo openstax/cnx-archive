@@ -268,6 +268,11 @@ class ViewsTestCase(unittest.TestCase):
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
         self._db_connection.commit()
+
+        self.settings['exports-directories'] = ' '.join([
+                os.path.join(TEST_DATA, 'exports'),
+                os.path.join(TEST_DATA, 'exports2')
+                ])
         self.settings['exports-allowable-types'] = '''
             pdf:pdf,application/pdf,Portable Document Format (PDF)
             epub:epub,application/epub+zip,Electronic Publication (EPUB)
@@ -376,10 +381,6 @@ class ViewsTestCase(unittest.TestCase):
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
         filename = "{}-{}.{}".format(id, version, type)
-        self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA, 'exports'),
-                os.path.join(TEST_DATA, 'exports2')
-                ])
 
         # Build the request.
         environ = self._make_environ()
@@ -415,11 +416,6 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(export, file.read())
 
     def test_exports_type_not_supported(self):
-        self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA, 'exports'),
-                os.path.join(TEST_DATA, 'exports2')
-                ])
-
         # Build the request
         environ = self._make_environ()
         environ['wsgiorg.routing_args'] = {
@@ -432,11 +428,6 @@ class ViewsTestCase(unittest.TestCase):
                 get_export, environ, self._start_response)
 
     def test_exports_404(self):
-        self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA, 'exports'),
-                os.path.join(TEST_DATA, 'exports2')
-                ])
-
         # Build the request
         environ = self._make_environ()
         environ['wsgiorg.routing_args'] = {
@@ -447,6 +438,19 @@ class ViewsTestCase(unittest.TestCase):
         from .views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
                 get_export, environ, self._start_response)
+
+    def test_exports_without_version(self):
+        id = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
+
+        from .views import get_export
+        get_export(environ, self._start_response)
+        self.assertEqual(self.captured_response['status'], '302 Found')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Location', '/exports/{}@1.5.pdf'.format(id)))
 
     def test_get_exports_allowable_types(self):
         from .views import get_export_allowable_types
