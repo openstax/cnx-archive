@@ -36,7 +36,10 @@ def get_content(environ, start_response):
             #       in the near future.
             if result['mediaType'] == 'Collection':
                 # Grab the collection tree.
-                result['tree'] = None  # TODO
+                query = SQL['get-tree-by-uuid-n-version']
+                args = dict(id=result['id'], version=result['version'])
+                cursor.execute(query, args)
+                result['tree'] = cursor.fetchone()[0]
             else:
                 # Grab the html content.
                 args = dict(id=id, filename='index.html')
