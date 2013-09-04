@@ -86,12 +86,29 @@ def get_resource(environ, start_response):
     start_response(status, headers)
     return [file]
 
+TYPE_INFO = {}
+def get_type_info():
+    if TYPE_INFO:
+        return
+    for line in get_settings()['exports-allowable-types'].splitlines():
+        if not line.strip():
+            continue
+        type_name, type_info = line.strip().split(':', 1)
+        type_info = type_info.split(',', 2)
+        TYPE_INFO[type_name] = {
+                'type_name': type_name,
+                'file_extension': type_info[0],
+                'mimetype': type_info[1],
+                'user_friendly_name': type_info[2],
+                }
 
-TYPE_INFO = {
-    # <type-name>: (<file-extension>, <mimetype>,),
-    'pdf': ('pdf', 'application/pdf',),
-    'epub': ('epub', 'application/epub+zip',),
-    }
+def get_export_allowable_types(environ, start_response):
+    """Return export types
+    """
+    get_type_info()
+    headers = [('Content-type', 'application/json')]
+    start_response('200 OK', headers)
+    return [json.dumps(TYPE_INFO)]
 
 def get_export(environ, start_response):
     """Retrieve an export file."""
@@ -99,11 +116,13 @@ def get_export(environ, start_response):
     args = environ['wsgiorg.routing_args']
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
+    get_type_info()
 
     if type not in TYPE_INFO:
         raise httpexceptions.HTTPNotFound()
 
-    file_extension, mimetype = TYPE_INFO[type]
+    file_extension = TYPE_INFO[type]['file_extension']
+    mimetype = TYPE_INFO[type]['mimetype']
     filename = '{}-{}.{}'.format(id, version, file_extension)
 
     status = "200 OK"

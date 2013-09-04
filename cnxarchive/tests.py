@@ -268,6 +268,11 @@ class ViewsTestCase(unittest.TestCase):
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
         self._db_connection.commit()
+        self.settings['exports-allowable-types'] = '''
+            pdf:pdf,application/pdf,Portable Document Format (PDF)
+            epub:epub,application/epub+zip,Electronic Publication (EPUB)
+            zip:zip,application/zip,ZIP archive
+        '''
 
     def tearDown(self):
         from . import _set_settings
@@ -438,3 +443,32 @@ class ViewsTestCase(unittest.TestCase):
         from .views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
                 get_export, environ, self._start_response)
+
+    def test_get_exports_allowable_types(self):
+        from .views import get_export_allowable_types
+        output = get_export_allowable_types(self._make_environ,
+                self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output), {
+            'pdf': {
+                'type_name': 'pdf',
+                'file_extension': 'pdf',
+                'mimetype': 'application/pdf',
+                'user_friendly_name': 'Portable Document Format (PDF)',
+                },
+            'epub': {
+                'type_name': 'epub',
+                'file_extension': 'epub',
+                'mimetype': 'application/epub+zip',
+                'user_friendly_name': 'Electronic Publication (EPUB)',
+                },
+            'zip': {
+                'type_name': 'zip',
+                'file_extension': 'zip',
+                'mimetype': 'application/zip',
+                'user_friendly_name': 'ZIP archive',
+                },
+            })
