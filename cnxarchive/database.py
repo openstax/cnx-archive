@@ -18,7 +18,8 @@ DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
 DB_SCHEMA_FILE_PATHS = (
     os.path.join(DB_SCHEMA_DIRECTORY, 'main.sql'),
     os.path.join(DB_SCHEMA_DIRECTORY, 'trees.sql'),
-    os.path.join(DB_SCHEMA_DIRECTORY, 'shred_collxml.sql')
+    os.path.join(DB_SCHEMA_DIRECTORY, 'shred_collxml.sql'),
+    os.path.join(DB_SCHEMA_DIRECTORY, 'tree_to_json.sql'),
     )
 
 
@@ -31,6 +32,7 @@ SQL = {
     'get-module-metadata': _read_sql_file('get-module-metadata'),
     'get-resource': _read_sql_file('get-resource'),
     'get-resource-by-filename': _read_sql_file('get-resource-by-filename'),
+    'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
     }
 
 
