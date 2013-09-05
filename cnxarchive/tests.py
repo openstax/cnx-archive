@@ -260,15 +260,27 @@ class DBQueryTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
+    def make_one(self, *args, **kwargs):
+        # Single point of import failure.
+        from .database import DBQuery
+        return DBQuery(*args, **kwargs)
+
     def test_case_zero(self):
         # Simple case to test for results of a basic title search.
-        from .database import DBQuery
         query_params = [('title', 'Physics')]
-        db_query = DBQuery(query_params)
-        stmt, args = db_query.dbapi_args
+        db_query = self.make_one(query_params)
         results = db_query()
 
         self.assertEqual(len(results), 4)
+
+    def test_case_one(self):
+        # Test for result on an abstract search.
+        query_params = [('abstract', 'algebra')]
+        db_query = self.make_one(query_params)
+        results = db_query()
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][6], 'algebra-::-abstract')
 
 
 class ViewsTestCase(unittest.TestCase):
