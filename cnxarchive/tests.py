@@ -230,6 +230,47 @@ class PostgresqlFixture:
 postgresql_fixture = PostgresqlFixture()
 
 
+class DBQueryTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from .utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from .database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        from . import _set_settings
+        _set_settings(self.settings)
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        from . import _set_settings
+        _set_settings(None)
+        self.fixture.tearDown()
+
+    def test_case_zero(self):
+        # Simple case to test for results of a basic title search.
+        from .database import DBQuery
+        query_params = [('title', 'Physics')]
+        db_query = DBQuery(query_params)
+        stmt, args = db_query.dbapi_args
+        results = db_query()
+
+        self.assertEqual(len(results), 4)
+
+
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
