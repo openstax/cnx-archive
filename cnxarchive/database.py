@@ -10,6 +10,8 @@ import os
 from collections import OrderedDict
 import psycopg2
 
+from . import get_settings
+
 
 CONNECTION_SETTINGS_KEY = 'db-connection-string'
 
@@ -70,7 +72,12 @@ class DBQuery:
 
     def __call__(self):
         """Return the search results"""
-        raise NotImplementedError
+        settings = get_settings()
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(*self.dbapi_args)
+                query_results = cursor.fetchall()
+        return query_results
 
     @property
     def dbapi_args(self):
