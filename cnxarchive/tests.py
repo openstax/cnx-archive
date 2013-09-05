@@ -49,6 +49,7 @@ COLLECTION_METADATA = {
     u'submitter': u'',
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'1.7',
+    u'googleAnalytics': u'UA-XXXXX-Y',
     }
 COLLECTION_JSON_TREE = u'''{"id":"e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7","title":"College Physics", "contents":[
     {"id":"209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7","title":"Preface"},
@@ -89,6 +90,7 @@ MODULE_METADATA = {
     u'submitter': u'',
     u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'1.8',
+    u'googleAnalytics': None,
     }
 
 def _get_app_settings(config_path):
