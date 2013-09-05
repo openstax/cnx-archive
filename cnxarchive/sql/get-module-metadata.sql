@@ -20,7 +20,8 @@ FROM (SELECT
            ARRAY(select ''::text where false)) as "parentAuthors",
   m.language as language,
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as roles,
-  list(tag) as subject
+  list(tag) as subject,
+  m.google_analytics as "googleAnalytics"
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
   LEFT JOIN modules p on m.parent = p.module_ident
@@ -34,5 +35,5 @@ GROUP BY
   m.moduleid, m.portal_type, m.version, m.name, m.created, m.revised,
   a.abstract, m.stateid, m.doctype, l.url, m.module_ident, m.submitter,
   m.submitlog, p.uuid, p.version, m.authors, m.licensors, m.maintainers,
-  m.parentauthors, m.language
+  m.parentauthors, m.language, m.google_analytics
 ) combined_rows ;
