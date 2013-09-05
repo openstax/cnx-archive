@@ -45,7 +45,7 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     # ('subject', 10),
     # ('fulltext', 1),
     ('abstract', 1),
-    # ('keyword', 10),
+    ('keyword', 10),
     # ('author', 50),
     # ('editor', 20),
     # ('translator', 40),
