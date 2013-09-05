@@ -51,7 +51,7 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     # ('translator', 40),
     # ('maintainer', 10),
     # ('licensor', 10),
-    # ('exact_title', 100),
+    ('exact_title', 100),
     ('title', 10),
     ])
 
