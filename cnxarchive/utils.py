@@ -8,6 +8,7 @@
 import os
 import sys
 import re
+import unicodedata
 import uuid
 from paste.deploy import appconfig
 
@@ -18,6 +19,8 @@ class IdentHashSyntaxError(Exception):
 
 def split_ident_hash(ident_hash):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
+    if '@' not in ident_hash:
+        ident_hash = '{}@'.format(ident_hash)
     split_value = ident_hash.split('@')
     if split_value[0] == '':
         raise ValueError("Missing values")
@@ -91,3 +94,20 @@ PORTALTYPE_TO_MIMETYPE_MAPPING = {
 def portaltype_to_mimetype(portal_type):
     """Map the given ``portal_type`` to a mimetype"""
     return PORTALTYPE_TO_MIMETYPE_MAPPING[portal_type]
+
+def slugify(string):
+    """Return a slug for the unicode_string (lowercase, only letters and
+    numbers, hyphens replace spaces)
+    """
+    filtered_string = []
+    if isinstance(string, str):
+        string = unicode(string, 'utf-8')
+    for i in unicodedata.normalize('NFKC', string):
+        cat = unicodedata.category(i)[0]
+        # filter out all the non letter and non number characters from the
+        # input (L is letter and N is number)
+        if cat in 'LN' or i in '-_':
+            filtered_string.append(i)
+        elif cat in 'Z':
+            filtered_string.append(' ')
+    return re.sub('\s+', '-', ''.join(filtered_string)).lower()

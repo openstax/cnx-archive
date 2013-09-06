@@ -13,6 +13,8 @@ from wsgiref.util import setup_testing_defaults
 import psycopg2
 from paste.deploy import appconfig
 
+from . import httpexceptions
+
 
 # Set the timezone for the postgresql client so that we get the times in the
 # right timezone (America/Whitehorse is -07 in summer and -08 in winter)
@@ -267,6 +269,16 @@ class ViewsTestCase(unittest.TestCase):
                 cursor.execute(fb.read())
         self._db_connection.commit()
 
+        self.settings['exports-directories'] = ' '.join([
+                os.path.join(TEST_DATA, 'exports'),
+                os.path.join(TEST_DATA, 'exports2')
+                ])
+        self.settings['exports-allowable-types'] = '''
+            pdf:pdf,application/pdf,Portable Document Format (PDF)
+            epub:epub,application/epub+zip,Electronic Publication (EPUB)
+            zip:zip,application/zip,ZIP archive
+        '''
+
     def tearDown(self):
         from . import _set_settings
         _set_settings(None)
@@ -364,15 +376,11 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
-        id = '8415caa0-2cf8-43d8-a073-05e41df8059c'
-        version = '1.21'
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
-        # Link up the exports directory, which is only done in dev-mode,
-        #   because the web server will be doing this in production.
-        exports_dir = os.path.join(TEST_DATA, 'exports')
         filename = "{}-{}.{}".format(id, version, type)
-        self.settings['exports-directory'] = exports_dir
 
         # Build the request.
         environ = self._make_environ()
@@ -386,6 +394,116 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
-                         "attached; filename={}".format(filename))
-        with open(os.path.join(exports_dir, filename), 'r') as file:
+                         "attached; filename=college-physics.pdf")
+        with open(os.path.join(TEST_DATA, 'exports', filename), 'r') as file:
             self.assertEqual(export, file.read())
+
+        # Test exports can access the other exports directory
+        id = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = '1.8'
+        ident_hash = '{}@{}'.format(id, version)
+        filename = '{}-{}.pdf'.format(id, version)
+        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
+                                           'type': 'pdf'
+                                           }
+
+        export = get_export(environ, self._start_response)[0]
+        headers = self.captured_response['headers']
+        headers = {x[0].lower(): x[1] for x in headers}
+        self.assertEqual(headers['content-disposition'],
+                         "attached; filename=elasticity-stress-and-strain.pdf")
+        with open(os.path.join(TEST_DATA, 'exports2', filename), 'r') as file:
+            self.assertEqual(export, file.read())
+
+    def test_exports_type_not_supported(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                'type': 'txt'
+                }
+
+        from .views import get_export
+        self.assertRaises(httpexceptions.HTTPNotFound,
+                get_export, environ, self._start_response)
+
+    def test_exports_404(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '24184288-14b9-11e3-86ac-207c8f4fa432@0',
+                'type': 'pdf'
+                }
+
+        from .views import get_export
+        self.assertRaises(httpexceptions.HTTPNotFound,
+                get_export, environ, self._start_response)
+
+    def test_exports_without_version(self):
+        id = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
+
+        from .views import get_export
+        get_export(environ, self._start_response)
+        self.assertEqual(self.captured_response['status'], '302 Found')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Location', '/exports/{}@1.5.pdf'.format(id)))
+
+    def test_get_exports_allowable_types(self):
+        from .views import get_export_allowable_types
+        output = get_export_allowable_types(self._make_environ,
+                self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output), {
+            'pdf': {
+                'type_name': 'pdf',
+                'file_extension': 'pdf',
+                'mimetype': 'application/pdf',
+                'user_friendly_name': 'Portable Document Format (PDF)',
+                },
+            'epub': {
+                'type_name': 'epub',
+                'file_extension': 'epub',
+                'mimetype': 'application/epub+zip',
+                'user_friendly_name': 'Electronic Publication (EPUB)',
+                },
+            'zip': {
+                'type_name': 'zip',
+                'file_extension': 'zip',
+                'mimetype': 'application/zip',
+                'user_friendly_name': 'ZIP archive',
+                },
+            })
+
+
+class SlugifyTestCase(unittest.TestCase):
+
+    def test_ascii(self):
+        from .utils import slugify
+        self.assertEqual(slugify('How to Work for Yourself: 100 Ways'),
+                'how-to-work-for-yourself-100-ways')
+
+    def test_hyphen(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Any Red-Blooded Girl'),
+                'any-red-blooded-girl')
+
+    def test_underscore(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Underscores _hello_'),
+                'underscores-_hello_')
+
+    def test_unicode(self):
+        from .utils import slugify
+        self.assertEqual(slugify('Radioactive (Die Verstoßenen)'),
+                u'radioactive-die-verstoßenen')
+
+        self.assertEqual(slugify(u'40文字でわかる！'
+            u'　知っておきたいビジネス理論'),
+            u'40文字でわかる-知っておきたいビジネス理論')
