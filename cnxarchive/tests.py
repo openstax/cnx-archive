@@ -248,6 +248,17 @@ class DBQueryTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
+            cnxuser_schema_filepath = os.path.join(TEST_DATA,
+                                                   'cnx-user.schema.sql')
+            cnxuser_data_filepath = os.path.join(TEST_DATA,
+                                                 'cnx-user.data.sql')
+            with open(cnxuser_schema_filepath, 'r') as fb:
+                cursor.execute(fb.read())
+            with open(cnxuser_data_filepath, 'r') as fb:
+                cursor.execute(fb.read())
+            # FIXME This is a temporary fix until the data can be updated.
+            cursor.execute("update modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
+            cursor.execute("update latest_modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
         self._db_connection.commit()
 
     def tearDown(self):
