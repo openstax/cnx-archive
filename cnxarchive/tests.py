@@ -276,7 +276,7 @@ class DBQueryTestCase(unittest.TestCase):
         from .database import DBQuery
         return DBQuery(*args, **kwargs)
 
-    def test_case_zero(self):
+    def test_title_search(self):
         # Simple case to test for results of a basic title search.
         query_params = [('title', 'Physics')]
         db_query = self.make_one(query_params)
@@ -284,7 +284,7 @@ class DBQueryTestCase(unittest.TestCase):
 
         self.assertEqual(len(results), 4)
 
-    def test_case_one(self):
+    def test_abstract_search(self):
         # Test for result on an abstract search.
         query_params = [('abstract', 'algebra')]
         db_query = self.make_one(query_params)
