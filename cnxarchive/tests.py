@@ -8,6 +8,7 @@
 import os
 import json
 import unittest
+import uuid
 from wsgiref.util import setup_testing_defaults
 
 import psycopg2
@@ -292,6 +293,32 @@ class DBQueryTestCase(unittest.TestCase):
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][6], 'algebra-::-abstract')
+
+    def test_author_search(self):
+        # Test the results of an author search.
+        user_id = str(uuid.uuid4())
+        query_params = [('author', 'Jill')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as an author.
+                cursor.execute(
+                    "UPDATE latest_modules SET (authors) = (%s) "
+                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
+                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
 
 
 class ViewsTestCase(unittest.TestCase):
