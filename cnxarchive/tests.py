@@ -315,6 +315,36 @@ class DBQueryTestCase(unittest.TestCase):
         results = db_query()
         self.assertEqual(len(results), 2)
 
+    def test_editor_search(self):
+        # Test the results of an editor search.
+        user_id = str(uuid.uuid4())
+        query_params = [('editor', 'jmiller@example.com')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as an editor.
+                role_id = 5
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 2, role_id))
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 3, role_id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
