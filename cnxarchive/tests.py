@@ -436,6 +436,34 @@ class DBQueryTestCase(unittest.TestCase):
         results = db_query()
         self.assertEqual(len(results), 2)
 
+    def test_parentauthor_search(self):
+        # Test the results of a parent author search.
+        user_id = str(uuid.uuid4())
+        # FIXME parentauthor is only searchable by user id, not by name
+        #       like the other user based columns. Inconsistent behavior...
+        query_params = [('parentauthor', user_id)]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as a parent author.
+                cursor.execute(
+                    "UPDATE latest_modules SET (parentauthors) = (%s) "
+                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
+                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
