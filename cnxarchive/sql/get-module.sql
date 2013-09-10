@@ -18,7 +18,8 @@ FROM (SELECT
      roles natural join moduleoptionalroles where
          module_ident=m.module_ident group by module_ident) as _roles,
   list(tag) as _subject,
-  encode(file,'escape')
+  encode(file,'escape'),
+  m.google_analytics as "googleAnalytics"
 FROM modules m
 NATURAL JOIN abstracts
 JOIN licenses l on l.licenseid = m.licenseid
