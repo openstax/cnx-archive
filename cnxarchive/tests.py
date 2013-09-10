@@ -15,6 +15,7 @@ import psycopg2
 from paste.deploy import appconfig
 
 from . import httpexceptions
+from .database import CONNECTION_SETTINGS_KEY
 
 
 # Set the timezone for the postgresql client so that we get the times in the
@@ -883,3 +884,90 @@ class SlugifyTestCase(unittest.TestCase):
         self.assertEqual(slugify(u'40文字でわかる！'
             u'　知っておきたいビジネス理論'),
             u'40文字でわかる-知っておきたいビジネス理論')
+
+
+class GetBuylinksTestCase(unittest.TestCase):
+    """Tests for the get_buylinks script
+    """
+
+    fixture = postgresql_fixture
+
+    def setUp(self):
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        from .utils import parse_app_settings
+        settings = parse_app_settings(TESTING_CONFIG)
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                    cursor.execute(fb.read())
+        db_connection.commit()
+
+        from .scripts import get_buylinks
+
+        # Mock command line arguments:
+        # arguments should be appended to self.argv by individual tests
+        import argparse
+        self.argv = ['cnx-archive_get_buylinks', TESTING_CONFIG]
+        argparse._sys.argv = self.argv
+        get_buylinks.argparse = argparse
+
+        # Mock response from plone site:
+        # responses should be assigned to self.responses by individual tests
+        import StringIO
+        import urllib2
+        self.responses = ['']
+        self.response_id = -1
+        def urlopen(url):
+            self.response_id += 1
+            return StringIO.StringIO(self.responses[self.response_id])
+        urllib2.urlopen = urlopen
+        get_buylinks.urllib2 = urllib2
+
+        # Use self.get_buylinks instead of importing it in tests to get all the
+        # mocks
+        self.get_buylinks = get_buylinks
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def get_buylink_from_db(self, collection_id):
+        from .utils import parse_app_settings
+        settings = parse_app_settings(TESTING_CONFIG)
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(
+                        'SELECT m.buylink FROM modules m WHERE m.moduleid = %(moduleid)s;',
+                        {'moduleid': collection_id})
+                return cursor.fetchone()[0]
+
+    def test(self):
+        self.argv.append('col11406')
+        self.argv.append('m42955')
+        self.responses = [
+                # response for col11406
+                "[('title', ''), "
+                "('buyLink', 'http://buy-col11406.com/download')]",
+                # response for m42955
+                "[('title', ''), "
+                "('buyLink', 'http://buy-m42955.com/')]"]
+        self.get_buylinks.main()
+
+        self.assertEqual(self.get_buylink_from_db('col11406'),
+                'http://buy-col11406.com/download')
+        self.assertEqual(self.get_buylink_from_db('m42955'),
+                'http://buy-m42955.com/')
+
+    def test_no_buylink(self):
+        self.argv.append('m42955')
+        self.response = "[('title', '')]"
+        self.get_buylinks.main()
+
+        self.assertEqual(self.get_buylink_from_db('m42955'), None)
+
+    def test_collection_not_in_db(self):
+        self.argv.append('col11522')
+        self.response = ("[('title', ''), "
+                "('buyLink', 'http://buy-col11522.com/download')]")
+        # Just assert that the script does not fail
+        self.get_buylinks.main()
