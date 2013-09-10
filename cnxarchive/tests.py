@@ -75,6 +75,54 @@ MODULE_METADATA = {
     u'version': u'1.8',
     }
 
+SEARCH_RESULTS_1 = {
+        u'query': {
+            u'limits': [
+                {u'text': u'college physics'},
+                ],
+            u'sort': [u'version'],
+            },
+        u'results': {
+            u'total': 2,
+            u'items': [
+                {
+                    u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
+                    u'type': u'book',
+                    u'title': u'College Physics',
+                    u'authors': [u'stub author'],
+                    u'keywords': [u'stub keyword'],
+                    u'summarySnippet': u'stub summary snippet',
+                    u'bodySnippet': u'stub body snippet',
+                    u'pubDate': u'2013-08-13T12:12Z',
+                    },
+                {
+                    u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
+                    u'type': u'page',
+                    u'title': u'Preface to College Physics',
+                    u'authors': [u'stub author'],
+                    u'keywords': [u'stub keyword'],
+                    u'summarySnippet': u'stub summary snippet',
+                    u'bodySnippet': u'stub body snippet',
+                    u'pubDate': u'2013-08-13T12:12Z',
+                    },
+                ],
+            },
+        }
+
+
+class MockDBQuery(object):
+
+    def __init__(self, query):
+        self.query = query
+
+    def __call__(self):
+        if MockDBQuery.result_set == 1:
+            return [
+                    ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
+                    ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
+                    ]
+
+
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
     # This assumes the application is section is named 'main'.
@@ -607,3 +655,25 @@ class ViewsTestCase(unittest.TestCase):
                          "attached; filename={}".format(filename))
         with open(os.path.join(exports_dir, filename), 'r') as file:
             self.assertEqual(export, file.read())
+
+    def test_search(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="college physics" sort:version'
+
+        # Mock DBQuery
+        import views
+        views.DBQuery = MockDBQuery
+        MockDBQuery.result_set = 1
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS_1.keys()))
+        for i in results:
+            self.assertEqual(results[i], SEARCH_RESULTS_1[i])

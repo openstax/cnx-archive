@@ -83,4 +83,5 @@ def main(global_config, **settings):
         if not settings.get('exports-directory', None):
             raise ValueError("Missing exports-directory configuration setting.")
         app.add_route('/exports/{ident_hash}/{type}', 'cnxarchive.views:get_export')
+    app.add_route('/search', 'cnxarchive.views:search')
     return app
