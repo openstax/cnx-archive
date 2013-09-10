@@ -45,7 +45,9 @@ def get_content(environ, start_response):
                 query = SQL['get-tree-by-uuid-n-version']
                 args = dict(id=result['id'], version=result['version'])
                 cursor.execute(query, args)
-                result['tree'] = cursor.fetchone()[0]
+                tree = cursor.fetchone()[0]
+                # Must unparse, otherwise we end up double encoding.
+                result['tree'] = json.loads(tree)
             else:
                 # Grab the html content.
                 args = dict(id=id, filename='index.html')
