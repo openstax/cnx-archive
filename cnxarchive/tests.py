@@ -53,6 +53,7 @@ COLLECTION_METADATA = {
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'1.7',
     u'googleAnalytics': u'UA-XXXXX-Y',
+    u'buyLink': None,
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
@@ -121,6 +122,7 @@ MODULE_METADATA = {
     u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'1.8',
     u'googleAnalytics': None,
+    u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
 
 SEARCH_RESULTS_1 = {
