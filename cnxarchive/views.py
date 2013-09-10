@@ -5,14 +5,16 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import cgi
 import os
 import json
 import psycopg2
+from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
 from . import httpexceptions
 from .utils import split_ident_hash, portaltype_to_mimetype
-from .database import CONNECTION_SETTINGS_KEY, SQL
+from .database import CONNECTION_SETTINGS_KEY, SQL, DBQuery
 
 
 def get_content(environ, start_response):
@@ -109,3 +111,44 @@ def get_export(environ, start_response):
     start_response(status, headers)
     with open(os.path.join(exports_dir, filename), 'r') as file:
         return [file.read()]
+
+MEDIA_TYPES = {
+        'Collection': 'book',
+        'Module': 'page',
+        }
+
+def search(environ, start_response):
+    """Search API
+    """
+    params = cgi.parse_qs(environ.get('QUERY_STRING', ''))
+    search_terms = params['q'][0]
+
+    node_tree = grammar.parse(search_terms)
+    search_dict = DictFormater().visit(node_tree)
+    sort = [dict(search_dict)['sort']]
+
+    db_query = DBQuery(search_dict)
+    db_results = db_query()
+
+    results = {}
+    results['query'] = {
+            'limits': [{i[0]: i[1]} for i in search_dict if i[0] != 'sort'],
+            'sort': sort,
+            }
+    results['results'] = {'total': len(db_results), 'items': []}
+    for i in db_results:
+        results['results']['items'].append({
+            'id': i[2],
+            'type': MEDIA_TYPES.get(i[9], i[9]),
+            'title': i[0],
+            'authors': ['stub author'], # TODO not in db_results
+            'keywords': ['stub keyword'], # TODO not in db_results
+            'summarySnippet': 'stub summary snippet', # TODO not in db_results
+            'bodySnippet': 'stub body snippet', # TODO not in db_results
+            'pubDate': '2013-08-13T12:12Z', # TODO not in db_results
+            })
+
+    status = '200 OK'
+    headers = [('Content-type', 'application/json')]
+    start_response(status, headers)
+    return [json.dumps(results)]
