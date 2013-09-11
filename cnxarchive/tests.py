@@ -517,6 +517,33 @@ class DBQueryTestCase(unittest.TestCase):
         self.assertEqual(results[0][2],
                          'b1509954-7460-43a4-8c52-262f1ddd7f2f')
 
+    def test_sort_filter_on_pubdate(self):
+        # Test the sorting of results by publication date.
+        query_params = [('text', 'physics'), ('sort', 'pubDate')]
+        db_query = self.make_one(query_params)
+        _same_date = '2113-01-01 00:00:00 America/New_York'
+        expectations = [('e3f8051d-7fde-4f14-92f6-7f31019887b3',
+                         _same_date,),  # this one has a higher weight.
+                        ('bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                         _same_date,),
+                        ('bf8c0d8f-1255-47eb-9f17-83705ae4b16f',
+                         '2112-01-01 00:00:00 America/New_York',),
+                        ]
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Update two modules in include a creation date.
+                for id, date in expectations:
+                    cursor.execute(
+                        "UPDATE latest_modules SET (created) = (%s) "
+                        "WHERE uuid = %s::uuid;", (date, id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 15)
+        for i, (id, date) in enumerate(expectations):
+            self.assertEqual(results[i][2], id)
+
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
