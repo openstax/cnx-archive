@@ -118,7 +118,10 @@ SEARCH_RESULTS_1 = {
 class MockDBQuery(object):
 
     def __init__(self, query):
-        self.query = query
+        self.filters = [q for q in query if q[0] == 'type']
+        self.sorts = [q[1] for q in query if q[0] == 'sort']
+        self.query = [q for q in query
+                      if q not in self.filters and q[0] != 'sort']
 
     def __call__(self):
         if MockDBQuery.result_set == 1:
