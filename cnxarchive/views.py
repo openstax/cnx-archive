@@ -143,10 +143,10 @@ def search(environ, start_response):
             'id': i[2],
             'type': MEDIA_TYPES.get(i[9], i[9]),
             'title': i[0],
-            'authors': ['stub author'], # TODO not in db_results
-            'keywords': ['stub keyword'], # TODO not in db_results
-            'summarySnippet': 'stub summary snippet', # TODO not in db_results
-            'bodySnippet': 'stub body snippet', # TODO not in db_results
+            'authors': [], # TODO not in db_results
+            'keywords': [], # TODO not in db_results
+            'summarySnippet': None, # TODO not in db_results
+            'bodySnippet': None, # TODO not in db_results
             'pubDate': '2013-08-13T12:12Z', # TODO not in db_results
             })
 
