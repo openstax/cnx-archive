@@ -14,7 +14,8 @@ from cnxquerygrammar.query_parser import grammar, DictFormater
 from . import get_settings
 from . import httpexceptions
 from .utils import split_ident_hash, portaltype_to_mimetype, slugify
-from .database import CONNECTION_SETTINGS_KEY, SQL, DBQuery
+from .database import CONNECTION_SETTINGS_KEY, SQL
+from .search import DBQuery
 
 
 def get_content_metadata(id, version, cursor):
