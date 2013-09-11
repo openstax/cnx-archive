@@ -507,6 +507,16 @@ class DBQueryTestCase(unittest.TestCase):
         results = db_query()
         self.assertEqual(len(results), 2)
 
+    def test_type_filter_on_books(self):
+        # Test for type filtering that will find books only.
+        query_params = [('text', 'physics'), ('type', 'book')]
+        db_query = self.make_one(query_params)
+
+        results = db_query()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][2],
+                         'b1509954-7460-43a4-8c52-262f1ddd7f2f')
+
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
