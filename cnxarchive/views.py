@@ -126,15 +126,16 @@ def search(environ, start_response):
 
     node_tree = grammar.parse(search_terms)
     search_dict = DictFormater().visit(node_tree)
-    sort = [dict(search_dict)['sort']]
 
     db_query = DBQuery(search_dict)
     db_results = db_query()
 
     results = {}
+    limits = [{keyword: value} for keyword, value in db_query.query]
+    limits.extend([{keyword: value} for keyword, value in db_query.filters])
     results['query'] = {
-            'limits': [{i[0]: i[1]} for i in search_dict if i[0] != 'sort'],
-            'sort': sort,
+            'limits': limits,
+            'sort': db_query.sorts,
             }
     results['results'] = {'total': len(db_results), 'items': []}
     for i in db_results:
