@@ -61,6 +61,9 @@ class WeightedSelect:
         arguments = []
 
         for i, (keyword, value) in enumerate(query):
+            if self.is_keyword_exclusive \
+               and (keyword != self.name and keyword != WILDCARD_KEYWORD):
+                continue
             argument_key = "{}_{}".format(self.name, i)
             stmt = self.template.format(argument_key)
             statements.append(stmt)
