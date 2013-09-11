@@ -317,7 +317,7 @@ class DBQueryTestCase(unittest.TestCase):
 
     def make_one(self, *args, **kwargs):
         # Single point of import failure.
-        from .database import DBQuery
+        from .search import DBQuery
         return DBQuery(*args, **kwargs)
 
     def test_title_search(self):
