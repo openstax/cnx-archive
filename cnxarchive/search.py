@@ -16,6 +16,9 @@ from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type',)
+SORT_VALUES_MAPPING = {
+    'pubdate': 'created',
+    }
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('parentauthor', 0),
     ('language', 5),
@@ -51,6 +54,14 @@ def _transmute_filter(keyword, value):
         raise ValueError("Invalid filter value '{}' for filter '{}'." \
                              .format(value, keyword))
     return ('portal_type', 'Collection')
+
+
+def _transmute_sort(sort_value):
+    """Provides a value translation to the SQL column name."""
+    try:
+        return SORT_VALUES_MAPPING[sort_value.lower()]
+    except KeyError:
+        raise ValueError("Invalid sort key '{}' provided.".format(sort_value))
 
 
 class WeightedSelect:
@@ -100,7 +111,9 @@ class DBQuery:
 
     def __init__(self, query, weights={}):
         self.filters = [q for q in query if q[0] in VALID_FILTER_KEYWORDS]
-        self.query = [q for q in query if q not in self.filters]
+        self.sorts = [q[1] for q in query if q[0] == 'sort']
+        self.query = [q for q in query
+                      if q not in self.filters and q[0] != 'sort']
         self.weights = weights
         if not self.weights:
             # Without any predefined weights, use the defaults verbatim.
@@ -142,7 +155,7 @@ class DBQuery:
             arguments.update(args)
         queries = '\nUNION ALL\n'.join([q for q in queries if q is not None])
 
-        # Add the arguments for filtering
+        # Add the arguments for filtering.
         filters = []
         if self.filters:
             if len(filters) == 0: filters.append('')  # For AND joining.
@@ -155,11 +168,22 @@ class DBQuery:
                 filter_stmt = "{} = %({})s".format(field_name, arg_name)
                 filters.append(filter_stmt)
         filters = ' AND '.join(filters)
+        # Add the arguments for sorting.
+        sorts = []
+        if self.sorts:
+            for sort in self.sorts:
+                field_name = _transmute_sort(sort)
+                # These sort values are not the name of the column used
+                #   in the database.
+                stmt = "{} DESC".format(field_name)
+                sorts.append(stmt)
+        sorts.append('weight DESC')
+        sorts = ', '.join(sorts)
 
         # Wrap the weighted queries with the main query.
         search_query_filepath = os.path.join(SQL_DIRECTORY,
                                              'search', 'query.sql')
         with open(search_query_filepath, 'r') as fb:
-            statement = fb.read().format(queries, filters)
+            statement = fb.read().format(queries, filters, sorts)
 
         return (statement, arguments)

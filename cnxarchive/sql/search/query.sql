@@ -2,7 +2,8 @@ SELECT
   lm.name as title, title_order(lm.name) as "sortTitle",
   lm.uuid as id, lm.version as version, language,
   weight, keys as _keys, '' as matched, '' as fields,
-  lm.portal_type as "mediaType"
+  lm.portal_type as "mediaType",
+  lm.created as "pubDate"
 -- Only retrieve the most recent published modules.
 FROM
   latest_modules lm,
@@ -17,5 +18,5 @@ FROM
 WHERE
   weighted.module_ident = lm.module_ident
   {}
-ORDER BY weight DESC
+ORDER BY {}
 ;
