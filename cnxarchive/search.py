@@ -14,6 +14,7 @@ from . import get_settings
 from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 
 
+WILDCARD_KEYWORD = 'text'
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('parentauthor', 0),
     ('language', 5),
@@ -29,6 +30,51 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('exact_title', 100),
     ('title', 10),
     ])
+SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
+def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql'):
+    path = os.path.join(root, '{}{}'.format(name, extension))
+    with open(path, 'r') as fp:
+        return fp.read()
+SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql')
+                        for name in DEFAULT_SEARCH_WEIGHTS.keys()}
+SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
+
+
+class WeightedSelect:
+    """A SQL SELECT builder with weighted results"""
+
+    def __init__(self, name, template, weight=0,
+                 is_keyword_exclusive=True):
+        self.name = name
+        self.template = template
+        self.weight = weight
+        self.is_keyword_exclusive = is_keyword_exclusive
+
+    def prepare(self, query):
+        """Prepares the statement for DBAPI 2.0 execution.
+
+        :returns: A tuple of the statement text and the arguments in an ordered
+                  dictionary.
+        """
+        statements = []
+        final_statement = None
+        arguments = []
+
+        for i, (keyword, value) in enumerate(query):
+            argument_key = "{}_{}".format(self.name, i)
+            stmt = self.template.format(argument_key)
+            statements.append(stmt)
+            arguments.append((argument_key, value))
+        if statements:
+            final_statement = SQL_WEIGHTED_SELECT_WRAPPER.format(
+                self.weight,
+                '\nUNION ALL\n'.join(statements))
+        return (final_statement, OrderedDict(arguments))
+
+
+def _make_weighted_select(name, weight=0):
+    """Private factory for creation of WeightedSelect objects."""
+    return WeightedSelect(name, SQL_SEARCH_TEMPLATES[name], weight)
 
 
 class DBQuery:
@@ -63,36 +109,23 @@ class DBQuery:
         execute method. For example, ``cursor.execute(*db_query.dbapi_args)``
         """
         statement = ''
-        args = {}
+        arguments = {}
 
-        # Build the weighted queries.
+        # Clone the weighted queries for popping.
         weights = self._query_weight_order[:]
-        wrapper_filepath = os.path.join(SQL_DIRECTORY, 'search', 'wrapper.sql')
-        with open(wrapper_filepath, 'r') as fb:
-            wrapper_template = fb.read()
+
         # Roll over the weight sequence.
         queries = []
         while weights:
             # TODO Bail out early if none of the remaining weights have
             #      any weight value.
-            weight = weights.pop(0)
-            sub_queries = []
-            # Build the individual sub_queries.
-            for i, (key, item) in enumerate(self.query):
-                arg_key = "{}_{}".format(weight, i)
-                sql_filename = "{}.part.sql".format(weight)
-                sql_filepath = os.path.join(SQL_DIRECTORY,
-                                            'search', sql_filename)
-                with open(sql_filepath, 'r') as sql_file:
-                    sub_query = sql_file.read().format(arg_key)
-                args[arg_key] = item
-                sub_queries.append(sub_query)
-
-            # Wrap the unioned queries in the outter select.
-            query = wrapper_template.format(self.weights[weight],
-                                            '\nUNION ALL\n'.join(sub_queries))
-            queries.append(query)
-        queries = '\nUNION ALL\n'.join(queries)
+            weight_name = weights.pop(0)
+            weighted_select = _make_weighted_select(weight_name,
+                                                    self.weights[weight_name])
+            stmt, args = weighted_select.prepare(self.query)
+            queries.append(stmt)
+            arguments.update(args)
+        queries = '\nUNION ALL\n'.join([q for q in queries if q is not None])
 
         # Wrap the weighted queries with the main query.
         search_query_filepath = os.path.join(SQL_DIRECTORY,
@@ -100,4 +133,4 @@ class DBQuery:
         with open(search_query_filepath, 'r') as fb:
             statement = fb.read().format(queries)
 
-        return (statement, args)
+        return (statement, arguments)
