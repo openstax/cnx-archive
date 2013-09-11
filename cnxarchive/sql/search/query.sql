@@ -11,8 +11,11 @@ FROM
      cast (sum(weight) as bigint) as weight,
      semilist(keys) as keys
    FROM
-     ({}) as matched GROUP BY module_ident
+     ({}) as matched
+   GROUP BY module_ident
    ) as weighted
 WHERE
   weighted.module_ident = lm.module_ident
+  {}
 ORDER BY weight DESC
+;

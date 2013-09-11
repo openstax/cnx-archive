@@ -15,6 +15,7 @@ from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 
 
 WILDCARD_KEYWORD = 'text'
+VALID_FILTER_KEYWORDS = ('type',)
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('parentauthor', 0),
     ('language', 5),
@@ -38,6 +39,18 @@ def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql'):
 SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql')
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
 SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
+
+
+def _transmute_filter(keyword, value):
+    """Provides a keyword to SQL column name translation for the filter."""
+    # Since there is only one filter at this time, there is no need
+    #   to over design this. Keeping this a simple switch over or error.
+    if keyword not in VALID_FILTER_KEYWORDS:
+        raise ValueError("Invalid filter keyword '{}'.".format(keyword))
+    elif value != 'book':
+        raise ValueError("Invalid filter value '{}' for filter '{}'." \
+                             .format(value, keyword))
+    return ('portal_type', 'Collection')
 
 
 class WeightedSelect:
@@ -86,7 +99,8 @@ class DBQuery:
     """
 
     def __init__(self, query, weights={}):
-        self.query = query
+        self.filters = [q for q in query if q[0] in VALID_FILTER_KEYWORDS]
+        self.query = [q for q in query if q not in self.filters]
         self.weights = weights
         if not self.weights:
             # Without any predefined weights, use the defaults verbatim.
@@ -120,8 +134,6 @@ class DBQuery:
         # Roll over the weight sequence.
         queries = []
         while weights:
-            # TODO Bail out early if none of the remaining weights have
-            #      any weight value.
             weight_name = weights.pop(0)
             weighted_select = _make_weighted_select(weight_name,
                                                     self.weights[weight_name])
@@ -130,10 +142,24 @@ class DBQuery:
             arguments.update(args)
         queries = '\nUNION ALL\n'.join([q for q in queries if q is not None])
 
+        # Add the arguments for filtering
+        filters = []
+        if self.filters:
+            if len(filters) == 0: filters.append('')  # For AND joining.
+            for i, (keyword, value) in enumerate(self.filters):
+                arg_name = "{}_{}".format(keyword, i)
+                # These key values are special in that they don't,
+                #   directly translate to SQL fields and values.
+                field_name, match_value = _transmute_filter(keyword, value)
+                arguments[arg_name] = match_value
+                filter_stmt = "{} = %({})s".format(field_name, arg_name)
+                filters.append(filter_stmt)
+        filters = ' AND '.join(filters)
+
         # Wrap the weighted queries with the main query.
         search_query_filepath = os.path.join(SQL_DIRECTORY,
                                              'search', 'query.sql')
         with open(search_query_filepath, 'r') as fb:
-            statement = fb.read().format(queries)
+            statement = fb.read().format(queries, filters)
 
         return (statement, arguments)
