@@ -31,6 +31,7 @@ ns = { "cnx":"http://cnx.rice.edu/cnxml",
 NODE_INS="INSERT INTO trees (parent_id,documentid,childorder) SELECT %s, module_ident, %s from modules where moduleid = %s and version = %s returning nodeid"
 NODE_NODOC_INS="INSERT INTO trees (parent_id,childorder) VALUES (%s, %s) returning nodeid"
 NODE_TITLE_UPD="UPDATE trees set title = %s where nodeid = %s" 
+NODE_TITLE_UPD="UPDATE trees set title = %s from modules where documentid = module_ident and name != %s and nodeid = %s"
 
 con=psycopg2.connect('dbname=repository')
 cur=con.cursor()
@@ -50,9 +51,7 @@ def _do_insert(pid,cid,oid=0,ver=0):
     return nodeid
 
 def _do_update(title,nid):
-    # FIXME Check and only store if this is an actual override 
-    # title (diff than what's in modules/documents table )
-    cur.execute(NODE_TITLE_UPD, (title,nid))
+    cur.execute(NODE_TITLE_UPD, (title,title,nid))
 
 class ModuleHandler(sax.ContentHandler):
     def __init__(self):

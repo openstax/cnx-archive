@@ -30,7 +30,7 @@ ns = { "cnx":"http://cnx.rice.edu/cnxml",
 
 NODE_INS=plpy.prepare("INSERT INTO trees (parent_id,documentid,childorder) SELECT $1, module_ident, $2 from modules where moduleid = $3 and version = $4 returning nodeid", ("int","int","text","text"))
 NODE_NODOC_INS=plpy.prepare("INSERT INTO trees (parent_id,childorder) VALUES ($1, $2) returning nodeid", ("int","int"))
-NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 where nodeid = $2",("text","int"))
+NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 from modules where documentid = module_ident and name != $1 and nodeid = $2",("text","int"))
 
 def _do_insert(pid,cid,oid=0,ver=0):
     if oid:
@@ -46,8 +46,6 @@ def _do_insert(pid,cid,oid=0,ver=0):
     return nodeid
 
 def _do_update(title,nid):
-    # FIXME Check and only store if this is an actual override 
-    # title (diff than what is in modules/documents table )
     plpy.execute(NODE_TITLE_UPD, (title,nid))
 
 class ModuleHandler(sax.ContentHandler):
@@ -141,6 +139,8 @@ RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
+
+drop trigger if exists shred_collxml on module_files;
 
 create trigger shred_collxml BEFORE INSERT on module_files
 for each row when (NEW.filename = 'collection.xml') execute procedure shred_collxml_trigger ();
