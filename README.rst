@@ -46,6 +46,8 @@ be run with minimal effort. Either of the following will work::
     $ python -m unittest discover
     $ python setup.py test
 
+This uses example data found in the test-data directory.
+
 License
 -------
 
