@@ -130,7 +130,7 @@ language plpythonu;
 
 create or replace function shred_collxml (fid int)  returns void as
 $$ 
-select shred_collxml(encode(file,'escape')) from files where fileid = fid
+select shred_collxml(convert_from(file,'UTF8')) from files where fileid = fid
 $$
 language sql;
 
