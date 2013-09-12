@@ -13,7 +13,7 @@ UNION ALL
 )
 SELECT
     REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(m.uuid::text,'subcol') ||COALESCE('@'||m.version,'') ||'",' ||
-      '"title":"'||ascii(COALESCE(title,name))||'"' ||
+      '"title":"'||COALESCE(title,name)||'"' ||
       CASE WHEN (depth < lead(depth,1,0) over(w)) THEN ', "contents":['
            WHEN (depth > lead(depth,1,0) over(w) AND depth > 2 ) THEN '}]},'
            WHEN (depth > lead(depth,1,0) over(w) AND depth = 2 ) THEN '}]}'
