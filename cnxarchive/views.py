@@ -40,6 +40,14 @@ def get_content(environ, start_response):
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
+            if not version:
+                cursor.execute(SQL['get-module-versions'], {'id': id})
+                try:
+                    latest_version = cursor.fetchone()[0]
+                    raise httpexceptions.HTTPFound('/contents/{}@{}'.format(
+                        id, latest_version))
+                except (TypeError, IndexError,): # None returned
+                    raise httpexceptions.HTTPNotFound()
             result = get_content_metadata(id, version, cursor)
             # FIXME The 'mediaType' value will be changing to mimetypes
             #       in the near future.
