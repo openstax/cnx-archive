@@ -35,14 +35,16 @@ COLLECTION_METADATA = {
     u'roles': None,
     u'subject': u'',
     u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
-    u'authors': [],
+    u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
     u'created': u'2013-07-31 12:07:20.342798-07',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
     u'language': u'en',
     u'license': u'http://creativecommons.org/licenses/by/3.0/',
-    u'licensors': [],
-    u'maintainers': [],
+    u'licensors': [u'9366c786-e3c8-4960-83d4-aec1269ac5e5'],
+    u'maintainers': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                     u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                     ],
     u'title': u'College Physics',
     u'parentAuthors': [],
     u'parentId': None,
@@ -104,14 +106,16 @@ MODULE_METADATA = {
     u'roles': None,
     u'subject': u'',
     u'abstract': None,
-    u'authors': [],
+    u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
     u'created': u'2013-07-31 12:07:24.856663-07',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
     u'language': u'en',
     u'license': u'http://creativecommons.org/licenses/by/3.0/',
-    u'licensors': [],
-    u'maintainers': [],
+    u'licensors': [u'9366c786-e3c8-4960-83d4-aec1269ac5e5'],
+    u'maintainers': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                     u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                     ],
     u'title': u'Elasticity: Stress and Strain',
     u'parentAuthors': [],
     u'parentId': None,
@@ -337,6 +341,14 @@ class PostgresqlFixture:
         # Initialize the database schema.
         from .database import initdb
         initdb(self._settings)
+        # Initialize the shadow of cnx-user.
+        with psycopg2.connect(self._connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cnxuser_schema_filepath = os.path.join(TEST_DATA,
+                                                       'cnx-user.schema.sql')
+                with open(cnxuser_schema_filepath, 'r') as fb:
+                    cursor.execute(fb.read())
+            db_connection.commit()
 
     def tearDown(self):
         # Drop all tables.
@@ -368,12 +380,8 @@ class DBQueryTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
-            cnxuser_schema_filepath = os.path.join(TEST_DATA,
-                                                   'cnx-user.schema.sql')
             cnxuser_data_filepath = os.path.join(TEST_DATA,
                                                  'cnx-user.data.sql')
-            with open(cnxuser_schema_filepath, 'r') as fb:
-                cursor.execute(fb.read())
             with open(cnxuser_data_filepath, 'r') as fb:
                 cursor.execute(fb.read())
             # FIXME This is a temporary fix until the data can be updated.
@@ -639,6 +647,14 @@ class ViewsTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
+            # Populate the cnx-user shadow.
+            cnxuser_data_filepath = os.path.join(TEST_DATA,
+                                                 'cnx-user.data.sql')
+            with open(cnxuser_data_filepath, 'r') as fb:
+                cursor.execute(fb.read())
+            # FIXME This is a temporary fix until the data can be updated.
+            cursor.execute("update modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
+            cursor.execute("update latest_modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
         self._db_connection.commit()
 
         self.settings['exports-directories'] = ' '.join([
