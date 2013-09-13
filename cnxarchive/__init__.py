@@ -79,6 +79,7 @@ def main(global_config, **settings):
     app.add_route('/contents/{ident_hash}', 'cnxarchive.views:get_content')
     app.add_route('/resources/{id}', 'cnxarchive.views:get_resource')
     app.add_route('/exports/{ident_hash}.{type}', 'cnxarchive.views:get_export')
+    app.add_route('/search', 'cnxarchive.views:search')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types']
     for setting in mandatory_settings:

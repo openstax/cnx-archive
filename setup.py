@@ -16,7 +16,7 @@ setup(
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/cnx-archive",
-    license='LGPL, See aslo LICENSE.txt',
+    license='LGPL, See also LICENSE.txt',
     description=description,
     packages=find_packages(),
     install_requires=install_requires,
