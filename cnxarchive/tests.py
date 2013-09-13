@@ -177,6 +177,24 @@ class MockDBQuery(object):
                     ]
 
 
+def db_connect(method):
+    """Decorator for methods that need to use the database
+
+    Example:
+    @db_connection
+    def setUp(self, cursor):
+        cursor.execute(some_sql)
+        # some other code
+    """
+    def wrapped(self, *args, **kwargs):
+        from .utils import parse_app_settings
+        settings = parse_app_settings(TESTING_CONFIG)
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                return method(self, cursor, *args, **kwargs)
+            db_connection.commit()
+    return wrapped
+
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
     # This assumes the application is section is named 'main'.
@@ -309,12 +327,11 @@ class PostgresqlFixture:
         # Drop all existing tables from the database.
         self._drop_all()
 
-    def _drop_all(self):
+    @db_connect
+    def _drop_all(self, cursor):
         """Drop all tables in the database."""
-        with psycopg2.connect(self._connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("DROP SCHEMA public CASCADE")
-                cursor.execute("CREATE SCHEMA public")
+        cursor.execute("DROP SCHEMA public CASCADE")
+        cursor.execute("CREATE SCHEMA public")
 
     def setUp(self):
         # Initialize the database schema.
@@ -892,16 +909,11 @@ class GetBuylinksTestCase(unittest.TestCase):
 
     fixture = postgresql_fixture
 
-    def setUp(self):
+    @db_connect
+    def setUp(self, cursor):
         self.fixture.setUp()
-        # Load the database with example legacy data.
-        from .utils import parse_app_settings
-        settings = parse_app_settings(TESTING_CONFIG)
-        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
-            with db_connection.cursor() as cursor:
-                with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-                    cursor.execute(fb.read())
-        db_connection.commit()
+        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+            cursor.execute(fb.read())
 
         from .scripts import get_buylinks
 
@@ -931,15 +943,14 @@ class GetBuylinksTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
-    def get_buylink_from_db(self, collection_id):
+    @db_connect
+    def get_buylink_from_db(self, cursor, collection_id):
         from .utils import parse_app_settings
         settings = parse_app_settings(TESTING_CONFIG)
-        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute(
-                        'SELECT m.buylink FROM modules m WHERE m.moduleid = %(moduleid)s;',
-                        {'moduleid': collection_id})
-                return cursor.fetchone()[0]
+        cursor.execute(
+                'SELECT m.buylink FROM modules m WHERE m.moduleid = %(moduleid)s;',
+                {'moduleid': collection_id})
+        return cursor.fetchone()[0]
 
     def test(self):
         self.argv.append('col11406')
