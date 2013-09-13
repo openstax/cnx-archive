@@ -1093,3 +1093,118 @@ class CORSTestCase(unittest.TestCase):
             ('Content-type', 'text/plain'),
             ]))
         self.assertEqual(self.kwargs, {})
+
+
+class ModulePublishTriggerTestCase(unittest.TestCase):
+    """Tests for the postgresql trigger when a module is published
+    """
+
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+            cursor.execute(fb.read())
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def test_module(self, cursor):
+        cursor.execute('SELECT nodeid FROM trees '
+                'WHERE parent_id IS NULL ORDER BY nodeid DESC')
+        old_nodeid = cursor.fetchone()[0]
+
+        cursor.execute('SELECT fileid '
+                'FROM module_files WHERE module_ident = 1')
+        old_files = cursor.fetchall()
+
+        cursor.execute('''
+        INSERT INTO modules VALUES (
+        100, 'Module', 'm42955', '209deb1f-1a46-4369-9e0d-18674cf58a3e', '2.0',
+        'Preface to College Physics', '2013-09-13 15:10:43.000000+02' ,
+        '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
+        'en', '{}', '{}', '{}', NULL, NULL, NULL)''')
+
+        cursor.execute('''
+        INSERT INTO module_files
+        (module_ident, fileid, filename, mimetype)
+            SELECT 100, fileid, filename, mimetype
+            FROM module_files
+            WHERE module_ident = 2 AND filename = 'index.cnxml'
+        ''')
+
+        cursor.execute('SELECT * FROM modules m ORDER BY created DESC')
+        results = cursor.fetchone()
+        new_collection_id = results[0]
+        self.assertEqual(results[1], 'Collection')
+        self.assertEqual(results[4], '1.8')
+        self.assertEqual(results[5], 'College Physics')
+
+        cursor.execute('SELECT nodeid FROM trees '
+                'WHERE parent_id IS NULL ORDER BY nodeid DESC')
+        new_nodeid = cursor.fetchone()[0]
+
+        sql = '''
+        WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
+            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.nodeid = %(nodeid)s
+        UNION ALL
+            SELECT c.*, path || ARRAY[c.nodeid]
+            FROM trees c JOIN t ON c.parent_id = t.node
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT * FROM t'''
+
+        cursor.execute(sql, {'nodeid': old_nodeid})
+        old_tree = cursor.fetchall()
+
+        cursor.execute(sql, {'nodeid': new_nodeid})
+        new_tree = cursor.fetchall()
+
+        self.assertEqual(len(old_tree), len(new_tree))
+
+        # make sure all the node ids are different from the old ones
+        old_nodeids = [i[0] for i in old_tree]
+        new_nodeids = [i[0] for i in new_tree]
+        all_nodeids = old_nodeids + new_nodeids
+        self.assertEqual(len(set(all_nodeids)), len(all_nodeids))
+
+        new_document_ids = {
+                # old module_ident: new module_ident
+                1: new_collection_id,
+                2: 100,
+                }
+        for i, old_node in enumerate(old_tree):
+            self.assertEqual(new_document_ids.get(old_node[2], old_node[2]),
+                    new_tree[i][2]) # documentid
+            self.assertEqual(old_node[3], new_tree[i][3]) # title
+            self.assertEqual(old_node[4], new_tree[i][4]) # child order
+            self.assertEqual(old_node[5], new_tree[i][5]) # latest
+
+#        # check collection files have been copied
+#        cursor.execute('SELECT fileid FROM module_files '
+#                'WHERE module_ident = %s', [new_collection_id])
+#        new_files = cursor.fetchall()
+#        # make sure new files have new fileid
+#        self.assertEqual(len(set(old_files + new_files)),
+#                len(old_files) + len(new_files))
+#        self.assertEqual(len(old_files), len(new_files))
+#        # make sure the md5 and file fields etc are copied
+#        cursor.execute('SELECT fileid, md5, file, uuid, filename, mimetype '
+#                'FROM module_files m JOIN files f ON m.fileid = f.fileid ')
+#        files = {} # {fileid: [fileid, md5, file, uuid, filename, mimetype], ...}
+#        for row in cursor.fetchall():
+#            files[row[0]] = row
+#        for i, old_file_id in enumerate(old_files):
+#            new_file_id = new_files[i]
+#            # check md5
+#            self.assertEqual(files[old_file_id][1], files[new_file_id][1])
+#            # check file
+#            self.assertEqual(files[old_file_id][2], files[new_file_id][2])
+#            # check uuid
+#            self.assertEqual(files[old_file_id][3], files[new_file_id][3])
+#            # check filename
+#            self.assertEqual(files[old_file_id][4], files[new_file_id][4])
+#            # check mimetype
+#            self.assertEqual(files[old_file_id][5], files[new_file_id][5])
