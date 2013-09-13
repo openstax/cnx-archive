@@ -180,6 +180,17 @@ CREATE TRIGGER update_latest_version
   BEFORE INSERT OR UPDATE ON modules FOR EACH ROW
   EXECUTE PROCEDURE update_latest();
 
+CREATE OR REPLACE FUNCTION republish_module ()
+  RETURNS trigger
+AS $$
+  from cnxarchive.database import republish_module
+  return republish_module(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_published
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE republish_module();
+
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
