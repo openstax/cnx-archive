@@ -8,6 +8,7 @@
 import os
 import json
 import unittest
+import uuid
 from wsgiref.util import setup_testing_defaults
 
 import psycopg2
@@ -121,6 +122,57 @@ MODULE_METADATA = {
     u'version': u'1.8',
     u'googleAnalytics': None,
     }
+
+SEARCH_RESULTS_1 = {
+        u'query': {
+            u'limits': [
+                {u'text': u'college physics'},
+                ],
+            u'sort': [u'version'],
+            },
+        u'results': {
+            u'total': 2,
+            u'items': [
+                {
+                    u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
+                    u'type': u'book',
+                    u'title': u'College Physics',
+                    u'authors': [],
+                    u'keywords': [],
+                    u'summarySnippet': None,
+                    u'bodySnippet': None,
+                    u'pubDate': u'2013-08-13T12:12Z',
+                    },
+                {
+                    u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
+                    u'type': u'page',
+                    u'title': u'Preface to College Physics',
+                    u'authors': [],
+                    u'keywords': [],
+                    u'summarySnippet': None,
+                    u'bodySnippet': None,
+                    u'pubDate': u'2013-08-13T12:12Z',
+                    },
+                ],
+            },
+        }
+
+
+class MockDBQuery(object):
+
+    def __init__(self, query):
+        self.filters = [q for q in query if q[0] == 'type']
+        self.sorts = [q[1] for q in query if q[0] == 'sort']
+        self.query = [q for q in query
+                      if q not in self.filters and q[0] != 'sort']
+
+    def __call__(self):
+        if MockDBQuery.result_set == 1:
+            return [
+                    ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
+                    ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
+                    ]
+
 
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
@@ -271,6 +323,277 @@ class PostgresqlFixture:
         self._drop_all()
 
 postgresql_fixture = PostgresqlFixture()
+
+
+class DBQueryTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from .utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from .database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        from . import _set_settings
+        _set_settings(self.settings)
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+            cnxuser_schema_filepath = os.path.join(TEST_DATA,
+                                                   'cnx-user.schema.sql')
+            cnxuser_data_filepath = os.path.join(TEST_DATA,
+                                                 'cnx-user.data.sql')
+            with open(cnxuser_schema_filepath, 'r') as fb:
+                cursor.execute(fb.read())
+            with open(cnxuser_data_filepath, 'r') as fb:
+                cursor.execute(fb.read())
+            # FIXME This is a temporary fix until the data can be updated.
+            cursor.execute("update modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
+            cursor.execute("update latest_modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
+        self._db_connection.commit()
+
+    def tearDown(self):
+        from . import _set_settings
+        _set_settings(None)
+        self.fixture.tearDown()
+
+    def make_one(self, *args, **kwargs):
+        # Single point of import failure.
+        from .search import DBQuery
+        return DBQuery(*args, **kwargs)
+
+    def test_title_search(self):
+        # Simple case to test for results of a basic title search.
+        query_params = [('title', 'Physics')]
+        db_query = self.make_one(query_params)
+        results = db_query()
+
+        self.assertEqual(len(results), 4)
+
+    def test_abstract_search(self):
+        # Test for result on an abstract search.
+        query_params = [('abstract', 'algebra')]
+        db_query = self.make_one(query_params)
+        results = db_query()
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][6], 'algebra-::-abstract')
+
+    def test_author_search(self):
+        # Test the results of an author search.
+        user_id = str(uuid.uuid4())
+        query_params = [('author', 'Jill')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as an author.
+                cursor.execute(
+                    "UPDATE latest_modules SET (authors) = (%s) "
+                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
+                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_editor_search(self):
+        # Test the results of an editor search.
+        user_id = str(uuid.uuid4())
+        query_params = [('editor', 'jmiller@example.com')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as an editor.
+                role_id = 5
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 2, role_id))
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 3, role_id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_licensor_search(self):
+        # Test the results of a licensor search.
+        user_id = str(uuid.uuid4())
+        query_params = [('licensor', 'jmiller')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as a licensor.
+                role_id = 2
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 2, role_id))
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 3, role_id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_maintainer_search(self):
+        # Test the results of a maintainer search.
+        user_id = str(uuid.uuid4())
+        query_params = [('maintainer', 'Miller')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as a maintainer.
+                cursor.execute(
+                    "UPDATE latest_modules SET (maintainers) = (%s) "
+                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
+                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_translator_search(self):
+        # Test the results of a translator search.
+        user_id = str(uuid.uuid4())
+        query_params = [('translator', 'jmiller')]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as a translator.
+                role_id = 4
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 2, role_id))
+                cursor.execute(
+                    "INSERT INTO moduleoptionalroles"
+                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+                    ([user_id], 3, role_id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_parentauthor_search(self):
+        # Test the results of a parent author search.
+        user_id = str(uuid.uuid4())
+        # FIXME parentauthor is only searchable by user id, not by name
+        #       like the other user based columns. Inconsistent behavior...
+        query_params = [('parentauthor', user_id)]
+        db_query = self.make_one(query_params)
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Create a new user.
+                cursor.execute(
+                    "INSERT INTO users "
+                    "(id, firstname, surname, fullname, email) "
+                    "VALUES (%s, %s, %s, %s, %s);",
+                    (user_id, 'Jill', 'Miller', 'Jill M.',
+                     'jmiller@example.com',))
+                # Update two modules in include this user as a parent author.
+                cursor.execute(
+                    "UPDATE latest_modules SET (parentauthors) = (%s) "
+                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
+                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 2)
+
+    def test_type_filter_on_books(self):
+        # Test for type filtering that will find books only.
+        query_params = [('text', 'physics'), ('type', 'book')]
+        db_query = self.make_one(query_params)
+
+        results = db_query()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][2],
+                         'b1509954-7460-43a4-8c52-262f1ddd7f2f')
+
+    def test_sort_filter_on_pubdate(self):
+        # Test the sorting of results by publication date.
+        query_params = [('text', 'physics'), ('sort', 'pubDate')]
+        db_query = self.make_one(query_params)
+        _same_date = '2113-01-01 00:00:00 America/New_York'
+        expectations = [('e3f8051d-7fde-4f14-92f6-7f31019887b3',
+                         _same_date,),  # this one has a higher weight.
+                        ('bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                         _same_date,),
+                        ('bf8c0d8f-1255-47eb-9f17-83705ae4b16f',
+                         '2112-01-01 00:00:00 America/New_York',),
+                        ]
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Update two modules in include a creation date.
+                for id, date in expectations:
+                    cursor.execute(
+                        "UPDATE latest_modules SET (created) = (%s) "
+                        "WHERE uuid = %s::uuid;", (date, id))
+            db_connection.commit()
+
+        results = db_query()
+        self.assertEqual(len(results), 15)
+        for i, (id, date) in enumerate(expectations):
+            self.assertEqual(results[i][2], id)
 
 
 class ViewsTestCase(unittest.TestCase):
@@ -509,6 +832,28 @@ class ViewsTestCase(unittest.TestCase):
                 'user_friendly_name': 'ZIP archive',
                 },
             })
+
+    def test_search(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="college physics" sort:version'
+
+        # Mock DBQuery
+        import views
+        views.DBQuery = MockDBQuery
+        MockDBQuery.result_set = 1
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS_1.keys()))
+        for i in results:
+            self.assertEqual(results[i], SEARCH_RESULTS_1[i])
 
 
 class SlugifyTestCase(unittest.TestCase):

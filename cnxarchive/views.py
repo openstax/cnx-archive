@@ -5,14 +5,17 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import cgi
 import os
 import json
 import psycopg2
+from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
 from . import httpexceptions
 from .utils import split_ident_hash, portaltype_to_mimetype, slugify
 from .database import CONNECTION_SETTINGS_KEY, SQL
+from .search import DBQuery
 
 
 def get_content_metadata(id, version, cursor):
@@ -170,3 +173,47 @@ def get_export(environ, start_response):
             pass
     else:
         raise httpexceptions.HTTPNotFound()
+
+
+MEDIA_TYPES = {
+        'Collection': 'book',
+        'Module': 'page',
+        }
+
+
+def search(environ, start_response):
+    """Search API
+    """
+    params = cgi.parse_qs(environ.get('QUERY_STRING', ''))
+    search_terms = params['q'][0]
+
+    node_tree = grammar.parse(search_terms)
+    search_dict = DictFormater().visit(node_tree)
+
+    db_query = DBQuery(search_dict)
+    db_results = db_query()
+
+    results = {}
+    limits = [{keyword: value} for keyword, value in db_query.query]
+    limits.extend([{keyword: value} for keyword, value in db_query.filters])
+    results['query'] = {
+            'limits': limits,
+            'sort': db_query.sorts,
+            }
+    results['results'] = {'total': len(db_results), 'items': []}
+    for i in db_results:
+        results['results']['items'].append({
+            'id': i[2],
+            'type': MEDIA_TYPES.get(i[9], i[9]),
+            'title': i[0],
+            'authors': [], # TODO not in db_results
+            'keywords': [], # TODO not in db_results
+            'summarySnippet': None, # TODO not in db_results
+            'bodySnippet': None, # TODO not in db_results
+            'pubDate': '2013-08-13T12:12Z', # TODO not in db_results
+            })
+
+    status = '200 OK'
+    headers = [('Content-type', 'application/json')]
+    start_response(status, headers)
+    return [json.dumps(results)]
