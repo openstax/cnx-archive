@@ -53,7 +53,50 @@ COLLECTION_METADATA = {
     u'version': u'1.7',
     u'googleAnalytics': u'UA-XXXXX-Y',
     }
-COLLECTION_JSON_TREE = u'''{"id": "e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7", "contents": [{"id": "209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7", "title": "80"}, {"id": "subcol", "contents": [{"id": "f3c9ab70-a916-4d8c-9256-42953287b4e9@1.3", "title": "73"}, {"id": "d395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4", "title": "80"}, {"id": "c8bdbabc-62b1-4a5f-b291-982ab25756d7@1.6", "title": "80"}, {"id": "5152cea8-829a-4aaf-bcc5-c58a416ecb66@1.7", "title": "65"}, {"id": "5838b105-41cd-4c3d-a957-3ac004a48af3@1.5", "title": "65"}], "title": "73"}, {"id": "subcol", "contents": [{"id": "24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@1.2", "title": "73"}, {"id": "ea271306-f7f2-46ac-b2ec-1d80ff186a59@1.5", "title": "70"}, {"id": "26346a42-84b9-48ad-9f6a-62303c16ad41@1.6", "title": "68"}, {"id": "56f1c5c1-4014-450d-a477-2121e276beca@1.8", "title": "69"}], "title": "70"}, {"id": "f6024d8a-1868-44c7-ab65-45419ef54881@1.3", "title": "65"}, {"id": "7250386b-14a7-41a2-b8bf-9e9ab872f0dc@1.2", "title": "83"}, {"id": "c0a76659-c311-405f-9a99-15c71af39325@1.5", "title": "85"}, {"id": "ae3e18de-638d-4738-b804-dc69cd4db3a3@1.4", "title": "71"}], "title": "67"}'''
+COLLECTION_JSON_TREE = {
+    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
+    u'title': u'College Physics',
+    u'contents': [
+        {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7',
+         u'title': u'Preface'},
+        {u'id': u'subcol',
+         u'title': u'Introduction: The Nature of Science and Physics',
+         u'contents': [
+                {u'id': u'f3c9ab70-a916-4d8c-9256-42953287b4e9@1.3',
+                 u'title': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units'},
+                {u'id': u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4',
+                 u'title': u'Physics: An Introduction'},
+                {u'id': u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@1.6',
+                 u'title': u'Physical Quantities and Units'},
+                {u'id': u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@1.7',
+                 u'title': u'Accuracy, Precision, and Significant Figures'},
+                {u'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@1.5',
+                 u'title': u'Approximation'},
+                ],
+         },
+        {u'id': u'subcol',
+         u'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
+         u'contents': [
+                {u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@1.2',
+                 u'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
+                {u'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@1.5',
+                 u'title': u'Friction'},
+                {u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@1.6',
+                 u'title': u'Drag Forces'},
+                {u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                 u'title': u'Elasticity: Stress and Strain'},
+                ],
+         },
+        {u'id': u'f6024d8a-1868-44c7-ab65-45419ef54881@1.3',
+         u'title': u'Atomic Masses'},
+        {u'id': u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@1.2',
+         u'title': u'Selected Radioactive Isotopes'},
+        {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@1.5',
+         u'title': u'Useful Information'},
+        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@1.4',
+         u'title': u'Glossary of Key Symbols and Notation'},
+        ],
+    }
 MODULE_METADATA = {
     u'roles': None,
     u'subject': u'',
@@ -305,7 +348,6 @@ class ViewsTestCase(unittest.TestCase):
                         key=key, v1=content[key], v2=COLLECTION_METADATA[key]))
 
         # Check the tree for accuracy.
-        content_tree = json.dumps(content_tree)
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
 
     def test_module_content(self):
