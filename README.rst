@@ -15,6 +15,12 @@ If you are using the ``development.ini`` configuration file,
 you'll want to set up a ``cnxarchive`` database for user ``cnxarchive``
 with the password ``cnxarchive``.
 
+Before installing cnx-archive, you need to first install its dependencies::
+
+    $ git clone git@github.com:Connexions/cnx-query-grammar.git
+    $ cd cnx-query-grammar
+    $ python setup.py install
+
 The application is built in Python and can be installed using the
 typical Python distribution installation procedure, as follows::
 
