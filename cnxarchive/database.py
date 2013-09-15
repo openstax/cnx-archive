@@ -34,6 +34,7 @@ SQL = {
     'get-resource-by-filename': _read_sql_file('get-resource-by-filename'),
     'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
     'get-module-versions': _read_sql_file('get-module-versions'),
+    'update-buylink': _read_sql_file('update-buylink'),
     }
 
 

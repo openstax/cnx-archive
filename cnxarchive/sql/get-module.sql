@@ -19,7 +19,8 @@ FROM (SELECT
          module_ident=m.module_ident group by module_ident) as _roles,
   list(tag) as _subject,
   encode(file,'escape'),
-  m.google_analytics as "googleAnalytics"
+  m.google_analytics as "googleAnalytics",
+  m.buylink as "buyLink"
 FROM modules m
 NATURAL JOIN abstracts
 JOIN licenses l on l.licenseid = m.licenseid
