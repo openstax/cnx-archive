@@ -881,3 +881,51 @@ class SlugifyTestCase(unittest.TestCase):
         self.assertEqual(slugify(u'40文字でわかる！'
             u'　知っておきたいビジネス理論'),
             u'40文字でわかる-知っておきたいビジネス理論')
+
+
+class CORSTestCase(unittest.TestCase):
+    """Tests for correctly enabling CORS on the server
+    """
+
+    def start_response(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def controller(self, environ, start_response):
+        status = '200 OK'
+        headers = [('Content-type', 'text/plain')]
+        start_response(status, headers)
+        return ['hello']
+
+    def test_get(self):
+        # We should have "Access-Control-Allow-Origin: *" in
+        # the headers
+        from . import Application
+        app = Application()
+        app.add_route('/', self.controller)
+        environ = {
+                'REQUEST_METHOD': 'GET',
+                'PATH_INFO': '/',
+                }
+        app(environ, self.start_response)
+        self.assertEqual(self.args, ('200 OK', [
+            ('Content-type', 'text/plain'),
+            ('Access-Control-Allow-Origin', '*'),
+            ]))
+        self.assertEqual(self.kwargs, {})
+
+    def test_post(self):
+        # We should not have "Access-Control-Allow-Origin: *" in
+        # the headers
+        from . import Application
+        app = Application()
+        app.add_route('/', self.controller)
+        environ = {
+                'REQUEST_METHOD': 'POST',
+                'PATH_INFO': '/',
+                }
+        app(environ, self.start_response)
+        self.assertEqual(self.args, ('200 OK', [
+            ('Content-type', 'text/plain'),
+            ]))
+        self.assertEqual(self.kwargs, {})

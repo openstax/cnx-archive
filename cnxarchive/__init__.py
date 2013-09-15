@@ -59,8 +59,16 @@ class Application:
                 return controller
         return None
 
+    def _start_response(self, start_response):
+        def r(status, headers, *args, **kwargs):
+            headers.append(('Access-Control-Allow-Origin', '*'))
+            start_response(status, headers, *args, **kwargs)
+        return r
+
     def __call__(self, environ, start_response):
         controller = self.route(environ)
+        if environ.get('REQUEST_METHOD', '') == 'GET':
+            start_response = self._start_response(start_response)
         if controller is not None:
             try:
                 return controller(environ, start_response)
