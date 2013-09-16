@@ -385,14 +385,6 @@ class PostgresqlFixture:
         # Initialize the database schema.
         from .database import initdb
         initdb(self._settings)
-        # Initialize the shadow of cnx-user.
-        with psycopg2.connect(self._connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cnxuser_schema_filepath = os.path.join(TEST_DATA,
-                                                       'cnx-user.schema.sql')
-                with open(cnxuser_schema_filepath, 'r') as fb:
-                    cursor.execute(fb.read())
-            db_connection.commit()
 
     def tearDown(self):
         # Drop all tables.
