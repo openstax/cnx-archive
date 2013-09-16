@@ -23,8 +23,9 @@ from .database import CONNECTION_SETTINGS_KEY
 os.environ['PGTZ'] = 'America/Whitehorse'
 
 here = os.path.abspath(os.path.dirname(__file__))
-TEST_DATA = os.path.join(here, 'test-data')
-TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA, 'data.sql')
+TEST_DATA_DIRECTORY = os.path.join(here, 'test-data')
+TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'data.sql')
+TESTING_CNXUSER_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'cnx-user.data.sql')
 try:
     TESTING_CONFIG = os.environ['TESTING_CONFIG']
 except KeyError as exc:
@@ -35,14 +36,38 @@ COLLECTION_METADATA = {
     u'roles': None,
     u'subject': u'',
     u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
-    u'authors': [],
+    u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                  u'fullname': u'OpenStax College',
+                  u'email': u'info@openstaxcollege.org',
+                  u'website': None, u'surname': None, u'suffix': None,
+                  u'firstname': u'OpenStax College', u'title': None,
+                  u'othername': None,
+                  }],
     u'created': u'2013-07-31 12:07:20.342798-07',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
     u'language': u'en',
     u'license': u'http://creativecommons.org/licenses/by/3.0/',
-    u'licensors': [],
-    u'maintainers': [],
+    u'licensors': [{u'website': None, u'surname': u'University',
+                    u'suffix': None, u'firstname': u'Rice',
+                    u'title': None, u'othername': None,
+                    u'id': u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                    u'fullname': u'Rice University',
+                    u'email': u'daniel@openstaxcollege.org'},
+                   ],
+    u'maintainers': [{u'website': None, u'surname': u'Physics',
+                      u'suffix': None, u'firstname': u'College',
+                      u'title': None, u'othername': None,
+                      u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                      u'fullname': u'OSC Physics Maintainer',
+                      u'email': u'info@openstaxcollege.org'},
+                     {u'website': None, u'surname': None,
+                      u'suffix': None, u'firstname': u'OpenStax College',
+                      u'title': None, u'othername': None,
+                      u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                      u'fullname': u'OpenStax College',
+                      u'email': u'info@openstaxcollege.org'},
+                     ],
     u'title': u'College Physics',
     u'parentAuthors': [],
     u'parentId': None,
@@ -104,14 +129,38 @@ MODULE_METADATA = {
     u'roles': None,
     u'subject': u'',
     u'abstract': None,
-    u'authors': [],
+    u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                  u'fullname': u'OpenStax College',
+                  u'email': u'info@openstaxcollege.org',
+                  u'website': None, u'surname': None, u'suffix': None,
+                  u'firstname': u'OpenStax College', u'title': None,
+                  u'othername': None,
+                  }],
     u'created': u'2013-07-31 12:07:24.856663-07',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
     u'language': u'en',
     u'license': u'http://creativecommons.org/licenses/by/3.0/',
-    u'licensors': [],
-    u'maintainers': [],
+    u'licensors': [{u'website': None, u'surname': u'University',
+                    u'suffix': None, u'firstname': u'Rice',
+                    u'title': None, u'othername': None,
+                    u'id': u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                    u'fullname': u'Rice University',
+                    u'email': u'daniel@openstaxcollege.org'},
+                   ],
+    u'maintainers': [{u'website': None, u'surname': u'Physics',
+                      u'suffix': None, u'firstname': u'College',
+                      u'title': None, u'othername': None,
+                      u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                      u'fullname': u'OSC Physics Maintainer',
+                      u'email': u'info@openstaxcollege.org'},
+                     {u'website': None, u'surname': None,
+                      u'suffix': None, u'firstname': u'OpenStax College',
+                      u'title': None, u'othername': None,
+                      u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                      u'fullname': u'OpenStax College',
+                      u'email': u'info@openstaxcollege.org'},
+                     ],
     u'title': u'Elasticity: Stress and Strain',
     u'parentAuthors': [],
     u'parentId': None,
@@ -368,17 +417,8 @@ class DBQueryTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
-            cnxuser_schema_filepath = os.path.join(TEST_DATA,
-                                                   'cnx-user.schema.sql')
-            cnxuser_data_filepath = os.path.join(TEST_DATA,
-                                                 'cnx-user.data.sql')
-            with open(cnxuser_schema_filepath, 'r') as fb:
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
                 cursor.execute(fb.read())
-            with open(cnxuser_data_filepath, 'r') as fb:
-                cursor.execute(fb.read())
-            # FIXME This is a temporary fix until the data can be updated.
-            cursor.execute("update modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
-            cursor.execute("update latest_modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
         self._db_connection.commit()
 
     def tearDown(self):
@@ -639,11 +679,14 @@ class ViewsTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
+            # Populate the cnx-user shadow.
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
+                cursor.execute(fb.read())
         self._db_connection.commit()
 
         self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA, 'exports'),
-                os.path.join(TEST_DATA, 'exports2')
+                os.path.join(TEST_DATA_DIRECTORY, 'exports'),
+                os.path.join(TEST_DATA_DIRECTORY, 'exports2')
                 ])
         self.settings['exports-allowable-types'] = '''
             pdf:pdf,application/pdf,Portable Document Format (PDF)
@@ -787,7 +830,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
                          "attached; filename=college-physics.pdf")
-        with open(os.path.join(TEST_DATA, 'exports', filename), 'r') as file:
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
         # Test exports can access the other exports directory
@@ -804,7 +847,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
                          "attached; filename=elasticity-stress-and-strain.pdf")
-        with open(os.path.join(TEST_DATA, 'exports2', filename), 'r') as file:
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports2', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
     def test_exports_type_not_supported(self):
