@@ -721,6 +721,23 @@ class ViewsTestCase(unittest.TestCase):
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
+    def test_content_without_version(self):
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'ident_hash': "{}".format(uuid)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from .views import get_content
+        content = get_content(environ, self._start_response)
+
+        # Check that the view redirects to the latest version
+        self.captured_response['status'] = '302 Found'
+        self.captured_response['headers'] = [
+                ('Location', '/content/{}@1.8'.format(uuid))]
+
     def test_resources(self):
         # Test the retrieval of resources contained in content.
         uuid = 'f45f8378-92db-40ae-ba58-648130038e4b'
