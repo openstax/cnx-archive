@@ -19,16 +19,17 @@ before_install:
   - sudo /etc/init.d/postgresql restart
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
-  - cd cnx-query-grammar
-  - python setup.py install
+  - pip install -e cnx-query-grammar --use-mirrors
 install:
-  - python setup.py install
+  - pip install -e . --use-mirrors
 before_script:
   # Setup postgres roles
-  - sudo psql -d postgres --command="CREATE USER cnxuser;"
-  - sudo psql -d postgres --command="CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
+  - sudo -u postgres psql -d postgres -c "CREATE USER cnxuser;"
+  - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
 script:
   - python -m unittest discover
 
+env:
+  - TESTING_CONFIG="testing.ini"
 notifications:
   email: false
