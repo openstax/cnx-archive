@@ -15,6 +15,7 @@ import psycopg2
 from paste.deploy import appconfig
 
 from . import httpexceptions
+from .database import CONNECTION_SETTINGS_KEY
 
 
 # Set the timezone for the postgresql client so that we get the times in the
@@ -53,6 +54,7 @@ COLLECTION_METADATA = {
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'1.7',
     u'googleAnalytics': u'UA-XXXXX-Y',
+    u'buyLink': None,
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
@@ -121,6 +123,7 @@ MODULE_METADATA = {
     u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'1.8',
     u'googleAnalytics': None,
+    u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
 
 SEARCH_RESULTS_1 = {
@@ -173,6 +176,24 @@ class MockDBQuery(object):
                     ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
                     ]
 
+
+def db_connect(method):
+    """Decorator for methods that need to use the database
+
+    Example:
+    @db_connection
+    def setUp(self, cursor):
+        cursor.execute(some_sql)
+        # some other code
+    """
+    def wrapped(self, *args, **kwargs):
+        from .utils import parse_app_settings
+        settings = parse_app_settings(TESTING_CONFIG)
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                return method(self, cursor, *args, **kwargs)
+            db_connection.commit()
+    return wrapped
 
 def _get_app_settings(config_path):
     """Shortcut to the application settings. This does not load logging."""
@@ -306,12 +327,11 @@ class PostgresqlFixture:
         # Drop all existing tables from the database.
         self._drop_all()
 
-    def _drop_all(self):
+    @db_connect
+    def _drop_all(self, cursor):
         """Drop all tables in the database."""
-        with psycopg2.connect(self._connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("DROP SCHEMA public CASCADE")
-                cursor.execute("CREATE SCHEMA public")
+        cursor.execute("DROP SCHEMA public CASCADE")
+        cursor.execute("CREATE SCHEMA public")
 
     def setUp(self):
         # Initialize the database schema.
@@ -881,3 +901,84 @@ class SlugifyTestCase(unittest.TestCase):
         self.assertEqual(slugify(u'40文字でわかる！'
             u'　知っておきたいビジネス理論'),
             u'40文字でわかる-知っておきたいビジネス理論')
+
+
+class GetBuylinksTestCase(unittest.TestCase):
+    """Tests for the get_buylinks script
+    """
+
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+            cursor.execute(fb.read())
+
+        from .scripts import get_buylinks
+
+        # Mock command line arguments:
+        # arguments should be appended to self.argv by individual tests
+        import argparse
+        self.argv = ['cnx-archive_get_buylinks', TESTING_CONFIG]
+        argparse._sys.argv = self.argv
+        get_buylinks.argparse = argparse
+
+        # Mock response from plone site:
+        # responses should be assigned to self.responses by individual tests
+        import StringIO
+        import urllib2
+        self.responses = ['']
+        self.response_id = -1
+        def urlopen(url):
+            self.response_id += 1
+            return StringIO.StringIO(self.responses[self.response_id])
+        urllib2.urlopen = urlopen
+        get_buylinks.urllib2 = urllib2
+
+        # Use self.get_buylinks instead of importing it in tests to get all the
+        # mocks
+        self.get_buylinks = get_buylinks
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def get_buylink_from_db(self, cursor, collection_id):
+        from .utils import parse_app_settings
+        settings = parse_app_settings(TESTING_CONFIG)
+        cursor.execute(
+                'SELECT m.buylink FROM modules m WHERE m.moduleid = %(moduleid)s;',
+                {'moduleid': collection_id})
+        return cursor.fetchone()[0]
+
+    def test(self):
+        self.argv.append('col11406')
+        self.argv.append('m42955')
+        self.responses = [
+                # response for col11406
+                "[('title', ''), "
+                "('buyLink', 'http://buy-col11406.com/download')]",
+                # response for m42955
+                "[('title', ''), "
+                "('buyLink', 'http://buy-m42955.com/')]"]
+        self.get_buylinks.main()
+
+        self.assertEqual(self.get_buylink_from_db('col11406'),
+                'http://buy-col11406.com/download')
+        self.assertEqual(self.get_buylink_from_db('m42955'),
+                'http://buy-m42955.com/')
+
+    def test_no_buylink(self):
+        self.argv.append('m42955')
+        self.response = "[('title', '')]"
+        self.get_buylinks.main()
+
+        self.assertEqual(self.get_buylink_from_db('m42955'), None)
+
+    def test_collection_not_in_db(self):
+        self.argv.append('col11522')
+        self.response = ("[('title', ''), "
+                "('buyLink', 'http://buy-col11522.com/download')]")
+        # Just assert that the script does not fail
+        self.get_buylinks.main()

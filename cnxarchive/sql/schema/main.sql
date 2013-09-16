@@ -74,6 +74,7 @@ CREATE TABLE "modules" (
 	"licensors" text[],
 	"parentauthors" text[],
 	"google_analytics" text,
+	"buylink" text,
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
 	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
 	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
@@ -108,7 +109,8 @@ CREATE TABLE "latest_modules" (
 	"maintainers" text[],
 	"licensors" text[],
 	"parentauthors" text[],
-	"google_analytics" text
+	"google_analytics" text,
+	"buylink" text
 );
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
@@ -183,13 +185,15 @@ CREATE VIEW all_modules as
 	SELECT module_ident, uuid, portal_type, moduleid, version, name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
-			authors, maintainers, licensors, parentauthors, google_analytics
+			authors, maintainers, licensors, parentauthors, google_analytics,
+			buylink
 	FROM modules
 	UNION ALL
 	SELECT module_ident, uuid, portal_type, moduleid, 'latest', name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
-			authors, maintainers, licensors, parentauthors, google_analytics
+			authors, maintainers, licensors, parentauthors, google_analytics,
+			buylink
 	FROM latest_modules;
 
 CREATE VIEW current_modules AS
