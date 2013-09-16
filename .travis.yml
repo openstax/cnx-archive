@@ -23,9 +23,11 @@ before_install:
 install:
   - pip install -e . --use-mirrors
 before_script:
-  # Setup postgres roles
+  # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxuser;"
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
+  # Set up the database
+  - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
 script:
   - python -m unittest discover
 
