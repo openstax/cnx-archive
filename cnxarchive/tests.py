@@ -23,8 +23,9 @@ from .database import CONNECTION_SETTINGS_KEY
 os.environ['PGTZ'] = 'America/Whitehorse'
 
 here = os.path.abspath(os.path.dirname(__file__))
-TEST_DATA = os.path.join(here, 'test-data')
-TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA, 'data.sql')
+TEST_DATA_DIRECTORY = os.path.join(here, 'test-data')
+TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'data.sql')
+TESTING_CNXUSER_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'cnx-user.data.sql')
 try:
     TESTING_CONFIG = os.environ['TESTING_CONFIG']
 except KeyError as exc:
@@ -416,9 +417,7 @@ class DBQueryTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
-            cnxuser_data_filepath = os.path.join(TEST_DATA,
-                                                 'cnx-user.data.sql')
-            with open(cnxuser_data_filepath, 'r') as fb:
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
                 cursor.execute(fb.read())
         self._db_connection.commit()
 
@@ -681,18 +680,13 @@ class ViewsTestCase(unittest.TestCase):
             with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
                 cursor.execute(fb.read())
             # Populate the cnx-user shadow.
-            cnxuser_data_filepath = os.path.join(TEST_DATA,
-                                                 'cnx-user.data.sql')
-            with open(cnxuser_data_filepath, 'r') as fb:
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
                 cursor.execute(fb.read())
-            # FIXME This is a temporary fix until the data can be updated.
-            cursor.execute("update modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
-            cursor.execute("update latest_modules set (authors, maintainers, licensors) = ('{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8, 1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}');")
         self._db_connection.commit()
 
         self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA, 'exports'),
-                os.path.join(TEST_DATA, 'exports2')
+                os.path.join(TEST_DATA_DIRECTORY, 'exports'),
+                os.path.join(TEST_DATA_DIRECTORY, 'exports2')
                 ])
         self.settings['exports-allowable-types'] = '''
             pdf:pdf,application/pdf,Portable Document Format (PDF)
@@ -816,7 +810,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
                          "attached; filename=college-physics.pdf")
-        with open(os.path.join(TEST_DATA, 'exports', filename), 'r') as file:
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
         # Test exports can access the other exports directory
@@ -833,7 +827,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
                          "attached; filename=elasticity-stress-and-strain.pdf")
-        with open(os.path.join(TEST_DATA, 'exports2', filename), 'r') as file:
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports2', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
     def test_exports_type_not_supported(self):

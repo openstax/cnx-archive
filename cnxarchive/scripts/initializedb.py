@@ -11,17 +11,39 @@ import sys
 import argparse
 
 import psycopg2
-from ..database import initdb
+from ..database import CONNECTION_SETTINGS_KEY, initdb
 from ..utils import parse_app_settings
+
+
+# FIXME These locations are also 'constants' in the tests module.
+#       The tests module needs refactored before we can import from there.
+here = os.path.abspath(os.path.dirname(__file__))
+TEST_DATA_DIRECTORY = os.path.join(here, '..', 'test-data')
+TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'data.sql')
+TESTING_CNXUSER_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'cnx-user.data.sql')
+EXAMPLE_DATA_FILEPATHS = (
+    TESTING_DATA_SQL_FILE,
+    TESTING_CNXUSER_DATA_SQL_FILE,
+    )
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('config_uri', help="Configuration INI file.")
-
+    parser.add_argument('--with-example-data', action='store_true',
+                        help="Initializes the database with example data.")
     args = parser.parse_args(argv)
+
     settings = parse_app_settings(args.config_uri)
     initdb(settings)
+
+    if args.with_example_data:
+        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        with psycopg2.connect(connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                for filepath in EXAMPLE_DATA_FILEPATHS:
+                    with open(filepath, 'r') as fb:
+                        cursor.execute(fb.read())
     return 0
 
 if __name__ == '__main__':
