@@ -721,6 +721,26 @@ class ViewsTestCase(unittest.TestCase):
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
+    def test_content_without_version(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'ident_hash': "{}".format(uuid)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from .views import get_content
+
+        # Check that the view redirects to the latest version
+        try:
+            get_content(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/contents/{}@1.5'.format(uuid))])
+
     def test_resources(self):
         # Test the retrieval of resources contained in content.
         uuid = 'f45f8378-92db-40ae-ba58-648130038e4b'
@@ -819,10 +839,13 @@ class ViewsTestCase(unittest.TestCase):
         environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
 
         from .views import get_export
-        get_export(environ, self._start_response)
-        self.assertEqual(self.captured_response['status'], '302 Found')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Location', '/exports/{}@1.5.pdf'.format(id)))
+        try:
+            get_export(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/exports/{}@1.5.pdf'.format(id))])
 
     def test_get_exports_allowable_types(self):
         from .views import get_export_allowable_types
