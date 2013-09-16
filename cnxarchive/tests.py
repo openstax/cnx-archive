@@ -819,10 +819,13 @@ class ViewsTestCase(unittest.TestCase):
         environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
 
         from .views import get_export
-        get_export(environ, self._start_response)
-        self.assertEqual(self.captured_response['status'], '302 Found')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Location', '/exports/{}@1.5.pdf'.format(id)))
+        try:
+            get_export(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/exports/{}@1.5.pdf'.format(id))])
 
     def test_get_exports_allowable_types(self):
         from .views import get_export_allowable_types

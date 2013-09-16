@@ -13,10 +13,13 @@ class HTTPException(Exception):
     status = None
     content_type = 'text/plain'
     message = ''
+    headers = None
 
     def __call__(self, environ, start_response):
-        headers = [('Content-type', self.content_type,)]
-        start_response(self.status, headers)
+        if self.headers is None:
+            self.headers = []
+        self.headers.append(('Content-type', self.content_type,))
+        start_response(self.status, self.headers)
         return [self.message]
 
 
@@ -30,3 +33,11 @@ class HTTPInternalServerError(HTTPException):
     """500 Internal Server Error"""
     status = '500 Internal Server Error'
     message = 'Internal server error'
+
+
+class HTTPFound(HTTPException):
+    """302 Found"""
+    status = '302 Found'
+
+    def __init__(self, location):
+        self.headers = [('Location', location,)]

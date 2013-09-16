@@ -121,11 +121,6 @@ def get_export_allowable_types(environ, start_response):
     start_response('200 OK', headers)
     return [json.dumps(TYPE_INFO)]
 
-def redirect(url):
-    status = '302 Found'
-    headers = [('Location', url)]
-    return status, headers
-
 def get_export(environ, start_response):
     """Retrieve an export file."""
     settings = get_settings()
@@ -144,9 +139,8 @@ def get_export(environ, start_response):
                 cursor.execute(SQL['get-module-versions'], {'id': id})
                 try:
                     latest_version = cursor.fetchone()[0]
-                    start_response(*redirect('/exports/{}@{}.{}'.format(
-                        id, latest_version, type)))
-                    return []
+                    raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
+                        id, latest_version, type))
                 except (TypeError, IndexError,): # None returned
                     raise httpexceptions.HTTPNotFound()
             result = get_content_metadata(id, version, cursor)
