@@ -8,24 +8,21 @@
 """Commandline script used to initialize the SQL database."""
 import os
 import sys
+import argparse
 
 import psycopg2
 from ..database import initdb
 from ..utils import parse_app_settings
 
 
-def usage(argv):
-    cmd = os.path.basename(argv[0])
-    print('usage: %s <config_uri>\n'
-          '(example: "%s development.ini")' % (cmd, cmd))
-    sys.exit(1)
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('config_uri', help="Configuration INI file.")
 
-def main(argv=sys.argv):
-    if len(argv) != 2:
-        usage(argv)
-    config_uri = argv[1]
-    try:
-        settings = parse_app_settings(config_uri)
-    except:
-        usage(argv)
+    args = parser.parse_args(argv)
+    settings = parse_app_settings(args.config_uri)
     initdb(settings)
+    return 0
+
+if __name__ == '__main__':
+    main()
