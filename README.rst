@@ -46,7 +46,8 @@ You can then surf to the address printed out by the above command.
 Running tests
 -------------
 
-.. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master   :target: https://travis-ci.org/Connexions/cnx-archive
+.. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master
+   :target: https://travis-ci.org/Connexions/cnx-archive
 
 The tests use the standard library ``unittest`` package and can therefore
 be run with minimal effort. Either of the following will work::

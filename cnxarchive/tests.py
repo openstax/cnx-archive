@@ -466,9 +466,8 @@ class DBQueryTestCase(unittest.TestCase):
                 # Update two modules in include this user as an author.
                 cursor.execute(
                     "UPDATE latest_modules SET (authors) = (%s) "
-                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
-                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
-                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+                    "WHERE module_ident = %s OR module_ident = %s;",
+                    ([user_id], 2, 3,))
             db_connection.commit()
 
         results = db_query()
@@ -552,9 +551,8 @@ class DBQueryTestCase(unittest.TestCase):
                 # Update two modules in include this user as a maintainer.
                 cursor.execute(
                     "UPDATE latest_modules SET (maintainers) = (%s) "
-                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
-                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
-                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+                    "WHERE module_ident = %s OR module_ident = %s;",
+                    ([user_id], 2, 3,))
             db_connection.commit()
 
         results = db_query()
@@ -610,9 +608,8 @@ class DBQueryTestCase(unittest.TestCase):
                 # Update two modules in include this user as a parent author.
                 cursor.execute(
                     "UPDATE latest_modules SET (parentauthors) = (%s) "
-                    "WHERE uuid = %s::uuid OR uuid = %s::uuid;",
-                    ([user_id], 'bdf58c1d-c738-478b-aea3-0c00df8f617c',
-                     'bf8c0d8f-1255-47eb-9f17-83705ae4b16f',))
+                    "WHERE module_ident = %s OR module_ident = %s;",
+                    ([user_id], 2, 3,))
             db_connection.commit()
 
         results = db_query()
@@ -626,18 +623,18 @@ class DBQueryTestCase(unittest.TestCase):
         results = db_query()
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][2],
-                         'b1509954-7460-43a4-8c52-262f1ddd7f2f')
+                         'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         db_query = self.make_one(query_params)
         _same_date = '2113-01-01 00:00:00 America/New_York'
-        expectations = [('e3f8051d-7fde-4f14-92f6-7f31019887b3',
+        expectations = [('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
                          _same_date,),  # this one has a higher weight.
-                        ('bdf58c1d-c738-478b-aea3-0c00df8f617c',
+                        ('c8bdbabc-62b1-4a5f-b291-982ab25756d7',
                          _same_date,),
-                        ('bf8c0d8f-1255-47eb-9f17-83705ae4b16f',
+                        ('5152cea8-829a-4aaf-bcc5-c58a416ecb66',
                          '2112-01-01 00:00:00 America/New_York',),
                         ]
 

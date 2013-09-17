@@ -123,11 +123,13 @@ CREATE OR REPLACE FUNCTION update_latest() RETURNS trigger AS '
 BEGIN
   IF TG_OP = ''INSERT'' THEN
       DELETE FROM latest_modules WHERE moduleid = NEW.moduleid;
-      INSERT into latest_modules ( module_ident,portal_type,moduleid, version, name,
+      INSERT into latest_modules (
+                uuid, module_ident, portal_type, moduleid, version, name,
   		created, revised, abstractid, stateid, doctype, licenseid,
   		submitter,submitlog, parent, language,
 		authors, maintainers, licensors, parentauthors, google_analytics)
-  	VALUES ( NEW.module_ident,NEW.portal_type,NEW.moduleid, NEW.version, NEW.name,
+  	VALUES (
+         NEW.uuid, NEW.module_ident, NEW.portal_type, NEW.moduleid, NEW.version, NEW.name,
   	 NEW.created, NEW.revised, NEW.abstractid, NEW.stateid, NEW.doctype, NEW.licenseid,
   	 NEW.submitter, NEW.submitlog, NEW.parent, NEW.language,
 	 NEW.authors, NEW.maintainers, NEW.licensors, NEW.parentauthors, NEW.google_analytics );
@@ -135,6 +137,7 @@ BEGIN
 
   IF TG_OP = ''UPDATE'' THEN
       UPDATE latest_modules SET
+        uuid=NEW.uuid,
         moduleid=NEW.moduleid,
         portal_type=NEW.portal_type,
         version=NEW.version,
