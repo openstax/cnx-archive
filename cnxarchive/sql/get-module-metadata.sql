@@ -15,7 +15,24 @@ FROM (SELECT
   m.submitter, m.submitlog, m.portal_type as "mediaType",
   a.abstract,
   p.uuid AS "parentId", p.version AS "parentVersion",
-  m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT id, email, firstname, othername, surname, fullname,
+                title, suffix, website
+         FROM users
+         WHERE users.id::text = ANY (m.authors)
+         ) as user_rows) as authors,
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT id, email, firstname, othername, surname, fullname,
+                title, suffix, website
+         FROM users
+         WHERE users.id::text = ANY (m.maintainers)
+         ) as user_rows) as maintainers,
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT id, email, firstname, othername, surname, fullname,
+                title, suffix, website
+         FROM users
+         WHERE users.id::text = ANY (m.licensors)
+         ) user_rows) as licensors,
   COALESCE(m.parentauthors,
            ARRAY(select ''::text where false)) as "parentAuthors",
   m.language as language,
