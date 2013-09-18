@@ -210,20 +210,11 @@ SEARCH_RESULTS_1 = {
         }
 
 
-class MockDBQuery(object):
-
-    def __init__(self, query):
-        self.filters = [q for q in query if q[0] == 'type']
-        self.sorts = [q[1] for q in query if q[0] == 'sort']
-        self.query = [q for q in query
-                      if q not in self.filters and q[0] != 'sort']
-
-    def __call__(self):
-        if MockDBQuery.result_set == 1:
-            return [
-                    ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
-                    ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
-                    ]
+def mock_search(query):
+    return [
+        ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
+        ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
+        ]
 
 
 def db_connect(method):
@@ -360,6 +351,44 @@ class RoutingTest(unittest.TestCase):
         self.assertEqual(environ['wsgiorg.routing_args'],
                          {'id': id})
 
+
+RAW_QUERY_RECORDS = [
+    ({u'_keys': u'physics-::-abstract;--;physics-::-maintainer;--;physics-::-title;--;physics-::-title',
+      u'fields': u'',
+      u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
+      u'language': u'en',
+      u'matched': u'',
+      u'mediaType': u'Collection',
+      u'pubDate': u'2013-07-31 15:07:20.342798-04',
+      u'sortTitle': u'College Physics',
+      u'title': u'College Physics',
+      u'version': u'1.7',
+      u'weight': 121},),
+    ({u'_keys': u'physics-::-maintainer;--;physics-::-title;--;physics-::-title',
+      u'fields': u'',
+      u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
+      u'language': u'en',
+      u'matched': u'',
+      u'mediaType': u'Module',
+      u'pubDate': u'2013-07-31 15:07:20.542211-04',
+      u'sortTitle': u'Preface to College Physics',
+      u'title': u'Preface to College Physics',
+      u'version': u'1.7',
+      u'weight': 120},),
+    ({u'_keys': u'physics-::-maintainer;--;physics-::-title',
+      u'fields': u'',
+      u'id': u'bace454a-6c56-443f-8422-6ea9c4d5e6c0',
+      u'language': u'en',
+      u'matched': u'',
+      u'mediaType': u'Module',
+      u'pubDate': u'2013-07-31 15:07:20.590652-04',
+      u'sortTitle': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units',
+      u'title': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units',
+      u'version': u'1.3',
+      u'weight': 20},),
+    ]
+
+
 class PostgresqlFixture:
     """A testing fixture for a live (same as production) SQL database.
     This will set up the database once for a test case. After each test
@@ -368,6 +397,7 @@ class PostgresqlFixture:
     On a personal note, this seems archaic... Why can't I rollback to a
     transaction?
     """
+    is_set_up = False
 
     def __init__(self):
         # Configure the database connection.
@@ -383,9 +413,13 @@ class PostgresqlFixture:
         cursor.execute("CREATE SCHEMA public")
 
     def setUp(self):
+        if self.is_set_up:
+            # Failed to clean up after last use.
+            self.tearDown()
         # Initialize the database schema.
         from .database import initdb
         initdb(self._settings)
+        self.is_set_up = True
 
     def tearDown(self):
         # Drop all tables.
@@ -394,7 +428,7 @@ class PostgresqlFixture:
 postgresql_fixture = PostgresqlFixture()
 
 
-class DBQueryTestCase(unittest.TestCase):
+class SearchTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
     @classmethod
@@ -426,24 +460,23 @@ class DBQueryTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def make_one(self, *args, **kwargs):
+    def call_target(self, query_params):
         # Single point of import failure.
-        from .search import DBQuery
-        return DBQuery(*args, **kwargs)
+        from .search import search, Query
+        query = Query(query_params)
+        return search(query)
 
     def test_title_search(self):
         # Simple case to test for results of a basic title search.
         query_params = [('title', 'Physics')]
-        db_query = self.make_one(query_params)
-        results = db_query()
+        results = self.call_target(query_params)
 
         self.assertEqual(len(results), 4)
 
     def test_abstract_search(self):
         # Test for result on an abstract search.
         query_params = [('abstract', 'algebra')]
-        db_query = self.make_one(query_params)
-        results = db_query()
+        results = self.call_target(query_params)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][6], 'algebra-::-abstract')
@@ -452,7 +485,6 @@ class DBQueryTestCase(unittest.TestCase):
         # Test the results of an author search.
         user_id = str(uuid.uuid4())
         query_params = [('author', 'Jill')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -470,14 +502,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_editor_search(self):
         # Test the results of an editor search.
         user_id = str(uuid.uuid4())
         query_params = [('editor', 'jmiller@example.com')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -500,14 +531,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_licensor_search(self):
         # Test the results of a licensor search.
         user_id = str(uuid.uuid4())
         query_params = [('licensor', 'jmiller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -530,14 +560,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_maintainer_search(self):
         # Test the results of a maintainer search.
         user_id = str(uuid.uuid4())
         query_params = [('maintainer', 'Miller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -555,14 +584,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_translator_search(self):
         # Test the results of a translator search.
         user_id = str(uuid.uuid4())
         query_params = [('translator', 'jmiller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -585,7 +613,7 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_parentauthor_search(self):
@@ -594,7 +622,6 @@ class DBQueryTestCase(unittest.TestCase):
         # FIXME parentauthor is only searchable by user id, not by name
         #       like the other user based columns. Inconsistent behavior...
         query_params = [('parentauthor', user_id)]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -612,15 +639,14 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.
         query_params = [('text', 'physics'), ('type', 'book')]
-        db_query = self.make_one(query_params)
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][2],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
@@ -628,7 +654,6 @@ class DBQueryTestCase(unittest.TestCase):
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
-        db_query = self.make_one(query_params)
         _same_date = '2113-01-01 00:00:00 America/New_York'
         expectations = [('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
                          _same_date,),  # this one has a higher weight.
@@ -647,7 +672,7 @@ class DBQueryTestCase(unittest.TestCase):
                         "WHERE uuid = %s::uuid;", (date, id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 15)
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i][2], id)
@@ -923,8 +948,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Mock DBQuery
         import views
-        views.DBQuery = MockDBQuery
-        MockDBQuery.result_set = 1
+        views.database_search = mock_search
 
         from .views import search
         results = search(environ, self._start_response)[0]
