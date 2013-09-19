@@ -12,8 +12,10 @@ Getting started
 This will require a 'Postgres' version 9.3 install
 and the 'plpythonu' extension.
 If you are using the ``development.ini`` configuration file,
-you'll want to set up a ``cnxarchive`` database for user ``cnxarchive``
-with the password ``cnxarchive``.
+you'll want to set up a ``cnxarchive`` database for superuser ``cnxarchive``
+with the password ``cnxarchive``. Currently, the user needs superuser access
+for creaeting pythonplu methods. Eventually, we will drop that requirement
+for runtime.
 
 Before installing cnx-archive, you need to first install its dependencies::
 
