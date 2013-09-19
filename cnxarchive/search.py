@@ -95,6 +95,23 @@ class QueryRecord(Mapping):
     def __len__(self):
         return len(self._record)
 
+    @property
+    def highlighted_abstract(self):
+        """Highlight the found terms in the abstract text."""
+        abstract = self['abstract']
+        start_elm = '<span class=\"search-highlight\">'
+        end_elm = '</span>'
+        for term in self.fields['abstract']:
+            start_at = 0
+            term_len = len(term)
+            while start_at < len(abstract):
+                i = abstract.find(term, start_at)
+                if i < 0: break
+                abstract = abstract[:i] + start_elm \
+                           + abstract[i:i+term_len] \
+                           + end_elm + abstract[i+term_len:]
+                start_at = i + len(start_elm) + term_len + len(end_elm)
+        return abstract
 
 class QueryResults(Sequence):
     """A listing of query results as well as hit counts and the parsed query

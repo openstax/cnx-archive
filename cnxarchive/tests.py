@@ -175,6 +175,9 @@ MODULE_METADATA = {
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
 
+with open(os.path.join(TEST_DATA, 'raw-search-rows.json'), 'r') as fb:
+    # Search results for a search on 'physics'.
+    RAW_QUERY_RECORDS = json.load(fb)
 SEARCH_RESULTS_1 = {
         u'query': {
             u'limits': [
@@ -352,41 +355,15 @@ class RoutingTest(unittest.TestCase):
                          {'id': id})
 
 
-RAW_QUERY_RECORDS = [
-    ({u'_keys': u'physics-::-abstract;--;physics-::-maintainer;--;physics-::-title;--;physics-::-title',
-      u'fields': u'',
-      u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
-      u'language': u'en',
-      u'matched': u'',
-      u'mediaType': u'Collection',
-      u'pubDate': u'2013-07-31 15:07:20.342798-04',
-      u'sortTitle': u'College Physics',
-      u'title': u'College Physics',
-      u'version': u'1.7',
-      u'weight': 121},),
-    ({u'_keys': u'physics-::-maintainer;--;physics-::-title;--;physics-::-title',
-      u'fields': u'',
-      u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
-      u'language': u'en',
-      u'matched': u'',
-      u'mediaType': u'Module',
-      u'pubDate': u'2013-07-31 15:07:20.542211-04',
-      u'sortTitle': u'Preface to College Physics',
-      u'title': u'Preface to College Physics',
-      u'version': u'1.7',
-      u'weight': 120},),
-    ({u'_keys': u'physics-::-maintainer;--;physics-::-title',
-      u'fields': u'',
-      u'id': u'bace454a-6c56-443f-8422-6ea9c4d5e6c0',
-      u'language': u'en',
-      u'matched': u'',
-      u'mediaType': u'Module',
-      u'pubDate': u'2013-07-31 15:07:20.590652-04',
-      u'sortTitle': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units',
-      u'title': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units',
-      u'version': u'1.3',
-      u'weight': 20},),
-    ]
+class SearchModelTestCase(unittest.TestCase):
+
+    def test_summary_highlighting(self):
+        # Confirm the record highlights on found items in the abstract/summary.
+        from .search import QueryRecord
+        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
+
+        expected = """This introductory, algebra-based, two-semester college <span class="search-highlight">physics</span> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <span class="search-highlight">physics</span> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <span class="search-highlight">physics</span> application problems."""
+        self.assertEqual(record.highlighted_abstract, expected)
 
 
 class PostgresqlFixture:
