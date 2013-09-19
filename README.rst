@@ -12,8 +12,10 @@ Getting started
 This will require a 'Postgres' version 9.3 install
 and the 'plpythonu' extension.
 If you are using the ``development.ini`` configuration file,
-you'll want to set up a ``cnxarchive`` database for user ``cnxarchive``
-with the password ``cnxarchive``.
+you'll want to set up a ``cnxarchive`` database for superuser ``cnxarchive``
+with the password ``cnxarchive``. Currently, the user needs superuser access
+for creaeting pythonplu methods. Eventually, we will drop that requirement
+for runtime.
 
 Before installing cnx-archive, you need to first install its dependencies::
 
@@ -50,7 +52,12 @@ Running tests
    :target: https://travis-ci.org/Connexions/cnx-archive
 
 The tests use the standard library ``unittest`` package and can therefore
-be run with minimal effort. Either of the following will work::
+be run with minimal effort. Make a testing config, such as testing.ini,
+and set the environment variable ``TESTING_CONFIG`` to the name of that file::
+
+    export TESTING_CONFIG=testing.ini
+
+Then, either of the following will work::
 
     $ python -m unittest discover
     $ python setup.py test
