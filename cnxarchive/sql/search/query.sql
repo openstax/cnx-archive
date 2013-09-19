@@ -12,10 +12,12 @@ SELECT
                 title, suffix, website
          FROM users
          WHERE users.id::text = ANY (lm.authors)
-         ) as user_rows) as authors
+         ) as user_rows) as authors,
+  a.abstract as abstract
 -- Only retrieve the most recent published modules.
 FROM
-  latest_modules lm,
+  latest_modules lm
+    LEFT JOIN abstracts a on lm.abstractid = a.abstractid,
   (SELECT
      module_ident,
      cast (sum(weight) as bigint) as weight,
