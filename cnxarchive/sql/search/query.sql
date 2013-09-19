@@ -1,3 +1,6 @@
+SELECT row_to_json(combined_rows) as results
+FROM (
+
 SELECT
   lm.name as title, title_order(lm.name) as "sortTitle",
   lm.uuid as id, lm.version as version, language,
@@ -19,4 +22,6 @@ WHERE
   weighted.module_ident = lm.module_ident
   {}
 ORDER BY {}
+
+) as combined_rows
 ;

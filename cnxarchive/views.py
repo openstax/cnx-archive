@@ -200,11 +200,11 @@ def search(environ, start_response):
             'sort': query.sorts,
             }
     results['results'] = {'total': len(db_results), 'items': []}
-    for i in db_results:
+    for record in db_results:
         results['results']['items'].append({
-            'id': i[2],
-            'type': MEDIA_TYPES.get(i[9], i[9]),
-            'title': i[0],
+            'id': record['id'],
+            'mediaType': record['mediaType'],
+            'title': record['title'],
             'authors': [], # TODO not in db_results
             'keywords': [], # TODO not in db_results
             'summarySnippet': None, # TODO not in db_results

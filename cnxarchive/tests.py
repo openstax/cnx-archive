@@ -479,7 +479,7 @@ class SearchTestCase(unittest.TestCase):
         results = self.call_target(query_params)
 
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0][6], 'algebra-::-abstract')
+        self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
     def test_author_search(self):
         # Test the results of an author search.
@@ -648,7 +648,7 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0][2],
+        self.assertEqual(results[0]['id'],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
     def test_sort_filter_on_pubdate(self):
@@ -675,7 +675,7 @@ class SearchTestCase(unittest.TestCase):
         results = self.call_target(query_params)
         self.assertEqual(len(results), 15)
         for i, (id, date) in enumerate(expectations):
-            self.assertEqual(results[i][2], id)
+            self.assertEqual(results[i]['id'], id)
 
 
 class ViewsTestCase(unittest.TestCase):

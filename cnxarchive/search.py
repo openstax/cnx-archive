@@ -7,7 +7,7 @@
 # ###
 """Database search utilties"""
 import os
-from collections import OrderedDict
+from collections import Mapping, OrderedDict, Sequence
 
 import psycopg2
 from cnxquerygrammar.query_parser import grammar, DictFormater
@@ -48,6 +48,8 @@ def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql'):
 SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql')
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
 SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
+QUERY_FIELD_ITEM_SEPARATOR = ';--;'
+QUERY_FIELD_PAIR_SEPARATOR = '-::-'
 
 
 class Query:
@@ -67,6 +69,46 @@ class Query:
         node_tree = grammar.parse(query_string)
         structured_query = DictFormater().visit(node_tree)
         return cls(structured_query)
+
+
+class QueryRecord(Mapping):
+    """A query record wrapper to parse hit values and add behavior."""
+
+    def __init__(self, **kwargs):
+        self._record = {k:v for k, v in kwargs.items()
+                        if k not in ('_keys', 'matched', 'fields',)}
+        self.matched = {}
+        self.fields = {}
+        # Parse the matching fields
+        for field_record in kwargs['_keys'].split(QUERY_FIELD_ITEM_SEPARATOR):
+            term, key = field_record.split(QUERY_FIELD_PAIR_SEPARATOR)
+            self.matched.setdefault(term, set()).add(key)
+            self.fields.setdefault(key, set()).add(term)
+        self.match_hits = (self.matched, self.fields)
+
+    def __getitem__(self, key):
+        return self._record[key]
+
+    def __iter__(self):
+        return iter(self._record)
+
+    def __len__(self):
+        return len(self._record)
+
+
+class QueryResults(Sequence):
+    """A listing of query results as well as hit counts and the parsed query
+    string.
+    """
+
+    def __init__(self, rows):
+        self._records = [QueryRecord(**r[0]) for r in rows]
+
+    def __getitem__(self, index):
+        return self._records[index]
+
+    def __len__(self):
+        return len(self._records)
 
 
 def _transmute_filter(keyword, value):
@@ -220,4 +262,5 @@ def search(query, weights=DEFAULT_SEARCH_WEIGHTS):
             cursor.execute(statement, arguments)
             search_results = cursor.fetchall()
 
-    return search_results
+    # Wrap the SQL results.
+    return QueryResults(search_results)
