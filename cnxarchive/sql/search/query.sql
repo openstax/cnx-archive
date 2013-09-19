@@ -6,7 +6,13 @@ SELECT
   lm.uuid as id, lm.version as version, language,
   weight, keys as _keys, '' as matched, '' as fields,
   lm.portal_type as "mediaType",
-  lm.created as "pubDate"
+  lm.created as "pubDate",
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT id, email, firstname, othername, surname, fullname,
+                title, suffix, website
+         FROM users
+         WHERE users.id::text = ANY (lm.authors)
+         ) as user_rows) as authors
 -- Only retrieve the most recent published modules.
 FROM
   latest_modules lm,
