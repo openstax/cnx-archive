@@ -50,7 +50,12 @@ Running tests
    :target: https://travis-ci.org/Connexions/cnx-archive
 
 The tests use the standard library ``unittest`` package and can therefore
-be run with minimal effort. Either of the following will work::
+be run with minimal effort. Make a testing config, such as testing.ini,
+and set the environment variable ``TESTING_CONFIG`` to the name of that file::
+
+    export TESTING_CONFIG=testing.ini
+
+Then, either of the following will work::
 
     $ python -m unittest discover
     $ python setup.py test
