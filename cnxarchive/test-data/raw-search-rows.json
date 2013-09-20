@@ -1,7 +1,7 @@
 [
   [
     {
-      "_keys": "physics-::-abstract;--;physics-::-maintainer;--;physics-::-title;--;physics-::-title",
+      "_keys": "physics-::-abstract;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-maintainer;--;physics-::-title;--;physics-::-title",
       "abstract": "This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.",
       "authors": [
         {
@@ -17,20 +17,74 @@
         }
       ],
       "fields": "",
-      "id": "b1509954-7460-43a4-8c52-262f1ddd7f2f",
+      "id": "e79ffde3-7fb4-4af3-9ec8-df648b391597",
+      "keywords": [
+        "college physics",
+        "physics",
+        "friction",
+        "ac circuits",
+        "atomic physics",
+        "bioelectricity",
+        "biological and medical applications",
+        "circuits",
+        "collisions",
+        "dc instruments",
+        "drag",
+        "elasticity",
+        "electric charge and electric field",
+        "electric current",
+        "electric potential",
+        "electrical technologies",
+        "electromagnetic induction",
+        "electromagnetic waves",
+        "energy",
+        "fluid dynamics",
+        "fluid statics",
+        "forces",
+        "frontiers of physics",
+        "gas laws",
+        "geometric optics",
+        "heat and transfer methods",
+        "kinematics",
+        "kinetic theory",
+        "linear momentum",
+        "magnetism",
+        "medical applications of nuclear physics",
+        "Newton\u2019s Laws of Motion",
+        "Ohm\u2019s Law",
+        "oscillatory motion and waves",
+        "particle physics",
+        "physics of hearing",
+        "quantum physics",
+        "radioactivity and nuclear physics",
+        "resistance",
+        "rotational motion and angular momentum",
+        "special relativity",
+        "statics and torque",
+        "temperature",
+        "thermodynamics",
+        "uniform circular motion and gravitation",
+        "vision and optical instruments",
+        "wave optics",
+        "work"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Collection",
       "pubDate": "2013-07-31 12:07:20.342798-07",
       "sortTitle": "College Physics",
+      "subjects": [
+        "Mathematics and Statistics",
+        "Science and Technology"
+      ],
       "title": "College Physics",
       "version": "1.7",
-      "weight": 121
+      "weight": 211
     }
   ],
   [
     {
-      "_keys": "physics-::-maintainer;--;physics-::-title;--;physics-::-title",
+      "_keys": "physics-::-keyword;--;physics-::-keyword;--;physics-::-maintainer;--;physics-::-title;--;physics-::-title",
       "abstract": null,
       "authors": [
         {
@@ -46,20 +100,28 @@
         }
       ],
       "fields": "",
-      "id": "85baef5b-acd6-446e-99bf-f2204caa25bc",
+      "id": "209deb1f-1a46-4369-9e0d-18674cf58a3e",
+      "keywords": [
+        "college physics",
+        "introduction",
+        "physics"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:20.542211-07",
       "sortTitle": "Preface to College Physics",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Preface to College Physics",
       "version": "1.7",
-      "weight": 120
+      "weight": 140
     }
   ],
   [
     {
-      "_keys": "physics-::-maintainer;--;physics-::-title",
+      "_keys": "physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-maintainer;--;physics-::-title",
       "abstract": null,
       "authors": [
         {
@@ -75,20 +137,53 @@
         }
       ],
       "fields": "",
-      "id": "bace454a-6c56-443f-8422-6ea9c4d5e6c0",
+      "id": "f3c9ab70-a916-4d8c-9256-42953287b4e9",
+      "keywords": [
+        "Accuracy",
+        "Approximation",
+        "Classical physics",
+        "Conversion factor",
+        "Customary system",
+        "Derived units",
+        "English units",
+        "Fundamental units",
+        "Kilogram",
+        "Law",
+        "Meter",
+        "Metric system",
+        "Model",
+        "Modern physics",
+        "Order of magnitude",
+        "Percent uncertainty",
+        "Physical quantity",
+        "Physics",
+        "Precision",
+        "Quantum mechanics",
+        "Relativity",
+        "Scientific method",
+        "Second",
+        "Significant figures",
+        "SI units",
+        "Theory",
+        "Uncertainty",
+        "Units"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:20.590652-07",
       "sortTitle": "Introduction to Science and the Realm of Physics, Physical Quantities, and Units",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Introduction to Science and the Realm of Physics, Physical Quantities, and Units",
       "version": "1.3",
-      "weight": 20
+      "weight": 50
     }
   ],
   [
     {
-      "_keys": "physics-::-maintainer;--;physics-::-title",
+      "_keys": "physics-::-keyword;--;physics-::-keyword;--;physics-::-keyword;--;physics-::-maintainer;--;physics-::-title",
       "abstract": null,
       "authors": [
         {
@@ -104,15 +199,29 @@
         }
       ],
       "fields": "",
-      "id": "e3f8051d-7fde-4f14-92f6-7f31019887b3",
+      "id": "d395b566-5fe3-4428-bcb2-19016e3aa3ce",
+      "keywords": [
+        "Classical physics",
+        "Law",
+        "Model",
+        "Modern physics",
+        "Physics",
+        "Quantum mechanics",
+        "Relativity",
+        "Scientific method",
+        "Theory"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:20.75499-07",
       "sortTitle": "Physics: An Introduction",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Physics: An Introduction",
       "version": "1.4",
-      "weight": 20
+      "weight": 50
     }
   ],
   [
@@ -133,12 +242,30 @@
         }
       ],
       "fields": "",
-      "id": "bdf58c1d-c738-478b-aea3-0c00df8f617c",
+      "id": "c8bdbabc-62b1-4a5f-b291-982ab25756d7",
+      "keywords": [
+        "Conversion factor",
+        "Customary system",
+        "Derived units",
+        "English units",
+        "Fundamental units",
+        "Kilogram",
+        "Meter",
+        "Metric system",
+        "Order of magnitude",
+        "Physical quantity",
+        "Second",
+        "SI units",
+        "Units"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:21.597444-07",
       "sortTitle": "Physical Quantities and Units",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Physical Quantities and Units",
       "version": "1.6",
       "weight": 10
@@ -162,12 +289,22 @@
         }
       ],
       "fields": "",
-      "id": "bf8c0d8f-1255-47eb-9f17-83705ae4b16f",
+      "id": "5152cea8-829a-4aaf-bcc5-c58a416ecb66",
+      "keywords": [
+        "Accuracy",
+        "Percent uncertainty",
+        "Precision",
+        "Significant figures",
+        "Uncertainty"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:21.833994-07",
       "sortTitle": "Accuracy, Precision, and Significant Figures",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Accuracy, Precision, and Significant Figures",
       "version": "1.7",
       "weight": 10
@@ -191,12 +328,18 @@
         }
       ],
       "fields": "",
-      "id": "226efed9-406f-4c9e-91ac-97e61d4f6016",
+      "id": "5838b105-41cd-4c3d-a957-3ac004a48af3",
+      "keywords": [
+        "Approximation"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:22.245879-07",
       "sortTitle": "Approximation",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Approximation",
       "version": "1.5",
       "weight": 10
@@ -220,12 +363,42 @@
         }
       ],
       "fields": "",
-      "id": "0e997d5d-f19e-4257-b3a4-ed4b695613f0",
+      "id": "24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d",
+      "keywords": [
+        "bulk modulus",
+        "compression",
+        "deformation",
+        "drag coefficient",
+        "drag force",
+        "force",
+        "friction",
+        "Hooke\u2019s law",
+        "kinetic friction",
+        "length",
+        "magnitude",
+        "magnitude of kinetic friction",
+        "magnitude of static friction",
+        "motion",
+        "normal force",
+        "position",
+        "shear modulus",
+        "sliding friction",
+        "static friction",
+        "Stokes\u2019 law",
+        "strain",
+        "stress",
+        "tension",
+        "velocity",
+        "Young\u2019s modulus"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:22.410554-07",
       "sortTitle": "Introduction: Further Applications of Newton\u2019s Laws",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Introduction: Further Applications of Newton\u2019s Laws",
       "version": "1.2",
       "weight": 10
@@ -249,12 +422,26 @@
         }
       ],
       "fields": "",
-      "id": "4d3a440a-e952-4d28-9833-43e8e6af4678",
+      "id": "ea271306-f7f2-46ac-b2ec-1d80ff186a59",
+      "keywords": [
+        "force",
+        "friction",
+        "kinetic friction",
+        "magnitude",
+        "magnitude of kinetic friction",
+        "magnitude of static friction",
+        "normal force",
+        "sliding friction",
+        "static friction"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:22.528746-07",
       "sortTitle": "Friction",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Friction",
       "version": "1.5",
       "weight": 10
@@ -278,12 +465,22 @@
         }
       ],
       "fields": "",
-      "id": "3f2e65d8-4280-48b3-9f74-241a79107b1d",
+      "id": "26346a42-84b9-48ad-9f6a-62303c16ad41",
+      "keywords": [
+        "drag coefficient",
+        "drag force",
+        "friction",
+        "Stokes\u2019 law",
+        "velocity"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:24.211068-07",
       "sortTitle": "Drag Forces",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Drag Forces",
       "version": "1.6",
       "weight": 10
@@ -307,12 +504,30 @@
         }
       ],
       "fields": "",
-      "id": "66d33adb-18ac-41d3-a670-aab043249ab6",
+      "id": "56f1c5c1-4014-450d-a477-2121e276beca",
+      "keywords": [
+        "bulk modulus",
+        "compression",
+        "deformation",
+        "force",
+        "Hooke\u2019s law",
+        "length",
+        "shear modulus",
+        "strain",
+        "stress",
+        "tension",
+        "Young\u2019s modulus",
+        "shear deformation",
+        "tensile strength"
+      ],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:24.856663-07",
       "sortTitle": "Elasticity: Stress and Strain",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Elasticity: Stress and Strain",
       "version": "1.8",
       "weight": 10
@@ -336,12 +551,16 @@
         }
       ],
       "fields": "",
-      "id": "6ff498d2-7e46-44bb-b5a7-884cfb9498dd",
+      "id": "f6024d8a-1868-44c7-ab65-45419ef54881",
+      "keywords": [],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:25.422884-07",
       "sortTitle": "Atomic Masses",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Atomic Masses",
       "version": "1.3",
       "weight": 10
@@ -365,12 +584,16 @@
         }
       ],
       "fields": "",
-      "id": "4482949e-3cf9-4bca-ab01-42e9e4dbb3af",
+      "id": "7250386b-14a7-41a2-b8bf-9e9ab872f0dc",
+      "keywords": [],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:25.542258-07",
       "sortTitle": "Selected Radioactive Isotopes",
+      "subjects": [
+        "Mathematics and Statistics"
+      ],
       "title": "Selected Radioactive Isotopes",
       "version": "1.2",
       "weight": 10
@@ -394,12 +617,16 @@
         }
       ],
       "fields": "",
-      "id": "58de10e4-2928-4f51-ac07-a346221762df",
+      "id": "c0a76659-c311-405f-9a99-15c71af39325",
+      "keywords": [],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:25.616481-07",
       "sortTitle": "Useful Information",
+      "subjects": [
+        "Science and Technology"
+      ],
       "title": "Useful Information",
       "version": "1.5",
       "weight": 10
@@ -423,12 +650,14 @@
         }
       ],
       "fields": "",
-      "id": "ef9dbcc6-e78b-4a12-8c42-a96f912dcf7f",
+      "id": "ae3e18de-638d-4738-b804-dc69cd4db3a3",
+      "keywords": [],
       "language": "en",
       "matched": "",
       "mediaType": "Module",
       "pubDate": "2013-07-31 12:07:25.745201-07",
       "sortTitle": "Glossary of Key Symbols and Notation",
+      "subjects": [],
       "title": "Glossary of Key Symbols and Notation",
       "version": "1.4",
       "weight": 10

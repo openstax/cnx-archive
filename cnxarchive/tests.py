@@ -380,6 +380,15 @@ class SearchModelTestCase(unittest.TestCase):
                          {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
         # Check counts for publication year.
         self.assertEqual(results.counts['pubYear'], {u'2013': 15})
+        # Check the subject counts.
+        self.assertEqual(results.counts['subject'],
+                         {u'Mathematics and Statistics': 8,
+                          u'Science and Technology': 7,
+                          })
+        # Check the keyword counts.
+        self.assertEqual(results.counts['keyword']['Modern physics'], 2)
+        self.assertEqual(results.counts['keyword']['particle physics'], 1)
+        self.assertEqual(results.counts['keyword']['force'], 3)
 
 
 class PostgresqlFixture:

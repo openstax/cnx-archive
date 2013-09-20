@@ -127,8 +127,8 @@ class QueryResults(Sequence):
         self._records = [QueryRecord(**r[0]) for r in rows]
         self.counts = {
             'mediaType': self._count_media(),
-            'subject': None,
-            'keyword': None,
+            'subject': self._count_field('subjects'),
+            'keyword': self._count_field('keywords'),
             'author': self._count_authors(),
             'pubYear': self._count_publication_year(),
             }
@@ -138,6 +138,14 @@ class QueryResults(Sequence):
 
     def __len__(self):
         return len(self._records)
+
+    def _count_field(self, field_name):
+        counts = {}
+        for rec in self._records:
+            for value in rec[field_name]:
+                counts.setdefault(value, 0)
+                counts[value] += 1
+        return counts
 
     def _count_media(self):
         counts = {
