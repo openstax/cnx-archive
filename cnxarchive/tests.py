@@ -175,7 +175,7 @@ MODULE_METADATA = {
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
 
-with open(os.path.join(TEST_DATA, 'raw-search-rows.json'), 'r') as fb:
+with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
     # Search results for a search on 'physics'.
     RAW_QUERY_RECORDS = json.load(fb)
 SEARCH_RESULTS_1 = {
