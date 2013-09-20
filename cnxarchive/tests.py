@@ -34,7 +34,7 @@ except KeyError as exc:
 
 COLLECTION_METADATA = {
     u'roles': None,
-    u'subject': u'',
+    u'subject': u'Mathematics and Statistics,Science and Technology',
     u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
@@ -127,7 +127,7 @@ COLLECTION_JSON_TREE = {
     }
 MODULE_METADATA = {
     u'roles': None,
-    u'subject': u'',
+    u'subject': u'Science and Technology',
     u'abstract': None,
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
