@@ -7,6 +7,7 @@
 # ###
 """Database search utilties"""
 import os
+import json
 from collections import Mapping, OrderedDict, Sequence
 
 import psycopg2
@@ -14,6 +15,9 @@ from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
 from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
+from .utils import (
+    portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
+    )
 
 
 __all__ = ('search', 'Query',)
@@ -113,6 +117,7 @@ class QueryRecord(Mapping):
                 start_at = i + len(start_elm) + term_len + len(end_elm)
         return abstract
 
+
 class QueryResults(Sequence):
     """A listing of query results as well as hit counts and the parsed query
     string.
@@ -120,12 +125,48 @@ class QueryResults(Sequence):
 
     def __init__(self, rows):
         self._records = [QueryRecord(**r[0]) for r in rows]
+        self.counts = {
+            'mediaType': self._count_media(),
+            'subject': None,
+            'keyword': None,
+            'author': self._count_authors(),
+            'pubYear': self._count_publication_year(),
+            }
 
     def __getitem__(self, index):
         return self._records[index]
 
     def __len__(self):
         return len(self._records)
+
+    def _count_media(self):
+        counts = {
+            MODULE_MIMETYPE: 0,
+            COLLECTION_MIMETYPE: 0,
+            }
+        for rec in self._records:
+            counts[portaltype_to_mimetype(rec['mediaType'])] += 1
+        return counts
+
+    def _count_authors(self):
+        counts = {}
+        for rec in self._records:
+            for author in rec['authors']:
+                uid = author['id']
+                counts.setdefault(uid, 0)
+                counts[uid] += 1
+        return counts
+
+    def _count_publication_year(self):
+        counts = {}
+        for rec in self._records:
+            date = rec['pubDate']
+            if date is None:
+                continue
+            year = date[:4]
+            counts.setdefault(year, 0)
+            counts[year] += 1
+        return counts
 
 
 def _transmute_filter(keyword, value):

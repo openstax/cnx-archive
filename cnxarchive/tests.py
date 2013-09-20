@@ -365,6 +365,22 @@ class SearchModelTestCase(unittest.TestCase):
         expected = """This introductory, algebra-based, two-semester college <span class="search-highlight">physics</span> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <span class="search-highlight">physics</span> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <span class="search-highlight">physics</span> application problems."""
         self.assertEqual(record.highlighted_abstract, expected)
 
+    def test_result_counts(self):
+        # Verify the counts on the results object.
+        from .search import QueryResults
+        results = QueryResults(RAW_QUERY_RECORDS)
+
+        self.assertEqual(len(results), 15)
+        # Check the mediaType counts.
+        from .utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
+        self.assertEqual(results.counts['mediaType'][MODULE_MIMETYPE], 14)
+        self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
+        # Check the author counts
+        self.assertEqual(results.counts['author'],
+                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
+        # Check counts for publication year.
+        self.assertEqual(results.counts['pubYear'], {u'2013': 15})
+
 
 class PostgresqlFixture:
     """A testing fixture for a live (same as production) SQL database.
