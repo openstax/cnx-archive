@@ -19,9 +19,14 @@ before_install:
   - sudo /etc/init.d/postgresql restart
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
-  - pip install -e cnx-query-grammar --use-mirrors
+  - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
+  # Install cnx-upgrade
+  - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
+  - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
+  - git clone https://github.com/Connexions/cnx-upgrade.git
+  - cd cnx-upgrade && sudo /usr/bin/python setup.py install && cd ..
 install:
-  - pip install -e . --use-mirrors
+  - sudo /usr/bin/python setup.py install
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxuser;"
@@ -29,7 +34,7 @@ before_script:
   # Set up the database
   - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
 script:
-  - python -m unittest discover
+  - /usr/bin/python -m unittest discover
 
 env:
   - TESTING_CONFIG="testing.ini"
