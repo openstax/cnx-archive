@@ -3,8 +3,11 @@ from setuptools import setup, find_packages
 
 
 install_requires = (
+    'cnx-query-grammar',
+    'cnx-upgrade',
     'PasteDeploy',
     'PasteScript',
+    'plpydbapi',
     'psycopg2>=2.5',
     )
 description = "An archive for Connexions documents."
