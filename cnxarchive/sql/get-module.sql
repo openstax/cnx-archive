@@ -18,7 +18,7 @@ FROM (SELECT
      roles natural join moduleoptionalroles where
          module_ident=m.module_ident group by module_ident) as _roles,
   list(tag) as _subject,
-  encode(file,'escape'),
+  convert_from(file,'utf8'),
   m.google_analytics as "googleAnalytics",
   m.buylink as "buyLink"
 FROM modules m
