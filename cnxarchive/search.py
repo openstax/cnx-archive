@@ -102,20 +102,38 @@ class QueryRecord(Mapping):
     @property
     def highlighted_abstract(self):
         """Highlight the found terms in the abstract text."""
-        abstract = self['abstract']
-        start_elm = '<span class=\"search-highlight\">'
-        end_elm = '</span>'
-        for term in self.fields['abstract']:
-            start_at = 0
-            term_len = len(term)
-            while start_at < len(abstract):
-                i = abstract.find(term, start_at)
-                if i < 0: break
-                abstract = abstract[:i] + start_elm \
-                           + abstract[i:i+term_len] \
-                           + end_elm + abstract[i+term_len:]
-                start_at = i + len(start_elm) + term_len + len(end_elm)
-        return abstract
+        abstract_terms = self.fields.get('abstract', [])
+        if not abstract_terms:
+            return None
+        arguments = {'id': self['id'],
+                     'query': ' & '.join(abstract_terms),
+                     }
+        settings = get_settings()
+        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        with psycopg2.connect(connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(_read_sql_file('highlighted-abstract'),
+                               arguments)
+                hl_abstract = cursor.fetchone()[0]
+        return hl_abstract
+
+    @property
+    def highlighted_fulltext(self):
+        """Highlight the found terms in the fulltext."""
+        terms = self.fields.get('fulltext', [])
+        if not terms:
+            return None
+        arguments = {'id': self['id'],
+                     'query': ' & '.join(terms),
+                     }
+        settings = get_settings()
+        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        with psycopg2.connect(connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(_read_sql_file('highlighted-fulltext'),
+                               arguments)
+                hl_fulltext = cursor.fetchone()[0]
+        return hl_fulltext
 
 
 class QueryResults(Sequence):

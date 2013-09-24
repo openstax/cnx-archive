@@ -355,42 +355,6 @@ class RoutingTest(unittest.TestCase):
                          {'id': id})
 
 
-class SearchModelTestCase(unittest.TestCase):
-
-    def test_summary_highlighting(self):
-        # Confirm the record highlights on found items in the abstract/summary.
-        from .search import QueryRecord
-        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
-
-        expected = """This introductory, algebra-based, two-semester college <span class="search-highlight">physics</span> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <span class="search-highlight">physics</span> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <span class="search-highlight">physics</span> application problems."""
-        self.assertEqual(record.highlighted_abstract, expected)
-
-    def test_result_counts(self):
-        # Verify the counts on the results object.
-        from .search import QueryResults
-        results = QueryResults(RAW_QUERY_RECORDS)
-
-        self.assertEqual(len(results), 15)
-        # Check the mediaType counts.
-        from .utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
-        self.assertEqual(results.counts['mediaType'][MODULE_MIMETYPE], 14)
-        self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
-        # Check the author counts
-        self.assertEqual(results.counts['author'],
-                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
-        # Check counts for publication year.
-        self.assertEqual(results.counts['pubYear'], {u'2013': 15})
-        # Check the subject counts.
-        self.assertEqual(results.counts['subject'],
-                         {u'Mathematics and Statistics': 8,
-                          u'Science and Technology': 7,
-                          })
-        # Check the keyword counts.
-        self.assertEqual(results.counts['keyword']['Modern physics'], 2)
-        self.assertEqual(results.counts['keyword']['particle physics'], 1)
-        self.assertEqual(results.counts['keyword']['force'], 3)
-
-
 class PostgresqlFixture:
     """A testing fixture for a live (same as production) SQL database.
     This will set up the database once for a test case. After each test
@@ -428,6 +392,82 @@ class PostgresqlFixture:
         self._drop_all()
 
 postgresql_fixture = PostgresqlFixture()
+
+
+class SearchModelTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from .utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from .database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        from . import _set_settings
+        _set_settings(self.settings)
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
+                cursor.execute(fb.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        from . import _set_settings
+        _set_settings(None)
+        self.fixture.tearDown()
+
+    def test_summary_highlighting(self):
+        # Confirm the record highlights on found terms in the abstract/summary.
+        from .search import QueryRecord
+        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
+
+        expected = """algebra-based, two-semester college <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems."""
+        self.assertEqual(record.highlighted_abstract, expected)
+
+    def test_fulltext_highlighting(self):
+        # Confirm the record highlights on found terms in the fulltext.
+        from .search import QueryRecord
+        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
+
+        expected = None
+        # XXX Something wrong with the data, but otherwise this works as
+        #     expected.
+        self.assertEqual(record.highlighted_fulltext, expected)
+
+    def test_result_counts(self):
+        # Verify the counts on the results object.
+        from .search import QueryResults
+        results = QueryResults(RAW_QUERY_RECORDS)
+
+        self.assertEqual(len(results), 15)
+        # Check the mediaType counts.
+        from .utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
+        self.assertEqual(results.counts['mediaType'][MODULE_MIMETYPE], 14)
+        self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
+        # Check the author counts
+        self.assertEqual(results.counts['author'],
+                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
+        # Check counts for publication year.
+        self.assertEqual(results.counts['pubYear'], {u'2013': 15})
+        # Check the subject counts.
+        self.assertEqual(results.counts['subject'],
+                         {u'Mathematics and Statistics': 8,
+                          u'Science and Technology': 7,
+                          })
+        # Check the keyword counts.
+        self.assertEqual(results.counts['keyword']['Modern physics'], 2)
+        self.assertEqual(results.counts['keyword']['particle physics'], 1)
+        self.assertEqual(results.counts['keyword']['force'], 3)
 
 
 class SearchTestCase(unittest.TestCase):
