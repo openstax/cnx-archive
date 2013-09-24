@@ -175,55 +175,98 @@ MODULE_METADATA = {
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
 
-SEARCH_RESULTS_1 = {
-        u'query': {
-            u'limits': [
-                {u'text': u'college physics'},
-                ],
-            u'sort': [u'version'],
-            },
-        u'results': {
-            u'total': 2,
-            u'items': [
-                {
-                    u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
-                    u'type': u'book',
-                    u'title': u'College Physics',
-                    u'authors': [],
-                    u'keywords': [],
-                    u'summarySnippet': None,
-                    u'bodySnippet': None,
-                    u'pubDate': u'2013-08-13T12:12Z',
-                    },
-                {
-                    u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
-                    u'type': u'page',
-                    u'title': u'Preface to College Physics',
-                    u'authors': [],
-                    u'keywords': [],
-                    u'summarySnippet': None,
-                    u'bodySnippet': None,
-                    u'pubDate': u'2013-08-13T12:12Z',
-                    },
-                ],
-            },
-        }
-
-
-class MockDBQuery(object):
-
-    def __init__(self, query):
-        self.filters = [q for q in query if q[0] == 'type']
-        self.sorts = [q[1] for q in query if q[0] == 'sort']
-        self.query = [q for q in query
-                      if q not in self.filters and q[0] != 'sort']
-
-    def __call__(self):
-        if MockDBQuery.result_set == 1:
-            return [
-                    ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
-                    ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
-                    ]
+with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
+    # Search results for a search on 'physics'.
+    RAW_QUERY_RECORDS = json.load(fb)
+SEARCH_RESULTS = {
+    u'query': {
+        u'limits': [{u'text': u'college physics'}],
+        u'sort': [u'version'],
+        },
+    u'results': {
+        u'items': [
+            {u'authors': [{u'email': u'info@openstaxcollege.org',
+                           u'firstname': u'OpenStax College',
+                           u'fullname': u'OpenStax College',
+                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                           u'othername': None,
+                           u'suffix': None,
+                           u'surname': None,
+                           u'title': None,
+                           u'website': None}],
+             u'bodySnippet': None,
+             u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+             u'keywords': [u'college physics',
+                           u'physics',
+                           u'friction',
+                           u'ac circuits',
+                           u'atomic physics',
+                           u'bioelectricity',
+                           u'biological and medical applications',
+                           u'circuits',
+                           u'collisions',
+                           u'dc instruments',
+                           u'drag',
+                           u'elasticity',
+                           u'electric charge and electric field',
+                           u'electric current',
+                           u'electric potential',
+                           u'electrical technologies',
+                           u'electromagnetic induction',
+                           u'electromagnetic waves',
+                           u'energy',
+                           u'fluid dynamics',
+                           u'fluid statics',
+                           u'forces',
+                           u'frontiers of physics',
+                           u'gas laws',
+                           u'geometric optics',
+                           u'heat and transfer methods',
+                           u'kinematics',
+                           u'kinetic theory',
+                           u'linear momentum',
+                           u'magnetism',
+                           u'medical applications of nuclear physics',
+                           u'Newton\u2019s Laws of Motion',
+                           u'Ohm\u2019s Law',
+                           u'oscillatory motion and waves',
+                           u'particle physics',
+                           u'physics of hearing',
+                           u'quantum physics',
+                           u'radioactivity and nuclear physics',
+                           u'resistance',
+                           u'rotational motion and angular momentum',
+                           u'special relativity',
+                           u'statics and torque',
+                           u'temperature',
+                           u'thermodynamics',
+                           u'uniform circular motion and gravitation',
+                           u'vision and optical instruments',
+                           u'wave optics',
+                           u'work'],
+             u'mediaType': u'Collection',
+             u'pubDate': u'2013-07-31 12:07:20.342798-07',
+             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
+             u'title': u'College Physics'},
+            {u'authors': [{u'email': u'info@openstaxcollege.org',
+                           u'firstname': u'OpenStax College',
+                           u'fullname': u'OpenStax College',
+                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                           u'othername': None,
+                           u'suffix': None,
+                           u'surname': None,
+                           u'title': None,
+                           u'website': None}],
+             u'bodySnippet': None,
+             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             u'keywords': [u'college physics',
+                           u'introduction',
+                           u'physics'],
+             u'mediaType': u'Module',
+             u'pubDate': u'2013-07-31 12:07:20.542211-07',
+             u'summarySnippet': None,
+             u'title': u'Preface to College Physics'}],
+        u'total': 2}}
 
 
 def db_connect(method):
@@ -360,6 +403,7 @@ class RoutingTest(unittest.TestCase):
         self.assertEqual(environ['wsgiorg.routing_args'],
                          {'id': id})
 
+
 class PostgresqlFixture:
     """A testing fixture for a live (same as production) SQL database.
     This will set up the database once for a test case. After each test
@@ -368,6 +412,7 @@ class PostgresqlFixture:
     On a personal note, this seems archaic... Why can't I rollback to a
     transaction?
     """
+    is_set_up = False
 
     def __init__(self):
         # Configure the database connection.
@@ -383,9 +428,13 @@ class PostgresqlFixture:
         cursor.execute("CREATE SCHEMA public")
 
     def setUp(self):
+        if self.is_set_up:
+            # Failed to clean up after last use.
+            self.tearDown()
         # Initialize the database schema.
         from .database import initdb
         initdb(self._settings)
+        self.is_set_up = True
 
     def tearDown(self):
         # Drop all tables.
@@ -394,7 +443,7 @@ class PostgresqlFixture:
 postgresql_fixture = PostgresqlFixture()
 
 
-class DBQueryTestCase(unittest.TestCase):
+class SearchModelTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
     @classmethod
@@ -426,33 +475,107 @@ class DBQueryTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def make_one(self, *args, **kwargs):
+    def test_summary_highlighting(self):
+        # Confirm the record highlights on found terms in the abstract/summary.
+        from .search import QueryRecord
+        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
+
+        expected = """algebra-based, two-semester college <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems."""
+        self.assertEqual(record.highlighted_abstract, expected)
+
+    def test_fulltext_highlighting(self):
+        # Confirm the record highlights on found terms in the fulltext.
+        from .search import QueryRecord
+        record = QueryRecord(**RAW_QUERY_RECORDS[0][0])
+
+        expected = None
+        # XXX Something wrong with the data, but otherwise this works as
+        #     expected.
+        self.assertEqual(record.highlighted_fulltext, expected)
+
+    def test_result_counts(self):
+        # Verify the counts on the results object.
+        from .search import QueryResults
+        results = QueryResults(RAW_QUERY_RECORDS)
+
+        self.assertEqual(len(results), 15)
+        # Check the mediaType counts.
+        from .utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
+        self.assertEqual(results.counts['mediaType'][MODULE_MIMETYPE], 14)
+        self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
+        # Check the author counts
+        self.assertEqual(results.counts['author'],
+                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
+        # Check counts for publication year.
+        self.assertEqual(results.counts['pubYear'], {u'2013': 15})
+        # Check the subject counts.
+        self.assertEqual(results.counts['subject'],
+                         {u'Mathematics and Statistics': 8,
+                          u'Science and Technology': 7,
+                          })
+        # Check the keyword counts.
+        self.assertEqual(results.counts['keyword']['Modern physics'], 2)
+        self.assertEqual(results.counts['keyword']['particle physics'], 1)
+        self.assertEqual(results.counts['keyword']['force'], 3)
+
+
+class SearchTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from .utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from .database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        from . import _set_settings
+        _set_settings(self.settings)
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+                cursor.execute(fb.read())
+            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
+                cursor.execute(fb.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        from . import _set_settings
+        _set_settings(None)
+        self.fixture.tearDown()
+
+    def call_target(self, query_params):
         # Single point of import failure.
-        from .search import DBQuery
-        return DBQuery(*args, **kwargs)
+        from .search import search, Query
+        query = Query(query_params)
+        return search(query)
 
     def test_title_search(self):
         # Simple case to test for results of a basic title search.
         query_params = [('title', 'Physics')]
-        db_query = self.make_one(query_params)
-        results = db_query()
+        results = self.call_target(query_params)
 
         self.assertEqual(len(results), 4)
 
     def test_abstract_search(self):
         # Test for result on an abstract search.
         query_params = [('abstract', 'algebra')]
-        db_query = self.make_one(query_params)
-        results = db_query()
+        results = self.call_target(query_params)
 
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0][6], 'algebra-::-abstract')
+        self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
     def test_author_search(self):
         # Test the results of an author search.
         user_id = str(uuid.uuid4())
         query_params = [('author', 'Jill')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -470,14 +593,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_editor_search(self):
         # Test the results of an editor search.
         user_id = str(uuid.uuid4())
         query_params = [('editor', 'jmiller@example.com')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -500,14 +622,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_licensor_search(self):
         # Test the results of a licensor search.
         user_id = str(uuid.uuid4())
         query_params = [('licensor', 'jmiller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -530,14 +651,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_maintainer_search(self):
         # Test the results of a maintainer search.
         user_id = str(uuid.uuid4())
         query_params = [('maintainer', 'Miller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -555,14 +675,13 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_translator_search(self):
         # Test the results of a translator search.
         user_id = str(uuid.uuid4())
         query_params = [('translator', 'jmiller')]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -585,7 +704,7 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 3, role_id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_parentauthor_search(self):
@@ -594,7 +713,6 @@ class DBQueryTestCase(unittest.TestCase):
         # FIXME parentauthor is only searchable by user id, not by name
         #       like the other user based columns. Inconsistent behavior...
         query_params = [('parentauthor', user_id)]
-        db_query = self.make_one(query_params)
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -612,23 +730,21 @@ class DBQueryTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.
         query_params = [('text', 'physics'), ('type', 'book')]
-        db_query = self.make_one(query_params)
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0][2],
+        self.assertEqual(results[0]['id'],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
-        db_query = self.make_one(query_params)
         _same_date = '2113-01-01 00:00:00 America/New_York'
         expectations = [('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
                          _same_date,),  # this one has a higher weight.
@@ -647,10 +763,10 @@ class DBQueryTestCase(unittest.TestCase):
                         "WHERE uuid = %s::uuid;", (date, id))
             db_connection.commit()
 
-        results = db_query()
+        results = self.call_target(query_params)
         self.assertEqual(len(results), 15)
         for i, (id, date) in enumerate(expectations):
-            self.assertEqual(results[i][2], id)
+            self.assertEqual(results[i]['id'], id)
 
 
 class ViewsTestCase(unittest.TestCase):
@@ -921,11 +1037,6 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         environ['QUERY_STRING'] = 'q="college physics" sort:version'
 
-        # Mock DBQuery
-        import views
-        views.DBQuery = MockDBQuery
-        MockDBQuery.result_set = 1
-
         from .views import search
         results = search(environ, self._start_response)[0]
         status = self.captured_response['status']
@@ -934,9 +1045,10 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
         results = json.loads(results)
-        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS_1.keys()))
+
+        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS.keys()))
         for i in results:
-            self.assertEqual(results[i], SEARCH_RESULTS_1[i])
+            self.assertEqual(results[i], SEARCH_RESULTS[i])
 
 
 class SlugifyTestCase(unittest.TestCase):
