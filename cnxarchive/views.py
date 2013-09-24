@@ -205,11 +205,11 @@ def search(environ, start_response):
             'id': record['id'],
             'mediaType': record['mediaType'],
             'title': record['title'],
-            'authors': [], # TODO not in db_results
-            'keywords': [], # TODO not in db_results
-            'summarySnippet': None, # TODO not in db_results
-            'bodySnippet': None, # TODO not in db_results
-            'pubDate': '2013-08-13T12:12Z', # TODO not in db_results
+            'authors': record['authors'],
+            'keywords': record['keywords'],
+            'summarySnippet': record.highlighted_abstract,
+            'bodySnippet': record.highlighted_fulltext,
+            'pubDate': record['pubDate'],
             })
 
     status = '200 OK'

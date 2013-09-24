@@ -178,46 +178,95 @@ MODULE_METADATA = {
 with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
     # Search results for a search on 'physics'.
     RAW_QUERY_RECORDS = json.load(fb)
-SEARCH_RESULTS_1 = {
-        u'query': {
-            u'limits': [
-                {u'text': u'college physics'},
-                ],
-            u'sort': [u'version'],
-            },
-        u'results': {
-            u'total': 2,
-            u'items': [
-                {
-                    u'id': u'b1509954-7460-43a4-8c52-262f1ddd7f2f',
-                    u'type': u'book',
-                    u'title': u'College Physics',
-                    u'authors': [],
-                    u'keywords': [],
-                    u'summarySnippet': None,
-                    u'bodySnippet': None,
-                    u'pubDate': u'2013-08-13T12:12Z',
-                    },
-                {
-                    u'id': u'85baef5b-acd6-446e-99bf-f2204caa25bc',
-                    u'type': u'page',
-                    u'title': u'Preface to College Physics',
-                    u'authors': [],
-                    u'keywords': [],
-                    u'summarySnippet': None,
-                    u'bodySnippet': None,
-                    u'pubDate': u'2013-08-13T12:12Z',
-                    },
-                ],
-            },
-        }
-
-
-def mock_search(query):
-    return [
-        ('College Physics', 'College Physics', 'b1509954-7460-43a4-8c52-262f1ddd7f2f', '1.7', 'en', 111L, 'college physics-::-abstract;--;college physics-::-title;--;college physics-::-title', '', '', 'Collection'),
-        ('Preface to College Physics', 'Preface to College Physics', '85baef5b-acd6-446e-99bf-f2204caa25bc', '1.7', 'en', 110L, 'college physics-::-title;--;college physics-::-title', '', '', 'Module')
-        ]
+SEARCH_RESULTS = {
+    u'query': {
+        u'limits': [{u'text': u'college physics'}],
+        u'sort': [u'version'],
+        },
+    u'results': {
+        u'items': [
+            {u'authors': [{u'email': u'info@openstaxcollege.org',
+                           u'firstname': u'OpenStax College',
+                           u'fullname': u'OpenStax College',
+                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                           u'othername': None,
+                           u'suffix': None,
+                           u'surname': None,
+                           u'title': None,
+                           u'website': None}],
+             u'bodySnippet': None,
+             u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+             u'keywords': [u'college physics',
+                           u'physics',
+                           u'friction',
+                           u'ac circuits',
+                           u'atomic physics',
+                           u'bioelectricity',
+                           u'biological and medical applications',
+                           u'circuits',
+                           u'collisions',
+                           u'dc instruments',
+                           u'drag',
+                           u'elasticity',
+                           u'electric charge and electric field',
+                           u'electric current',
+                           u'electric potential',
+                           u'electrical technologies',
+                           u'electromagnetic induction',
+                           u'electromagnetic waves',
+                           u'energy',
+                           u'fluid dynamics',
+                           u'fluid statics',
+                           u'forces',
+                           u'frontiers of physics',
+                           u'gas laws',
+                           u'geometric optics',
+                           u'heat and transfer methods',
+                           u'kinematics',
+                           u'kinetic theory',
+                           u'linear momentum',
+                           u'magnetism',
+                           u'medical applications of nuclear physics',
+                           u'Newton\u2019s Laws of Motion',
+                           u'Ohm\u2019s Law',
+                           u'oscillatory motion and waves',
+                           u'particle physics',
+                           u'physics of hearing',
+                           u'quantum physics',
+                           u'radioactivity and nuclear physics',
+                           u'resistance',
+                           u'rotational motion and angular momentum',
+                           u'special relativity',
+                           u'statics and torque',
+                           u'temperature',
+                           u'thermodynamics',
+                           u'uniform circular motion and gravitation',
+                           u'vision and optical instruments',
+                           u'wave optics',
+                           u'work'],
+             u'mediaType': u'Collection',
+             u'pubDate': u'2013-07-31 12:07:20.342798-07',
+             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
+             u'title': u'College Physics'},
+            {u'authors': [{u'email': u'info@openstaxcollege.org',
+                           u'firstname': u'OpenStax College',
+                           u'fullname': u'OpenStax College',
+                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                           u'othername': None,
+                           u'suffix': None,
+                           u'surname': None,
+                           u'title': None,
+                           u'website': None}],
+             u'bodySnippet': None,
+             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             u'keywords': [u'college physics',
+                           u'introduction',
+                           u'physics'],
+             u'mediaType': u'Module',
+             u'pubDate': u'2013-07-31 12:07:20.542211-07',
+             u'summarySnippet': None,
+             u'title': u'Preface to College Physics'}],
+        u'total': 2}}
 
 
 def db_connect(method):
@@ -988,10 +1037,6 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         environ['QUERY_STRING'] = 'q="college physics" sort:version'
 
-        # Mock DBQuery
-        import views
-        views.database_search = mock_search
-
         from .views import search
         results = search(environ, self._start_response)[0]
         status = self.captured_response['status']
@@ -1000,9 +1045,10 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
         results = json.loads(results)
-        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS_1.keys()))
+
+        self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS.keys()))
         for i in results:
-            self.assertEqual(results[i], SEARCH_RESULTS_1[i])
+            self.assertEqual(results[i], SEARCH_RESULTS[i])
 
 
 class SlugifyTestCase(unittest.TestCase):
