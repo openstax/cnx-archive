@@ -4,6 +4,7 @@ from setuptools import setup, find_packages
 
 install_requires = (
     'cnx-query-grammar',
+    'cnx-upgrade',
     'PasteDeploy',
     'PasteScript',
     'psycopg2>=2.5',

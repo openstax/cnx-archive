@@ -20,6 +20,11 @@ before_install:
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
   - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
+  # Install cnx-upgrade
+  - git clone -b abstracts-and-metadata https://github.com/Connexions/rhaptos.cnxmlutils.git
+  - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
+  - git clone https://github.com/Connexions/cnx-upgrade.git
+  - cd cnx-upgrade && sudo /usr/bin/python setup.py install && cd ..
 install:
   - sudo /usr/bin/python setup.py install
 before_script:

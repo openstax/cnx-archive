@@ -275,6 +275,17 @@ CREATE TABLE module_files (
 
 CREATE UNIQUE INDEX module_files_idx ON module_files (module_ident, filename);
 
+CREATE OR REPLACE FUNCTION add_module_file ()
+  RETURNS trigger
+AS $$
+  from cnxarchive.database import add_module_file
+  return add_module_file(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_file_added
+  AFTER INSERT ON module_files FOR EACH ROW
+  EXECUTE PROCEDURE add_module_file();
+
 
 
 
