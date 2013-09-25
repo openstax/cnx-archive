@@ -64,12 +64,13 @@ class Application:
         """
         def r(status, headers, *args, **kwargs):
             headers.append(('Access-Control-Allow-Origin', '*'))
+            headers.append(('Access-Control-Allow-Methods', 'GET, OPTIONS'))
             start_response(status, headers, *args, **kwargs)
         return r
 
     def __call__(self, environ, start_response):
         controller = self.route(environ)
-        if environ.get('REQUEST_METHOD', '') == 'GET':
+        if environ.get('REQUEST_METHOD', '') in ['GET', 'OPTIONS']:
             start_response = self.add_cors(start_response)
         if controller is not None:
             try:
