@@ -257,7 +257,7 @@ SEARCH_RESULTS = {
                            u'surname': None,
                            u'title': None,
                            u'website': None}],
-             u'bodySnippet': None,
+             u'bodySnippet': u' \n  Glossary of Key Symbols and Notation        \n\n  Glossary of Key Symbols and Notation \n     In this glossary, key symbols and notation are briefly defined. \n      \n \n Symbol \n Definition \n \n  \n           \n             \n               \n                 \n                   \n                     \n                       \n                         \n                           any symbol \n                           \n                         \n                         \n                         &#175; \n                       \n                     \n                     \n                   \n                    size 12{ {overline  {"any"`" symbol"}} } {} \n                 \n               \n             \n             average (indicated by a bar over a symbol&#8212;e.g.,       v  &#175;       size 12{ {overline  {v}} } {}    is average',
              u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
              u'keywords': [u'college physics',
                            u'introduction',
@@ -732,6 +732,16 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
+
+    def test_fulltext_search(self):
+        # Test the results of a search on fulltext.
+        query_params = [('fulltext', 'uncertainty'), ('fulltext', 'rotation')]
+
+        results = self.call_target(query_params)
+        self.assertEqual(len(results), 6)
+        # Ensure the record with both values is the top result.
+        self.assertEqual(results[0]['id'],
+                         'ae3e18de-638d-4738-b804-dc69cd4db3a3')
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.
