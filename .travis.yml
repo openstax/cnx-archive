@@ -17,6 +17,10 @@ before_install:
   - sudo echo "host    all         all         127.0.0.1/32          trust" >> /etc/postgresql/9.3/main/pg_hba.conf
   - sudo echo "host    all         all         ::1/128               trust" >> /etc/postgresql/9.3/main/pg_hba.conf
   - sudo /etc/init.d/postgresql restart
+  # Install the 'plxslt' extension language
+  - sudo apt-get install libxml2-dev libxslt-dev
+  - git clone https://github.com/petere/plxslt.git
+  - cd plxslt && sudo make && sudo make install && cd ..
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
   - pip install -e cnx-query-grammar --use-mirrors
