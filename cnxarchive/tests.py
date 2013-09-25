@@ -1050,6 +1050,49 @@ class ViewsTestCase(unittest.TestCase):
         for i in results:
             self.assertEqual(results[i], SEARCH_RESULTS[i])
 
+    def test_search_no_params(self):
+        environ = self._make_environ()
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        self.assertEqual(results, json.dumps({
+            u'query': {
+                u'limits': [],
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                },
+            }))
+
+    def test_search_whitespace(self):
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q= '
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        self.assertEqual(results, json.dumps({
+            u'query': {
+                u'limits': [],
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                },
+            }))
+
 
 class SlugifyTestCase(unittest.TestCase):
 

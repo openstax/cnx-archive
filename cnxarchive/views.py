@@ -186,10 +186,27 @@ MEDIA_TYPES = {
 def search(environ, start_response):
     """Search API
     """
+    empty_response = json.dumps({
+        u'query': {
+            u'limits': [],
+            },
+        u'results': {
+            u'items': [],
+            u'total': 0,
+            },
+        })
+
     params = cgi.parse_qs(environ.get('QUERY_STRING', ''))
-    search_terms = params['q'][0]
+    try:
+        search_terms = params.get('q', [])[0]
+    except IndexError:
+        start_response('200 OK', [('Content-type', 'application/json')])
+        return [empty_response]
 
     query = Query.from_raw_query(search_terms)
+    if not(query.filters or query.terms):
+        start_response('200 OK', [('Content-type', 'application/json')])
+        return [empty_response]
     db_results = database_search(query)
 
     results = {}
