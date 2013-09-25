@@ -1187,6 +1187,25 @@ class CORSTestCase(unittest.TestCase):
         self.assertEqual(self.args, ('200 OK', [
             ('Content-type', 'text/plain'),
             ('Access-Control-Allow-Origin', '*'),
+            ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+            ]))
+        self.assertEqual(self.kwargs, {})
+
+    def test_options(self):
+        # We should have "Access-Control-Allow-Origin: *" in the headers for
+        # preflighted requests
+        from . import Application
+        app = Application()
+        app.add_route('/', self.controller)
+        environ = {
+                'REQUEST_METHOD': 'OPTIONS',
+                'PATH_INFO': '/',
+                }
+        app(environ, self.start_response)
+        self.assertEqual(self.args, ('200 OK', [
+            ('Content-type', 'text/plain'),
+            ('Access-Control-Allow-Origin', '*'),
+            ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
             ]))
         self.assertEqual(self.kwargs, {})
 
