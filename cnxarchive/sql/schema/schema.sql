@@ -208,6 +208,7 @@ CREATE VIEW current_modules AS
 CREATE TABLE "modulefti" (
 	"module_ident" integer UNIQUE,
 	"module_idx" tsvector,
+        "baretext" bytea,
 	FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
 );
 
