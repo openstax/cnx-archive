@@ -59,18 +59,22 @@ class Application:
                 return controller
         return None
 
-    def add_cors(self, start_response):
+    def add_cors(self, environ, start_response):
         """A start_response wrapper to add CORS header to GET requests
         """
         def r(status, headers, *args, **kwargs):
             headers.append(('Access-Control-Allow-Origin', '*'))
+            headers.append(('Access-Control-Allow-Methods', 'GET, OPTIONS'))
+            req_headers = environ.get('HTTP_ACCESS_CONTROL_REQUEST_HEADERS')
+            if req_headers:
+                headers.append(('Access-Control-Allow-Headers', req_headers))
             start_response(status, headers, *args, **kwargs)
         return r
 
     def __call__(self, environ, start_response):
         controller = self.route(environ)
-        if environ.get('REQUEST_METHOD', '') == 'GET':
-            start_response = self.add_cors(start_response)
+        if environ.get('REQUEST_METHOD', '') in ['GET', 'OPTIONS']:
+            start_response = self.add_cors(environ, start_response)
         if controller is not None:
             try:
                 return controller(environ, start_response)
