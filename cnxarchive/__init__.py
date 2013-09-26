@@ -81,6 +81,7 @@ class Application:
             except httpexceptions.HTTPException as exc:
                 return exc(environ, start_response)
             except:
+                raise
                 server_error = httpexceptions.HTTPInternalServerError()
                 return server_error(environ, start_response)
         return httpexceptions.HTTPNotFound()(environ, start_response)
