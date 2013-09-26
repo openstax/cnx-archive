@@ -180,6 +180,17 @@ CREATE TRIGGER update_latest_version
   BEFORE INSERT OR UPDATE ON modules FOR EACH ROW
   EXECUTE PROCEDURE update_latest();
 
+CREATE OR REPLACE FUNCTION republish_module ()
+  RETURNS trigger
+AS $$
+  from cnxarchive.database import republish_module
+  return republish_module(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_published
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE republish_module();
+
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
@@ -263,6 +274,17 @@ CREATE TABLE module_files (
 );
 
 CREATE UNIQUE INDEX module_files_idx ON module_files (module_ident, filename);
+
+CREATE OR REPLACE FUNCTION add_module_file ()
+  RETURNS trigger
+AS $$
+  from cnxarchive.database import add_module_file
+  return add_module_file(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_file_added
+  AFTER INSERT ON module_files FOR EACH ROW
+  EXECUTE PROCEDURE add_module_file();
 
 
 
