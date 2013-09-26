@@ -135,7 +135,7 @@ def republish_module(plpy, td):
             children[i['parent']].append(i['node'])
 
         sql = '''
-        INSERT INTO trees
+        INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
         VALUES (DEFAULT, $1, $2, $3, $4, $5)
         RETURNING nodeid
         '''
@@ -157,10 +157,11 @@ def republish_module(plpy, td):
         the module_ident of the row inserted
         """
         sql = '''
-        INSERT INTO modules
-            SELECT NEXTVAL('modules_module_ident_seq'), m.portal_type, m.moduleid,
-            m.uuid, $1, m.name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, m.abstractid,
-            m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
+        INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
+            abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
+            authors,maintainers,licensors,parentauthors,google_analytics,buylink)
+            SELECT m.portal_type, m.moduleid, m.uuid, $1, m.name, m.created, CURRENT_TIMESTAMP,
+            m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
             m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
             m.google_analytics, m.buylink
             FROM modules m
@@ -206,7 +207,7 @@ def add_module_file(plpy, td):
 
     from cnxupgrade.upgrades.to_html import (
             transform_cnxml_to_html, BytesIO, SQL_RESOURCE_INFO_STATEMENT,
-            etree)
+            etree, _split_ref, SQL_MODULE_BY_ID_N_VERSION_STATEMENT)
 
     def to_plpy_stmt(dbapi_stmt):
         """Change a statment like "SELECT * FROM a WHERE id = %s" to
@@ -243,7 +244,7 @@ def add_module_file(plpy, td):
 
         def get_module_uuid(module, version):
             stmt = plpy.prepare(to_plpy_stmt(
-                SQL_MODULE_BY_ID_N_VERSION_STATEMENT), ['integer', 'text'])
+                SQL_MODULE_BY_ID_N_VERSION_STATEMENT), ['text', 'text'])
             results = plpy.execute(stmt, [module, version])
             uuid = results[0]['uuid']
             return uuid
