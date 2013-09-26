@@ -7,7 +7,7 @@ It will need to be altered to know about db config in that case.
 The in-database method is in shred_collxml.sql It creates a function called
 shed_collxml. Example usage of the in db shredder:
 
-select shred_collxml(encode(file,'escape')::text) from files natural join  module_files natural join latest_modules where moduleid = 'col10522' and filename = 'collection.xml';
+select shred_collxml(convert_from(file,'utf8')::text) from files natural join  module_files natural join latest_modules where moduleid = 'col10522' and filename = 'collection.xml';
 
 example building a TOC from the trees table:
 

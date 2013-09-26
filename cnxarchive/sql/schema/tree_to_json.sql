@@ -13,10 +13,10 @@ UNION ALL
 )
 SELECT
     REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(m.uuid::text,'subcol') ||COALESCE('@'||m.version,'') ||'",' ||
-      '"title":"'||COALESCE(title,name)||'"' ||
+      '"title":'||to_json(COALESCE(title,name))||
       CASE WHEN (depth < lead(depth,1,0) over(w)) THEN ', "contents":['
-           WHEN (depth > lead(depth,1,0) over(w) AND depth > 2 ) THEN '}]},'
-           WHEN (depth > lead(depth,1,0) over(w) AND depth = 2 ) THEN '}]}'
+           WHEN (depth > lead(depth,1,0) over(w) AND lead(depth,1,0) over(w) = 0 ) THEN '}'||REPEAT(']}',depth - lead(depth,1,0) over(w) - 1)
+           WHEN (depth > lead(depth,1,0) over(w) AND lead(depth,1,0) over(w) != 0 ) THEN '}'||REPEAT(']}',depth - lead(depth,1,0) over(w))||','
            ELSE '},' END
       AS "toc"
 FROM t left join  modules m on t.value = m.module_ident
