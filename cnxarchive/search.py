@@ -8,8 +8,10 @@
 """Database search utilties"""
 import os
 import json
+import re
 from collections import Mapping, OrderedDict, Sequence
 
+from parsimonious.exceptions import IncompleteParseError
 import psycopg2
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
@@ -66,11 +68,35 @@ class Query:
                       if q not in self.filters and q[0] != 'sort']
 
     @classmethod
+    def fix_quotes(cls, query_string):
+        # Attempt to fix unbalanced quotes in query_string
+
+        if query_string.count('"') % 2 == 0:
+            # no unbalanced quotes to fix
+            return query_string
+
+        fields = [] # contains what's matched by the regexp
+        # e.g. fields = ['sort:pubDate', 'author:"first last"']
+        def f(match):
+            fields.append(match.string[match.start():match.end()])
+            return ''
+
+        # terms will be all the search terms that don't have a field
+        # terms is the 
+        terms = re.sub(r'[^\s:]*:("[^"]*"|[^\s]*)', f, query_string)
+        query_string = '{}" {}'.format(terms.strip(), ' '.join(fields))
+        return query_string
+
+    @classmethod
     def from_raw_query(cls, query_string):
         """Given a raw string (typically typed by the user),
         parse to a structured format and initialize the class.
         """
-        node_tree = grammar.parse(query_string)
+        try:
+            node_tree = grammar.parse(query_string)
+        except IncompleteParseError:
+            query_string = cls.fix_quotes(query_string)
+            node_tree = grammar.parse(query_string)
         structured_query = DictFormater().visit(node_tree)
         return cls(structured_query)
 

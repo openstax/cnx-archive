@@ -1142,6 +1142,33 @@ class ViewsTestCase(unittest.TestCase):
                 },
             })
 
+    def test_search_unbalanced_quotes(self):
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = r'q="a phrase" "something else sort:pubDate author:"first last"'
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        self.assertEqual(json.loads(results), {
+            u'query': {
+                u'limits': [
+                    {u'text': u'a phrase'},
+                    {u'text': u'something else'},
+                    {u'author': 'first last'},
+                    ],
+                u'sort': [u'pubDate'],
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                }
+            })
+
 
 class SlugifyTestCase(unittest.TestCase):
 
