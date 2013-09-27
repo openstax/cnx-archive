@@ -1093,6 +1093,55 @@ class ViewsTestCase(unittest.TestCase):
                 },
             }))
 
+    def test_search_utf8(self):
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="你好"'
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        self.assertEqual(json.loads(results), {
+            u'query': {
+                u'limits': [{u'text': u'你好'}],
+                u'sort': [],
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                },
+            })
+
+    def test_search_punctuations(self):
+        environ = self._make_environ()
+        # %2B is +
+        environ['QUERY_STRING'] = r"q=:\.%2B'?"
+
+        from .views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        self.assertEqual(json.loads(results), {
+            u'query': {
+                u'limits': [
+                    {u'text': ur":\.+'?"},
+                    ],
+                u'sort': [],
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                },
+            })
+
 
 class SlugifyTestCase(unittest.TestCase):
 
