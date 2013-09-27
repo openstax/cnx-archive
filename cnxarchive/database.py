@@ -8,6 +8,7 @@
 """Database models and utilities"""
 import os
 import psycopg2
+import re
 
 
 CONNECTION_SETTINGS_KEY = 'db-connection-string'
@@ -57,6 +58,30 @@ def initdb(settings):
                 with open(filepath, 'r') as f:
                     cursor.execute(f.read())
 
+# Code transmorgrified from cnxupgrade, for triggers
+
+from cnxupgrade.upgrades.to_html import (
+        transform_cnxml_to_html, BytesIO, SQL_RESOURCE_INFO_STATEMENT,
+        etree, _split_ref, SQL_MODULE_BY_ID_STATEMENT)
+
+def to_plpy_stmt(dbapi_stmt):
+    """Change a statment like "SELECT * FROM a WHERE id = %s" to
+    "SELECT * FROM a WHERE id = $1"
+    """
+    def f(matchobj, arg=[0]):
+        arg[0] += 1
+        return '${}'.format(arg[0])
+    return re.sub('%s', f, dbapi_stmt)
+
+def get_module_uuid(plpy,moduleid):
+    stmt = plpy.prepare(to_plpy_stmt(
+        SQL_MODULE_BY_ID_STATEMENT), ['text'])
+    results = plpy.execute(stmt, [moduleid])
+    uuid = None
+    if results:
+        uuid = results[0]['uuid']
+    return uuid
+
 
 def republish_module(plpy, td):
     """Postgres database trigger for republishing a module
@@ -69,10 +94,12 @@ def republish_module(plpy, td):
     update).
     """
     portal_type = td['new']['portal_type']
+    
+    modified='OK'
 
     def get_current_module_ident(moduleid):
         stmt = plpy.prepare('SELECT m.module_ident FROM modules m '
-                'WHERE m.moduleid = $1 ORDER BY created DESC', ['text'])
+                'WHERE m.moduleid = $1 ORDER BY module_ident DESC', ['text'])
         results = plpy.execute(stmt, [moduleid])
         if results:
             return results[0]['module_ident']
@@ -105,7 +132,7 @@ def republish_module(plpy, td):
             WHERE not c.nodeid = ANY(t.path)
         )
         SELECT m.module_ident
-        FROM t JOIN modules m ON (t.document = m.module_ident)
+        FROM t JOIN latest_modules m ON (t.document = m.module_ident)
         WHERE t.parent IS NULL
         '''
         stmt = plpy.prepare(sql, ['integer'])
@@ -121,7 +148,7 @@ def republish_module(plpy, td):
             SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = $1
         UNION ALL
             SELECT c.*, path || ARRAY[c.nodeid]
-            FROM trees c JOIN t ON (c.nodeid = t.parent OR c.parent_id = t.node)
+            FROM trees c JOIN t ON (c.parent_id = t.node)
             WHERE not c.nodeid = ANY(t.path)
         )
         SELECT * FROM t
@@ -172,14 +199,20 @@ def republish_module(plpy, td):
         results = plpy.execute(stmt, [next_version, collection_ident])
         return results[0]['module_ident']
 
+
     current_module_ident = get_current_module_ident(td['new']['moduleid'])
-    if not current_module_ident:
+    if current_module_ident:
+        # need to overide autogen uuid to keep it constant per moduleid
+        uuid = get_module_uuid(plpy,td['new']['moduleid'])
+        td['new']['uuid'] = uuid
+        modified = 'MODIFY'
+    else:
         # nothing to do if the module/collection is new
-        return
+        return modified
 
     if portal_type != 'Module':
-        # nothing to do if something else is being published
-        return
+        # nothing else to do if something else is being published
+        return modified
 
     # Module is republished
     for collection_id in get_collections(current_module_ident):
@@ -190,11 +223,12 @@ def republish_module(plpy, td):
             current_module_ident: td['new']['module_ident'],
             })
 
+    return modified
+
 
 class ResourceNotFoundException(Exception):
     """Raised when a resource file is not found in the database
     """
-
 
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
@@ -203,20 +237,6 @@ def add_module_file(plpy, td):
     transforms it into html and stores it in the database as index.html.
     """
     import json
-    import re
-
-    from cnxupgrade.upgrades.to_html import (
-            transform_cnxml_to_html, BytesIO, SQL_RESOURCE_INFO_STATEMENT,
-            etree, _split_ref, SQL_MODULE_BY_ID_N_VERSION_STATEMENT)
-
-    def to_plpy_stmt(dbapi_stmt):
-        """Change a statment like "SELECT * FROM a WHERE id = %s" to
-        "SELECT * FROM a WHERE id = $1"
-        """
-        def f(matchobj, arg=[0]):
-            arg[0] += 1
-            return '${}'.format(arg[0])
-        return re.sub('%s', f, dbapi_stmt)
 
     # Copied from cnxupgrade.upgrades.to_html, modified to work with plpy
     def fix_reference_urls(document_ident, html):
@@ -242,13 +262,6 @@ def add_module_file(plpy, td):
                 raise ResourceNotFoundException
             return json.loads(info)
 
-        def get_module_uuid(module, version):
-            stmt = plpy.prepare(to_plpy_stmt(
-                SQL_MODULE_BY_ID_N_VERSION_STATEMENT), ['text', 'text'])
-            results = plpy.execute(stmt, [module, version])
-            uuid = results[0]['uuid']
-            return uuid
-
         # Namespace reworking...
         namespaces = xml_doc.nsmap.copy()
         namespaces['html'] = namespaces.pop(None)
@@ -266,15 +279,20 @@ def add_module_file(plpy, td):
                and not ref.startswith('/'):
                 continue
             id, version = _split_ref(ref)
+            plpy.log("ref info: %s %s" % (id,version))
             # FIXME We need a better way to determine if the link is a
             #       module or resource reference. Probably some way to
             #       add an attribute in the xsl.
             #       The try & except can be removed after we fix this.
             try:
-                uuid = get_module_uuid(id, version)
+                uuid = get_module_uuid(plpy,id)
             except TypeError:
                 continue
-            anchor.set('href', '/contents/{}@{}'.format(uuid, version))
+            if uuid:
+                anchor.set('href', '/contents/{}@{}'.format(uuid, version))
+            else: # Maybe it's a non-image resource (zip etc.), local filename in module
+                info = get_resource_info(ref)
+                anchor.set('href', '/resources/{}/{}'.format(info['hash'], ref))
 
         return etree.tostring(xml_doc)
 
