@@ -322,12 +322,15 @@ def add_module_file(plpy, td):
         return message
 
     filename = td['new']['filename']
+    if filename != 'index.cnxml':
+        return
 
     stmt = plpy.prepare('''SELECT * FROM module_files
     WHERE filename = 'index.html' AND module_ident = $1''', ['integer'])
     results = plpy.execute(stmt, [td['new']['module_ident']])
 
-    if len(results) == 0:
+    if len(results) == 0: 
         message = produce_html_for_module(td['new']['module_ident'])
         if message:
             plpy.error(message)
+    return
