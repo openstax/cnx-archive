@@ -1265,7 +1265,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         # Test that the latest row in modules is a collection with updated
         # version
-        cursor.execute('SELECT * FROM modules m ORDER BY created DESC')
+        cursor.execute('SELECT * FROM modules m ORDER BY module_ident DESC')
         results = cursor.fetchone()
         new_collection_id = results[0]
         self.assertEqual(results[1], 'Collection')

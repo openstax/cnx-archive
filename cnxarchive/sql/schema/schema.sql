@@ -87,12 +87,13 @@ CREATE INDEX modules_upname_idx ON modules  (upper(name));
 CREATE INDEX modules_portal_type_idx on modules (portal_type);
 
 -- the following needs to be an identical copy of modules as latest_modules
+-- except, absence of defaults is intentional
 
 CREATE TABLE "latest_modules" (
 	"module_ident" integer,
 	"portal_type" text,
 	"moduleid" text,
-        "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "uuid" uuid NOT NULL,
 	"version" text,
 	"name" text NOT NULL,
 	"created" timestamp with time zone NOT NULL,
