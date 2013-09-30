@@ -35,10 +35,10 @@ CREATE OR REPLACE FUNCTION index_fulltext_trigger()
     _idx_vectors := to_tsvector(_baretext);
 
     IF has_existing_record IS NULL THEN
-      INSERT INTO modulefti (module_ident, baretext, module_idx)
-        VALUES ( NEW.module_ident, convert_to(_baretext, 'UTF8'), _idx_vectors );
+      INSERT INTO modulefti (module_ident, fulltext, module_idx)
+        VALUES ( NEW.module_ident, _baretext, _idx_vectors );
     ELSE
-      UPDATE modulefti SET (baretext, module_idx) = ( convert_to(_baretext, 'UTF8'), _idx_vectors )
+      UPDATE modulefti SET (fulltext, module_idx) = ( _baretext, _idx_vectors )
         WHERE module_ident = NEW.module_ident;
     END IF;
     RETURN NEW;

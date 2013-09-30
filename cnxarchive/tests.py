@@ -257,7 +257,7 @@ SEARCH_RESULTS = {
                            u'surname': None,
                            u'title': None,
                            u'website': None}],
-             u'bodySnippet': u' \n  Glossary of Key Symbols and Notation        \n\n  Glossary of Key Symbols and Notation \n     In this glossary, key symbols and notation are briefly defined. \n      \n \n Symbol \n Definition \n \n  \n           \n             \n               \n                 \n                   \n                     \n                       \n                         \n                           any symbol \n                           \n                         \n                         \n                         &#175; \n                       \n                     \n                     \n                   \n                    size 12{ {overline  {"any"`" symbol"}} } {} \n                 \n               \n             \n             average (indicated by a bar over a symbol&#8212;e.g.,       v  &#175;       size 12{ {overline  {v}} } {}    is average',
+             u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
              u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
              u'keywords': [u'college physics',
                            u'introduction',
