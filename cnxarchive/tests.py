@@ -1255,6 +1255,10 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
                 'FROM module_files WHERE module_ident = 1')
         old_files = cursor.fetchall()
 
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        old_n_modules = cursor.fetchone()[0]
+        self.assertEqual(old_n_modules, 16)
+
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules VALUES (
@@ -1263,6 +1267,11 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
         'en', '{}', '{}', '{}', NULL, NULL, NULL) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
+
+        # After the new module is inserted, there should be a new module and a
+        # new collection
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        self.assertEqual(cursor.fetchone()[0], 18)
 
         # Test that the latest row in modules is a collection with updated
         # version
