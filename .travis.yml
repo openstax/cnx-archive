@@ -23,7 +23,7 @@ before_install:
   # Install cnx-upgrade
   - git clone -b abstracts-and-metadata https://github.com/Connexions/rhaptos.cnxmlutils.git
   - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
-  - git clone https://github.com/Connexions/cnx-upgrade.git
+  - git clone -b cnxml-to-html-v3 https://github.com/Connexions/cnx-upgrade.git
   - cd cnx-upgrade && sudo /usr/bin/python setup.py install && cd ..
 install:
   - sudo /usr/bin/python setup.py install
