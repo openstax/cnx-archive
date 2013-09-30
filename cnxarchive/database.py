@@ -201,6 +201,7 @@ def republish_module(plpy, td):
 
 
     current_module_ident = get_current_module_ident(td['new']['moduleid'])
+    plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
     if current_module_ident:
         # need to overide autogen uuid to keep it constant per moduleid
         uuid = get_module_uuid(plpy,td['new']['moduleid'])
