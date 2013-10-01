@@ -85,12 +85,12 @@ def get_content(environ, start_response):
 def get_resource(environ, start_response):
     """Retrieve a file's data."""
     settings = get_settings()
-    id = environ['wsgiorg.routing_args']['id']
+    hash = environ['wsgiorg.routing_args']['hash']
 
     # Do the module lookup
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            args = dict(id=id)
+            args = dict(hash=hash)
             cursor.execute(SQL['get-resource'], args)
             try:
                 filename, mimetype, file = cursor.fetchone()

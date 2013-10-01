@@ -5,8 +5,9 @@
 -- See LICENCE.txt for details.
 -- ###
 
--- arguments: id:string
-SELECT filename, mimetype, file
+-- arguments: hash:string
+SELECT mf.filename, mf.mimetype, f.file
 FROM module_files as mf
 LEFT JOIN files f on mf.fileid = f.fileid
-WHERE mf.uuid = %(id)s;
+WHERE f.md5 = %(hash)s
+;
