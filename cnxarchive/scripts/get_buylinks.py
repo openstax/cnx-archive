@@ -8,31 +8,33 @@
 """Command-line script to take collection ids as arguments, get the buy link
 for each collection from the plone site and insert into the database.
 """
-
-import argparse
-import re
-import urllib2
 import sys
+import re
+import argparse
+import urllib2
 
 import psycopg2
 
 from ..database import CONNECTION_SETTINGS_KEY, SQL
 from ..utils import parse_app_settings
 
+
 PROPERTY_URL = 'http://cnx.org/content/{}/latest/propertyItems'
+
 
 def get_buylink(url):
     content = urllib2.urlopen(url).read()
     if 'buyLink' in content:
         return re.search("'buyLink', '([^']*)'", content).group(1)
 
-def main():
+
+def main(argv=None):
     parser = argparse.ArgumentParser(description='Insert the buy links'
             ' of collections from the plone site into the database')
     parser.add_argument('config_uri', help='Config URI, e.g. development.ini')
     parser.add_argument('collection_ids', metavar='collection_id', nargs='+',
             help='Collection id, e.g. col11522')
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     try:
         settings = parse_app_settings(args.config_uri)
@@ -49,3 +51,7 @@ def main():
                 query = SQL['update-buylink']
                 args = {'moduleid': collection_id, 'buylink': buylink}
                 cursor.execute(query, args)
+
+
+if __name__ == '__main__':
+    main()
