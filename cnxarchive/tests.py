@@ -918,7 +918,6 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         expected_headers = [
             ('Content-type', 'image/png',),
-            ('Content-disposition', "attached; filename=PhET_Icon.png",),
             ]
         self.assertEqual(headers, expected_headers)
 

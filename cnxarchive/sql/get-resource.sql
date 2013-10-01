@@ -6,7 +6,7 @@
 -- ###
 
 -- arguments: hash:string
-SELECT mf.filename, mf.mimetype, f.file
+SELECT mf.mimetype, f.file
 FROM module_files as mf
 LEFT JOIN files f on mf.fileid = f.fileid
 WHERE f.md5 = %(hash)s

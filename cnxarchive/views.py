@@ -93,17 +93,15 @@ def get_resource(environ, start_response):
             args = dict(hash=hash)
             cursor.execute(SQL['get-resource'], args)
             try:
-                filename, mimetype, file = cursor.fetchone()
+                mimetype, file = cursor.fetchone()
             except TypeError:  # None returned
                 raise httpexceptions.HTTPNotFound()
 
     status = "200 OK"
-    headers = [('Content-type', mimetype,),
-               ('Content-disposition',
-                "attached; filename={}".format(filename),),
-               ]
+    headers = [('Content-type', mimetype)]
     start_response(status, headers)
-    return [file]
+    return [file[:]]
+
 
 TYPE_INFO = {}
 def get_type_info():
