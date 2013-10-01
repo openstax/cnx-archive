@@ -24,14 +24,8 @@ class GetBuylinksTestCase(unittest.TestCase):
         with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
             cursor.execute(fb.read())
 
-        from ..scripts import get_buylinks
-
-        # Mock command line arguments:
-        # arguments should be appended to self.argv by individual tests
-        import argparse
-        self.argv = ['cnx-archive_get_buylinks', TESTING_CONFIG]
-        argparse._sys.argv = self.argv
-        get_buylinks.argparse = argparse
+        # Mock commandline arguments for ..scripts.get_buylinks.main
+        self.argv = [TESTING_CONFIG]
 
         # Mock response from plone site:
         # responses should be assigned to self.responses by individual tests
@@ -40,15 +34,16 @@ class GetBuylinksTestCase(unittest.TestCase):
         def urlopen(url):
             self.response_id += 1
             return StringIO(unicode(self.responses[self.response_id]))
+        original_urlopen = urllib2.urlopen
         urllib2.urlopen = urlopen
-        get_buylinks.urllib2 = urllib2
-
-        # Use self.get_buylinks instead of importing it in tests to get all the
-        # mocks
-        self.get_buylinks = get_buylinks
+        self.addCleanup(setattr, urllib2, 'urlopen', original_urlopen)
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    def call_target(self):
+        from ..scripts import get_buylinks
+        return get_buylinks.main(self.argv)
 
     @db_connect
     def get_buylink_from_db(self, cursor, collection_id):
@@ -69,7 +64,7 @@ class GetBuylinksTestCase(unittest.TestCase):
                 # response for m42955
                 "[('title', ''), "
                 "('buyLink', 'http://buy-m42955.com/')]"]
-        self.get_buylinks.main()
+        self.call_target()
 
         self.assertEqual(self.get_buylink_from_db('col11406'),
                 'http://buy-col11406.com/download')
@@ -79,7 +74,7 @@ class GetBuylinksTestCase(unittest.TestCase):
     def test_no_buylink(self):
         self.argv.append('m42955')
         self.response = "[('title', '')]"
-        self.get_buylinks.main()
+        self.call_target()
 
         self.assertEqual(self.get_buylink_from_db('m42955'), None)
 
@@ -88,7 +83,7 @@ class GetBuylinksTestCase(unittest.TestCase):
         self.response = ("[('title', ''), "
                 "('buyLink', 'http://buy-col11522.com/download')]")
         # Just assert that the script does not fail
-        self.get_buylinks.main()
+        self.call_target()
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
