@@ -9,4 +9,4 @@
 SELECT m.version
 FROM modules m
 WHERE m.uuid = %(id)s
-ORDER BY m.created DESC
+ORDER BY m.module_ident DESC
