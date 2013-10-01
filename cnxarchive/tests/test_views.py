@@ -69,43 +69,43 @@ COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
     u'title': u'College Physics',
     u'contents': [
-        {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7',
+        {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
          u'title': u'Preface'},
         {u'id': u'subcol',
          u'title': u'Introduction: The Nature of Science and Physics',
          u'contents': [
-                {u'id': u'f3c9ab70-a916-4d8c-9256-42953287b4e9@1.3',
+                {u'id': u'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
                  u'title': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units'},
-                {u'id': u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4',
+                {u'id': u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
                  u'title': u'Physics: An Introduction'},
-                {u'id': u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@1.6',
+                {u'id': u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@6',
                  u'title': u'Physical Quantities and Units'},
-                {u'id': u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@1.7',
+                {u'id': u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@7',
                  u'title': u'Accuracy, Precision, and Significant Figures'},
-                {u'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@1.5',
+                {u'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
                  u'title': u'Approximation'},
                 ],
          },
         {u'id': u'subcol',
          u'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
          u'contents': [
-                {u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@1.2',
+                {u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
                  u'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
-                {u'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@1.5',
+                {u'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
                  u'title': u'Friction'},
-                {u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@1.6',
+                {u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
                  u'title': u'Drag Forces'},
-                {u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                {u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
                  u'title': u'Elasticity: Stress and Strain'},
                 ],
          },
-        {u'id': u'f6024d8a-1868-44c7-ab65-45419ef54881@1.3',
+        {u'id': u'f6024d8a-1868-44c7-ab65-45419ef54881@3',
          u'title': u'Atomic Masses'},
-        {u'id': u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@1.2',
+        {u'id': u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
          u'title': u'Selected Radioactive Isotopes'},
-        {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@1.5',
+        {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@5',
          u'title': u'Useful Information'},
-        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@1.4',
+        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@4',
          u'title': u'Glossary of Key Symbols and Notation'},
         ],
     }
@@ -154,7 +154,7 @@ MODULE_METADATA = {
     u'submitlog': u'',
     u'submitter': u'',
     u'mediaType': u'application/vnd.org.cnx.module',
-    u'version': u'1.8',
+    u'version': u'8',
     u'googleAnalytics': None,
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     }
@@ -165,6 +165,24 @@ SEARCH_RESULTS = {
         },
     u'results': {
         u'items': [
+            {u'authors': [{u'email': u'info@openstaxcollege.org',
+                           u'firstname': u'OpenStax College',
+                           u'fullname': u'OpenStax College',
+                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                           u'othername': None,
+                           u'suffix': None,
+                           u'surname': None,
+                           u'title': None,
+                           u'website': None}],
+             u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
+             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             u'keywords': [u'college physics',
+                           u'introduction',
+                           u'physics'],
+             u'mediaType': u'Module',
+             u'pubDate': u'2013-07-31 12:07:20.542211-07',
+             u'summarySnippet': None,
+             u'title': u'Preface to College Physics'},
             {u'authors': [{u'email': u'info@openstaxcollege.org',
                            u'firstname': u'OpenStax College',
                            u'fullname': u'OpenStax College',
@@ -227,25 +245,7 @@ SEARCH_RESULTS = {
              u'mediaType': u'Collection',
              u'pubDate': u'2013-07-31 12:07:20.342798-07',
              u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
-             u'title': u'College Physics'},
-            {u'authors': [{u'email': u'info@openstaxcollege.org',
-                           u'firstname': u'OpenStax College',
-                           u'fullname': u'OpenStax College',
-                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                           u'othername': None,
-                           u'suffix': None,
-                           u'surname': None,
-                           u'title': None,
-                           u'website': None}],
-             u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
-             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
-             u'keywords': [u'college physics',
-                           u'introduction',
-                           u'physics'],
-             u'mediaType': u'Module',
-             u'pubDate': u'2013-07-31 12:07:20.542211-07',
-             u'summarySnippet': None,
-             u'title': u'Preface to College Physics'}],
+             u'title': u'College Physics'}],
         u'total': 2}}
 
 
@@ -332,7 +332,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_module_content(self):
         # Test for retreiving a module.
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
-        version = '1.8'
+        version = '8'
 
         # Build the request environment.
         environ = self._make_environ()
@@ -375,7 +375,7 @@ class ViewsTestCase(unittest.TestCase):
         except httpexceptions.HTTPFound, e:
             self.assertEqual(e.status, '302 Found')
             self.assertEqual(e.headers, [('Location',
-                '/contents/{}@1.5'.format(uuid))])
+                '/contents/{}@5'.format(uuid))])
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
@@ -427,7 +427,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Test exports can access the other exports directory
         id = '56f1c5c1-4014-450d-a477-2121e276beca'
-        version = '1.8'
+        version = '8'
         ident_hash = '{}@{}'.format(id, version)
         filename = '{}-{}.pdf'.format(id, version)
         environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
@@ -446,7 +446,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         environ = self._make_environ()
         environ['wsgiorg.routing_args'] = {
-                'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@8',
                 'type': 'txt'
                 }
 
@@ -480,7 +480,7 @@ class ViewsTestCase(unittest.TestCase):
         except httpexceptions.HTTPFound, e:
             self.assertEqual(e.status, '302 Found')
             self.assertEqual(e.headers, [('Location',
-                '/exports/{}@1.5.pdf'.format(id))])
+                '/exports/{}@5.pdf'.format(id))])
 
     def test_get_exports_allowable_types(self):
         from ..views import get_export_allowable_types
