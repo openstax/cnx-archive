@@ -116,6 +116,10 @@ class QueryRecord(Mapping):
             self.fields.setdefault(key, set()).add(term)
         self.match_hits = (self.matched, self.fields)
 
+    def __repr__(self):
+        s = "<{} id='{}'>".format(self.__class__.__name__, self['id'])
+        return s
+
     def __getitem__(self, key):
         return self._record[key]
 
@@ -176,6 +180,11 @@ class QueryResults(Sequence):
             'author': self._count_authors(),
             'pubYear': self._count_publication_year(),
             }
+
+    def __repr__(self):
+        s = "<{} with '{}' results>".format(self.__class__.__name__,
+                                            len(self))
+        return s
 
     def __getitem__(self, index):
         return self._records[index]
