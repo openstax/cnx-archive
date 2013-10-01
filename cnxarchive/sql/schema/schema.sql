@@ -59,6 +59,8 @@ CREATE TABLE "modules" (
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"version" text default '1.1',
 	"name" text NOT NULL,
+	-- The "created" column contains the date and time for the original publish
+	-- for the first version of the document.
 	"created" timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
 	"revised" timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
 	"abstractid" integer ,
