@@ -389,19 +389,19 @@ class RoutingTest(unittest.TestCase):
         path_one = "/contents/{ident_hash}"
         view_one = 'cnxarchive.views:get_content'
         app.add_route(path_one, view_one)
-        path_two = "/resources/{id}"
+        path_two = "/resources/{hash}"
         view_two = 'cnxarchive.views:get_resource'
         app.add_route(path_two, view_two)
 
-        id = '1a2b3c4d5678'
-        environ = {'PATH_INFO': '/resources/{}'.format(id)}
+        hash = '1a2b3c4d5678'
+        environ = {'PATH_INFO': '/resources/{}'.format(hash)}
         setup_testing_defaults(environ)
         controller = app.route(environ)
 
         from .views import get_resource
         self.assertEqual(controller, get_resource)
         self.assertEqual(environ['wsgiorg.routing_args'],
-                         {'id': id})
+                         {'hash': hash})
 
 
 class PostgresqlFixture:
@@ -909,11 +909,11 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
-        uuid = 'f45f8378-92db-40ae-ba58-648130038e4b'
+        hash = '8c48c59e411d1e31cc0186be535fa5eb'
 
         # Build the request.
         environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'id': uuid}
+        environ['wsgiorg.routing_args'] = {'hash': hash}
 
         # Call the view.
         from .views import get_resource
@@ -928,7 +928,6 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         expected_headers = [
             ('Content-type', 'image/png',),
-            ('Content-disposition', "attached; filename=PhET_Icon.png",),
             ]
         self.assertEqual(headers, expected_headers)
 
