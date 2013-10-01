@@ -257,7 +257,7 @@ SEARCH_RESULTS = {
                            u'surname': None,
                            u'title': None,
                            u'website': None}],
-             u'bodySnippet': None,
+             u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
              u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
              u'keywords': [u'college physics',
                            u'introduction',
@@ -732,6 +732,16 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
+
+    def test_fulltext_search(self):
+        # Test the results of a search on fulltext.
+        query_params = [('fulltext', 'uncertainty'), ('fulltext', 'rotation')]
+
+        results = self.call_target(query_params)
+        self.assertEqual(len(results), 6)
+        # Ensure the record with both values is the top result.
+        self.assertEqual(results[0]['id'],
+                         'ae3e18de-638d-4738-b804-dc69cd4db3a3')
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.

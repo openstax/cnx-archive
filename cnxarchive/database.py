@@ -19,6 +19,8 @@ DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
 DB_SCHEMA_FILE_PATHS = (
     os.path.join(DB_SCHEMA_DIRECTORY, 'schema.sql'),
     os.path.join(DB_SCHEMA_DIRECTORY, 'trees.sql'),
+    # Module fulltext indexing
+    os.path.join(DB_SCHEMA_DIRECTORY, 'fulltext-indexing.sql'),
     # cnx-user user shadow table.
     os.path.join(DB_SCHEMA_DIRECTORY, 'cnx-user.schema.sql'),
     # Functions
