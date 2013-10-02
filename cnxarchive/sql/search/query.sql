@@ -3,7 +3,13 @@ FROM (
 
 SELECT
   lm.name as title, title_order(lm.name) as "sortTitle",
-  lm.uuid as id, lm.version as version, language,
+  lm.uuid as id,
+  CASE
+    WHEN lm.portal_type = 'Collection'
+      THEN lm.major_version || '.' || lm.minor_version
+    ELSE lm.major_version || ''
+  END AS version,
+  language,
   weight, keys as _keys, '' as matched, '' as fields,
   lm.portal_type as "mediaType",
   lm.created as "pubDate",

@@ -57,6 +57,8 @@ CREATE TABLE "modules" (
 	"portal_type" text,
 	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        -- please do not use version in cnx-archive code, it is only used for
+        -- storing the legacy version
 	"version" text default '1.1',
 	"name" text NOT NULL,
 	-- The "created" column contains the date and time for the original publish
@@ -77,6 +79,10 @@ CREATE TABLE "modules" (
 	"parentauthors" text[],
 	"google_analytics" text,
 	"buylink" text,
+        -- Collections have versions like <major_version>.<minor_version> while
+        -- modules have versions like <major_version>
+	"major_version" integer default 1,
+	"minor_version" integer default 1,
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
 	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
 	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
@@ -96,6 +102,8 @@ CREATE TABLE "latest_modules" (
 	"portal_type" text,
 	"moduleid" text,
         "uuid" uuid NOT NULL,
+        -- please do not use version in cnx-archive code, it is only used for
+        -- storing the legacy version
 	"version" text,
 	"name" text NOT NULL,
 	"created" timestamp with time zone NOT NULL,
@@ -113,7 +121,11 @@ CREATE TABLE "latest_modules" (
 	"licensors" text[],
 	"parentauthors" text[],
 	"google_analytics" text,
-	"buylink" text
+	"buylink" text,
+        -- Collections have versions like <major_version>.<minor_version> while
+        -- modules have versions like <major_version>
+	"major_version" integer default 1,
+	"minor_version" integer default 1
 );
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
@@ -130,12 +142,14 @@ BEGIN
                 uuid, module_ident, portal_type, moduleid, version, name,
   		created, revised, abstractid, stateid, doctype, licenseid,
   		submitter,submitlog, parent, language,
-		authors, maintainers, licensors, parentauthors, google_analytics)
+		authors, maintainers, licensors, parentauthors, google_analytics,
+                major_version, minor_version)
   	VALUES (
          NEW.uuid, NEW.module_ident, NEW.portal_type, NEW.moduleid, NEW.version, NEW.name,
   	 NEW.created, NEW.revised, NEW.abstractid, NEW.stateid, NEW.doctype, NEW.licenseid,
   	 NEW.submitter, NEW.submitlog, NEW.parent, NEW.language,
-	 NEW.authors, NEW.maintainers, NEW.licensors, NEW.parentauthors, NEW.google_analytics );
+	 NEW.authors, NEW.maintainers, NEW.licensors, NEW.parentauthors, NEW.google_analytics,
+         NEW.major_version, NEW.minor_version );
   END IF;
 
   IF TG_OP = ''UPDATE'' THEN
@@ -159,7 +173,9 @@ BEGIN
 	maintainers=NEW.maintainers,
 	licensors=NEW.licensors,
 	parentauthors=NEW.parentauthors,
-	google_analytics=NEW.google_analytics
+	google_analytics=NEW.google_analytics,
+        major_version=NEW.major_version,
+        minor_version=NEW.minor_version
         WHERE module_ident=NEW.module_ident;
   END IF;
 
@@ -203,14 +219,14 @@ CREATE VIEW all_modules as
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors, google_analytics,
-			buylink
+			buylink, major_version, minor_version
 	FROM modules
 	UNION ALL
 	SELECT module_ident, uuid, portal_type, moduleid, 'latest', name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors, google_analytics,
-			buylink
+			buylink, major_version, minor_version
 	FROM latest_modules;
 
 CREATE VIEW current_modules AS

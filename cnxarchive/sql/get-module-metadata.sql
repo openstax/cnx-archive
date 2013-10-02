@@ -8,13 +8,30 @@
 -- arguments: id:string; version:string
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
-  m.uuid AS id, m.version, m.name as title,
+  m.uuid AS id, 
+
+  CASE
+    WHEN m.portal_type = 'Collection'
+      THEN m.major_version || '.' || m.minor_version
+    ELSE m.major_version || ''
+  END AS current_version,
+  -- can't use "version" as we need it in GROUP BY clause and it causes a
+  -- "column name is ambiguous" error
+
+  m.name as title,
   m.created as created, m.revised as revised,
   m.stateid, m.doctype,
   l.url AS license,
   m.submitter, m.submitlog, m.portal_type as "mediaType",
   a.abstract,
-  p.uuid AS "parentId", p.version AS "parentVersion",
+  p.uuid AS "parentId",
+
+  CASE
+    WHEN p.portal_type = 'Collection'
+      THEN p.major_version || '.' || p.minor_version
+    ELSE p.major_version || ''
+  END AS "parentVersion",
+
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT id, email, firstname, othername, surname, fullname,
                 title, suffix, website
@@ -48,10 +65,14 @@ FROM modules m
 WHERE
   m.licenseid = l.licenseid AND
   m.uuid = %(id)s AND
-  m.version = %(version)s
+  CASE
+    WHEN m.portal_type = 'Collection'
+      THEN m.major_version || '.' || m.minor_version
+    ELSE m.major_version || ''
+  END = %(version)s
 GROUP BY
-  m.moduleid, m.portal_type, m.version, m.name, m.created, m.revised,
+  m.moduleid, m.portal_type, current_version, m.name, m.created, m.revised,
   a.abstract, m.stateid, m.doctype, l.url, m.module_ident, m.submitter,
-  m.submitlog, p.uuid, p.version, m.authors, m.licensors, m.maintainers,
+  m.submitlog, p.uuid, "parentVersion", m.authors, m.licensors, m.maintainers,
   m.parentauthors, m.language, m.google_analytics
 ) combined_rows ;

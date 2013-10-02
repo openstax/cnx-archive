@@ -6,7 +6,12 @@
 -- ###
 
 -- arguments: id:string
-SELECT m.version
+SELECT
+  CASE
+    WHEN m.portal_type = 'Collection'
+      THEN m.major_version || '.' || m.minor_version
+    ELSE m.major_version || ''
+  END AS version
 FROM modules m
 WHERE m.uuid = %(id)s
 ORDER BY m.module_ident DESC
