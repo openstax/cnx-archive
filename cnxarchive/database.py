@@ -106,19 +106,15 @@ def republish_module(plpy, td):
         if results:
             return results[0]['module_ident']
 
-    def get_version(module_ident):
-        stmt = plpy.prepare('SELECT m.version FROM modules m '
-                'WHERE m.module_ident = $1', ['integer'])
-        return plpy.execute(stmt, [module_ident])[0]['version']
+    def get_minor_version(module_ident):
+        stmt = plpy.prepare('SELECT m.minor_version '
+                'FROM modules m WHERE m.module_ident = $1', ['integer'])
+        results = plpy.execute(stmt, [module_ident])
+        return results[0]['minor_version']
 
-    def next_version(module_ident, release):
-        # "major" release bumps the first number so 1.4 becomes 2.1
-        # "minor" release bumps the number after the dot so 1.4 becomes 1.5
-        current_version = get_version(module_ident)
-        major, minor = current_version.split('.', 1)
-        if release == 'major':
-            return '{}.1'.format(int(major) + 1)
-        return '{}.{}'.format(major, int(minor) + 1)
+    def next_version(module_ident):
+        minor = get_minor_version(module_ident)
+        return minor + 1
 
     def get_collections(module_ident):
         """Get all the collections that the module is part of
@@ -181,24 +177,25 @@ def republish_module(plpy, td):
                 build_tree(i, new_node)
         build_tree(root_node, None)
 
-    def republish_collection(next_version, collection_ident):
+    def republish_collection(next_minor_version, collection_ident):
         """Insert a new row for collection_ident with a new version and return
         the module_ident of the row inserted
         """
         sql = '''
-        INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
+        INSERT INTO modules (portal_type, moduleid, uuid, name, created, revised,
             abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
-            authors,maintainers,licensors,parentauthors,google_analytics,buylink)
-            SELECT m.portal_type, m.moduleid, m.uuid, $1, m.name, m.created, CURRENT_TIMESTAMP,
+            authors,maintainers,licensors,parentauthors,google_analytics,buylink,
+            major_version, minor_version)
+            SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, CURRENT_TIMESTAMP,
             m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
             m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
-            m.google_analytics, m.buylink
+            m.google_analytics, m.buylink, m.major_version, $1
             FROM modules m
             WHERE m.module_ident = $2
         RETURNING module_ident
         '''
-        stmt = plpy.prepare(sql, ['text', 'integer'])
-        results = plpy.execute(stmt, [next_version, collection_ident])
+        stmt = plpy.prepare(sql, ['integer', 'integer'])
+        results = plpy.execute(stmt, [next_minor_version, collection_ident])
         return results[0]['module_ident']
 
 
@@ -219,8 +216,8 @@ def republish_module(plpy, td):
 
     # Module is republished
     for collection_id in get_collections(current_module_ident):
-        new_version = next_version(collection_id, 'minor')
-        new_ident = republish_collection(new_version, collection_id)
+        minor = next_version(collection_id)
+        new_ident = republish_collection(minor, collection_id)
         rebuild_collection_tree(collection_id, {
             collection_id: new_ident,
             current_module_ident: td['new']['module_ident'],

@@ -117,10 +117,10 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm42955', '209deb1f-1a46-4369-9e0d-18674cf58a3e', '2.0',
+        DEFAULT, 'Module', 'm42955', '209deb1f-1a46-4369-9e0d-18674cf58a3e', NULL,
         'Preface to College Physics', '2013-09-13 15:10:43.000000+02' ,
         '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
-        'en', '{}', '{}', '{}', NULL, NULL, NULL) RETURNING module_ident''')
+        'en', '{}', '{}', '{}', NULL, NULL, NULL, 2, 0) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
 
         # After the new module is inserted, there should be a new module and a
@@ -133,9 +133,10 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         cursor.execute('SELECT * FROM modules m ORDER BY module_ident DESC')
         results = cursor.fetchone()
         new_collection_id = results[0]
-        self.assertEqual(results[1], 'Collection')
-        self.assertEqual(results[4], '1.8')
-        self.assertEqual(results[5], 'College Physics')
+        self.assertEqual(results[1], 'Collection') # portal_type
+        self.assertEqual(results[5], 'College Physics') # name
+        self.assertEqual(results[-2], 1) # major_version
+        self.assertEqual(results[-1], 8) # minor_version
 
         cursor.execute('SELECT nodeid FROM trees '
                 'WHERE parent_id IS NULL ORDER BY nodeid DESC')
@@ -184,10 +185,10 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm42119', 'f3c9ab70-a916-4d8c-9256-42953287b4e9', '2.0',
+        DEFAULT, 'Module', 'm42119', 'f3c9ab70-a916-4d8c-9256-42953287b4e9', NULL,
         'New Version', '2013-09-13 15:10:43.000000+02' ,
         '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
-        'en', '{}', '{}', '{}', NULL, NULL, NULL) RETURNING module_ident''')
+        'en', '{}', '{}', '{}', NULL, NULL, NULL, 2, NULL) RETURNING module_ident''')
 
         new_module_ident = cursor.fetchone()[0]
 

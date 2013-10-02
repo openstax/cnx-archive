@@ -28,6 +28,11 @@ def get_content_metadata(id, version, cursor):
     cursor.execute(SQL['get-module-metadata'], args)
     try:
         result = cursor.fetchone()[0]
+        # version is what we want to return, but in the sql we're using
+        # current_version because otherwise there's a "column reference is
+        # ambiguous" error
+        result['version'] = result.pop('current_version')
+
         return result
     except (TypeError, IndexError,):  # None returned
         raise httpexceptions.HTTPNotFound()

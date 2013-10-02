@@ -8,9 +8,26 @@
 -- arguments: id:string; version:string filename:string
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
-  m.uuid AS id, m.version, m.name, m.created as _created, m.revised as _revised,
+  m.uuid AS id,
+
+  CASE
+    WHEN m.portal_type = 'Collection'
+      THEN m.major_version || '.' || m.minor_version
+    ELSE m.major_version || ''
+  END AS current_version,
+  -- can't use "version" as we need it in GROUP BY clause and it causes a
+  -- "column name is ambiguous" error
+
+  m.name, m.created as _created, m.revised as _revised,
   abstract, m.stateid, m.doctype,l.url AS license, m.module_ident AS ident, m.submitter, m.submitlog,
-  p.uuid AS parent_id, p.version AS parent_version,
+  p.uuid AS parent_id,
+
+  CASE
+    WHEN p.portal_type = 'Collection'
+      THEN p.major_version || '.' || p.minor_version
+    ELSE p.major_version || ''
+  END AS "parentVersion",
+
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
   COALESCE(m.parentauthors,ARRAY(select ''::text where false)) as "parentAuthors",
   m.language as language,
@@ -29,10 +46,14 @@ LEFT JOIN modules p on m.parent = p.module_ident
 LEFT JOIN moduletags mt on m.module_ident = mt.module_ident NATURAL LEFT JOIN tags
 WHERE
 m.uuid = %(id)s AND
-m.version = %(version)s AND
+CASE
+  WHEN m.portal_type = 'Collection'
+    THEN m.major_version || '.' || m.minor_version
+  ELSE m.major_version || ''
+END = %(version)s AND
 mf.filename = %(filename)s
 GROUP BY
-m.uuid, m.portal_type, m.version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype,
-l.url, m.module_ident, m.submitter, m.submitlog, p.uuid, p.version, m.authors, m.licensors,
+m.uuid, m.portal_type, current_version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype,
+l.url, m.module_ident, m.submitter, m.submitlog, p.uuid, "parentVersion", m.authors, m.licensors,
 m.maintainers, m.parentauthors, m.language, f.file
 ) combined_rows;
