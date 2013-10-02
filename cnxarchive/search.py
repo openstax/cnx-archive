@@ -82,7 +82,7 @@ class Query:
             return ''
 
         # terms will be all the search terms that don't have a field
-        # terms is the 
+        # terms is the
         terms = re.sub(r'[^\s:]*:("[^"]*"|[^\s]*)', f, query_string)
         query_string = '{}" {}'.format(terms.strip(), ' '.join(fields))
         return query_string
@@ -236,10 +236,14 @@ def _transmute_filter(keyword, value):
     #   to over design this. Keeping this a simple switch over or error.
     if keyword not in VALID_FILTER_KEYWORDS:
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
-    elif value != 'book':
+    elif value == 'book':
+        type_name = 'Collection'
+    elif value == 'page':
+        type_name = 'Module'
+    else:
         raise ValueError("Invalid filter value '{}' for filter '{}'." \
                              .format(value, keyword))
-    return ('portal_type', 'Collection')
+    return ('portal_type', type_name)
 
 
 def _transmute_sort(sort_value):
@@ -328,7 +332,11 @@ def _build_search(structured_query, weights):
             arg_name = "{}_{}".format(keyword, i)
             # These key values are special in that they don't,
             #   directly translate to SQL fields and values.
-            field_name, match_value = _transmute_filter(keyword, value)
+            try:
+                field_name, match_value = _transmute_filter(keyword, value)
+            except ValueError:
+                del structured_query.filters[i]
+                continue
             arguments[arg_name] = match_value
             filter_stmt = "{} = %({})s".format(field_name, arg_name)
             filters.append(filter_stmt)
