@@ -334,6 +334,17 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(results[0]['id'],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
+    def test_type_filter_on_pages(self):
+        # Test for type filtering that will find books only.
+        query_params = [('text', 'physics'), ('type', 'page')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 14)
+        # Check that the collection/book is not in the results.
+        self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                         result_ids)
+
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
