@@ -90,6 +90,10 @@ To set up the database, issue the following commands::
 Installing the application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+**Note**: cnx-archive requires the packages in this section to be installed
+with the system python.  Specifically it needs to be installed to the python
+that postgresql uses for python triggers.
+
 Before installing cnx-archive, you need to first install the
 dependencies that have not been released to the public package repositories::
 
