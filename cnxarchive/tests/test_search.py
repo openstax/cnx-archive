@@ -136,8 +136,9 @@ class SearchTestCase(unittest.TestCase):
     def call_target(self, query_params):
         # Single point of import failure.
         from ..search import search, Query
-        query = Query(query_params)
-        return search(query)
+        self.query = Query(query_params)
+        self.addCleanup(delattr, self, 'query')
+        return search(self.query)
 
     def test_title_search(self):
         # Simple case to test for results of a basic title search.
@@ -344,6 +345,14 @@ class SearchTestCase(unittest.TestCase):
         # Check that the collection/book is not in the results.
         self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597',
                          result_ids)
+
+    def test_type_filter_on_unknown(self):
+        # Test for type filtering on an unknown type.
+        query_params = [('text', 'physics'), ('type', 'image')]
+
+        results = self.call_target(query_params)
+        # Check for the removal of the filter
+        self.assertEqual(self.query.filters, [])
 
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.

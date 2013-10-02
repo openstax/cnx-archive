@@ -332,7 +332,11 @@ def _build_search(structured_query, weights):
             arg_name = "{}_{}".format(keyword, i)
             # These key values are special in that they don't,
             #   directly translate to SQL fields and values.
-            field_name, match_value = _transmute_filter(keyword, value)
+            try:
+                field_name, match_value = _transmute_filter(keyword, value)
+            except ValueError:
+                del structured_query.filters[i]
+                continue
             arguments[arg_name] = match_value
             filter_stmt = "{} = %({})s".format(field_name, arg_name)
             filters.append(filter_stmt)
