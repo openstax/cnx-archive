@@ -196,6 +196,11 @@ def search(environ, start_response):
         u'results': {
             u'items': [],
             u'total': 0,
+            u'limits': [{u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
             },
         })
 
@@ -231,6 +236,11 @@ def search(environ, start_response):
             'bodySnippet': record.highlighted_fulltext,
             'pubDate': record['pubDate'],
             })
+    result_limits = []
+    for count_name, values in db_results.counts.items():
+        for keyword, count in values.items():
+            result_limits.append({count_name:keyword, 'count': count})
+    results['results']['limits'] = result_limits
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
