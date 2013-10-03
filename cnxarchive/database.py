@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Database models and utilities"""
+import datetime
 import os
 import psycopg2
 import re
@@ -196,7 +197,7 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy=None
     build_tree(root_node, None)
 
 def republish_collection(next_minor_version, collection_ident, plpy=None,
-        cursor=None):
+        cursor=None, revised=None):
     """Insert a new row for collection_ident with a new version and return
     the module_ident of the row inserted
     """
@@ -205,7 +206,7 @@ def republish_collection(next_minor_version, collection_ident, plpy=None,
         abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
         authors,maintainers,licensors,parentauthors,google_analytics,buylink,
         major_version, minor_version)
-        SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, CURRENT_TIMESTAMP,
+        SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, %s,
         m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
         m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
         m.google_analytics, m.buylink, m.major_version, %s
@@ -213,12 +214,14 @@ def republish_collection(next_minor_version, collection_ident, plpy=None,
         WHERE m.module_ident = %s
     RETURNING module_ident
     '''
+    if revised is None:
+        revised = datetime.datetime.now()
     if plpy:
-        stmt = plpy.prepare(to_plpy_stmt(sql), ['integer', 'integer'])
-        results = plpy.execute(stmt, [next_minor_version,
+        stmt = plpy.prepare(to_plpy_stmt(sql), ['timestamp', 'integer', 'integer'])
+        results = plpy.execute(stmt, [revised, next_minor_version,
             collection_ident])[0]['module_ident']
     elif cursor:
-        cursor.execute(sql, [next_minor_version, collection_ident])
+        cursor.execute(sql, [revised, next_minor_version, collection_ident])
         results = cursor.fetchone()[0]
     return results
 
@@ -389,3 +392,80 @@ def add_module_file(plpy, td):
         if message:
             plpy.error(message)
     return
+
+def get_collection_tree(collection_ident, cursor):
+    cursor.execute('''
+    WITH RECURSIVE t(node, parent, document, path) AS (
+        SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
+        FROM trees tr
+        WHERE tr.documentid = %s
+    UNION ALL
+        SELECT c.nodeid, c.parent_id, c.documentid, path || ARRAY[c.nodeid]
+        FROM trees c JOIN t ON c.parent_id = t.node
+        WHERE NOT c.nodeid = ANY(t.path)
+    )
+    SELECT t.document, m.portal_type
+    from t JOIN modules m ON t.document = m.module_ident''', [collection_ident])
+    for i in cursor.fetchall():
+        yield i
+
+def create_collection_minor_versions(cursor, collection_ident):
+    """Migration to create collection minor versions from the existing modules
+    and collections """
+    # Get the collection tree
+    # modules = []
+    # Loop over each module
+    #    If there is a version of the modules that have next_collection.revised > revised > collection.revised 
+    #        modules.append((module_ident, revised))
+    # sort modules by revised ascending
+    # for each module in modules
+    #    increment minor version of collection, with module's revised time
+    #    rebuild collection tree
+
+    cursor.execute('''
+    WITH current AS (
+        SELECT uuid, revised FROM modules WHERE module_ident = %s
+    )
+    SELECT m.module_ident, m.revised FROM modules m, current
+    WHERE m.uuid = current.uuid AND m.revised >= current.revised
+    ORDER BY m.revised LIMIT 2
+    ''',
+        [collection_ident])
+    results = cursor.fetchall()
+    this_module_ident, this_revised = results[0]
+    next_revised = datetime.datetime.now()
+    if len(results) == 2:
+        next_module_ident, next_revised = results[1]
+
+    sql = '''SELECT DISTINCT(m.module_ident), m.revised FROM modules m
+    WHERE m.revised > %s AND m.revised < %s AND m.uuid = (
+        SELECT uuid FROM modules WHERE module_ident = %s)
+    ORDER BY m.revised
+    '''
+
+    old_module_idents = {}
+    modules = []
+    for module_ident, portal_type in get_collection_tree(collection_ident,
+            cursor):
+        if portal_type == 'Module':
+            cursor.execute(sql, [this_revised, next_revised, module_ident])
+            results = cursor.fetchall()
+            for i, data in enumerate(results):
+                if i == 0:
+                    old_module_idents[data[0]] = module_ident
+                else:
+                    old_module_idents[data[0]] = results[i - 1][0]
+                modules.append(data)
+
+    modules.sort(lambda a, b: cmp(a[1], b[1])) # sort modules by revised
+
+    next_minor_version = next_version(collection_ident, cursor=cursor)
+    for module_ident, module_revised in modules:
+        new_ident = republish_collection(next_minor_version, collection_ident, cursor=cursor, revised=module_revised)
+        rebuild_collection_tree(collection_ident, {
+            collection_ident: new_ident,
+            old_module_idents[module_ident]: module_ident,
+            }, cursor=cursor)
+
+        next_minor_version += 1
+        collection_ident = new_ident
