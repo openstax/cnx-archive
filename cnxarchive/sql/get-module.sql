@@ -10,11 +10,7 @@ SELECT row_to_json(combined_rows) as module
 FROM (SELECT
   m.uuid AS id,
 
-  CASE
-    WHEN m.portal_type = 'Collection'
-      THEN m.major_version || '.' || m.minor_version
-    ELSE m.major_version || ''
-  END AS current_version,
+  concat_ws('.', m.major_version, m.minor_version) AS current_version,
   -- can't use "version" as we need it in GROUP BY clause and it causes a
   -- "column name is ambiguous" error
 
@@ -22,11 +18,7 @@ FROM (SELECT
   abstract, m.stateid, m.doctype,l.url AS license, m.module_ident AS ident, m.submitter, m.submitlog,
   p.uuid AS parent_id,
 
-  CASE
-    WHEN p.portal_type = 'Collection'
-      THEN p.major_version || '.' || p.minor_version
-    ELSE p.major_version || ''
-  END AS "parentVersion",
+  concat_ws('.', m.major_version, m.minor_version) AS "parentVersion",
 
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
   COALESCE(m.parentauthors,ARRAY(select ''::text where false)) as "parentAuthors",
@@ -46,11 +38,7 @@ LEFT JOIN modules p on m.parent = p.module_ident
 LEFT JOIN moduletags mt on m.module_ident = mt.module_ident NATURAL LEFT JOIN tags
 WHERE
 m.uuid = %(id)s AND
-CASE
-  WHEN m.portal_type = 'Collection'
-    THEN m.major_version || '.' || m.minor_version
-  ELSE m.major_version || ''
-END = %(version)s AND
+ concat_ws('.', m.major_version, m.minor_version) = %(version)s AND
 mf.filename = %(filename)s
 GROUP BY
 m.uuid, m.portal_type, current_version, m.name, m.created, m.revised, abstract, m.stateid, m.doctype,
