@@ -101,6 +101,206 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.fixture.tearDown()
 
     @db_connect
+    def test_get_current_module_ident(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import get_current_module_ident
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, 1)''')
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
+
+        module_ident = cursor.fetchone()[0]
+
+        self.assertEqual(get_current_module_ident('m1', cursor=cursor),
+                module_ident)
+
+    @db_connect
+    def test_next_version(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import next_version
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
+        module_ident = cursor.fetchone()[0]
+
+        self.assertEqual(next_version(module_ident, cursor=cursor), 2)
+
+    @db_connect
+    def test_get_collections(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import get_collections
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
+        collection_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c2', DEFAULT, '1.8', 'Name of c1',
+        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 8, 1) RETURNING module_ident''')
+        collection2_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
+        module_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
+        [collection_ident])
+        nodeid = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
+        [collection2_ident])
+        nodeid = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
+
+        self.assertEqual(list(get_collections(module_ident, cursor=cursor)),
+                [collection_ident, collection2_ident])
+
+    @db_connect
+    def test_rebuild_collection_tree(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import rebuild_collection_tree
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
+        collection_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
+        module_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm2', DEFAULT, '1.1', 'Name of m2',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, 1) RETURNING module_ident''')
+        module2_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
+        [collection_ident])
+        nodeid = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
+
+        cursor.execute('''INSERT INTO trees VALUES (
+        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module2_ident])
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 10, 1) RETURNING module_ident''')
+        new_collection_ident = cursor.fetchone()[0]
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 3, 1) RETURNING module_ident''')
+        new_module_ident = cursor.fetchone()[0]
+
+        new_document_id_map = {
+                collection_ident: new_collection_ident,
+                module_ident: new_module_ident
+                }
+        rebuild_collection_tree(collection_ident, new_document_id_map,
+                cursor=cursor)
+
+        cursor.execute('''
+        WITH RECURSIVE t(node, parent, document, path) AS (
+            SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
+            FROM trees tr WHERE tr.documentid = %s
+        UNION ALL
+            SELECT c.nodeid, c.parent_id, c.documentid, path || ARRAY[c.nodeid]
+            FROM trees c JOIN t ON (t.node = c.parent_id)
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT document FROM t
+        ''', [new_collection_ident])
+        self.assertEqual(cursor.fetchall(), [(new_collection_ident,),
+            (new_module_ident,), (module2_ident,)])
+
+    @db_connect
+    def test_republish_collection(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import republish_collection
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
+        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
+        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
+        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
+        ) RETURNING module_ident''')
+        collection_ident = cursor.fetchone()[0]
+
+        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+
+        cursor.execute('''SELECT * FROM modules WHERE
+        module_ident = %s''', [new_ident])
+        data = cursor.fetchone()
+        self.assertEqual(data[1], 'Collection')
+        self.assertEqual(data[2], 'c1')
+        self.assertEqual(data[3], '3a5344bd-410d-4553-a951-87bccd996822')
+        self.assertEqual(data[5], 'Name of c1')
+        self.assertEqual(str(data[6]), '2013-07-31 12:00:00-07:00')
+        self.assertNotEqual(str(data[7]), '2013-10-03 21:59:12-07:00')
+        self.assertEqual(data[8], 1)
+        self.assertEqual(data[9], 11)
+        self.assertEqual(data[10], 'doctype')
+        self.assertEqual(data[11], 'submitter')
+        self.assertEqual(data[12], 'submitlog')
+        self.assertEqual(data[13], None)
+        self.assertEqual(data[14], None)
+        self.assertEqual(data[15], 'en')
+        self.assertEqual(data[16], ['authors'])
+        self.assertEqual(data[17], ['maintainers'])
+        self.assertEqual(data[18], ['licensors'])
+        self.assertEqual(data[19], ['parentauthors'])
+        self.assertEqual(data[20], 'analytics code')
+        self.assertEqual(data[21], 'buylink')
+        self.assertEqual(data[22], 10)
+        self.assertEqual(data[23], 3)
+
+    @db_connect
     def test_module(self, cursor):
         cursor.execute('SELECT nodeid FROM trees '
                        'WHERE parent_id IS NULL ORDER BY nodeid DESC')
