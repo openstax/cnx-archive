@@ -245,12 +245,77 @@ SEARCH_RESULTS = {
              u'mediaType': u'Collection',
              u'pubDate': u'2013-07-31 12:07:20.342798-07',
              u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
-             u'title': u'College Physics'}],
-        u'total': 2}}
-
+             u'title': u'College Physics'},
+            ],
+        u'total': 2,
+        u'limits': [
+            {u'count': 2, u'pubYear': u'2013'},
+            {u'author': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+             u'count': 2},
+            {u'count': 1,
+             u'mediaType': u'application/vnd.org.cnx.collection'},
+            {u'count': 1, u'mediaType': u'application/vnd.org.cnx.module'},
+            {u'count': 1, u'keyword': u'work'},
+            {u'count': 1, u'keyword': u'electric potential'},
+            {u'count': 1, u'keyword': u'energy'},
+            {u'count': 1, u'keyword': u'ac circuits'},
+            {u'count': 1, u'keyword': u'elasticity'},
+            {u'count': 1, u'keyword': u'friction'},
+            {u'count': 1, u'keyword': u'vision and optical instruments'},
+            {u'count': 1, u'keyword': u'fluid statics'},
+            {u'count': 1, u'keyword': u'statics and torque'},
+            {u'count': 1, u'keyword': u'radioactivity and nuclear physics'},
+            {u'count': 1,
+             u'keyword': u'uniform circular motion and gravitation'},
+            {u'count': 1, u'keyword': u'particle physics'},
+            {u'count': 1,
+             u'keyword': u'biological and medical applications'},
+            {u'count': 1, u'keyword': u'fluid dynamics'},
+            {u'count': 1, u'keyword': u'quantum physics'},
+            {u'count': 1, u'keyword': u'thermodynamics'},
+            {u'count': 1, u'keyword': u'introduction'},
+            {u'count': 1, u'keyword': u'Newton\u2019s Laws of Motion'},
+            {u'count': 1, u'keyword': u'atomic physics'},
+            {u'count': 2, u'keyword': u'college physics'},
+            {u'count': 1, u'keyword': u'collisions'},
+            {u'count': 1, u'keyword': u'electric charge and electric field'},
+            {u'count': 1, u'keyword': u'kinematics'},
+            {u'count': 1, u'keyword': u'forces'},
+            {u'count': 1, u'keyword': u'electrical technologies'},
+            {u'count': 1,
+             u'keyword': u'rotational motion and angular momentum'},
+            {u'count': 1,
+             u'keyword': u'medical applications of nuclear physics'},
+            {u'count': 1, u'keyword': u'wave optics'},
+            {u'count': 1, u'keyword': u'kinetic theory'},
+            {u'count': 1, u'keyword': u'special relativity'},
+            {u'count': 1, u'keyword': u'heat and transfer methods'},
+            {u'count': 1, u'keyword': u'resistance'},
+            {u'count': 1, u'keyword': u'drag'},
+            {u'count': 1, u'keyword': u'electric current'},
+            {u'count': 1, u'keyword': u'dc instruments'},
+            {u'count': 1, u'keyword': u'electromagnetic waves'},
+            {u'count': 1, u'keyword': u'frontiers of physics'},
+            {u'count': 1, u'keyword': u'physics of hearing'},
+            {u'count': 1, u'keyword': u'gas laws'},
+            {u'count': 1, u'keyword': u'temperature'},
+            {u'count': 1, u'keyword': u'electromagnetic induction'},
+            {u'count': 1, u'keyword': u'circuits'},
+            {u'count': 1, u'keyword': u'oscillatory motion and waves'},
+            {u'count': 1, u'keyword': u'geometric optics'},
+            {u'count': 1, u'keyword': u'magnetism'},
+            {u'count': 1, u'keyword': u'linear momentum'},
+            {u'count': 1, u'keyword': u'bioelectricity'},
+            {u'count': 1, u'keyword': u'Ohm\u2019s Law'},
+            {u'count': 2, u'keyword': u'physics'},
+            {u'count': 2, u'subject': u'Mathematics and Statistics'},
+            {u'count': 1, u'subject': u'Science and Technology'}],
+        }
+    }
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
+    maxDiff = 10000
 
     @classmethod
     def setUpClass(cls):
@@ -547,6 +612,12 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
+                u'limits': [
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
                 },
             }))
 
@@ -569,6 +640,12 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
+                u'limits': [
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
                 },
             }))
 
@@ -592,6 +669,12 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
+                u'limits': [
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
                 },
             })
 
@@ -618,6 +701,12 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
+                u'limits': [
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
                 },
             })
 
@@ -645,5 +734,11 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
+                u'limits': [
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'count': 0,
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
                 }
             })
