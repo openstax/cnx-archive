@@ -105,6 +105,10 @@ dependencies that have not been released to the public package repositories::
     cd cnx-upgrade
     python setup.py install
     cd ..
+    git clone -b abstracts-and-metadata https://github.com/Connexions/rhaptos.cnxmlutils.git
+    cd rhaptos.cnxmlutils
+    python setup.py install
+    cd ..
 
 To install the application itself::
 
