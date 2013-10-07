@@ -20,7 +20,7 @@ FROM (SELECT
   m.submitter, m.submitlog, m.portal_type as "mediaType",
   a.abstract,
   p.uuid AS "parentId",
-  concat_ws('.', m.major_version, m.minor_version) AS "parentVersion",
+  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
 
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT id, email, firstname, othername, surname, fullname,
