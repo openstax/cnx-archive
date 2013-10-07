@@ -18,7 +18,7 @@ FROM (SELECT
   abstract, m.stateid, m.doctype,l.url AS license, m.module_ident AS ident, m.submitter, m.submitlog,
   p.uuid AS parent_id,
 
-  concat_ws('.', m.major_version, m.minor_version) AS "parentVersion",
+  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
 
   m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
   COALESCE(m.parentauthors,ARRAY(select ''::text where false)) as "parentAuthors",

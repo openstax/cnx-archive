@@ -55,7 +55,7 @@ COLLECTION_METADATA = {
     u'title': u'College Physics',
     u'parentAuthors': [],
     u'parentId': None,
-    u'parentVersion': None,
+    u'parentVersion': '',
     u'revised': u'2013-07-31 12:07:20.342798-07',
     u'stateid': None,
     u'submitlog': u'',
@@ -148,7 +148,7 @@ MODULE_METADATA = {
     u'title': u'Elasticity: Stress and Strain',
     u'parentAuthors': [],
     u'parentId': None,
-    u'parentVersion': None,
+    u'parentVersion': '',
     u'revised': u'2013-07-31 12:07:24.856663-07',
     u'stateid': None,
     u'submitlog': u'',
@@ -326,6 +326,7 @@ class ViewsTestCase(unittest.TestCase):
                     'content[{key}] = {v1} but COLLECTION_METADATA[{key}] = {v2}'.format(
                         key=key, v1=content[key], v2=COLLECTION_METADATA[key]))
 
+        self.maxDiff = 10000
         # Check the tree for accuracy.
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
 
