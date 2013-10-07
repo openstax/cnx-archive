@@ -8,6 +8,7 @@ install_requires = (
     'PasteDeploy',
     'PasteScript',
     'psycopg2>=2.5',
+    'waitress',  # wsgi server
     )
 description = "An archive for Connexions documents."
 
@@ -26,8 +27,6 @@ setup(
     entry_points="""\
     [paste.app_factory]
     main = cnxarchive:main
-    [paste.server_runner]
-    main = cnxarchive._wsgiref:main
     [console_scripts]
     initialize_cnx-archive_db = cnxarchive.scripts.initializedb:main
     cnx-archive_get_buylinks = cnxarchive.scripts.get_buylinks:main
