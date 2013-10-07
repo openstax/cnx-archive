@@ -8,7 +8,7 @@ install_requires = (
     'PasteDeploy',
     'PasteScript',
     'psycopg2>=2.5',
-    'waitress',  # development server
+    'waitress',  # wsgi server
     )
 description = "An archive for Connexions documents."
 
