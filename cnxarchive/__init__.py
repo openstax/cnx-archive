@@ -6,13 +6,19 @@
 # See LICENCE.txt for details.
 # ###
 """Document and collection archive web application."""
+import os
 import re
-
+import logging
+from logging.config import fileConfig as load_logging_configuration
 
 from . import httpexceptions
 from .utils import import_function, template_to_regex
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+DEFAULT_LOGGING_CONFIG_FILEPATH = os.path.join(here, 'default-logging.ini')
+
+logger = logging.getLogger('cnxarchive')
 _settings = None
 
 def get_settings():
@@ -71,7 +77,15 @@ class Application:
             start_response(status, headers, *args, **kwargs)
         return r
 
+    def log_request(self, environ):
+        path = environ['PATH_INFO']
+        if environ.get('QUERY_STRING'):
+            path = "{}?{}".format(path, environ['QUERY_STRING'])
+        message = "{} - {}".format(environ['REQUEST_METHOD'], path)
+        logger.info(message)
+
     def __call__(self, environ, start_response):
+        self.log_request(environ)
         controller = self.route(environ)
         if environ.get('REQUEST_METHOD', '') in ['GET', 'OPTIONS']:
             start_response = self.add_cors(environ, start_response)
@@ -81,7 +95,7 @@ class Application:
             except httpexceptions.HTTPException as exc:
                 return exc(environ, start_response)
             except:
-                raise
+                logger.exception("Unknown exception")
                 server_error = httpexceptions.HTTPInternalServerError()
                 return server_error(environ, start_response)
         return httpexceptions.HTTPNotFound()(environ, start_response)
@@ -90,6 +104,11 @@ class Application:
 def main(global_config, **settings):
     """Main WSGI application factory."""
     _set_settings(settings)
+    # Initialize logging
+    logging_config_filepath = settings.get('logging-configuration-filepath',
+                                           DEFAULT_LOGGING_CONFIG_FILEPATH)
+    load_logging_configuration(logging_config_filepath)
+
     app = Application()
     app.add_route('/contents/{ident_hash}', 'cnxarchive.views:get_content')
     app.add_route('/resources/{hash}', 'cnxarchive.views:get_resource')
