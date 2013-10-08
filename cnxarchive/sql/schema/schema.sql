@@ -82,7 +82,7 @@ CREATE TABLE "modules" (
         -- Collections have versions like <major_version>.<minor_version> while
         -- modules have versions like <major_version>
 	"major_version" integer default 1,
-	"minor_version" integer default 1,
+	"minor_version" integer default NULL,
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
 	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
 	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
