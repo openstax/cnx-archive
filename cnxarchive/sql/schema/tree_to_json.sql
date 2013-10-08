@@ -14,8 +14,7 @@ UNION ALL
     WHERE not nodeid = any (t.path)
 )
 SELECT
-    REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(m.uuid::text,'subcol') ||COALESCE('@'||
-      concat_ws('.', m.major_version, m.minor_version), '') ||'",' ||
+    REPEAT('    ', depth - 1) || '{"id":"' || COALESCE(m.uuid::text,'subcol') ||concat_ws('.', '@'||m.major_version, m.minor_version) ||'",' ||
       '"title":'||to_json(COALESCE(title,name))||
       CASE WHEN (depth < lead(depth,1,0) over(w)) THEN ', "contents":['
            WHEN (depth > lead(depth,1,0) over(w) AND lead(depth,1,0) over(w) = 0 ) THEN '}'||REPEAT(']}',depth - lead(depth,1,0) over(w) - 1)
