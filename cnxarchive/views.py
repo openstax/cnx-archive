@@ -8,6 +8,7 @@
 import cgi
 import os
 import json
+import logging
 import psycopg2
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
@@ -16,6 +17,9 @@ from . import httpexceptions
 from .utils import split_ident_hash, portaltype_to_mimetype, slugify
 from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import search as database_search, Query
+
+
+logger = logging.getLogger('cnxarchive')
 
 
 def get_content_metadata(id, version, cursor):
@@ -49,10 +53,12 @@ def get_content(environ, start_response):
                 cursor.execute(SQL['get-module-versions'], {'id': id})
                 try:
                     latest_version = cursor.fetchone()[0]
-                    raise httpexceptions.HTTPFound('/contents/{}@{}'.format(
-                        id, latest_version))
                 except (TypeError, IndexError,): # None returned
+                    logger.debug("version was not supplied "
+                                 "and could not be discovered.")
                     raise httpexceptions.HTTPNotFound()
+                raise httpexceptions.HTTPFound('/contents/{}@{}' \
+                        .format(id, latest_version,))
             result = get_content_metadata(id, version, cursor)
             # FIXME The 'mediaType' value will be changing to mimetypes
             #       in the near future.
@@ -71,6 +77,7 @@ def get_content(environ, start_response):
                 try:
                     content = cursor.fetchone()[0]
                 except (TypeError, IndexError,):  # None returned
+                    logger.debug("module found, but 'index.html' is missing.")
                     raise httpexceptions.HTTPNotFound()
                 result['content'] = content[:]
 
@@ -142,6 +149,7 @@ def get_export(environ, start_response):
     get_type_info()
 
     if type not in TYPE_INFO:
+        logger.debug("invalid type '{}' requested.".format(type))
         raise httpexceptions.HTTPNotFound()
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
@@ -150,10 +158,12 @@ def get_export(environ, start_response):
                 cursor.execute(SQL['get-module-versions'], {'id': id})
                 try:
                     latest_version = cursor.fetchone()[0]
-                    raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
-                        id, latest_version, type))
                 except (TypeError, IndexError,): # None returned
+                    logger.debug("version was not supplied "
+                                 "and could not be discovered.")
                     raise httpexceptions.HTTPNotFound()
+                raise httpexceptions.HTTPFound('/exports/{}@{}.{}' \
+                        .format(id, latest_version, type))
             result = get_content_metadata(id, version, cursor)
 
     file_extension = TYPE_INFO[type]['file_extension']
