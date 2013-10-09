@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Database models and utilities"""
+import datetime
 import os
 import psycopg2
 import re
@@ -84,122 +85,168 @@ def get_module_uuid(plpy,moduleid):
         uuid = results[0]['uuid']
     return uuid
 
+def get_current_module_ident(moduleid, plpy=None, cursor=None):
+    sql = '''SELECT m.module_ident FROM modules m 
+        WHERE m.moduleid = %s ORDER BY module_ident DESC'''
+    if plpy:
+        stmt = plpy.prepare(to_plpy_stmt(sql), ['text'])
+        results = plpy.execute(stmt, [moduleid])[0]['module_ident']
+    elif cursor:
+        cursor.execute(sql, [moduleid])
+        results = cursor.fetchone()[0]
+    return results
+
+def get_minor_version(module_ident, plpy=None, cursor=None):
+    sql = '''SELECT m.minor_version
+            FROM modules m WHERE m.module_ident = %s'''
+    if plpy:
+        stmt = plpy.prepare(to_plpy_stmt(sql), ['integer'])
+        results = plpy.execute(stmt, [module_ident])[0]['minor_version']
+    elif cursor:
+        cursor.execute(sql, [module_ident])
+        results = cursor.fetchone()[0]
+    return results
+
+def next_version(module_ident, plpy=None, cursor=None):
+    minor = get_minor_version(module_ident, plpy=plpy, cursor=cursor)
+    return minor + 1
+
+def get_collections(module_ident, plpy=None, cursor=None):
+    """Get all the collections that the module is part of
+    """
+    sql = '''
+    WITH RECURSIVE t(node, parent, path, document) AS (
+        SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
+        FROM trees tr
+        WHERE tr.documentid = %s
+    UNION ALL
+        SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
+        FROM trees c JOIN t ON (c.nodeid = t.parent)
+        WHERE not c.nodeid = ANY(t.path)
+    )
+    SELECT m.module_ident
+    FROM t JOIN latest_modules m ON (t.document = m.module_ident)
+    WHERE t.parent IS NULL
+    '''
+    if plpy:
+        stmt = plpy.prepare(to_plpy_stmt(sql), ['integer'])
+        for i in plpy.execute(stmt, [module_ident]):
+            yield i['module_ident']
+    elif cursor:
+        cursor.execute(sql, [module_ident])
+        for i in cursor.fetchall():
+            yield i[0]
+
+def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy=None, cursor=None):
+    """Create a new tree for the collection based on the old tree but with
+    new document ids
+    """
+    sql = '''
+    WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
+        SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = %s
+    UNION ALL
+        SELECT c.*, path || ARRAY[c.nodeid]
+        FROM trees c JOIN t ON (c.parent_id = t.node)
+        WHERE not c.nodeid = ANY(t.path)
+    )
+    SELECT * FROM t
+    '''
+
+    def get_tree():
+        if plpy:
+            stmt = plpy.prepare(to_plpy_stmt(sql), ['integer'])
+            for i in plpy.execute(stmt, [old_collection_ident]):
+                yield i
+        elif cursor:
+            cursor.execute(sql, [old_collection_ident])
+            for i in cursor.fetchall():
+                yield dict(zip(('node', 'parent', 'document', 'title',
+                    'childorder', 'latest', 'path'), i))
+
+    tree = {} # { old_nodeid: {'data': ...}, ...}
+    children = {} # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
+    for i in get_tree():
+        tree[i['node']] = {'data': i, 'new_nodeid': None}
+        children.setdefault(i['parent'], [])
+        children[i['parent']].append(i['node'])
+
+    sql = '''
+    INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
+    VALUES (DEFAULT, %s, %s, %s, %s, %s)
+    RETURNING nodeid
+    '''
+
+    def execute(fields):
+        if plpy:
+            stmt = plpy.prepare(to_plpy_stmt(sql), ['integer',
+                'integer', 'text', 'integer', 'boolean'])
+            results = plpy.execute(stmt, fields)[0]['nodeid']
+        elif cursor:
+            cursor.execute(sql, fields)
+            results = cursor.fetchone()[0]
+        return results
+
+    root_node = children[None][0]
+    def build_tree(node, parent):
+        data = tree[node]['data']
+        new_node = execute([parent, new_document_id_map.get(data['document'],
+            data['document']), data['title'], data['childorder'],
+            data['latest']])
+        for i in children.get(node, []):
+            build_tree(i, new_node)
+    build_tree(root_node, None)
+
+def republish_collection(next_minor_version, collection_ident, plpy=None,
+        cursor=None, revised=None):
+    """Insert a new row for collection_ident with a new version and return
+    the module_ident of the row inserted
+    """
+    sql = '''
+    INSERT INTO modules (portal_type, moduleid, uuid, name, created, revised,
+        abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
+        authors,maintainers,licensors,parentauthors,google_analytics,buylink,
+        major_version, minor_version)
+        SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, %s,
+        m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
+        m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
+        m.google_analytics, m.buylink, m.major_version, %s
+        FROM modules m
+        WHERE m.module_ident = %s
+    RETURNING module_ident
+    '''
+    if revised is None:
+        revised = datetime.datetime.now()
+    if plpy:
+        stmt = plpy.prepare(to_plpy_stmt(sql), ['timestamp', 'integer', 'integer'])
+        results = plpy.execute(stmt, [revised, next_minor_version,
+            collection_ident])[0]['module_ident']
+    elif cursor:
+        cursor.execute(sql, [revised, next_minor_version, collection_ident])
+        results = cursor.fetchone()[0]
+    return results
 
 def republish_module(plpy, td):
     """Postgres database trigger for republishing a module
 
     When a module is republished, the versions of the collections that it is
-    part of will need to be updated (a minor update).  The cnxml will need to
-    be transformed to html.
+    part of will need to be updated (a minor update).
 
-    When a collection is republished, the version needs to be updated (a major
-    update).
+
+    e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+    m1 is updated, we have a new row in the modules table with m1 v4
+
+    this trigger will create increment the minor version of c1, so we'll have
+    c1 v2.2
+
+    we need to create a collection tree for c1 v2.2 which is exactly the same
+    as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
     """
     portal_type = td['new']['portal_type']
     
     modified='OK'
 
-    def get_current_module_ident(moduleid):
-        stmt = plpy.prepare('SELECT m.module_ident FROM modules m '
-                'WHERE m.moduleid = $1 ORDER BY module_ident DESC', ['text'])
-        results = plpy.execute(stmt, [moduleid])
-        if results:
-            return results[0]['module_ident']
-
-    def get_minor_version(module_ident):
-        stmt = plpy.prepare('SELECT m.minor_version '
-                'FROM modules m WHERE m.module_ident = $1', ['integer'])
-        results = plpy.execute(stmt, [module_ident])
-        return results[0]['minor_version']
-
-    def next_version(module_ident):
-        minor = get_minor_version(module_ident)
-        return minor + 1
-
-    def get_collections(module_ident):
-        """Get all the collections that the module is part of
-        """
-        sql = '''
-        WITH RECURSIVE t(node, parent, path, document) AS (
-            SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
-            FROM trees tr
-            WHERE tr.documentid = $1
-        UNION ALL
-            SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
-            FROM trees c JOIN t ON (c.nodeid = t.parent)
-            WHERE not c.nodeid = ANY(t.path)
-        )
-        SELECT m.module_ident
-        FROM t JOIN latest_modules m ON (t.document = m.module_ident)
-        WHERE t.parent IS NULL
-        '''
-        stmt = plpy.prepare(sql, ['integer'])
-        for i in plpy.execute(stmt, [module_ident]):
-            yield i['module_ident']
-
-    def rebuild_collection_tree(old_collection_ident, new_document_id_map):
-        """Create a new tree for the collection based on the old tree but with
-        new document ids
-        """
-        sql = '''
-        WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
-            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = $1
-        UNION ALL
-            SELECT c.*, path || ARRAY[c.nodeid]
-            FROM trees c JOIN t ON (c.parent_id = t.node)
-            WHERE not c.nodeid = ANY(t.path)
-        )
-        SELECT * FROM t
-        '''
-        stmt = plpy.prepare(sql, ['integer'])
-        tree = {} # { old_nodeid: {'data': ...}, ...}
-        children = {} # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
-        for i in plpy.execute(stmt, [old_collection_ident]):
-            tree[i['node']] = {'data': i, 'new_nodeid': None}
-            children.setdefault(i['parent'], [])
-            children[i['parent']].append(i['node'])
-
-        sql = '''
-        INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
-        VALUES (DEFAULT, $1, $2, $3, $4, $5)
-        RETURNING nodeid
-        '''
-        stmt = plpy.prepare(sql, ['integer', 'integer', 'text', 'integer',
-            'boolean'])
-        root_node = children[None][0]
-        def build_tree(node, parent):
-            data = tree[node]['data']
-            new_node = plpy.execute(stmt, [parent,
-                new_document_id_map.get(data['document'], data['document']),
-                data['title'], data['childorder'],
-                data['latest']])[0]['nodeid']
-            for i in children.get(node, []):
-                build_tree(i, new_node)
-        build_tree(root_node, None)
-
-    def republish_collection(next_minor_version, collection_ident):
-        """Insert a new row for collection_ident with a new version and return
-        the module_ident of the row inserted
-        """
-        sql = '''
-        INSERT INTO modules (portal_type, moduleid, uuid, name, created, revised,
-            abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
-            authors,maintainers,licensors,parentauthors,google_analytics,buylink,
-            major_version, minor_version)
-            SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, CURRENT_TIMESTAMP,
-            m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
-            m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
-            m.google_analytics, m.buylink, m.major_version, $1
-            FROM modules m
-            WHERE m.module_ident = $2
-        RETURNING module_ident
-        '''
-        stmt = plpy.prepare(sql, ['integer', 'integer'])
-        results = plpy.execute(stmt, [next_minor_version, collection_ident])
-        return results[0]['module_ident']
-
-
-    current_module_ident = get_current_module_ident(td['new']['moduleid'])
+    current_module_ident = get_current_module_ident(td['new']['moduleid'], plpy)
     plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
     if current_module_ident:
         # need to overide autogen uuid to keep it constant per moduleid
@@ -215,13 +262,13 @@ def republish_module(plpy, td):
         return modified
 
     # Module is republished
-    for collection_id in get_collections(current_module_ident):
-        minor = next_version(collection_id)
-        new_ident = republish_collection(minor, collection_id)
+    for collection_id in get_collections(current_module_ident, plpy):
+        minor = next_version(collection_id, plpy)
+        new_ident = republish_collection(minor, collection_id, plpy)
         rebuild_collection_tree(collection_id, {
             collection_id: new_ident,
             current_module_ident: td['new']['module_ident'],
-            })
+            }, plpy)
 
     return modified
 
@@ -352,3 +399,105 @@ def add_module_file(plpy, td):
         if message:
             plpy.error(message)
     return
+
+def get_collection_tree(collection_ident, cursor):
+    cursor.execute('''
+    WITH RECURSIVE t(node, parent, document, path) AS (
+        SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
+        FROM trees tr
+        WHERE tr.documentid = %s
+    UNION ALL
+        SELECT c.nodeid, c.parent_id, c.documentid, path || ARRAY[c.nodeid]
+        FROM trees c JOIN t ON c.parent_id = t.node
+        WHERE NOT c.nodeid = ANY(t.path)
+    )
+    SELECT t.document, m.portal_type
+    from t JOIN modules m ON t.document = m.module_ident''', [collection_ident])
+    for i in cursor.fetchall():
+        yield i
+
+def create_collection_minor_versions(cursor, collection_ident):
+    """Migration to create collection minor versions from the existing modules
+    and collections """
+    # Get the collection tree
+    # modules = []
+    # Loop over each module
+    #    If there is a version of the modules that have next_collection.revised > revised > collection.revised 
+    #        modules.append((module_ident, revised))
+    # sort modules by revised ascending
+    # for each module in modules
+    #    increment minor version of collection, with module's revised time
+    #    rebuild collection tree
+
+    # fetches the collection version of interest and the next version
+    # and in case the collection version of interest is latest, revised for the
+    # next version is now
+    cursor.execute('''
+    (
+        WITH current AS (
+            SELECT uuid, revised FROM modules WHERE module_ident = %s
+        )
+        SELECT m.module_ident, m.revised FROM modules m, current
+        WHERE m.uuid = current.uuid AND m.revised >= current.revised
+        ORDER BY m.revised
+    )
+    UNION ALL SELECT NULL, CURRENT_TIMESTAMP
+    LIMIT 2;
+    ''',
+        [collection_ident])
+    results = cursor.fetchall()
+    this_module_ident, this_revised = results[0]
+    next_module_ident, next_revised = results[1]
+
+    # gather all relevant module versions
+    sql = '''SELECT DISTINCT(m.module_ident), m.revised FROM modules m
+    WHERE m.revised > %s AND m.revised < %s AND m.uuid = (
+        SELECT uuid FROM modules WHERE module_ident = %s)
+    ORDER BY m.revised
+    '''
+
+    old_module_idents = {}
+    modules = []
+    for module_ident, portal_type in get_collection_tree(collection_ident,
+            cursor):
+        if portal_type == 'Module':
+            cursor.execute(sql, [this_revised, next_revised, module_ident])
+
+            # get all the modules with the same uuid that have been published
+            # between this collection version and the next version
+            results = cursor.fetchall()
+
+            # about what the loop below does...
+            #
+            # e.g. we have a module m1, and it was updated 3 times between the
+            # time the collection is updated
+            #
+            # let's say the module_ident for current m1 is 1 and the updated
+            # versions 3, 6, 9
+            #
+            # then results looks like [(3, revised), (6, revised), (9, revised)
+            #
+            # we need to know that 3 replaces 1, 6 replaces 3 and 9 replaces 6
+            # so that we know what to change when we copy the collection tree
+            #
+            # so old_module_idents should have:
+            # {3: 1, 6: 3, 9: 6}
+            for i, data in enumerate(results):
+                if i == 0:
+                    old_module_idents[data[0]] = module_ident
+                else:
+                    old_module_idents[data[0]] = results[i - 1][0]
+                modules.append(data)
+
+    modules.sort(lambda a, b: cmp(a[1], b[1])) # sort modules by revised
+
+    next_minor_version = next_version(collection_ident, cursor=cursor)
+    for module_ident, module_revised in modules:
+        new_ident = republish_collection(next_minor_version, collection_ident, cursor=cursor, revised=module_revised)
+        rebuild_collection_tree(collection_ident, {
+            collection_ident: new_ident,
+            old_module_idents[module_ident]: module_ident,
+            }, cursor=cursor)
+
+        next_minor_version += 1
+        collection_ident = new_ident
