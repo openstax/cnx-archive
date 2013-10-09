@@ -229,11 +229,18 @@ def republish_module(plpy, td):
     """Postgres database trigger for republishing a module
 
     When a module is republished, the versions of the collections that it is
-    part of will need to be updated (a minor update).  The cnxml will need to
-    be transformed to html.
+    part of will need to be updated (a minor update).
 
-    When a collection is republished, the version needs to be updated (a major
-    update).
+
+    e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+    m1 is updated, we have a new row in the modules table with m1 v4
+
+    this trigger will create increment the minor version of c1, so we'll have
+    c1 v2.2
+
+    we need to create a collection tree for c1 v2.2 which is exactly the same
+    as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
     """
     portal_type = td['new']['portal_type']
     
@@ -422,21 +429,27 @@ def create_collection_minor_versions(cursor, collection_ident):
     #    increment minor version of collection, with module's revised time
     #    rebuild collection tree
 
+    # fetches the collection version of interest and the next version
+    # and in case the collection version of interest is latest, revised for the
+    # next version is now
     cursor.execute('''
-    WITH current AS (
-        SELECT uuid, revised FROM modules WHERE module_ident = %s
+    (
+        WITH current AS (
+            SELECT uuid, revised FROM modules WHERE module_ident = %s
+        )
+        SELECT m.module_ident, m.revised FROM modules m, current
+        WHERE m.uuid = current.uuid AND m.revised >= current.revised
+        ORDER BY m.revised
     )
-    SELECT m.module_ident, m.revised FROM modules m, current
-    WHERE m.uuid = current.uuid AND m.revised >= current.revised
-    ORDER BY m.revised LIMIT 2
+    UNION ALL SELECT NULL, CURRENT_TIMESTAMP
+    LIMIT 2;
     ''',
         [collection_ident])
     results = cursor.fetchall()
     this_module_ident, this_revised = results[0]
-    next_revised = datetime.datetime.now()
-    if len(results) == 2:
-        next_module_ident, next_revised = results[1]
+    next_module_ident, next_revised = results[1]
 
+    # gather all relevant module versions
     sql = '''SELECT DISTINCT(m.module_ident), m.revised FROM modules m
     WHERE m.revised > %s AND m.revised < %s AND m.uuid = (
         SELECT uuid FROM modules WHERE module_ident = %s)
@@ -449,7 +462,26 @@ def create_collection_minor_versions(cursor, collection_ident):
             cursor):
         if portal_type == 'Module':
             cursor.execute(sql, [this_revised, next_revised, module_ident])
+
+            # get all the modules with the same uuid that have been published
+            # between this collection version and the next version
             results = cursor.fetchall()
+
+            # about what the loop below does...
+            #
+            # e.g. we have a module m1, and it was updated 3 times between the
+            # time the collection is updated
+            #
+            # let's say the module_ident for current m1 is 1 and the updated
+            # versions 3, 6, 9
+            #
+            # then results looks like [(3, revised), (6, revised), (9, revised)
+            #
+            # we need to know that 3 replaces 1, 6 replaces 3 and 9 replaces 6
+            # so that we know what to change when we copy the collection tree
+            #
+            # so old_module_idents should have:
+            # {3: 1, 6: 3, 9: 6}
             for i, data in enumerate(results):
                 if i == 0:
                     old_module_idents[data[0]] = module_ident
