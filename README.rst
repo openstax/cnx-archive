@@ -101,12 +101,19 @@ dependencies that have not been released to the public package repositories::
     cd cnx-query-grammar
     python setup.py install
     cd ..
+
     git clone https://github.com/Connexions/cnx-upgrade.git
     cd cnx-upgrade
     python setup.py install
     cd ..
+
     git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
     cd rhaptos.cnxmlutils
+    python setup.py install
+    cd ..
+
+    git clone -b bug-fixes https://github.com/karenc/plpydbapi.git
+    cd plpydbapi
     python setup.py install
     cd ..
 
