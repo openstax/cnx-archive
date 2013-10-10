@@ -29,6 +29,9 @@ before_install:
   - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
   - git clone https://github.com/Connexions/cnx-upgrade.git
   - cd cnx-upgrade && sudo /usr/bin/python setup.py install && cd ..
+  # Install karen's branch of plpydbapi
+  - git clone -b bug-fixes https://github.com/karenc/plpydbapi.git
+  - cd plpydbapi && sudo /usr/bin/python setup.py install && cd ..
 install:
   - sudo /usr/bin/python setup.py install
 before_script:

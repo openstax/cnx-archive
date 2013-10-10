@@ -7,6 +7,7 @@ install_requires = (
     'cnx-upgrade',
     'PasteDeploy',
     'PasteScript',
+    'plpydbapi',
     'psycopg2>=2.5',
     'waitress',  # wsgi server
     )
