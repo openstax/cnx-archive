@@ -11,8 +11,7 @@ import os
 import psycopg2
 import re
 
-from cnxupgrade.upgrades.to_html import (
-        get_module_uuid, produce_html_for_module)
+from .to_html import get_module_uuid, produce_html_for_module
 
 
 CONNECTION_SETTINGS_KEY = 'db-connection-string'

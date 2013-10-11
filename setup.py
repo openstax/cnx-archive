@@ -4,11 +4,12 @@ from setuptools import setup, find_packages
 
 install_requires = (
     'cnx-query-grammar',
-    'cnx-upgrade',
+    'lxml',
     'PasteDeploy',
     'PasteScript',
     'plpydbapi',
     'psycopg2>=2.5',
+    'rhaptos.cnxmlutils',
     'waitress',  # wsgi server
     )
 description = "An archive for Connexions documents."
