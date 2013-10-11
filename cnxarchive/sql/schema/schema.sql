@@ -202,8 +202,8 @@ CREATE TRIGGER update_latest_version
 CREATE OR REPLACE FUNCTION republish_module ()
   RETURNS trigger
 AS $$
-  from cnxarchive.database import republish_module
-  return republish_module(plpy, TD)
+  from cnxarchive.database import republish_module_trigger
+  return republish_module_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER module_published
