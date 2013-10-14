@@ -4,11 +4,12 @@ from setuptools import setup, find_packages
 
 install_requires = (
     'cnx-query-grammar',
-    'cnx-upgrade',
+    'lxml',
     'PasteDeploy',
     'PasteScript',
     'plpydbapi',
     'psycopg2>=2.5',
+    'rhaptos.cnxmlutils',
     'waitress',  # wsgi server
     )
 description = "An archive for Connexions documents."
@@ -30,7 +31,6 @@ setup(
     main = cnxarchive:main
     [console_scripts]
     initialize_cnx-archive_db = cnxarchive.scripts.initializedb:main
-    cnx-archive_get_buylinks = cnxarchive.scripts.get_buylinks:main
     """,
     test_suite='cnxarchive.tests'
     )
