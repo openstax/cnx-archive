@@ -31,7 +31,6 @@ setup(
     main = cnxarchive:main
     [console_scripts]
     initialize_cnx-archive_db = cnxarchive.scripts.initializedb:main
-    cnx-archive_get_buylinks = cnxarchive.scripts.get_buylinks:main
     """,
     test_suite='cnxarchive.tests'
     )

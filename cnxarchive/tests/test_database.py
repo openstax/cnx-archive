@@ -5,86 +5,9 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
 import unittest
-import urllib2
-import uuid
-from io import StringIO
 
 from . import *
-
-
-class GetBuylinksTestCase(unittest.TestCase):
-    """Tests for the get_buylinks script
-    """
-    fixture = postgresql_fixture
-
-    @db_connect
-    def setUp(self, cursor):
-        self.fixture.setUp()
-        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-            cursor.execute(fb.read())
-
-        # Mock commandline arguments for ..scripts.get_buylinks.main
-        self.argv = [TESTING_CONFIG]
-
-        # Mock response from plone site:
-        # responses should be assigned to self.responses by individual tests
-        self.responses = ['']
-        self.response_id = -1
-        def urlopen(url):
-            self.response_id += 1
-            return StringIO(unicode(self.responses[self.response_id]))
-        original_urlopen = urllib2.urlopen
-        urllib2.urlopen = urlopen
-        self.addCleanup(setattr, urllib2, 'urlopen', original_urlopen)
-
-    def tearDown(self):
-        self.fixture.tearDown()
-
-    def call_target(self):
-        from ..scripts import get_buylinks
-        return get_buylinks.main(self.argv)
-
-    @db_connect
-    def get_buylink_from_db(self, cursor, collection_id):
-        from ..utils import parse_app_settings
-        settings = parse_app_settings(TESTING_CONFIG)
-        cursor.execute(
-                'SELECT m.buylink FROM modules m WHERE m.moduleid = %(moduleid)s;',
-                {'moduleid': collection_id})
-        return cursor.fetchone()[0]
-
-    def test(self):
-        self.argv.append('col11406')
-        self.argv.append('m42955')
-        self.responses = [
-                # response for col11406
-                "[('title', ''), "
-                "('buyLink', 'http://buy-col11406.com/download')]",
-                # response for m42955
-                "[('title', ''), "
-                "('buyLink', 'http://buy-m42955.com/')]"]
-        self.call_target()
-
-        self.assertEqual(self.get_buylink_from_db('col11406'),
-                'http://buy-col11406.com/download')
-        self.assertEqual(self.get_buylink_from_db('m42955'),
-                'http://buy-m42955.com/')
-
-    def test_no_buylink(self):
-        self.argv.append('m42955')
-        self.response = "[('title', '')]"
-        self.call_target()
-
-        self.assertEqual(self.get_buylink_from_db('m42955'), None)
-
-    def test_collection_not_in_db(self):
-        self.argv.append('col11522')
-        self.response = ("[('title', ''), "
-                "('buyLink', 'http://buy-col11522.com/download')]")
-        # Just assert that the script does not fail
-        self.call_target()
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
