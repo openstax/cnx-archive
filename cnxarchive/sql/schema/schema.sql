@@ -136,7 +136,10 @@ CREATE INDEX latest_modules_portal_type_idx on latest_modules (portal_type);
 
 CREATE OR REPLACE FUNCTION update_latest() RETURNS trigger AS '
 BEGIN
-  IF TG_OP = ''INSERT'' THEN
+  IF TG_OP = ''INSERT'' AND
+          NEW.revised >= ((SELECT revised FROM modules
+              WHERE uuid = NEW.uuid ORDER BY revised DESC LIMIT 1)
+              UNION ALL VALUES (NEW.revised) LIMIT 1) THEN
       DELETE FROM latest_modules WHERE moduleid = NEW.moduleid;
       INSERT into latest_modules (
                 uuid, module_ident, portal_type, moduleid, version, name,

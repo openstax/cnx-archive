@@ -386,3 +386,83 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Test that the index.html contains html
         html = index_htmls[0][0][:]
         self.assert_('<html' in html)
+
+
+class UpdateLatestTriggerTestCase(unittest.TestCase):
+    """Test case for updating the latest_modules table
+    """
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
+            cursor.execute(fb.read())
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def test_insert_new_module(self, cursor):
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, NULL) RETURNING module_ident, uuid''')
+        module_ident, uuid = cursor.fetchone()
+
+        cursor.execute('''SELECT module_ident FROM latest_modules
+        WHERE uuid = %s''', [uuid])
+        self.assertEqual(cursor.fetchone()[0], module_ident)
+
+    @db_connect
+    def test_insert_existing_module(self, cursor):
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, NULL) RETURNING module_ident, uuid''')
+        module_ident, uuid = cursor.fetchone()
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-14 17:57:54.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, NULL) RETURNING module_ident, uuid''', [uuid])
+        module_ident, uuid = cursor.fetchone()
+
+        cursor.execute('''SELECT module_ident FROM latest_modules
+        WHERE uuid = %s''', [uuid])
+        self.assertEqual(cursor.fetchone()[0], module_ident)
+
+    @db_connect
+    def test_insert_not_latest_version(self, cursor):
+        """This test case is specifically written for backfilling, new inserts
+        may not mean new versions
+        """
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, NULL)
+        RETURNING module_ident, uuid''')
+        module_ident, uuid = cursor.fetchone()
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1 again',
+        '2013-07-31 12:00:00.000000+02', '2013-10-14 18:05:31.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 3, NULL)
+        RETURNING module_ident, uuid''', [uuid])
+        module_ident, uuid = cursor.fetchone()
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-14 17:08:57.000000+02',
+        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 2, NULL)
+        RETURNING module_ident, uuid''', [uuid])
+
+        cursor.execute('''SELECT module_ident FROM latest_modules
+        WHERE uuid = %s''', [uuid])
+        self.assertEqual(cursor.fetchone()[0], module_ident)
