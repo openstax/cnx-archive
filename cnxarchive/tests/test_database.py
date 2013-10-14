@@ -225,6 +225,25 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[23], 3)
 
     @db_connect
+    def test_insert_new_module(self, cursor):
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        old_n_modules = cursor.fetchone()[0]
+
+        # Insert a new module
+        cursor.execute('''
+        INSERT INTO modules VALUES (
+        DEFAULT, 'Module', 'm1', DEFAULT, NULL, 'Name of m1',
+        '2013-10-14 17:41:40.000000+02', '2013-10-14 17:41:40.000000+02',
+        NULL, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        NULL, NULL, NULL, 1, NULL
+        )''')
+
+        # module_republished trigger should not insert anything
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        n_modules = cursor.fetchone()[0]
+        self.assertEqual(n_modules, old_n_modules + 1)
+
+    @db_connect
     def test_module(self, cursor):
         cursor.execute('SELECT nodeid FROM trees '
                        'WHERE parent_id IS NULL ORDER BY nodeid DESC')
