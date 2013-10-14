@@ -124,8 +124,8 @@ CREATE TABLE "latest_modules" (
 	"buylink" text,
         -- Collections have versions like <major_version>.<minor_version> while
         -- modules have versions like <major_version>
-	"major_version" integer default 1,
-	"minor_version" integer default 1
+	"major_version" integer,
+	"minor_version" integer
 );
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
