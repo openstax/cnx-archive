@@ -64,10 +64,11 @@ def initdb(settings):
 
 def get_current_module_ident(moduleid, cursor):
     sql = '''SELECT m.module_ident FROM modules m 
-        WHERE m.moduleid = %s ORDER BY module_ident DESC'''
+        WHERE m.moduleid = %s ORDER BY revised DESC'''
     cursor.execute(sql, [moduleid])
-    results = cursor.fetchone()[0]
-    return results
+    results = cursor.fetchone()
+    if results:
+        return results[0]
 
 def get_minor_version(module_ident, cursor):
     sql = '''SELECT m.minor_version
