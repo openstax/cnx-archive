@@ -102,11 +102,6 @@ dependencies that have not been released to the public package repositories::
     python setup.py install
     cd ..
 
-    git clone https://github.com/Connexions/cnx-upgrade.git
-    cd cnx-upgrade
-    python setup.py install
-    cd ..
-
     git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
     cd rhaptos.cnxmlutils
     python setup.py install

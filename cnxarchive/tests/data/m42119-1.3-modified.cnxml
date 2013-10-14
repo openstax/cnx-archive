@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<document xmlns="http://cnx.rice.edu/cnxml" xmlns:md="http://cnx.rice.edu/mdml" id="imported-from-openoffice" module-id="imported-from-openoffice" cnxml-version="0.7" class="introduction">
+
+  <title>Introduction to Science and the Realm of Physics, Physical Quantities, and Units</title>
+<metadata xmlns:md="http://cnx.rice.edu/mdml"
+          mdml-version="0.5">
+  <!-- WARNING! The 'metadata' section is read only. Do not edit below.
+       Changes to the metadata section in the source will not be saved. -->
+  <md:repository>http://cnx.org/content</md:repository>
+  <md:content-url>http://cnx.org/content/m42119/latest</md:content-url>
+  <md:content-id>m42119</md:content-id>
+  <md:title>Introduction to Science and the Realm of Physics, Physical Quantities, and Units</md:title>
+  <md:version>1.3</md:version>
+  <md:created>2011/12/28 11:41:38 -0600</md:created>
+  <md:revised>2012/07/05 20:00:59 -0500</md:revised>
+  <md:actors>
+    <md:person userid="cnxcap">
+      <md:firstname>College</md:firstname>
+      <md:surname>Physics</md:surname>
+      <md:fullname>OSC Physics Maintainer</md:fullname>
+      <md:email>info@openstaxcollege.org</md:email>
+    </md:person>
+    <md:organization userid="OpenStaxCollege">
+      <md:shortname>OpenStax College</md:shortname>
+      <md:fullname>OpenStax College</md:fullname>
+      <md:email>info@openstaxcollege.org</md:email>
+    </md:organization>
+    <md:person userid="OSCRiceUniversity">
+      <md:firstname>Rice</md:firstname>
+      <md:surname>University</md:surname>
+      <md:fullname>Rice University</md:fullname>
+      <md:email>daniel@openstaxcollege.org</md:email>
+    </md:person>
+  </md:actors>
+  <md:roles>
+    <md:role type="author">OpenStaxCollege</md:role>
+    <md:role type="maintainer">OpenStaxCollege cnxcap</md:role>
+    <md:role type="licensor">OSCRiceUniversity</md:role>
+  </md:roles>
+  <md:license url="http://creativecommons.org/licenses/by/3.0/" />
+  <!-- For information on license requirements for use or modification, see license url in the
+       above <md:license> element.
+       For information on formatting required attribution, see the URL:
+         CONTENT_URL/content_info#cnx_cite_header
+       where CONTENT_URL is the value provided above in the <md:content-url> element.
+  -->
+  <md:keywordlist>
+    <md:keyword>Accuracy</md:keyword>
+    <md:keyword>Approximation</md:keyword>
+    <md:keyword>Classical physics</md:keyword>
+    <md:keyword>Conversion factor</md:keyword>
+    <md:keyword>Customary system</md:keyword>
+    <md:keyword>Derived units</md:keyword>
+    <md:keyword>English units</md:keyword>
+    <md:keyword>Fundamental units</md:keyword>
+    <md:keyword>Kilogram</md:keyword>
+    <md:keyword>Law</md:keyword>
+    <md:keyword>Meter</md:keyword>
+    <md:keyword>Metric system</md:keyword>
+    <md:keyword>Model</md:keyword>
+    <md:keyword>Modern physics</md:keyword>
+    <md:keyword>Order of magnitude</md:keyword>
+    <md:keyword>Percent uncertainty</md:keyword>
+    <md:keyword>Physical quantity</md:keyword>
+    <md:keyword>Physics</md:keyword>
+    <md:keyword>Precision</md:keyword>
+    <md:keyword>Quantum mechanics</md:keyword>
+    <md:keyword>Relativity</md:keyword>
+    <md:keyword>Scientific method</md:keyword>
+    <md:keyword>Second</md:keyword>
+    <md:keyword>Significant figures</md:keyword>
+    <md:keyword>SI units</md:keyword>
+    <md:keyword>Theory</md:keyword>
+    <md:keyword>Uncertainty</md:keyword>
+    <md:keyword>Units</md:keyword>
+  </md:keywordlist>
+  <md:subjectlist>
+    <md:subject>Mathematics and Statistics</md:subject>
+  </md:subjectlist>
+  <md:abstract></md:abstract>
+  <md:language>en</md:language>
+  <!-- WARNING! The 'metadata' section is read only. Do not edit above.
+       Changes to the metadata section in the source will not be saved. -->
+</metadata>
+
+<content>
+
+<?cnx.eoc class="section-summary" title="Section Summary"?>
+<?cnx.eoc class="conceptual-questions" title="Conceptual Questions"?>
+<?cnx.eoc class="problems-exercises" title="Problems & Exercises"?>
+<?chapter-toc label="Key Concepts"?>
+
+    <figure xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" id="import-auto-id2688158" class="splash"><media id="import-auto-id3147051" alt="The spiral galaxy Andromeda is shown."><image mime-type="image/jpg" src="Figure_01_00_01.jpg"/></media>
+	<caption>Galaxies are as immense as atoms are small. Yet the same laws of physics describe both, and all the rest of nature—an indication of the underlying unity in the universe. The laws of physics are surprisingly few in number, implying an underlying simplicity to nature’s apparent complexity. (credit: NASA, JPL-Caltech, P. Barmby, Harvard-Smithsonian Center for Astrophysics)</caption></figure><para xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" id="import-auto-id2747641">What is your first reaction when you hear the word “physics”? Did you imagine working through difficult equations or memorizing formulas that seem to have no real use in life outside the physics classroom? Many people come to the subject of physics with a bit of fear. But as you begin your exploration of this broad-ranging subject, you may soon come to realize that physics plays a much larger role in your life than you first thought, no matter your life goals or career choice.</para><para xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:q="http://cnx.rice.edu/qml/1.0" id="import-auto-id1349762">For example, take a look at the image above. This image is of the Andromeda Galaxy, which contains billions of individual stars, huge clouds of gas, and dust. Two smaller galaxies are also visible as bright blue spots in the background. At a staggering 2.5 million light years from the Earth, this galaxy is the nearest one to our own galaxy (which is called the Milky Way). The stars and planets that make up Andromeda might seem to be the furthest thing from most people’s regular, everyday lives. But Andromeda is a great starting point to think about the forces that hold together the universe. The forces that cause Andromeda to act as it does are the same forces we contend with here on Earth, whether we are planning to send a rocket into space or simply raise the walls for a new home. The same gravity that causes the stars of Andromeda to rotate and revolve also causes water to flow over hydroelectric dams here on Earth. Tonight, take a moment to look up at the stars. The forces out there are the same as the ones here on Earth. Through a study of physics, you may gain a greater understanding of the interconnectedness of everything we can see and know in this universe.</para><para id="import-auto-id1665197">Think now about all of the technological devices that you use on a regular basis. Computers, smart phones, GPS systems, MP3 players, and satellite radio might come to mind. Next, think about the most exciting modern technologies that you have heard about in the news, such as trains that levitate above tracks, “invisibility cloaks” that bend light around them, and microscopic robots that fight cancer cells in our bodies. All of these groundbreaking advancements, commonplace or unbelievable, rely on the principles of physics. Aside from playing a significant role in technology, professionals such as engineers, pilots, physicians, physical therapists, electricians, and computer programmers apply physics concepts in their daily work. For example, a pilot must understand how wind forces affect a flight path and a physical therapist must understand how the muscles in the body experience forces as they move and bend. As you will learn in this text, physics principles are propelling new, exciting technologies, and these principles are applied in a wide range of careers.</para>
+    <para id="fs-id2195793">In this text, you will begin to explore the history of the formal study of physics, beginning with natural philosophy and the ancient Greeks, and leading up through a review of Sir Isaac Newton and the laws of physics that bear his name. You will also be introduced to the standards scientists use when they study physical quantities and the interrelated system of measurements most of the scientific community uses to communicate in a single mathematical language. Finally, you will study the limits of our ability to be accurate and precise, and the reasons scientists go to painstaking lengths to be as clear as possible regarding their own limitations.</para>
+
+        <!-- This section has been added to provide link and media testing -->
+        <section>
+            <title>Link and media testing area </title>
+            <para>
+                There are many ways to grill
+                <link document="m42955" version="1.7">a good
+                steak</link>. My favorite can be found
+                <link url="http://en.wikibooks.org/"
+                      window="new">on Wikibooks</link>.
+                <link resource="Figure_01_00_01.jpg">Figure 1.0.1</link>
+            </para>
+        </section>
+
+    </content>
+</document>
