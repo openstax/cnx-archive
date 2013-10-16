@@ -46,7 +46,9 @@ FROM (SELECT
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as roles,
   list(tag) as subject,
   m.google_analytics as "googleAnalytics",
-  m.buylink as "buyLink"
+  m.buylink as "buyLink",
+  m.moduleid as "legacy_id",
+  m.version as "legacy_version"
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
   LEFT JOIN modules p on m.parent = p.module_ident
