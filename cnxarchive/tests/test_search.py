@@ -78,7 +78,8 @@ class SearchModelTestCase(unittest.TestCase):
 
     def test_result_counts(self):
         # Verify the counts on the results object.
-        results = self.make_queryresults(RAW_QUERY_RECORDS)
+        query = [('text', 'physics')]
+        results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
 
         self.assertEqual(len(results), 15)
         # Check the mediaType counts.
