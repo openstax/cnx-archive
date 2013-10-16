@@ -57,8 +57,12 @@ SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
 QUERY_FIELD_ITEM_SEPARATOR = ';--;'
 QUERY_FIELD_PAIR_SEPARATOR = '-::-'
 
+SET_OPERATORS = ('OR', 'AND', 'NOT',)
+QUERY_TYPES = ('OR', 'AND', 'weakAND',)
+DEFAULT_QUERY_TYPE = SET_OPERATORS[0]
 
-class Query:
+
+class Query(Sequence):
     """A structured respresentation of the query string"""
 
     def __init__(self, query):
@@ -66,6 +70,16 @@ class Query:
         self.sorts = [q[1] for q in query if q[0] == 'sort']
         self.terms = [q for q in query
                       if q not in self.filters and q[0] != 'sort']
+
+    def __repr__(self):
+        s = "<{} with '{}' >".format(self.__class__.__name__, self.terms)
+        return s
+
+    def __getitem__(self, index):
+        return self.terms[index]
+
+    def __len__(self):
+        return len(self.terms)
 
     @classmethod
     def fix_quotes(cls, query_string):
@@ -166,13 +180,66 @@ class QueryRecord(Mapping):
         return hl_fulltext
 
 
+def _apply_query_type(records, query, query_type):
+    """Apply a AND, weak AND or OR operation to the results records.
+    Returns the revised list of records, unmatched terms, and matched terms.
+    """
+    # These all get revised an returned at the end.
+    query = list(set(query))  # Ensure a unique queue list
+    matched_terms = []
+    unmatched_terms = query
+    revised_records = records
+
+    if records:
+        #: List of records that match all terms.
+        all_matched_records = []
+        term_matches = []
+        for rec in records:
+            if len(rec.matched) == len(query):
+                all_matched_records.append(rec)
+            term_matches.extend(list(rec.matched))
+
+        unmatched_terms = [term for term in query
+                           if term[1] not in term_matches]
+        if unmatched_terms:
+            matching_length = len(query) - len(unmatched_terms)
+            #: List of records that match some of the terms.
+            some_matched_records = [rec for rec in records
+                                    if len(rec.matched) == matching_length]
+            matched_terms = [term for term in query
+                             if term[1] in term_matches]
+        else:
+            some_matched_records = all_matched_records
+            matched_terms = query
+
+        if query_type.upper() == 'AND':
+            revised_records = all_matched_records
+        elif query_type.upper() == 'WEAKAND':
+            revised_records = some_matched_records
+        # elif query_type.upper() == 'OR':
+        #     pass
+    return revised_records, unmatched_terms, matched_terms
+
+
 class QueryResults(Sequence):
     """A listing of query results as well as hit counts and the parsed query
-    string.
+    string. The query is necessary to do in-python set operations on the
+    rows.
     """
 
-    def __init__(self, rows):
-        self._records = [QueryRecord(**r[0]) for r in rows]
+    def __init__(self, rows, query, query_type=DEFAULT_QUERY_TYPE):
+        if query_type not in QUERY_TYPES:
+            raise ValueError("Invalid query type supplied: '{}'" \
+                                 .format(query_type))
+        self._query = query
+        # Capture all the rows for interal usage.
+        self._all_records = [QueryRecord(**r[0]) for r in rows]
+        # Apply the query type to the results.
+        applied_results = _apply_query_type(self._all_records, self._query,
+                                            query_type)
+        self._records = applied_results[0]
+        self._unmatched_terms = applied_results[1]
+        self._matched_terms = applied_results[2]
         self.counts = {
             'mediaType': self._count_media(),
             'subject': self._count_field('subjects'),
@@ -327,7 +394,7 @@ def _build_search(structured_query, weights):
     # Add the arguments for filtering.
     filters = []
     if structured_query.filters:
-        if len(filters) == 0: filters.append('')  # For AND joining.
+        if len(filters) == 0: filters.append('')  # For SQL AND joining.
         for i, (keyword, value) in enumerate(structured_query.filters):
             arg_name = "{}_{}".format(keyword, i)
             # These key values are special in that they don't,
@@ -390,4 +457,4 @@ def search(query, weights=DEFAULT_SEARCH_WEIGHTS):
             search_results = cursor.fetchall()
 
     # Wrap the SQL results.
-    return QueryResults(search_results)
+    return QueryResults(search_results, query)

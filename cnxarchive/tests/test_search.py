@@ -133,12 +133,12 @@ class SearchTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def call_target(self, query_params):
+    def call_target(self, query_params, query_type='OR'):
         # Single point of import failure.
         from ..search import search, Query
         self.query = Query(query_params)
         self.addCleanup(delattr, self, 'query')
-        return search(self.query)
+        return search(self.query, query_type=query_type)
 
     def test_title_search(self):
         # Simple case to test for results of a basic title search.
