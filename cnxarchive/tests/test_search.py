@@ -407,3 +407,41 @@ class SearchTestCase(unittest.TestCase):
             self.assertEqual(results[i]['id'], id)
         # This just verifies that all three terms matched on each result.
         self.assertEqual([r.matched for r in results], matched_on)
+
+    def test_weak_anding(self):
+        # Test that the results intersect with one another rather than
+        #   search the terms independently. This uses the weakAND operator.
+        # The query for this would look like "physics [weakAND] force".
+        # This will drop any term-set that doesn't match anything
+        #   and use the remaining terms to do a traditional AND against.
+        query_params = [('text', 'physics'), ('text', 'force'),
+                        ('keyword', 'contentment'),
+                        ]
+        expectations = ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                        'f3c9ab70-a916-4d8c-9256-42953287b4e9',
+                        'd395b566-5fe3-4428-bcb2-19016e3aa3ce',
+                        ]
+        matched_on_keys = [[u'force', u'physics'],
+                           [u'force', u'physics'],
+                           [u'force', u'physics'],
+                           [u'physics', u'force'],
+                           [u'force', u'physics'],
+                           [u'physics', u'force'],
+                           [u'force', u'physics'],
+                           [u'force', u'physics'],
+                           [u'force', u'physics'],
+                           [u'physics', u'force'],
+                           [u'physics', u'force'],
+                           ]
+
+        results = self.call_target(query_params, query_type='weakAND')
+        # Basically, everything matches the first search term,
+        #   about eleven match the first two terms,
+        #   and when the third is through in we condense this to two.
+        self.assertEqual(len(results), 11)
+        for i, id in enumerate(expectations):
+            self.assertEqual(results[i]['id'], id)
+        # This just verifies that only two of the three terms
+        #   matched on each result.
+        self.assertEqual([r.matched.keys() for r in results],
+                         matched_on_keys)
