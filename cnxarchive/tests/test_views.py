@@ -56,16 +56,44 @@ COLLECTION_METADATA = {
     u'parentAuthors': [],
     u'parentId': None,
     u'parentVersion': '',
-    u'revised': u'2013-07-31 12:07:20.342798-07',
+    u'revised': u'2013-08-31 12:07:20.342798-07',
     u'stateid': None,
-    u'submitlog': u'',
-    u'submitter': u'',
+    u'submitlog': u'New version 1.7',
+    u'submitter': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'1.7',
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
     u'legacy_id':u'col11406',
     u'legacy_version':u'1.7',
+    u'history': [
+        {
+            u'version': u'1.7',
+            u'revised': u'2013-08-31 12:07:20.342798-07',
+            u'changes': 'New version 1.7',
+            u'publisher': {
+                u'website': None, u'surname': None,
+                u'suffix': None, u'firstname': u'OpenStax College',
+                u'title': None, u'othername': None,
+                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'fullname': u'OpenStax College',
+                u'email': u'info@openstaxcollege.org'
+                },
+            },
+        {
+            u'version': u'1.6',
+            u'revised': u'2013-07-31 12:07:20.342798-07',
+            u'changes': 'Updated something',
+            u'publisher': {
+                u'website': None, u'surname': None,
+                u'suffix': None, u'firstname': u'OpenStax College',
+                u'title': None, u'othername': None,
+                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'fullname': u'OpenStax College',
+                u'email': u'info@openstaxcollege.org'
+                },
+            },
+        ],
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
@@ -153,14 +181,29 @@ MODULE_METADATA = {
     u'parentVersion': '',
     u'revised': u'2013-07-31 12:07:24.856663-07',
     u'stateid': None,
-    u'submitlog': u'',
-    u'submitter': u'',
+    u'submitlog': u'Added more examples',
+    u'submitter': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
     u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'8',
     u'googleAnalytics': None,
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
     u'legacy_id':u'm42081',
     u'legacy_version':u'1.8',
+    u'history': [
+        {
+            u'version': u'8',
+            u'revised': u'2013-07-31 12:07:24.856663-07',
+            u'changes': u'Added more examples',
+            u'publisher': {
+                u'website': None, u'surname': None,
+                u'suffix': None, u'firstname': u'OpenStax College',
+                u'title': None, u'othername': None,
+                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'fullname': u'OpenStax College',
+                u'email': u'info@openstaxcollege.org',
+                },
+            },
+        ],
     }
 SEARCH_RESULTS = {
     u'query': {
