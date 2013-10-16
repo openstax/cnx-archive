@@ -25,7 +25,7 @@ before_install:
   - git clone https://github.com/Connexions/cnx-query-grammar.git
   - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
   # Install rhaptos.cnxmlutils
-  - git clone -b abstracts-and-metadata https://github.com/Connexions/rhaptos.cnxmlutils.git
+  - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
   - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
   # Install bug-fixes branch of plpydbapi
   - git clone -b bug-fixes https://github.com/Connexions/plpydbapi.git
