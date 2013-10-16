@@ -64,6 +64,8 @@ COLLECTION_METADATA = {
     u'version': u'1.7',
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
+    u'legacy_id':u'col11406',
+    u'legacy_version':u'1.7',
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
@@ -157,6 +159,8 @@ MODULE_METADATA = {
     u'version': u'8',
     u'googleAnalytics': None,
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
+    u'legacy_id':u'm42081',
+    u'legacy_version':u'1.8',
     }
 SEARCH_RESULTS = {
     u'query': {

@@ -29,7 +29,9 @@ FROM (SELECT
   list(tag) as _subject,
   convert_from(file,'utf8'),
   m.google_analytics as "googleAnalytics",
-  m.buylink as "buyLink"
+  m.buylink as "buyLink",
+  m.moduleid as "legacy_id",
+  m.version as  "legacy_version"
 FROM modules m
 NATURAL JOIN abstracts
 JOIN licenses l on l.licenseid = m.licenseid
