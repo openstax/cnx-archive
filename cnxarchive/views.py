@@ -139,6 +139,45 @@ def get_export_allowable_types(environ, start_response):
     start_response('200 OK', headers)
     return [json.dumps(TYPE_INFO)]
 
+
+class ExportError(Exception):
+    pass
+
+
+def get_export_file(cursor, id, version, type, exports_dirs):
+    get_type_info()
+
+    if type not in TYPE_INFO:
+        raise ExportError("invalid type '{}' requested.".format(type))
+
+    if not version:
+        cursor.execute(SQL['get-module-versions'], {'id': id})
+        try:
+            latest_version = cursor.fetchone()[0]
+        except (TypeError, IndexError,): # None returned
+            raise ExportError("version was not supplied and could not be "
+                    "discovered.")
+        raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
+            id, latest_version, type))
+
+    metadata = get_content_metadata(id, version, cursor)
+    file_extension = TYPE_INFO[type]['file_extension']
+    mimetype = TYPE_INFO[type]['mimetype']
+    filename = '{}-{}.{}'.format(id, version, file_extension)
+    slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
+            file_extension)
+
+    for exports_dir in exports_dirs:
+        try:
+            with open(os.path.join(exports_dir, filename), 'r') as file:
+                return (slugify_title_filename, mimetype, file.read())
+        except IOError:
+            # to be handled by the else part below if unable to find file in
+            # any of the export dirs
+            pass
+    else:
+        raise ExportError('{}@{}.{} not found'.format(id, version, type))
+
 def get_export(environ, start_response):
     """Retrieve an export file."""
     settings = get_settings()
@@ -146,49 +185,23 @@ def get_export(environ, start_response):
     args = environ['wsgiorg.routing_args']
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
-    get_type_info()
-
-    if type not in TYPE_INFO:
-        logger.debug("invalid type '{}' requested.".format(type))
-        raise httpexceptions.HTTPNotFound()
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
-                cursor.execute(SQL['get-module-versions'], {'id': id})
-                try:
-                    latest_version = cursor.fetchone()[0]
-                except (TypeError, IndexError,): # None returned
-                    logger.debug("version was not supplied "
-                                 "and could not be discovered.")
-                    raise httpexceptions.HTTPNotFound()
-                raise httpexceptions.HTTPFound('/exports/{}@{}.{}' \
-                        .format(id, latest_version, type))
-            result = get_content_metadata(id, version, cursor)
-
-    file_extension = TYPE_INFO[type]['file_extension']
-    mimetype = TYPE_INFO[type]['mimetype']
-    filename = '{}-{}.{}'.format(id, version, file_extension)
+            try:
+                filename, mimetype, file_content = get_export_file(cursor,
+                        id, version, type, exports_dirs)
+            except ExportError as e:
+                logger.debug(str(e))
+                raise httpexceptions.HTTPNotFound()
 
     status = "200 OK"
     headers = [('Content-type', mimetype,),
                ('Content-disposition',
-                'attached; filename={}.{}'.format(slugify(result['title']),
-                    file_extension),),
+                'attached; filename={}'.format(filename),),
                ]
-
-    for exports_dir in exports_dirs:
-        try:
-            with open(os.path.join(exports_dir, filename), 'r') as file:
-                start_response(status, headers)
-                return [file.read()]
-        except IOError:
-            # to be handled by the else part below if unable to find file in
-            # any of the export dirs
-            pass
-    else:
-        raise httpexceptions.HTTPNotFound()
-
+    start_response(status, headers)
+    return [file_content]
 
 MEDIA_TYPES = {
         'Collection': 'book',
