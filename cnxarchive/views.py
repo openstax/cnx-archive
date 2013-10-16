@@ -16,7 +16,10 @@ from . import get_settings
 from . import httpexceptions
 from .utils import split_ident_hash, portaltype_to_mimetype, slugify
 from .database import CONNECTION_SETTINGS_KEY, SQL
-from .search import search as database_search, Query
+from .search import (
+    search as database_search, Query,
+    QUERY_TYPES, DEFAULT_QUERY_TYPE,
+    )
 
 
 logger = logging.getLogger('cnxarchive')
@@ -220,12 +223,15 @@ def search(environ, start_response):
     except IndexError:
         start_response('200 OK', [('Content-type', 'application/json')])
         return [empty_response]
+    query_type = params.get('t', None)
+    if query_type is None or query_type not in QUERY_TYPES:
+        query_type = DEFAULT_QUERY_TYPE
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
         start_response('200 OK', [('Content-type', 'application/json')])
         return [empty_response]
-    db_results = database_search(query)
+    db_results = database_search(query, query_type)
 
     results = {}
     limits = [{keyword: value} for keyword, value in query.terms]
