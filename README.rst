@@ -17,10 +17,10 @@ then feel free to either file an
 `issue <https://github.com/Connexions/cnx-archive/issues/new>`_
 or contact Connexions for further assistance.
 
-Install the Postgres database
+Install the PostgreSQL database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This will require a 'Postgres' install
+This will require a ``PostgreSQL`` install
 that is greater than or equal to version 9.3.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
@@ -31,16 +31,27 @@ On Debian (and Ubuntu), issue the following command::
 
     apt-get install postgresql-9.3 postgresql-server-dev-9.3 postgresql-client-9.3 postgresql-contrib-9.3 postgresql-plpython-9.3
 
-Installing the Postgres plpythonu extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Verify the install and port by using ``pg_lscluster``. If the 9.3
+cluster is not the first one installed (which it likely is not), note
+the port and cluster name. For example, the second cluster installed
+will end up by default with port 5433, and a cluster named ``main``.
+
+Set the ``PGCLUSTER`` environment variable to make psql and other
+postgresql command line tools connect to the appropriate server. For
+the example above, use::
+
+    export PGCLUSTER=9.3/main
+
+Installing the PostgreSQL plpythonu extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``plpythonu`` extension comes with the `PostgresApp`,
 which you don't have to install this one manuallly.
-And we've included the ``postgresql-plpython`` package
-in the previous installation command.
+We've included the ``postgresql-plpython`` package
+in the previous installation command, for Debian and Ubuntu.
 
-Installing the Postgres plxslt extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing the PostgreSQL plxslt extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``plxslt`` package can be found on github at
 `petere/plxslt <https://github.com/petere/plxslt>`_).
@@ -82,16 +93,17 @@ If you decided to change any of these default values,
 please ensure you also change them in the application's configuration file,
 which is discussed later in this instructions.
 
-To set up the database, issue the following commands::
+To set up the database, issue the following commands (these will use
+the default cluster, as defined above)::
 
-    psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
-    createdb -O cnxarchive cnxarchive
+    psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
+    createdb -U postgres -O cnxarchive cnxarchive
 
 Installing the application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Note**: cnx-archive requires the packages in this section to be installed
-with the system python.  Specifically it needs to be installed to the python
+with the system python. Specifically it needs to be installed to the python
 that postgresql uses for python triggers.
 
 Before installing cnx-archive, you need to first install the
@@ -107,7 +119,8 @@ dependencies that have not been released to the public package repositories::
     python setup.py install
     cd ..
 
-    git clone -b bug-fixes https://github.com/karenc/plpydbapi.git
+    # Install bug-fixes branch of plpydbapi
+    git clone -b bug-fixes https://github.com/Connexions/plpydbapi.git
     cd plpydbapi
     python setup.py install
     cd ..
@@ -130,11 +143,10 @@ which will populate the database with a small set of content.
 To run the application, use the ``paste`` script with the ``serve`` command.
 (The paste script and serve command come from ``PasteScript`` and
 ``PasteDeploy``, respectively.)
-This example uses the ``development.ini``,
-which has been supplied with the package.
-If you changed any of the database setup values,
-you'll also need to change them in the configuration file.
-::
+
+This example uses the ``development.ini``, which has been supplied with the
+package.  If you changed any of the database setup values, you'll also need to
+change them in the configuration file.::
 
     paster serve development.ini
 
