@@ -428,7 +428,8 @@ def _build_search(structured_query, weights):
     return (statement, arguments)
 
 
-def search(query, weights=DEFAULT_SEARCH_WEIGHTS):
+def search(query, query_type=DEFAULT_QUERY_TYPE,
+           weights=DEFAULT_SEARCH_WEIGHTS):
     """Executes a database search query from the given ``query``
     (a ``Query`` object) and optionally accepts a list of search weights.
     By default, the search results are ordered by weight.
@@ -457,4 +458,4 @@ def search(query, weights=DEFAULT_SEARCH_WEIGHTS):
             search_results = cursor.fetchall()
 
     # Wrap the SQL results.
-    return QueryResults(search_results, query)
+    return QueryResults(search_results, query, query_type)

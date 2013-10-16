@@ -379,3 +379,31 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(results), 15)
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
+
+    def test_anding(self):
+        # Test that the results intersect with one another rather than
+        #   search the terms independently. This uses the AND operator.
+        # The query for this would look like "physics [AND] force".
+        query_params = [('text', 'physics'), ('text', 'force'),
+                        ('keyword', 'stress'),
+                        ]
+        expectations = ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
+                         '56f1c5c1-4014-450d-a477-2121e276beca',
+                         ]
+        matched_on = [{u'force': set([u'fulltext', u'keyword']),
+                       u'physics': set([u'maintainer']),
+                       u'stress': set([u'keyword'])},
+                      {u'force': set([u'fulltext', u'keyword']),
+                       u'physics': set([u'fulltext', u'maintainer']),
+                       u'stress': set([u'keyword'])},
+                      ]
+
+        results = self.call_target(query_params, query_type='AND')
+        # Basically, everything matches the first search term,
+        #   about eleven match the first two terms,
+        #   and when the third is through in we condense this to two.
+        self.assertEqual(len(results), 2)
+        for i, id in enumerate(expectations):
+            self.assertEqual(results[i]['id'], id)
+        # This just verifies that all three terms matched on each result.
+        self.assertEqual([r.matched for r in results], matched_on)
