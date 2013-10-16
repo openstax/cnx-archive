@@ -394,9 +394,9 @@ class ViewsTestCase(unittest.TestCase):
                 os.path.join(TEST_DATA_DIRECTORY, 'exports2')
                 ])
         self.settings['exports-allowable-types'] = '''
-            pdf:pdf,application/pdf,Portable Document Format (PDF)
-            epub:epub,application/epub+zip,Electronic Publication (EPUB)
-            zip:zip,application/zip,ZIP archive
+            pdf:pdf,application/pdf,PDF,PDF file, for viewing content offline and printing.
+            epub:epub,application/epub+zip,EPUB,Electronic book format file, for viewing on mobile devices.
+            zip:zip,application/zip,Offline ZIP,An offline HTML copy of the content.  Also includes XML, included media files, and other support files.
         '''
 
     def tearDown(self):
@@ -595,34 +595,56 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(e.headers, [('Location',
                 '/exports/{}@5.pdf'.format(id))])
 
-    def test_get_exports_allowable_types(self):
+    def test_get_exports_no_allowable_types(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.6'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
         from ..views import get_export_allowable_types
-        output = get_export_allowable_types(self._make_environ,
-                self._start_response)[0]
+        output = get_export_allowable_types(environ, self._start_response)[0]
 
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), {
-            'pdf': {
-                'type_name': 'pdf',
-                'file_extension': 'pdf',
-                'mimetype': 'application/pdf',
-                'user_friendly_name': 'Portable Document Format (PDF)',
+        self.assertEqual(json.loads(output), [])
+
+    def test_get_exports_allowable_types(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
+        from ..views import get_export_allowable_types
+        output = get_export_allowable_types(environ, self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output), [
+            {
+                u'format': u'PDF',
+                u'filename': u'college-physics.pdf',
+                u'details': u'PDF file, for viewing content offline and printing.',
+                u'path': u'/exports/{}@{}.pdf'.format(id, version),
                 },
-            'epub': {
-                'type_name': 'epub',
-                'file_extension': 'epub',
-                'mimetype': 'application/epub+zip',
-                'user_friendly_name': 'Electronic Publication (EPUB)',
+            {
+                u'format': u'EPUB',
+                u'filename': u'college-physics.epub',
+                u'details': u'Electronic book format file, for viewing on mobile devices.',
+                u'path': u'/exports/{}@{}.epub'.format(id, version),
                 },
-            'zip': {
-                'type_name': 'zip',
-                'file_extension': 'zip',
-                'mimetype': 'application/zip',
-                'user_friendly_name': 'ZIP archive',
+            {
+                u'format': u'Offline ZIP',
+                u'filename': u'college-physics.zip',
+                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                u'path': u'/exports/{}@{}.zip'.format(id, version),
                 },
-            })
+            ])
 
     def test_search(self):
         # Build the request

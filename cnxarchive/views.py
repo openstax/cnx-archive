@@ -115,7 +115,7 @@ def get_resource(environ, start_response):
     return [file[:]]
 
 
-TYPE_INFO = {}
+TYPE_INFO = []
 def get_type_info():
     if TYPE_INFO:
         return
@@ -123,21 +123,44 @@ def get_type_info():
         if not line.strip():
             continue
         type_name, type_info = line.strip().split(':', 1)
-        type_info = type_info.split(',', 2)
-        TYPE_INFO[type_name] = {
-                'type_name': type_name,
-                'file_extension': type_info[0],
-                'mimetype': type_info[1],
-                'user_friendly_name': type_info[2],
-                }
+        type_info = type_info.split(',', 3)
+        TYPE_INFO.append((type_name, {
+            'type_name': type_name,
+            'file_extension': type_info[0],
+            'mimetype': type_info[1],
+            'user_friendly_name': type_info[2],
+            'description': type_info[3],
+            }))
 
 def get_export_allowable_types(environ, start_response):
     """Return export types
     """
+    settings = get_settings()
+    exports_dirs = settings['exports-directories'].split()
+    args = environ['wsgiorg.routing_args']
+    id, version = split_ident_hash(args['ident_hash'])
     get_type_info()
+
+    results = []
+
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            for type_name, type_info in TYPE_INFO:
+                try:
+                    filename, mimetype, file_content = get_export_file(cursor,
+                            id, version, type_name, exports_dirs)
+                    results.append({
+                        'format': type_info['user_friendly_name'],
+                        'filename': filename,
+                        'details': type_info['description'],
+                        'path': '/exports/{}@{}.{}'.format(id, version, type_name),
+                        })
+                except ExportError as e:
+                    # file not found, so don't include it
+                    pass
     headers = [('Content-type', 'application/json')]
     start_response('200 OK', headers)
-    return [json.dumps(TYPE_INFO)]
+    return [json.dumps(results)]
 
 
 class ExportError(Exception):
@@ -146,8 +169,9 @@ class ExportError(Exception):
 
 def get_export_file(cursor, id, version, type, exports_dirs):
     get_type_info()
+    type_info = dict(TYPE_INFO)
 
-    if type not in TYPE_INFO:
+    if type not in type_info:
         raise ExportError("invalid type '{}' requested.".format(type))
 
     if not version:
@@ -161,8 +185,8 @@ def get_export_file(cursor, id, version, type, exports_dirs):
             id, latest_version, type))
 
     metadata = get_content_metadata(id, version, cursor)
-    file_extension = TYPE_INFO[type]['file_extension']
-    mimetype = TYPE_INFO[type]['mimetype']
+    file_extension = type_info[type]['file_extension']
+    mimetype = type_info[type]['mimetype']
     filename = '{}-{}.{}'.format(id, version, file_extension)
     slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
             file_extension)
