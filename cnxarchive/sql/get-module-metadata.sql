@@ -48,7 +48,17 @@ FROM (SELECT
   m.google_analytics as "googleAnalytics",
   m.buylink as "buyLink",
   m.moduleid as "legacy_id",
-  m.version as "legacy_version"
+  m.version as "legacy_version",
+  ARRAY(
+    SELECT row_to_json(history_info) FROM (
+        SELECT concat_ws('.', m1.major_version, m1.minor_version) AS version,
+            m1.revised, m1.submitlog AS changes,
+            (SELECT row_to_json(publisher) AS publisher FROM (
+                    SELECT id, email, firstname, othername, surname, fullname, title, suffix, website
+                    FROM users WHERE users.id::text = m1.submitter
+            ) publisher)
+            FROM modules m1 WHERE m1.uuid = %(id)s ORDER BY m1.revised DESC
+    ) history_info) as history
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
   LEFT JOIN modules p on m.parent = p.module_ident
