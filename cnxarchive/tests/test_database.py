@@ -245,8 +245,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_module(self, cursor):
-        cursor.execute('SELECT nodeid FROM trees '
-                       'WHERE parent_id IS NULL ORDER BY nodeid DESC')
+        cursor.execute('SELECT nodeid FROM trees WHERE documentid = 1')
         old_nodeid = cursor.fetchone()[0]
 
         cursor.execute('SELECT fileid '
@@ -255,7 +254,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         cursor.execute('SELECT COUNT(*) FROM modules')
         old_n_modules = cursor.fetchone()[0]
-        self.assertEqual(old_n_modules, 16)
+        self.assertEqual(old_n_modules, 17)
 
         # Insert a new version of an existing module
         cursor.execute('''
@@ -269,7 +268,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # After the new module is inserted, there should be a new module and a
         # new collection
         cursor.execute('SELECT COUNT(*) FROM modules')
-        self.assertEqual(cursor.fetchone()[0], 18)
+        self.assertEqual(cursor.fetchone()[0], 19)
 
         # Test that the latest row in modules is a collection with updated
         # version

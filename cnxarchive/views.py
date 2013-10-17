@@ -118,7 +118,7 @@ def get_resource(environ, start_response):
     return [file[:]]
 
 
-TYPE_INFO = {}
+TYPE_INFO = []
 def get_type_info():
     if TYPE_INFO:
         return
@@ -126,21 +126,84 @@ def get_type_info():
         if not line.strip():
             continue
         type_name, type_info = line.strip().split(':', 1)
-        type_info = type_info.split(',', 2)
-        TYPE_INFO[type_name] = {
-                'type_name': type_name,
-                'file_extension': type_info[0],
-                'mimetype': type_info[1],
-                'user_friendly_name': type_info[2],
-                }
+        type_info = type_info.split(',', 3)
+        TYPE_INFO.append((type_name, {
+            'type_name': type_name,
+            'file_extension': type_info[0],
+            'mimetype': type_info[1],
+            'user_friendly_name': type_info[2],
+            'description': type_info[3],
+            }))
 
 def get_export_allowable_types(environ, start_response):
     """Return export types
     """
+    settings = get_settings()
+    exports_dirs = settings['exports-directories'].split()
+    args = environ['wsgiorg.routing_args']
+    id, version = split_ident_hash(args['ident_hash'])
     get_type_info()
+
+    results = []
+
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            for type_name, type_info in TYPE_INFO:
+                try:
+                    filename, mimetype, file_content = get_export_file(cursor,
+                            id, version, type_name, exports_dirs)
+                    results.append({
+                        'format': type_info['user_friendly_name'],
+                        'filename': filename,
+                        'details': type_info['description'],
+                        'path': '/exports/{}@{}.{}'.format(id, version, type_name),
+                        })
+                except ExportError as e:
+                    # file not found, so don't include it
+                    pass
     headers = [('Content-type', 'application/json')]
     start_response('200 OK', headers)
-    return [json.dumps(TYPE_INFO)]
+    return [json.dumps(results)]
+
+
+class ExportError(Exception):
+    pass
+
+
+def get_export_file(cursor, id, version, type, exports_dirs):
+    get_type_info()
+    type_info = dict(TYPE_INFO)
+
+    if type not in type_info:
+        raise ExportError("invalid type '{}' requested.".format(type))
+
+    if not version:
+        cursor.execute(SQL['get-module-versions'], {'id': id})
+        try:
+            latest_version = cursor.fetchone()[0]
+        except (TypeError, IndexError,): # None returned
+            raise ExportError("version was not supplied and could not be "
+                    "discovered.")
+        raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
+            id, latest_version, type))
+
+    metadata = get_content_metadata(id, version, cursor)
+    file_extension = type_info[type]['file_extension']
+    mimetype = type_info[type]['mimetype']
+    filename = '{}-{}.{}'.format(id, version, file_extension)
+    slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
+            file_extension)
+
+    for exports_dir in exports_dirs:
+        try:
+            with open(os.path.join(exports_dir, filename), 'r') as file:
+                return (slugify_title_filename, mimetype, file.read())
+        except IOError:
+            # to be handled by the else part below if unable to find file in
+            # any of the export dirs
+            pass
+    else:
+        raise ExportError('{}@{}.{} not found'.format(id, version, type))
 
 def get_export(environ, start_response):
     """Retrieve an export file."""
@@ -149,49 +212,23 @@ def get_export(environ, start_response):
     args = environ['wsgiorg.routing_args']
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
-    get_type_info()
-
-    if type not in TYPE_INFO:
-        logger.debug("invalid type '{}' requested.".format(type))
-        raise httpexceptions.HTTPNotFound()
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
-                cursor.execute(SQL['get-module-versions'], {'id': id})
-                try:
-                    latest_version = cursor.fetchone()[0]
-                except (TypeError, IndexError,): # None returned
-                    logger.debug("version was not supplied "
-                                 "and could not be discovered.")
-                    raise httpexceptions.HTTPNotFound()
-                raise httpexceptions.HTTPFound('/exports/{}@{}.{}' \
-                        .format(id, latest_version, type))
-            result = get_content_metadata(id, version, cursor)
-
-    file_extension = TYPE_INFO[type]['file_extension']
-    mimetype = TYPE_INFO[type]['mimetype']
-    filename = '{}-{}.{}'.format(id, version, file_extension)
+            try:
+                filename, mimetype, file_content = get_export_file(cursor,
+                        id, version, type, exports_dirs)
+            except ExportError as e:
+                logger.debug(str(e))
+                raise httpexceptions.HTTPNotFound()
 
     status = "200 OK"
     headers = [('Content-type', mimetype,),
                ('Content-disposition',
-                'attached; filename={}.{}'.format(slugify(result['title']),
-                    file_extension),),
+                'attached; filename={}'.format(filename),),
                ]
-
-    for exports_dir in exports_dirs:
-        try:
-            with open(os.path.join(exports_dir, filename), 'r') as file:
-                start_response(status, headers)
-                return [file.read()]
-        except IOError:
-            # to be handled by the else part below if unable to find file in
-            # any of the export dirs
-            pass
-    else:
-        raise httpexceptions.HTTPNotFound()
-
+    start_response(status, headers)
+    return [file_content]
 
 MEDIA_TYPES = {
         'Collection': 'book',
