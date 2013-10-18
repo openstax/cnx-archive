@@ -10,4 +10,4 @@ SELECT
 concat_ws('.', m.major_version, m.minor_version)
 FROM modules m
 WHERE m.uuid = %(id)s
-ORDER BY m.module_ident DESC
+ORDER BY m.revised DESC
