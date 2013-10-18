@@ -16,8 +16,16 @@ FROM (SELECT
   m.name as title,
   m.created as created, m.revised as revised,
   m.stateid, m.doctype,
-  l.url AS license,
-  m.submitter, m.submitlog, m.portal_type as "mediaType",
+  (SELECT row_to_json(license) AS license FROM (
+        SELECT l.code, l.version, l.name, l.url
+    ) license),
+  (SELECT row_to_json(submitter_row) AS submitter FROM (
+        SELECT id, email, firstname, othername, surname, fullname,
+            title, suffix, website
+        FROM users
+        WHERE users.id::text = m.submitter
+    ) AS submitter_row),
+  m.submitlog, m.portal_type as "mediaType",
   a.abstract,
   p.uuid AS "parentId",
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
@@ -70,7 +78,7 @@ WHERE
   concat_ws('.', m.major_version, m.minor_version) = %(version)s
 GROUP BY
   m.moduleid, m.portal_type, current_version, m.name, m.created, m.revised,
-  a.abstract, m.stateid, m.doctype, l.url, m.module_ident, m.submitter,
-  m.submitlog, p.uuid, "parentVersion", m.authors, m.licensors, m.maintainers,
-  m.parentauthors, m.language, m.google_analytics
+  a.abstract, m.stateid, m.doctype, l.code, l.name, l.version, l.url,
+  m.module_ident, m.submitter, m.submitlog, p.uuid, "parentVersion", m.authors,
+  m.licensors, m.maintainers, m.parentauthors, m.language, m.google_analytics
 ) combined_rows ;
