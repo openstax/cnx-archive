@@ -146,7 +146,7 @@ COLLECTION_JSON_TREE = {
          u'title': u'Selected Radioactive Isotopes'},
         {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@5',
          u'title': u'Useful Information'},
-        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@4',
+        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
          u'title': u'Glossary of Key Symbols and Notation'},
         ],
     }
