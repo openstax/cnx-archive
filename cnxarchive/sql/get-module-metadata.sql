@@ -19,7 +19,13 @@ FROM (SELECT
   (SELECT row_to_json(license) AS license FROM (
         SELECT l.code, l.version, l.name, l.url
     ) license),
-  m.submitter, m.submitlog, m.portal_type as "mediaType",
+  (SELECT row_to_json(submitter_row) AS submitter FROM (
+        SELECT id, email, firstname, othername, surname, fullname,
+            title, suffix, website
+        FROM users
+        WHERE users.id::text = m.submitter
+    ) AS submitter_row),
+  m.submitlog, m.portal_type as "mediaType",
   a.abstract,
   p.uuid AS "parentId",
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
