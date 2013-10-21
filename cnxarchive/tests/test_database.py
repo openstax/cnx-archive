@@ -605,3 +605,18 @@ class DocumentHitsTestCase(unittest.TestCase):
                          close_enough(sum(hits[1][2:]) / 3.0))
         self.assertEqual(close_enough(other_average),
                          close_enough(sum(hits[6]) / 5.0))
+
+    def test_hit_rank_function(self):
+        # Verify the hit rank is output in both overall and recent
+        #   circumstances.
+        self.override_recent_date()
+        hits = self.create_hits()
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT hit_rank(5, 'f');")
+                rank = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_rank(5, 't');")
+                recent_rank = cursor.fetchone()[0]
+        self.assertEqual(rank, 5)
+        self.assertEqual(recent_rank, 3)
