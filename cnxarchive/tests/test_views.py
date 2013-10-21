@@ -319,7 +319,7 @@ SEARCH_RESULTS = {
         u'total': 2,
         u'limits': [
             {u'count': 2, u'pubYear': u'2013'},
-            {u'author': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+            {u'author': u'OpenStax College',
              u'count': 2},
             {u'count': 1,
              u'mediaType': u'application/vnd.org.cnx.collection'},

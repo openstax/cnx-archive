@@ -88,7 +88,7 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
         # Check the author counts
         self.assertEqual(results.counts['author'],
-                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
+                         {u'OpenStax College': 15})
         # Check counts for publication year.
         self.assertEqual(results.counts['pubYear'], {u'2013': 15})
         # Check the subject counts.
