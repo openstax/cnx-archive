@@ -465,3 +465,35 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''SELECT module_ident FROM latest_modules
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
+
+
+class DocumentHitsTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from ..utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from ..database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def test_recency_function(self, cursor):
+        # Exam the function out puts a date.
+
+        # At the time of this writting the recency is one week.
+        from datetime import datetime, timedelta
+        then = datetime.today() - timedelta(7)
+
+        cursor.execute("SELECT get_recency_date();")
+        value = cursor.fetchone()[0]
+        # We're mostly checking by the day rather than by time,
+        #   so checking by date should be sufficient.
+        self.assertEqual(then.date(), value.date())
