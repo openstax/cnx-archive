@@ -661,7 +661,10 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), {u'downloads': []})
+        self.assertEqual(json.loads(output), {
+            u'downloads': [],
+            u'is_latest': False,
+            })
 
     def test_get_extra_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -697,6 +700,36 @@ class ViewsTestCase(unittest.TestCase):
                 u'path': u'/exports/{}@{}.zip'.format(id, version),
                 },
             ])
+
+    def test_extra_latest(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output)['is_latest'], True)
+
+        version = '1.6'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output)['is_latest'], False)
 
     def test_search(self):
         # Build the request

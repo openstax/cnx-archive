@@ -131,10 +131,20 @@ def get_extra(environ, start_response):
         with db_connection.cursor() as cursor:
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
+            results['is_latest'] = is_latest(cursor, id, version)
 
     headers = [('Content-type', 'application/json')]
     start_response('200 OK', headers)
     return [json.dumps(results)]
+
+
+def is_latest(cursor, id, version):
+    cursor.execute(SQL['get-module-versions'], {'id': id})
+    try:
+        latest_version = cursor.fetchone()[0]
+        return latest_version == version
+    except (TypeError, IndexError,): # None returned
+        raise httpexceptions.HTTPNotFound()
 
 
 TYPE_INFO = []
