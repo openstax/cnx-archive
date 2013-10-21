@@ -663,7 +663,7 @@ class ViewsTestCase(unittest.TestCase):
                 ('Content-type', 'application/json'))
         self.assertEqual(json.loads(output), {
             u'downloads': [],
-            u'is_latest': False,
+            u'isLatest': False,
             })
 
     def test_get_extra_allowable_types(self):
@@ -715,7 +715,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['is_latest'], True)
+        self.assertEqual(json.loads(output)['isLatest'], True)
 
         version = '1.6'
 
@@ -729,7 +729,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['is_latest'], False)
+        self.assertEqual(json.loads(output)['isLatest'], False)
 
     def test_search(self):
         # Build the request
