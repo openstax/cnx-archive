@@ -389,4 +389,14 @@ CREATE TABLE moduletags (
     FOREIGN KEY (tagid) REFERENCES tags(tagid) DEFERRABLE
 );
 
+CREATE TABLE document_hits (
+  module_ident INTEGER NOT NULL,
+  start_timestamp TIMESTAMP NOT NULL,
+  end_timestamp TIMESTAMP NOT NULL,
+  hits INTEGER DEFAULT 0,
+  FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
+);
+
+
+
 COMMIT;

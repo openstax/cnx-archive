@@ -84,6 +84,7 @@ class PostgresqlFixture:
         """Drop all tables in the database."""
         cursor.execute("DROP SCHEMA public CASCADE")
         cursor.execute("CREATE SCHEMA public")
+        self.is_set_up = False
 
     def setUp(self):
         if self.is_set_up:
