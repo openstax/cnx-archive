@@ -10,3 +10,22 @@ AS $$
   END;
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION hit_average (ident INTEGER, recent BOOLEAN)
+RETURNS FLOAT
+AS $$
+  DECLARE
+    average FLOAT;
+  BEGIN
+    recent := coalesce(recent, 'f')::BOOLEAN;
+    IF recent THEN
+      average := avg(hits) FROM document_hits
+        WHERE documentid = ident AND start_timestamp >= get_recency_date();
+    ELSE
+      average := avg(hits) FROM document_hits WHERE documentid = ident;
+    END IF;
+    RETURN average;
+  END;
+$$
+LANGUAGE plpgsql;

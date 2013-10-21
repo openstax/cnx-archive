@@ -7,6 +7,7 @@
 # ###
 import unittest
 
+import psycopg2
 from . import *
 
 
@@ -467,6 +468,49 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         self.assertEqual(cursor.fetchone()[0], module_ident)
 
 
+SQL_FOR_HIT_DOCUMENTS = """
+ALTER TABLE modules DISABLE TRIGGER ALL;
+INSERT INTO abstracts VALUES (1, '');
+INSERT INTO modules VALUES (
+  1, 'Module', 'm1', '88cd206d-66d2-48f9-86bb-75d5366582ee',
+  '1.1', 'Name of m1',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, NULL);
+INSERT INTO modules VALUES (
+  2, 'Module', 'm1', '88cd206d-66d2-48f9-86bb-75d5366582ee',
+  '1.2', 'Name of m1',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 2, NULL);
+INSERT INTO modules VALUES (
+  3, 'Module', 'm2', 'f122af91-5f4f-4736-a502-67bd0a1628aa',
+  '1.1', 'Name of m2',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, NULL);
+INSERT INTO modules VALUES (
+  4, 'Module', 'm3', 'c8ee8dc5-bb73-47c8-b10f-3f37123cf607',
+  '1.1', 'Name of m2',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+INSERT INTO modules VALUES (
+  5, 'Module', 'm4', 'dd7b92c2-e82e-43bb-b224-accbc3cd395a',
+  '1.1', 'Name of m4',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+INSERT INTO modules VALUES (
+  6, 'Module', 'm5', '84b98813-928b-4f3f-b7d0-0472c82bfd1c',
+  '1.1', 'Name of m5',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+ALTER TABLE modules ENABLE TRIGGER ALL;
+"""
+
+
 class DocumentHitsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
@@ -480,9 +524,20 @@ class DocumentHitsTestCase(unittest.TestCase):
     @db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
+        cursor.execute(SQL_FOR_HIT_DOCUMENTS)
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    @db_connect
+    def make_hit(self, cursor, ident, start_date, end_date=None, count=0):
+        from datetime import timedelta
+        if end_date is None:
+            end_date = start_date + timedelta(1)
+        payload = (ident, start_date, end_date, count,)
+        cursor.execute("INSERT INTO document_hits "
+                       "  VALUES (%s, %s, %s, %s);",
+                       payload)
 
     @db_connect
     def test_recency_function(self, cursor):
@@ -497,3 +552,51 @@ class DocumentHitsTestCase(unittest.TestCase):
         # We're mostly checking by the day rather than by time,
         #   so checking by date should be sufficient.
         self.assertEqual(then.date(), value.date())
+
+    def test_hit_average_function(self):
+        # Verify the hit average is output in both overall and recent
+        #   circumstances.
+        from datetime import datetime, timedelta
+        recent_date = datetime(2013, 10, 20)
+        # Override the SQL function for acquiring the recent date,
+        #   because otherwise the test will be a moving target in time.
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
+                               "RETURNS TIMESTAMP AS $$ BEGIN "
+                               "  RETURN '2013-10-20'::timestamp; "
+                               "END; $$ LANGUAGE plpgsql;")
+
+        dates = (recent_date - timedelta(2),
+                 recent_date - timedelta(1),
+                 recent_date,
+                 recent_date + timedelta(1),
+                 recent_date + timedelta(2),
+                 )
+        hits = {
+            1: [1, 1, 9, 7, 15],
+            2: [9, 2, 5, 7, 11],
+            3: [1, 2, 3, 4, 1],
+            4: [3, 3, 3, 3, 3],
+            5: [7, 9, 11, 7, 5],
+            6: [18, 20, 13, 12, 24],
+            }
+        for i, date in enumerate(dates):
+            for ident, hit_counts in hits.items():
+                self.make_hit(ident, date, count=hit_counts[i])
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT hit_average(1, NULL);")
+                average = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_average(1, 't');")
+                recent_average = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_average(6, 'f');")
+                other_average = cursor.fetchone()[0]
+        self.assertEqual(average, sum(hits[1]) / 5.0)
+        from math import ceil
+        close_enough = lambda d: ceil(d * 1000) / 1000
+        self.assertEqual(close_enough(recent_average),
+                         close_enough(sum(hits[1][2:]) / 3.0))
+        self.assertEqual(close_enough(other_average),
+                         close_enough(sum(hits[6]) / 5.0))
