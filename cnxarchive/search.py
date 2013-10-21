@@ -280,7 +280,7 @@ class QueryResults(Sequence):
         counts = {}
         for rec in self._records:
             for author in rec['authors']:
-                uid = author['id']
+                uid = author['fullname']
                 counts.setdefault(uid, 0)
                 counts[uid] += 1
         return counts
