@@ -647,7 +647,7 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(e.headers, [('Location',
                 '/exports/{}@5.pdf'.format(id))])
 
-    def test_get_exports_no_allowable_types(self):
+    def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '1.6'
 
@@ -655,15 +655,15 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
 
-        from ..views import get_export_allowable_types
-        output = get_export_allowable_types(environ, self._start_response)[0]
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
 
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), [])
+        self.assertEqual(json.loads(output), {u'downloads': []})
 
-    def test_get_exports_allowable_types(self):
+    def test_get_extra_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '1.7'
 
@@ -671,13 +671,13 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
 
-        from ..views import get_export_allowable_types
-        output = get_export_allowable_types(environ, self._start_response)[0]
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
 
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), [
+        self.assertEqual(json.loads(output)['downloads'], [
             {
                 u'format': u'PDF',
                 u'filename': u'college-physics.pdf',

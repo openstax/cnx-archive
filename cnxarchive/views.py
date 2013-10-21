@@ -118,6 +118,25 @@ def get_resource(environ, start_response):
     return [file[:]]
 
 
+def get_extra(environ, start_response):
+    """Return information about a module / collection that cannot be cached
+    """
+    settings = get_settings()
+    exports_dirs = settings['exports-directories'].split()
+    args = environ['wsgiorg.routing_args']
+    id, version = split_ident_hash(args['ident_hash'])
+    results = {}
+
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            results['downloads'] = list(get_export_allowable_types(cursor,
+                exports_dirs, id, version))
+
+    headers = [('Content-type', 'application/json')]
+    start_response('200 OK', headers)
+    return [json.dumps(results)]
+
+
 TYPE_INFO = []
 def get_type_info():
     if TYPE_INFO:
@@ -135,35 +154,24 @@ def get_type_info():
             'description': type_info[3],
             }))
 
-def get_export_allowable_types(environ, start_response):
+def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types
     """
-    settings = get_settings()
-    exports_dirs = settings['exports-directories'].split()
-    args = environ['wsgiorg.routing_args']
-    id, version = split_ident_hash(args['ident_hash'])
     get_type_info()
 
-    results = []
-
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
-        with db_connection.cursor() as cursor:
-            for type_name, type_info in TYPE_INFO:
-                try:
-                    filename, mimetype, file_content = get_export_file(cursor,
-                            id, version, type_name, exports_dirs)
-                    results.append({
-                        'format': type_info['user_friendly_name'],
-                        'filename': filename,
-                        'details': type_info['description'],
-                        'path': '/exports/{}@{}.{}'.format(id, version, type_name),
-                        })
-                except ExportError as e:
-                    # file not found, so don't include it
-                    pass
-    headers = [('Content-type', 'application/json')]
-    start_response('200 OK', headers)
-    return [json.dumps(results)]
+    for type_name, type_info in TYPE_INFO:
+        try:
+            filename, mimetype, file_content = get_export_file(cursor,
+                    id, version, type_name, exports_dirs)
+            yield {
+                'format': type_info['user_friendly_name'],
+                'filename': filename,
+                'details': type_info['description'],
+                'path': '/exports/{}@{}.{}'.format(id, version, type_name),
+                }
+        except ExportError as e:
+            # file not found, so don't include it
+            pass
 
 
 class ExportError(Exception):
