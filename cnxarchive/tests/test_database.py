@@ -530,6 +530,15 @@ class DocumentHitsTestCase(unittest.TestCase):
         self.fixture.tearDown()
 
     @db_connect
+    def override_recent_date(self, cursor):
+        # Override the SQL function for acquiring the recent date,
+        #   because otherwise the test will be a moving target in time.
+        cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
+                       "RETURNS TIMESTAMP AS $$ BEGIN "
+                       "  RETURN '2013-10-20'::timestamp; "
+                       "END; $$ LANGUAGE plpgsql;")
+
+    @db_connect
     def make_hit(self, cursor, ident, start_date, end_date=None, count=0):
         from datetime import timedelta
         if end_date is None:
@@ -538,6 +547,28 @@ class DocumentHitsTestCase(unittest.TestCase):
         cursor.execute("INSERT INTO document_hits "
                        "  VALUES (%s, %s, %s, %s);",
                        payload)
+
+    def create_hits(self):
+        from datetime import datetime, timedelta
+        recent_date = datetime(2013, 10, 20)
+        dates = (recent_date - timedelta(2),
+                 recent_date - timedelta(1),
+                 recent_date,
+                 recent_date + timedelta(1),
+                 recent_date + timedelta(2),
+                 )
+        hits = {
+            1: [1, 1, 9, 7, 15],
+            2: [9, 2, 5, 7, 11],
+            3: [1, 2, 3, 4, 1],
+            4: [3, 3, 3, 3, 3],
+            5: [7, 9, 11, 7, 5],
+            6: [18, 20, 13, 12, 24],
+            }
+        for i, date in enumerate(dates):
+            for ident, hit_counts in hits.items():
+                self.make_hit(ident, date, count=hit_counts[i])
+        return hits
 
     @db_connect
     def test_recency_function(self, cursor):
@@ -556,34 +587,8 @@ class DocumentHitsTestCase(unittest.TestCase):
     def test_hit_average_function(self):
         # Verify the hit average is output in both overall and recent
         #   circumstances.
-        from datetime import datetime, timedelta
-        recent_date = datetime(2013, 10, 20)
-        # Override the SQL function for acquiring the recent date,
-        #   because otherwise the test will be a moving target in time.
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
-                               "RETURNS TIMESTAMP AS $$ BEGIN "
-                               "  RETURN '2013-10-20'::timestamp; "
-                               "END; $$ LANGUAGE plpgsql;")
-
-        dates = (recent_date - timedelta(2),
-                 recent_date - timedelta(1),
-                 recent_date,
-                 recent_date + timedelta(1),
-                 recent_date + timedelta(2),
-                 )
-        hits = {
-            1: [1, 1, 9, 7, 15],
-            2: [9, 2, 5, 7, 11],
-            3: [1, 2, 3, 4, 1],
-            4: [3, 3, 3, 3, 3],
-            5: [7, 9, 11, 7, 5],
-            6: [18, 20, 13, 12, 24],
-            }
-        for i, date in enumerate(dates):
-            for ident, hit_counts in hits.items():
-                self.make_hit(ident, date, count=hit_counts[i])
+        self.override_recent_date()
+        hits = self.create_hits()
 
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
