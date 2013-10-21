@@ -464,6 +464,36 @@ class ViewsTestCase(unittest.TestCase):
         # Check the tree for accuracy.
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
 
+    def test_history_metadata(self):
+        # Test for the history field in the metadata
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.6'
+
+        # Build the request environment
+        environ = self._make_environ()
+        routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view
+        from ..views import get_content
+        content = get_content(environ, self._start_response)[0]
+        content = json.loads(content)
+
+        # History should only include displayed version and older versions
+        self.assertEqual(content['history'], [{
+            u'version': u'1.6',
+            u'revised': u'2013-07-31 12:07:20.342798-07',
+            u'changes': 'Updated something',
+            u'publisher': {
+                u'website': None, u'surname': None,
+                u'suffix': None, u'firstname': u'OpenStax College',
+                u'title': None, u'othername': None,
+                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'fullname': u'OpenStax College',
+                u'email': u'info@openstaxcollege.org'
+                },
+            }])
+
     def test_module_content(self):
         # Test for retreiving a module.
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
