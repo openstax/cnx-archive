@@ -75,7 +75,7 @@ class HitsCounterTestCase(unittest.TestCase):
         # Check for the insertion of data.
         with psycopg2.connect(self.db_connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                cursor.execute("SELECT module_ident, hits "
+                cursor.execute("SELECT documentid, hits "
                                "  FROM document_hits;")
                 hits = cursor.fetchall()
         hits = sorted(hits)

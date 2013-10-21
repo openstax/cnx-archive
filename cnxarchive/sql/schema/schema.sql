@@ -390,11 +390,11 @@ CREATE TABLE moduletags (
 );
 
 CREATE TABLE document_hits (
-  module_ident INTEGER NOT NULL,
+  documentid INTEGER NOT NULL,
   start_timestamp TIMESTAMP NOT NULL,
   end_timestamp TIMESTAMP NOT NULL,
   hits INTEGER DEFAULT 0,
-  FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
+  FOREIGN KEY (documentid) REFERENCES modules (module_ident) ON DELETE CASCADE
 );
 
 
