@@ -65,7 +65,8 @@ FROM (SELECT
                     SELECT id, email, firstname, othername, surname, fullname, title, suffix, website
                     FROM users WHERE users.id::text = m1.submitter
             ) publisher)
-            FROM modules m1 WHERE m1.uuid = %(id)s ORDER BY m1.revised DESC
+            FROM modules m1 WHERE m1.uuid = %(id)s AND m1.revised <= m.revised
+            ORDER BY m1.revised DESC
     ) history_info) as history
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
