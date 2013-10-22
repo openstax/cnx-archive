@@ -381,6 +381,35 @@ class SearchTestCase(unittest.TestCase):
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
 
+    def test_sort_filter_on_popularity(self):
+        # Test the sorting of results by popularity (hit statistics).
+        query_params = [('text', 'physics'), ('sort', 'popularity')]
+        # The top three items we are looking have their normal sort
+        #   index in a comment to the left, just to show where it came from.
+        expectations = [
+            # ident: uuid
+            (8, u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),  # 10
+            (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),  # 4
+            (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),  # 5
+            # No hits applied from here on, normal ordering expected.
+            (1, u'e79ffde3-7fb4-4af3-9ec8-df648b391597',),  # 1
+            ]
+        hits_to_apply = {8: 25, 7: 15, 9: 5, 1: 0}
+
+        from datetime import datetime, timedelta
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                 end = datetime.today()
+                 start = end - timedelta(1)
+                 for ident, hits in hits_to_apply.items():
+                     cursor.execute("INSERT INTO document_hits "
+                                    "VALUES (%s, %s, %s, %s);",
+                                    (ident, start, end, hits,))
+
+        results = self.call_target(query_params)
+        for i, (ident, id) in enumerate(expectations):
+            self.assertEqual(results[i]['id'], id)
+
     def test_anding(self):
         # Test that the results intersect with one another rather than
         #   search the terms independently. This uses the AND operator.
