@@ -301,7 +301,7 @@ def search(environ, start_response):
             'id': record['id'],
             'mediaType': record['mediaType'],
             'title': record['title'],
-            'authors': record['authors'],
+            'authors': [a['id'] for a in record['authors']],
             'keywords': record['keywords'],
             'summarySnippet': record.highlighted_abstract,
             'bodySnippet': record.highlighted_fulltext,

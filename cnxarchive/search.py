@@ -283,12 +283,26 @@ class QueryResults(Sequence):
 
     def _count_authors(self):
         counts = {}
+        uid_author = {} # look up author record by uid
         for rec in self._records:
             for author in rec['authors']:
                 uid = author['id']
                 counts.setdefault(uid, 0)
                 counts[uid] += 1
-        return counts.iteritems()
+                uid_author.setdefault(uid, author)
+        authors = []
+        for uid, count in counts.iteritems():
+            author = uid_author[uid]
+            authors.append((author, count))
+
+        def sort_name(a, b):
+            result = cmp(a[0]['surname'], b[0]['surname'])
+            if result == 0:
+                result = cmp(a[0]['firstname'], b[0]['firstname'])
+            return result
+        # Sort authors by surname then first name
+        authors.sort(sort_name)
+        return authors
 
     def _count_publication_year(self):
         counts = {}
