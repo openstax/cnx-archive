@@ -97,6 +97,17 @@
           "surname": null,
           "title": null,
           "website": null
+        },
+        {
+          "email": "info@openstaxcollege.org",
+          "firstname": "College",
+          "fullname": "OSC Physics Maintainer",
+          "id": "1df3bab1-1dc7-4017-9b3a-960a87e706b1",
+          "othername": null,
+          "suffix": null,
+          "surname": "Physics",
+          "title": null,
+          "website": null
         }
       ],
       "fields": "",

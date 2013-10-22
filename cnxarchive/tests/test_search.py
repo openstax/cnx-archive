@@ -88,9 +88,27 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(media_types[MODULE_MIMETYPE], 14)
         self.assertEqual(media_types[COLLECTION_MIMETYPE], 1)
         # Check the author counts
-        authors = dict(results.counts['author'])
-        self.assertEqual(authors,
-                         {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
+        osc_physics = {u'email': u'info@openstaxcollege.org',
+                       u'firstname': u'College',
+                       u'fullname': u'OSC Physics Maintainer',
+                       u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                       u'othername': None,
+                       u'suffix': None,
+                       u'surname': u'Physics',
+                       u'title': None,
+                       u'website': None}
+        open_stax_college = {u'website': None,
+                             u'surname': None,
+                             u'suffix': None,
+                             u'firstname': u'OpenStax College',
+                             u'title': None,
+                             u'othername': None,
+                             u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                             u'fullname': u'OpenStax College',
+                             u'email': u'info@openstaxcollege.org'}
+
+        self.assertEqual(results.counts['author'],
+                         [(open_stax_college, 15), (osc_physics, 1)])
         # Check counts for publication year.
         pub_years = dict(results.counts['pubYear'])
         self.assertEqual(pub_years, {u'2013': 15})
