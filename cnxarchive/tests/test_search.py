@@ -84,22 +84,27 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(len(results), 15)
         # Check the mediaType counts.
         from ..utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
-        self.assertEqual(results.counts['mediaType'][MODULE_MIMETYPE], 14)
-        self.assertEqual(results.counts['mediaType'][COLLECTION_MIMETYPE], 1)
+        media_types = dict(results.counts['mediaType'])
+        self.assertEqual(media_types[MODULE_MIMETYPE], 14)
+        self.assertEqual(media_types[COLLECTION_MIMETYPE], 1)
         # Check the author counts
-        self.assertEqual(results.counts['author'],
+        authors = dict(results.counts['author'])
+        self.assertEqual(authors,
                          {u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8': 15})
         # Check counts for publication year.
-        self.assertEqual(results.counts['pubYear'], {u'2013': 15})
+        pub_years = dict(results.counts['pubYear'])
+        self.assertEqual(pub_years, {u'2013': 15})
         # Check the subject counts.
-        self.assertEqual(results.counts['subject'],
+        subjects = dict(results.counts['subject'])
+        self.assertEqual(subjects,
                          {u'Mathematics and Statistics': 8,
                           u'Science and Technology': 7,
                           })
         # Check the keyword counts.
-        self.assertEqual(results.counts['keyword']['Modern physics'], 2)
-        self.assertEqual(results.counts['keyword']['particle physics'], 1)
-        self.assertEqual(results.counts['keyword']['force'], 3)
+        keywords = dict(results.counts['keyword'])
+        self.assertEqual(keywords['Modern physics'], 2)
+        self.assertEqual(keywords['particle physics'], 1)
+        self.assertEqual(keywords['force'], 3)
 
 
 class SearchTestCase(unittest.TestCase):

@@ -309,7 +309,7 @@ def search(environ, start_response):
             })
     result_limits = []
     for count_name, values in db_results.counts.items():
-        for keyword, count in values.items():
+        for keyword, count in values:
             result_limits.append({count_name:keyword, 'count': count})
     results['results']['limits'] = result_limits
 

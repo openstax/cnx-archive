@@ -259,12 +259,17 @@ class QueryResults(Sequence):
     def __len__(self):
         return len(self._records)
 
-    def _count_field(self, field_name):
+    def _count_field(self, field_name, sorted=True):
         counts = {}
         for rec in self._records:
             for value in rec[field_name]:
                 counts.setdefault(value, 0)
                 counts[value] += 1
+        if sorted:
+            counts = counts.items()
+            counts.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
+        else:
+            counts = counts.iteritems()
         return counts
 
     def _count_media(self):
@@ -274,7 +279,7 @@ class QueryResults(Sequence):
             }
         for rec in self._records:
             counts[portaltype_to_mimetype(rec['mediaType'])] += 1
-        return counts
+        return counts.iteritems()
 
     def _count_authors(self):
         counts = {}
@@ -283,7 +288,7 @@ class QueryResults(Sequence):
                 uid = author['id']
                 counts.setdefault(uid, 0)
                 counts[uid] += 1
-        return counts
+        return counts.iteritems()
 
     def _count_publication_year(self):
         counts = {}
@@ -294,7 +299,7 @@ class QueryResults(Sequence):
             year = date[:4]
             counts.setdefault(year, 0)
             counts[year] += 1
-        return counts
+        return counts.iteritems()
 
 
 def _transmute_filter(keyword, value):
