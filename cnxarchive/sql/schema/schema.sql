@@ -391,8 +391,8 @@ CREATE TABLE moduletags (
 
 CREATE TABLE document_hits (
   documentid INTEGER NOT NULL,
-  start_timestamp TIMESTAMP NOT NULL,
-  end_timestamp TIMESTAMP NOT NULL,
+  start_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
   hits INTEGER DEFAULT 0,
   FOREIGN KEY (documentid) REFERENCES modules (module_ident) ON DELETE CASCADE
 );
