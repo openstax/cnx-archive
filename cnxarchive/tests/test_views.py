@@ -946,3 +946,20 @@ class ViewsTestCase(unittest.TestCase):
                         ],
                 }
             })
+
+        def test_get_config(self):
+            # Build the request
+            environ = self._make_environ()
+
+            # Call the view
+            from ..views import get_config
+            config = get_config(environ, self._start_response)[0]
+            config = json.loads(config)
+            self.assertEqual(config, {
+                u'subjects': [{'id': 1, u'name': u'Arts'},
+                              {'id': 2, u'name': u'Business'},
+                              {'id': 3, u'name': u'Humanities'},
+                              {'id': 4, u'name': u'Mathematics and Statistics'},
+                              {'id': 5, u'name': u'Science and Technology'},
+                              {'id': 6, u'name': u'Social Sciences'},
+                })
