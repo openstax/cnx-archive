@@ -900,3 +900,21 @@ class ViewsTestCase(unittest.TestCase):
                         ],
                 }
             })
+
+        def test_get_config(self):
+            # Build the request
+            environ = self._make_environ()
+
+            # Call the view
+            from ..views import get_config
+            config = get_config(environ, self._start_response)[0]
+            config = json.loads(config)
+            self.assertEqual(config, {
+                u'subjects': [[1, u'Arts'],
+                              [2, u'Business'],
+                              [3, u'Humanities'],
+                              [4, u'Mathematics and Statistics'],
+                              [5, u'Science and Technology'],
+                              [6, u'Social Sciences'],
+                              [0, u'Test/Draft']],
+                })
