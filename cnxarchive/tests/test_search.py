@@ -405,6 +405,7 @@ class SearchTestCase(unittest.TestCase):
                      cursor.execute("INSERT INTO document_hits "
                                     "VALUES (%s, %s, %s, %s);",
                                     (ident, start, end, hits,))
+                     cursor.execute("SELECT update_hit_ranks();")
 
         results = self.call_target(query_params)
         for i, (ident, id) in enumerate(expectations):

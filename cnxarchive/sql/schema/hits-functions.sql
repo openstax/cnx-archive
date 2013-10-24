@@ -87,7 +87,7 @@ AS $$
       (SELECT im.uuid AS document,
               sum(hits) AS hits,
               avg(hits) AS average,
-              rank() OVER (ORDER BY avg(hits)) AS rank
+              rank() OVER (ORDER BY avg(hits)) as rank
        FROM ident_mapping AS im,
             document_hits AS dh
        WHERE dh.documentid = any(im.idents)

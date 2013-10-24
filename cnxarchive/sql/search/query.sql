@@ -29,16 +29,17 @@ SELECT
   keys as _keys, '' as matched, '' as fields
 -- Only retrieve the most recent published modules.
 FROM
-  latest_modules lm,
+  latest_modules AS lm
+  LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
      module_ident,
      cast (sum(weight) as bigint) as weight,
-     semilist(keys) as keys,
-     hit_rank(module_ident, 't') AS rank
+     semilist(keys) as keys
    FROM
      ({}) as matched
+   -- table join...
    GROUP BY module_ident
-   ) as weighted
+   ) AS weighted
 WHERE
   weighted.module_ident = lm.module_ident
   {}
