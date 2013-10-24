@@ -961,5 +961,5 @@ class ViewsTestCase(unittest.TestCase):
                               {'id': 3, u'name': u'Humanities'},
                               {'id': 4, u'name': u'Mathematics and Statistics'},
                               {'id': 5, u'name': u'Science and Technology'},
-                              {'id': 6, u'name': u'Social Sciences'},
+                              {'id': 6, u'name': u'Social Sciences'},]
                 })
