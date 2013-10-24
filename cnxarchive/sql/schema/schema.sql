@@ -397,6 +397,18 @@ CREATE TABLE document_hits (
   FOREIGN KEY (documentid) REFERENCES modules (module_ident) ON DELETE CASCADE
 );
 
+CREATE TABLE recent_hit_ranks (
+  document UUID NOT NULL PRIMARY KEY,
+  hits INTEGER DEFAULT 0,
+  average FLOAT DEFAULT NULL,
+  rank INTEGER DEFAULT NULL
+);
 
+CREATE TABLE overall_hit_ranks (
+  document UUID NOT NULL PRIMARY KEY,
+  hits INTEGER DEFAULT 0,
+  average FLOAT DEFAULT NULL,
+  rank INTEGER DEFAULT NULL
+);
 
 COMMIT;

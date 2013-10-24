@@ -64,3 +64,53 @@ AS $$
   END;
 $$
 LANGUAGE plpgsql;
+
+CREATE AGGREGATE array_accum (anyelement) (
+  sfunc = array_append,
+  stype = anyarray,
+  initcond = '{}'
+);
+
+CREATE OR REPLACE FUNCTION update_hit_ranks () RETURNS VOID
+AS $$
+  BEGIN
+    DELETE FROM recent_hit_ranks;
+    DELETE FROM overall_hit_ranks;
+    -- Inserted new records are grouped by uuid.
+
+    -- Inserts into the recent_hit_ranks table
+    WITH
+      ident_mapping AS
+      (SELECT uuid, array_accum(module_ident) AS idents
+       FROM modules GROUP BY uuid),
+      stats AS
+      (SELECT im.uuid AS document,
+              sum(hits) AS hits,
+              avg(hits) AS average,
+              rank() OVER (ORDER BY avg(hits)) AS rank
+       FROM ident_mapping AS im,
+            document_hits AS dh
+       WHERE dh.documentid = any(im.idents)
+             AND start_timestamp >= get_recency_date()
+       GROUP BY im.uuid)
+    INSERT INTO recent_hit_ranks select * from stats;
+
+    -- Inserts into the overall_hit_ranks table.
+    WITH
+      ident_mapping AS
+      (SELECT uuid, array_accum(module_ident) AS idents
+       FROM modules GROUP BY uuid),
+      stats AS
+      (SELECT im.uuid AS document,
+              sum(hits) AS hits,
+              avg(hits) AS average,
+              rank() OVER (ORDER BY avg(hits)) AS rank
+       FROM ident_mapping AS im,
+            document_hits AS dh
+       WHERE dh.documentid = any(im.idents)
+       GROUP BY im.uuid)
+    INSERT INTO overall_hit_ranks select * from stats;
+
+  END;
+$$
+LANGUAGE plpgsql;
