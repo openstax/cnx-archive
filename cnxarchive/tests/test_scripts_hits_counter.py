@@ -51,3 +51,19 @@ class HitsCounterTestCase(unittest.TestCase):
                 hits = cursor.fetchall()
         hits = sorted(hits)
         self.assertEqual(hits, expectations)
+
+    def test_updates_optimization_tables(self):
+        # Call the command line script.
+        args = ['--log-format', 'plain', TESTING_CONFIG, TEST_VARNISH_LOG]
+        from ..scripts.hits_counter import main
+        main(args)
+
+        # Check the optimization tables for content.
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT count(*) from recent_hit_ranks;")
+                recent_count = cursor.fetchone()[0]
+                cursor.execute("SELECT count(*) from overall_hit_ranks;")
+                overall_count = cursor.fetchone()[0]
+        self.assertTrue(recent_count > 0)
+        self.assertTrue(overall_count > 0)

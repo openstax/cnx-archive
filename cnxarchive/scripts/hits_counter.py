@@ -100,7 +100,7 @@ def main(argv=None):
                 cursor.execute("INSERT INTO document_hits "
                                "  VALUES (%s, %s, %s, %s);",
                                payload)
-
+            cursor.execute("SELECT update_hit_ranks();")
     return 0
 
 
