@@ -752,6 +752,52 @@ class ViewsTestCase(unittest.TestCase):
         for i in results:
             self.assertEqual(results[i], SEARCH_RESULTS[i])
 
+    def test_search_highlight_abstract(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="college physics"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['items'][0]['summarySnippet'],
+                'algebra-based, two-semester <b>college</b> <b>physics</b> book '
+                'is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental '
+                '<b>physics</b> concepts. This online, fully editable and '
+                'customizable title includes learning objectives, concept '
+                'questions, links to labs and simulations, and ample practice '
+                'opportunities to solve traditional <b>physics</b> application '
+                'problems.')
+        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+
+        environ['QUERY_STRING'] = 'q=title:"college physics"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['items'][0]['summarySnippet'],
+                'This introductory, algebra-based, two-semester college physics '
+                'book is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental physics '
+                'concepts. This online, fully editable and customizable title '
+                'includes learning objectives, concept questions, links to labs '
+                'and simulations, and ample practice opportunities to solve '
+                'traditional')
+        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+
     def test_search_no_params(self):
         environ = self._make_environ()
 

@@ -147,8 +147,10 @@ class QueryRecord(Mapping):
     def highlighted_abstract(self):
         """Highlight the found terms in the abstract text."""
         abstract_terms = self.fields.get('abstract', [])
-        if not abstract_terms:
-            return None
+        if abstract_terms:
+            sql = _read_sql_file('highlighted-abstract')
+        else:
+            sql = _read_sql_file('get-abstract')
         arguments = {'id': self['id'],
                      'query': ' & '.join(abstract_terms),
                      }
@@ -156,10 +158,10 @@ class QueryRecord(Mapping):
         connection_string = settings[CONNECTION_SETTINGS_KEY]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                cursor.execute(_read_sql_file('highlighted-abstract'),
-                               arguments)
-                hl_abstract = cursor.fetchone()[0]
-        return hl_abstract
+                cursor.execute(sql, arguments)
+                hl_abstract = cursor.fetchone()
+        if hl_abstract:
+            return hl_abstract[0]
 
     @property
     def highlighted_fulltext(self):
