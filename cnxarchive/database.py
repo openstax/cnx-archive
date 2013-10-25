@@ -19,19 +19,22 @@ CONNECTION_SETTINGS_KEY = 'db-connection-string'
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
-DB_SCHEMA_FILE_PATHS = (
-    os.path.join(DB_SCHEMA_DIRECTORY, 'schema.sql'),
-    os.path.join(DB_SCHEMA_DIRECTORY, 'trees.sql'),
+DB_SCHEMA_FILES = (
+    'schema.sql',
+    # Collection trees
+    'trees.sql',
     # Module fulltext indexing
-    os.path.join(DB_SCHEMA_DIRECTORY, 'fulltext-indexing.sql'),
+    'fulltext-indexing.sql',
     # cnx-user user shadow table.
-    os.path.join(DB_SCHEMA_DIRECTORY, 'cnx-user.schema.sql'),
-    # Functions
-    os.path.join(DB_SCHEMA_DIRECTORY, 'shred_collxml.sql'),
-    os.path.join(DB_SCHEMA_DIRECTORY, 'tree_to_json.sql'),
-    os.path.join(DB_SCHEMA_DIRECTORY, 'hits-functions.sql'),
+    'cnx-user.schema.sql',
+    # Functions for collections
+    'shred_collxml.sql',
+    'tree_to_json.sql',
+    'hits-functions.sql',
     )
 
+DB_SCHEMA_FILE_PATHS = tuple([os.path.join(DB_SCHEMA_DIRECTORY, dsf)
+                              for dsf in  DB_SCHEMA_FILES])
 
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
