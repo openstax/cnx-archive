@@ -28,8 +28,9 @@ __all__ = ('search', 'Query',)
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type',)
 SORT_VALUES_MAPPING = {
-    'pubdate': 'created',
-    'version': 'version',
+    'pubdate': 'created DESC',
+    'version': 'version DESC',
+    'popularity': 'rank DESC NULLS LAST',
     }
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('parentauthor', 0),
@@ -433,10 +434,9 @@ def _build_search(structured_query, weights):
     sorts = []
     if structured_query.sorts:
         for sort in structured_query.sorts:
-            field_name = _transmute_sort(sort)
             # These sort values are not the name of the column used
             #   in the database.
-            stmt = "{} DESC".format(field_name)
+            stmt = _transmute_sort(sort)
             sorts.append(stmt)
     sorts.append('weight DESC')
     sorts = ', '.join(sorts)

@@ -41,12 +41,12 @@ def split_ident_hash(ident_hash):
     return id, version
 
 
-def parse_app_settings(config_uri):
+def parse_app_settings(config_uri, name='main'):
     """Parse the settings from the config file for the application.
-    Assumes that application section is name 'main'.
+    The application section defaults to name 'main'.
     """
     config_path = os.path.abspath(config_uri)
-    return appconfig("config:{}".format(config_path), name='main')
+    return appconfig("config:{}".format(config_path), name=name)
 
 
 # The import_function and template_to_regex functions are derived from

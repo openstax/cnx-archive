@@ -29,6 +29,7 @@ DB_SCHEMA_FILE_PATHS = (
     # Functions
     os.path.join(DB_SCHEMA_DIRECTORY, 'shred_collxml.sql'),
     os.path.join(DB_SCHEMA_DIRECTORY, 'tree_to_json.sql'),
+    os.path.join(DB_SCHEMA_DIRECTORY, 'hits-functions.sql'),
     )
 
 
@@ -64,7 +65,7 @@ def initdb(settings):
                     cursor.execute(f.read())
 
 def get_current_module_ident(moduleid, cursor):
-    sql = '''SELECT m.module_ident FROM modules m 
+    sql = '''SELECT m.module_ident FROM modules m
         WHERE m.moduleid = %s ORDER BY revised DESC'''
     cursor.execute(sql, [moduleid])
     results = cursor.fetchone()
@@ -267,7 +268,7 @@ def add_module_file(plpy, td):
     WHERE filename = 'index.html' AND module_ident = $1''', ['integer'])
     results = plpy.execute(stmt, [td['new']['module_ident']])
 
-    if len(results) == 0: 
+    if len(results) == 0:
         with plpydbapi.connect() as db_connection:
             with db_connection.cursor() as cursor:
                 message = produce_html_for_module(db_connection, cursor, td['new']['module_ident'])

@@ -7,6 +7,7 @@
 # ###
 import unittest
 
+import psycopg2
 from . import *
 
 
@@ -465,3 +466,204 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''SELECT module_ident FROM latest_modules
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
+
+
+SQL_FOR_HIT_DOCUMENTS = """
+ALTER TABLE modules DISABLE TRIGGER ALL;
+INSERT INTO abstracts VALUES (1, '');
+INSERT INTO modules VALUES (
+  1, 'Module', 'm1', '88cd206d-66d2-48f9-86bb-75d5366582ee',
+  '1.1', 'Name of m1',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, NULL);
+INSERT INTO modules VALUES (
+  2, 'Module', 'm1', '88cd206d-66d2-48f9-86bb-75d5366582ee',
+  '1.2', 'Name of m1',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 2, NULL);
+INSERT INTO modules VALUES (
+  3, 'Module', 'm2', 'f122af91-5f4f-4736-a502-67bd0a1628aa',
+  '1.1', 'Name of m2',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, NULL);
+INSERT INTO modules VALUES (
+  4, 'Module', 'm3', 'c8ee8dc5-bb73-47c8-b10f-3f37123cf607',
+  '1.1', 'Name of m2',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+INSERT INTO modules VALUES (
+  5, 'Module', 'm4', 'dd7b92c2-e82e-43bb-b224-accbc3cd395a',
+  '1.1', 'Name of m4',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+INSERT INTO modules VALUES (
+  6, 'Module', 'm5', '84b98813-928b-4f3f-b7d0-0472c82bfd1c',
+  '1.1', 'Name of m5',
+  '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+  1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+  NULL, NULL, NULL, 1, 1);
+INSERT INTO latest_modules SELECT * FROM modules WHERE module_ident = 2;
+INSERT INTO latest_modules SELECT * FROM modules WHERE module_ident = 3;
+INSERT INTO latest_modules SELECT * FROM modules WHERE module_ident = 4;
+INSERT INTO latest_modules SELECT * FROM modules WHERE module_ident = 5;
+INSERT INTO latest_modules SELECT * FROM modules WHERE module_ident = 6;
+ALTER TABLE modules ENABLE TRIGGER ALL;
+"""
+
+
+class DocumentHitsTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        from ..utils import parse_app_settings
+        cls.settings = parse_app_settings(TESTING_CONFIG)
+        from ..database import CONNECTION_SETTINGS_KEY
+        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        cursor.execute(SQL_FOR_HIT_DOCUMENTS)
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def override_recent_date(self, cursor):
+        # Override the SQL function for acquiring the recent date,
+        #   because otherwise the test will be a moving target in time.
+        cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
+                       "RETURNS TIMESTAMP AS $$ BEGIN "
+                       "  RETURN '2013-10-20'::timestamp; "
+                       "END; $$ LANGUAGE plpgsql;")
+
+    @db_connect
+    def make_hit(self, cursor, ident, start_date, end_date=None, count=0):
+        from datetime import timedelta
+        if end_date is None:
+            end_date = start_date + timedelta(1)
+        payload = (ident, start_date, end_date, count,)
+        cursor.execute("INSERT INTO document_hits "
+                       "  VALUES (%s, %s, %s, %s);",
+                       payload)
+
+    def create_hits(self):
+        from datetime import datetime, timedelta
+        recent_date = datetime(2013, 10, 20)
+        dates = (recent_date - timedelta(2),
+                 recent_date - timedelta(1),
+                 recent_date,
+                 recent_date + timedelta(1),
+                 recent_date + timedelta(2),
+                 )
+        hits = {
+            # module_ident: [hits]    # total, recent
+            1: [1, 1, 9, 7, 15],      # 33, 31
+            2: [9, 2, 5, 7, 11],      # 34, 23
+            # combined 1 & 2          #
+            3: [1, 2, 3, 4, 1],       # 11, 8
+            4: [3, 3, 3, 3, 3],       # 15, 9
+            5: [7, 9, 11, 7, 5],      # 39, 23
+            6: [18, 20, 13, 12, 24],  # 87, 49
+            }
+        for i, date in enumerate(dates):
+            for ident, hit_counts in hits.items():
+                self.make_hit(ident, date, count=hit_counts[i])
+        return hits
+
+    @db_connect
+    def test_recency_function(self, cursor):
+        # Exam the function out puts a date.
+
+        # At the time of this writting the recency is one week.
+        from datetime import datetime, timedelta
+        then = datetime.today() - timedelta(7)
+
+        cursor.execute("SELECT get_recency_date();")
+        value = cursor.fetchone()[0]
+        # We're mostly checking by the day rather than by time,
+        #   so checking by date should be sufficient.
+        self.assertEqual(then.date(), value.date())
+
+    def test_hit_average_function(self):
+        # Verify the hit average is output in both overall and recent
+        #   circumstances.
+        self.override_recent_date()
+        hits = self.create_hits()
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT hit_average(1, NULL);")
+                average = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_average(1, 't');")
+                recent_average = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_average(6, 'f');")
+                other_average = cursor.fetchone()[0]
+        self.assertEqual(average, sum(hits[1]) / 5.0)
+        from math import ceil
+        close_enough = lambda d: ceil(d * 1000) / 1000
+        self.assertEqual(close_enough(recent_average),
+                         close_enough(sum(hits[1][2:]) / 3.0))
+        self.assertEqual(close_enough(other_average),
+                         close_enough(sum(hits[6]) / 5.0))
+
+    def test_hit_rank_function(self):
+        # Verify the hit rank is output in both overall and recent
+        #   circumstances.
+        self.override_recent_date()
+        hits = self.create_hits()
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT hit_rank(5, 'f');")
+                rank = cursor.fetchone()[0]
+                cursor.execute("SELECT hit_rank(5, 't');")
+                recent_rank = cursor.fetchone()[0]
+        self.assertEqual(rank, 5)
+        self.assertEqual(recent_rank, 3)
+
+    def test_update_recent_hits_function(self):
+        # Verify the function updates the recent hit ranks table
+        #   with hit rank information grouped by document uuid.
+        self.override_recent_date()
+        hits = self.create_hits()
+
+        # Call the target SQL function.
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT update_hit_ranks();")
+                cursor.execute("SELECT * FROM recent_hit_ranks "
+                               "ORDER BY rank ASC;")
+                hit_ranks = cursor.fetchall()
+
+        self.assertEqual(hit_ranks[1],
+                         ('c8ee8dc5-bb73-47c8-b10f-3f37123cf607', 9, 3, 2))
+        self.assertEqual(hit_ranks[3],  # row that combines two idents.
+                         ('88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4))
+
+    def test_update_recent_hits_function(self):
+        # Verify the function updates the overall hit ranks table
+        #   with hit rank information grouped by document uuid.
+        self.override_recent_date()
+        hits = self.create_hits()
+
+        # Call the target SQL function.
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT update_hit_ranks();")
+                cursor.execute("SELECT * FROM overall_hit_ranks "
+                               "ORDER BY rank ASC;")
+                hit_ranks = cursor.fetchall()
+
+        self.assertEqual(hit_ranks[2],  # row that combines two idents.
+                         ('88cd206d-66d2-48f9-86bb-75d5366582ee', 67, 6.7, 3))
+        # Note, this module has fewer hits in total, but more on average,
+        #   which expectedly boosts its rank.
+        self.assertEqual(hit_ranks[3],
+                         ('dd7b92c2-e82e-43bb-b224-accbc3cd395a', 39, 7.8, 4))
