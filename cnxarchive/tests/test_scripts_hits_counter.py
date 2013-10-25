@@ -35,6 +35,16 @@ class HitsCounterTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
+    @db_connect
+    def override_recent_date(self, cursor):
+        # Override the SQL function for acquiring the recent date,
+        #   because otherwise the test will be a moving target in time.
+        cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
+                       "RETURNS TIMESTAMP AS $$ BEGIN "
+                       # 'varnish.log' timestamps are between 18-20.
+                       "  RETURN '2013-10-17'::timestamp with time zone; "
+                       "END; $$ LANGUAGE plpgsql;")
+
     def test_insertion(self):
         # Call the command line script.
         args = ['--log-format', 'plain', TESTING_CONFIG, TEST_VARNISH_LOG]
@@ -53,6 +63,7 @@ class HitsCounterTestCase(unittest.TestCase):
         self.assertEqual(hits, expectations)
 
     def test_updates_optimization_tables(self):
+        self.override_recent_date()
         # Call the command line script.
         args = ['--log-format', 'plain', TESTING_CONFIG, TEST_VARNISH_LOG]
         from ..scripts.hits_counter import main

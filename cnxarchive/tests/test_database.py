@@ -540,7 +540,7 @@ class DocumentHitsTestCase(unittest.TestCase):
         #   because otherwise the test will be a moving target in time.
         cursor.execute("CREATE OR REPLACE FUNCTION get_recency_date () "
                        "RETURNS TIMESTAMP AS $$ BEGIN "
-                       "  RETURN '2013-10-20'::timestamp; "
+                       "  RETURN '2013-10-20'::timestamp with time zone; "
                        "END; $$ LANGUAGE plpgsql;")
 
     @db_connect
