@@ -65,12 +65,6 @@ AS $$
 $$
 LANGUAGE plpgsql;
 
-CREATE AGGREGATE array_accum (anyelement) (
-  sfunc = array_append,
-  stype = anyarray,
-  initcond = '{}'
-);
-
 CREATE OR REPLACE FUNCTION update_hit_ranks () RETURNS VOID
 AS $$
   BEGIN
@@ -81,7 +75,7 @@ AS $$
     -- Inserts into the recent_hit_ranks table
     WITH
       ident_mapping AS
-      (SELECT uuid, array_accum(module_ident) AS idents
+      (SELECT uuid, array_agg(module_ident) AS idents
        FROM modules GROUP BY uuid),
       stats AS
       (SELECT im.uuid AS document,
@@ -98,7 +92,7 @@ AS $$
     -- Inserts into the overall_hit_ranks table.
     WITH
       ident_mapping AS
-      (SELECT uuid, array_accum(module_ident) AS idents
+      (SELECT uuid, array_agg(module_ident) AS idents
        FROM modules GROUP BY uuid),
       stats AS
       (SELECT im.uuid AS document,
