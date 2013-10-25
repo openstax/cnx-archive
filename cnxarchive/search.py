@@ -320,7 +320,27 @@ class QueryResults(Sequence):
 
 
 def _transmute_filter(keyword, value):
-    """Provides a keyword to SQL column name translation for the filter."""
+    """Produces a SQL condition statement that is a python format statement,
+    to be used with the string ``format`` method.
+    This is to allow for the input of argument names for later
+    SQL query preparation.
+    For example::
+
+        >>> statement, value = _transmute_filter('type', 'book')
+        >>> statement.format('type_argument_one')
+        >>> statement
+        "portal_type = %(type_argument_one)s"
+
+    And later when the DBAPI ``execute`` method works on this statement,
+    it will supply an argument dictionary.
+    ::
+
+        >>> query = "SELECT * FROM modules WHERE {};".format(statement)
+        >>> cursor.execute(query, dict(type_argument_one=value))
+        >>> cursor.query
+        "SELECT * FROM modules WHERE portal_type = 'Collection';"
+
+    """
     if keyword not in VALID_FILTER_KEYWORDS:
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
 
