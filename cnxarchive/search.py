@@ -26,7 +26,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorId',)
 SORT_VALUES_MAPPING = {
     'pubdate': 'created DESC',
     'version': 'version DESC',
@@ -321,18 +321,24 @@ class QueryResults(Sequence):
 
 def _transmute_filter(keyword, value):
     """Provides a keyword to SQL column name translation for the filter."""
-    # Since there is only one filter at this time, there is no need
-    #   to over design this. Keeping this a simple switch over or error.
     if keyword not in VALID_FILTER_KEYWORDS:
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
-    elif value == 'book':
-        type_name = 'Collection'
-    elif value == 'page':
-        type_name = 'Module'
-    else:
-        raise ValueError("Invalid filter value '{}' for filter '{}'." \
-                             .format(value, keyword))
-    return ('portal_type', type_name)
+
+    if keyword == 'type':
+        if value == 'book':
+            type_name = 'Collection'
+        elif value == 'page':
+            type_name = 'Module'
+        else:
+            raise ValueError("Invalid filter value '{}' for filter '{}'." \
+                                 .format(value, keyword))
+        return ('portal_type = %({})s', type_name)
+
+    elif keyword == 'pubYear':
+        return ('extract(year from created) = %({})s', int(value))
+
+    elif keyword == 'authorId':
+        return ('%({})s = ANY(authors)', value)
 
 
 def _transmute_sort(sort_value):
@@ -422,12 +428,12 @@ def _build_search(structured_query, weights):
             # These key values are special in that they don't,
             #   directly translate to SQL fields and values.
             try:
-                field_name, match_value = _transmute_filter(keyword, value)
+                filter_stmt, match_value = _transmute_filter(keyword, value)
             except ValueError:
                 del structured_query.filters[i]
                 continue
             arguments[arg_name] = match_value
-            filter_stmt = "{} = %({})s".format(field_name, arg_name)
+            filter_stmt = filter_stmt.format(arg_name)
             filters.append(filter_stmt)
     filters = ' AND '.join(filters)
     # Add the arguments for sorting.
