@@ -46,7 +46,7 @@ The list of keyword specific search fields is as follows:
 
 Filters are keywords as well,
 except that they only support a limited set of values.
-There are currently two search filters: ``type`` and ``pubYear``.
+There are currently three search filters: ``type``, ``pubYear`` and ``authorID``.
 The type filter is used to further filter keyword searches.
 The possible values for the type field are ``book`` and ``page``.
 It is assumed that if the type field is absent, all types are viable.

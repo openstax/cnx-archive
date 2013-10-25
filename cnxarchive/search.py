@@ -26,7 +26,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
 SORT_VALUES_MAPPING = {
     'pubdate': 'created DESC',
     'version': 'version DESC',
@@ -332,10 +332,13 @@ def _transmute_filter(keyword, value):
         else:
             raise ValueError("Invalid filter value '{}' for filter '{}'." \
                                  .format(value, keyword))
-        return ('portal_type', type_name)
+        return ('portal_type = %({})s', type_name)
 
     elif keyword == 'pubYear':
-        return ('extract(year from created)', int(value))
+        return ('extract(year from created) = %({})s', int(value))
+
+    elif keyword == 'authorID':
+        return ('%({})s = ANY(authors)', value)
 
 
 def _transmute_sort(sort_value):
@@ -425,12 +428,12 @@ def _build_search(structured_query, weights):
             # These key values are special in that they don't,
             #   directly translate to SQL fields and values.
             try:
-                field_name, match_value = _transmute_filter(keyword, value)
+                filter_stmt, match_value = _transmute_filter(keyword, value)
             except ValueError:
                 del structured_query.filters[i]
                 continue
             arguments[arg_name] = match_value
-            filter_stmt = "{} = %({})s".format(field_name, arg_name)
+            filter_stmt = filter_stmt.format(arg_name)
             filters.append(filter_stmt)
     filters = ' AND '.join(filters)
     # Add the arguments for sorting.
