@@ -378,6 +378,55 @@ class SearchTestCase(unittest.TestCase):
         # Check for the removal of the filter
         self.assertEqual(self.query.filters, [])
 
+    @db_connect
+    def _pubYear_setup(self, cursor):
+        # Modify some modules to give them different year of publication
+        pub_year_mods = {
+                '2010': ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                         '209deb1f-1a46-4369-9e0d-18674cf58a3e'],
+                '2012': ['f3c9ab70-a916-4d8c-9256-42953287b4e9'],
+                }
+
+        for year, ids in pub_year_mods.iteritems():
+            cursor.execute(
+                    "UPDATE latest_modules "
+                    "SET created = '{}-07-31 12:00:00.000000-07'"
+                    "WHERE uuid IN %s RETURNING module_ident".format(year),
+                    [tuple(ids)])
+
+    def test_pubYear_filter(self):
+        self._pubYear_setup()
+
+        # Test for filtering results with pubYear 2013
+        query_params = [('text', 'physics'), ('pubYear', '2013')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 12)
+        self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
+        self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
+        self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
+
+    def test_pubYear_filter_no_results(self):
+        self._pubYear_setup()
+
+        # Test for filtering results with pubYear 2011
+        query_params = [('text', 'physics'), ('pubYear', '2011')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 0)
+
+    def test_authorId_filter(self):
+        # Filter results by author "OSC Physics Maintainer"
+        query_params = [('text', 'physics'),
+                        ('authorID', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
+
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]

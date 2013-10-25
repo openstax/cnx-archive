@@ -46,7 +46,7 @@ The list of keyword specific search fields is as follows:
 
 Filters are keywords as well,
 except that they only support a limited set of values.
-There is currently only one search filter, that is ``type``.
+There are currently three search filters: ``type``, ``pubYear`` and ``authorID``.
 The type filter is used to further filter keyword searches.
 The possible values for the type field are ``book`` and ``page``.
 It is assumed that if the type field is absent, all types are viable.
@@ -112,9 +112,41 @@ The results (in JSON) of this search will look something like::
          {type: "book", count:20},
 
          // Not suggesting structure, adding space just for visibility
-         {author: "340e5eed-e923-45b9-99d4-d6f49a55ffb1", count: 1},
-         {author: "14b70e33-20ce-4dcd-a9b7-1cf36a721a08", count: 3},
-         {author: "b9e93d15-719a-4595-b923-af00eff1e243", count: 2},
+         {author: {"id": "340e5eed-e923-45b9-99d4-d6f49a55ffb1",
+                   "website": null,
+                   "surname": null,
+                   "suffix": null,
+                   "firstname": "OpenStax College",
+                   "title": null,
+                   "othername": null,
+                   "email": "info@openstaxcollege.org",
+                   "fullname": "OpenStax College"
+                  },
+          count: 1
+         },
+         {author: {"id": "14b70e33-20ce-4dcd-a9b7-1cf36a721a08",
+                   "website": null,
+                   "surname": "Last",
+                   "suffix": null,
+                   "firstname": "First",
+                   "title": null,
+                   "othername": null,
+                   "email": "first@last.com",
+                   "fullname": "First Last"
+                  },
+          count: 3
+         },
+         {author: {"id": "b9e93d15-719a-4595-b923-af00eff1e243",
+                   "website": null,
+                   "surname": "Physics",
+                   "suffix": null,
+                   "firstname": "College",
+                   "title": null,
+                   "email": "info@openstaxcollege.org",
+                   "fullname": "OSC Physics Maintainer"
+                  },
+          count: 2
+         },
          ...
 
          {pubYear: 2013, count: 1},
