@@ -26,7 +26,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear',)
 SORT_VALUES_MAPPING = {
     'pubdate': 'created DESC',
     'version': 'version DESC',
@@ -321,18 +321,21 @@ class QueryResults(Sequence):
 
 def _transmute_filter(keyword, value):
     """Provides a keyword to SQL column name translation for the filter."""
-    # Since there is only one filter at this time, there is no need
-    #   to over design this. Keeping this a simple switch over or error.
     if keyword not in VALID_FILTER_KEYWORDS:
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
-    elif value == 'book':
-        type_name = 'Collection'
-    elif value == 'page':
-        type_name = 'Module'
-    else:
-        raise ValueError("Invalid filter value '{}' for filter '{}'." \
-                             .format(value, keyword))
-    return ('portal_type', type_name)
+
+    if keyword == 'type':
+        if value == 'book':
+            type_name = 'Collection'
+        elif value == 'page':
+            type_name = 'Module'
+        else:
+            raise ValueError("Invalid filter value '{}' for filter '{}'." \
+                                 .format(value, keyword))
+        return ('portal_type', type_name)
+
+    elif keyword == 'pubYear':
+        return ('extract(year from created)', int(value))
 
 
 def _transmute_sort(sort_value):
