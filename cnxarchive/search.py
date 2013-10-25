@@ -148,8 +148,10 @@ class QueryRecord(Mapping):
     def highlighted_abstract(self):
         """Highlight the found terms in the abstract text."""
         abstract_terms = self.fields.get('abstract', [])
-        if not abstract_terms:
-            return None
+        if abstract_terms:
+            sql = _read_sql_file('highlighted-abstract')
+        else:
+            sql = _read_sql_file('get-abstract')
         arguments = {'id': self['id'],
                      'query': ' & '.join(abstract_terms),
                      }
@@ -157,10 +159,10 @@ class QueryRecord(Mapping):
         connection_string = settings[CONNECTION_SETTINGS_KEY]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                cursor.execute(_read_sql_file('highlighted-abstract'),
-                               arguments)
-                hl_abstract = cursor.fetchone()[0]
-        return hl_abstract
+                cursor.execute(sql, arguments)
+                hl_abstract = cursor.fetchone()
+        if hl_abstract:
+            return hl_abstract[0]
 
     @property
     def highlighted_fulltext(self):
@@ -260,12 +262,17 @@ class QueryResults(Sequence):
     def __len__(self):
         return len(self._records)
 
-    def _count_field(self, field_name):
+    def _count_field(self, field_name, sorted=True):
         counts = {}
         for rec in self._records:
             for value in rec[field_name]:
                 counts.setdefault(value, 0)
                 counts[value] += 1
+        if sorted:
+            counts = counts.items()
+            counts.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
+        else:
+            counts = counts.iteritems()
         return counts
 
     def _count_media(self):
@@ -275,16 +282,30 @@ class QueryResults(Sequence):
             }
         for rec in self._records:
             counts[portaltype_to_mimetype(rec['mediaType'])] += 1
-        return counts
+        return counts.iteritems()
 
     def _count_authors(self):
         counts = {}
+        uid_author = {} # look up author record by uid
         for rec in self._records:
             for author in rec['authors']:
                 uid = author['id']
                 counts.setdefault(uid, 0)
                 counts[uid] += 1
-        return counts
+                uid_author.setdefault(uid, author)
+        authors = []
+        for uid, count in counts.iteritems():
+            author = uid_author[uid]
+            authors.append((author, count))
+
+        def sort_name(a, b):
+            result = cmp(a[0]['surname'], b[0]['surname'])
+            if result == 0:
+                result = cmp(a[0]['firstname'], b[0]['firstname'])
+            return result
+        # Sort authors by surname then first name
+        authors.sort(sort_name)
+        return authors
 
     def _count_publication_year(self):
         counts = {}
@@ -295,7 +316,7 @@ class QueryResults(Sequence):
             year = date[:4]
             counts.setdefault(year, 0)
             counts[year] += 1
-        return counts
+        return counts.iteritems()
 
 
 def _transmute_filter(keyword, value):

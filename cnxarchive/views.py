@@ -301,7 +301,7 @@ def search(environ, start_response):
             'id': record['id'],
             'mediaType': record['mediaType'],
             'title': record['title'],
-            'authors': record['authors'],
+            'authors': [a['id'] for a in record['authors']],
             'keywords': record['keywords'],
             'summarySnippet': record.highlighted_abstract,
             'bodySnippet': record.highlighted_fulltext,
@@ -309,7 +309,7 @@ def search(environ, start_response):
             })
     result_limits = []
     for count_name, values in db_results.counts.items():
-        for keyword, count in values.items():
+        for keyword, count in values:
             result_limits.append({count_name:keyword, 'count': count})
     results['results']['limits'] = result_limits
 
@@ -317,3 +317,20 @@ def search(environ, start_response):
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
     return [json.dumps(results)]
+
+def get_config(environ, start_response):
+    """Return a dict with config values for webview
+    """
+    settings = get_settings()
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-subject-list'])
+            subjects = [{'id': s[0], 'name': s[1]} for s in cursor.fetchall()]
+    config = {
+            'subjects': subjects,
+            }
+
+    status = '200 OK'
+    headers = [('Content-type', 'application/json')]
+    start_response(status, headers)
+    return [json.dumps(config)]

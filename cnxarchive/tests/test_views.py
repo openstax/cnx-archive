@@ -234,15 +234,8 @@ SEARCH_RESULTS = {
         },
     u'results': {
         u'items': [
-            {u'authors': [{u'email': u'info@openstaxcollege.org',
-                           u'firstname': u'OpenStax College',
-                           u'fullname': u'OpenStax College',
-                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                           u'othername': None,
-                           u'suffix': None,
-                           u'surname': None,
-                           u'title': None,
-                           u'website': None}],
+            {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                          u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
              u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
              u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
              u'keywords': [u'college physics',
@@ -252,15 +245,7 @@ SEARCH_RESULTS = {
              u'pubDate': u'2013-07-31 12:07:20.542211-07',
              u'summarySnippet': None,
              u'title': u'Preface to College Physics'},
-            {u'authors': [{u'email': u'info@openstaxcollege.org',
-                           u'firstname': u'OpenStax College',
-                           u'fullname': u'OpenStax College',
-                           u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                           u'othername': None,
-                           u'suffix': None,
-                           u'surname': None,
-                           u'title': None,
-                           u'website': None}],
+            {u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
              u'bodySnippet': None,
              u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
              u'keywords': [u'college physics',
@@ -319,64 +304,81 @@ SEARCH_RESULTS = {
         u'total': 2,
         u'limits': [
             {u'count': 2, u'pubYear': u'2013'},
-            {u'author': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+            {u'author': {u'email': u'info@openstaxcollege.org',
+                         u'firstname': u'OpenStax College',
+                         u'fullname': u'OpenStax College',
+                         u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                         u'othername': None,
+                         u'suffix': None,
+                         u'surname': None,
+                         u'title': None,
+                         u'website': None},
              u'count': 2},
+            {u'author': {u'email': u'info@openstaxcollege.org',
+                         u'firstname': u'College',
+                         u'fullname': u'OSC Physics Maintainer',
+                         u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                         u'othername': None,
+                         u'suffix': None,
+                         u'surname': u'Physics',
+                         u'title': None,
+                         u'website': None},
+             u'count': 1},
             {u'count': 1,
              u'mediaType': u'application/vnd.org.cnx.collection'},
             {u'count': 1, u'mediaType': u'application/vnd.org.cnx.module'},
-            {u'count': 1, u'keyword': u'work'},
-            {u'count': 1, u'keyword': u'electric potential'},
-            {u'count': 1, u'keyword': u'energy'},
             {u'count': 1, u'keyword': u'ac circuits'},
-            {u'count': 1, u'keyword': u'elasticity'},
-            {u'count': 1, u'keyword': u'friction'},
-            {u'count': 1, u'keyword': u'vision and optical instruments'},
-            {u'count': 1, u'keyword': u'fluid statics'},
-            {u'count': 1, u'keyword': u'statics and torque'},
-            {u'count': 1, u'keyword': u'radioactivity and nuclear physics'},
-            {u'count': 1,
-             u'keyword': u'uniform circular motion and gravitation'},
-            {u'count': 1, u'keyword': u'particle physics'},
-            {u'count': 1,
-             u'keyword': u'biological and medical applications'},
-            {u'count': 1, u'keyword': u'fluid dynamics'},
-            {u'count': 1, u'keyword': u'quantum physics'},
-            {u'count': 1, u'keyword': u'thermodynamics'},
-            {u'count': 1, u'keyword': u'introduction'},
-            {u'count': 1, u'keyword': u'Newton\u2019s Laws of Motion'},
             {u'count': 1, u'keyword': u'atomic physics'},
+            {u'count': 1, u'keyword': u'bioelectricity'},
+            {u'count': 1, u'keyword': u'biological and medical applications'},
+            {u'count': 1, u'keyword': u'circuits'},
             {u'count': 2, u'keyword': u'college physics'},
             {u'count': 1, u'keyword': u'collisions'},
+            {u'count': 1, u'keyword': u'dc instruments'},
+            {u'count': 1, u'keyword': u'drag'},
+            {u'count': 1, u'keyword': u'elasticity'},
             {u'count': 1, u'keyword': u'electric charge and electric field'},
-            {u'count': 1, u'keyword': u'kinematics'},
-            {u'count': 1, u'keyword': u'forces'},
+            {u'count': 1, u'keyword': u'electric current'},
+            {u'count': 1, u'keyword': u'electric potential'},
             {u'count': 1, u'keyword': u'electrical technologies'},
-            {u'count': 1,
-             u'keyword': u'rotational motion and angular momentum'},
+            {u'count': 1, u'keyword': u'electromagnetic induction'},
+            {u'count': 1, u'keyword': u'electromagnetic waves'},
+            {u'count': 1, u'keyword': u'energy'},
+            {u'count': 1, u'keyword': u'fluid dynamics'},
+            {u'count': 1, u'keyword': u'fluid statics'},
+            {u'count': 1, u'keyword': u'forces'},
+            {u'count': 1, u'keyword': u'friction'},
+            {u'count': 1, u'keyword': u'frontiers of physics'},
+            {u'count': 1, u'keyword': u'gas laws'},
+            {u'count': 1, u'keyword': u'geometric optics'},
+            {u'count': 1, u'keyword': u'heat and transfer methods'},
+            {u'count': 1, u'keyword': u'introduction'},
+            {u'count': 1, u'keyword': u'kinematics'},
+            {u'count': 1, u'keyword': u'kinetic theory'},
+            {u'count': 1, u'keyword': u'linear momentum'},
+            {u'count': 1, u'keyword': u'magnetism'},
             {u'count': 1,
              u'keyword': u'medical applications of nuclear physics'},
-            {u'count': 1, u'keyword': u'wave optics'},
-            {u'count': 1, u'keyword': u'kinetic theory'},
-            {u'count': 1, u'keyword': u'special relativity'},
-            {u'count': 1, u'keyword': u'heat and transfer methods'},
-            {u'count': 1, u'keyword': u'resistance'},
-            {u'count': 1, u'keyword': u'drag'},
-            {u'count': 1, u'keyword': u'electric current'},
-            {u'count': 1, u'keyword': u'dc instruments'},
-            {u'count': 1, u'keyword': u'electromagnetic waves'},
-            {u'count': 1, u'keyword': u'frontiers of physics'},
-            {u'count': 1, u'keyword': u'physics of hearing'},
-            {u'count': 1, u'keyword': u'gas laws'},
-            {u'count': 1, u'keyword': u'temperature'},
-            {u'count': 1, u'keyword': u'electromagnetic induction'},
-            {u'count': 1, u'keyword': u'circuits'},
-            {u'count': 1, u'keyword': u'oscillatory motion and waves'},
-            {u'count': 1, u'keyword': u'geometric optics'},
-            {u'count': 1, u'keyword': u'magnetism'},
-            {u'count': 1, u'keyword': u'linear momentum'},
-            {u'count': 1, u'keyword': u'bioelectricity'},
+            {u'count': 1, u'keyword': u'Newton\u2019s Laws of Motion'},
             {u'count': 1, u'keyword': u'Ohm\u2019s Law'},
+            {u'count': 1, u'keyword': u'oscillatory motion and waves'},
+            {u'count': 1, u'keyword': u'particle physics'},
             {u'count': 2, u'keyword': u'physics'},
+            {u'count': 1, u'keyword': u'physics of hearing'},
+            {u'count': 1, u'keyword': u'quantum physics'},
+            {u'count': 1, u'keyword': u'radioactivity and nuclear physics'},
+            {u'count': 1, u'keyword': u'resistance'},
+            {u'count': 1,
+             u'keyword': u'rotational motion and angular momentum'},
+            {u'count': 1, u'keyword': u'special relativity'},
+            {u'count': 1, u'keyword': u'statics and torque'},
+            {u'count': 1, u'keyword': u'temperature'},
+            {u'count': 1, u'keyword': u'thermodynamics'},
+            {u'count': 1,
+             u'keyword': u'uniform circular motion and gravitation'},
+            {u'count': 1, u'keyword': u'vision and optical instruments'},
+            {u'count': 1, u'keyword': u'wave optics'},
+            {u'count': 1, u'keyword': u'work'},
             {u'count': 2, u'subject': u'Mathematics and Statistics'},
             {u'count': 1, u'subject': u'Science and Technology'}],
         }
@@ -746,8 +748,55 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS.keys()))
+        self.maxDiff = None
         for i in results:
             self.assertEqual(results[i], SEARCH_RESULTS[i])
+
+    def test_search_highlight_abstract(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="college physics"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['items'][0]['summarySnippet'],
+                'algebra-based, two-semester <b>college</b> <b>physics</b> book '
+                'is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental '
+                '<b>physics</b> concepts. This online, fully editable and '
+                'customizable title includes learning objectives, concept '
+                'questions, links to labs and simulations, and ample practice '
+                'opportunities to solve traditional <b>physics</b> application '
+                'problems.')
+        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+
+        environ['QUERY_STRING'] = 'q=title:"college physics"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['items'][0]['summarySnippet'],
+                'This introductory, algebra-based, two-semester college physics '
+                'book is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental physics '
+                'concepts. This online, fully editable and customizable title '
+                'includes learning objectives, concept questions, links to labs '
+                'and simulations, and ample practice opportunities to solve '
+                'traditional')
+        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
 
     def test_search_no_params(self):
         environ = self._make_environ()
@@ -897,3 +946,20 @@ class ViewsTestCase(unittest.TestCase):
                         ],
                 }
             })
+
+        def test_get_config(self):
+            # Build the request
+            environ = self._make_environ()
+
+            # Call the view
+            from ..views import get_config
+            config = get_config(environ, self._start_response)[0]
+            config = json.loads(config)
+            self.assertEqual(config, {
+                u'subjects': [{'id': 1, u'name': u'Arts'},
+                              {'id': 2, u'name': u'Business'},
+                              {'id': 3, u'name': u'Humanities'},
+                              {'id': 4, u'name': u'Mathematics and Statistics'},
+                              {'id': 5, u'name': u'Science and Technology'},
+                              {'id': 6, u'name': u'Social Sciences'},]
+                })
