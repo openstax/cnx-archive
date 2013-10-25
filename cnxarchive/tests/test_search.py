@@ -417,6 +417,16 @@ class SearchTestCase(unittest.TestCase):
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 0)
 
+    def test_authorId_filter(self):
+        # Filter results by author "OSC Physics Maintainer"
+        query_params = [('text', 'physics'),
+                        ('authorId', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
+
     def test_sort_filter_on_pubdate(self):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
