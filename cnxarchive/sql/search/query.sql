@@ -28,10 +28,8 @@ SELECT
   -- The following are used internally for further sorting and debugging.
   weight, rank,
   keys as _keys, '' as matched, '' as fields,
-  -- FIXME we need a param passed in with the full set of query terms
-  -- to use for hghlighting w/ plainto_tsquery()
-  ts_headline(abstract,'', 'ShortWord=5, MinWords=50, MaxWords=60') as abstract,
-  ts_headline(mfti.fulltext, '',
+  ts_headline(abstract,plainto_tsquery(%(text_terms)s), 'ShortWord=5, MinWords=50, MaxWords=60') as abstract,
+  ts_headline(mfti.fulltext, plainto_tsquery(%(text_terms)s),
               'StartSel=<b>, StopSel=</b>, ShortWord=5, MinWords=50, MaxWords=60') as headline
 -- Only retrieve the most recent published modules.
 FROM
