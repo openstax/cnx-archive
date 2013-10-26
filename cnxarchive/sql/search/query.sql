@@ -1,3 +1,4 @@
+-- arguements query:string
 SELECT row_to_json(combined_rows) as results
 FROM (
 
@@ -26,10 +27,17 @@ SELECT
          ) as user_rows) as authors,
   -- The following are used internally for further sorting and debugging.
   weight, rank,
-  keys as _keys, '' as matched, '' as fields
+  keys as _keys, '' as matched, '' as fields,
+  -- FIXME we need a param passed in with the full set of query terms
+  -- to use for hghlighting w/ plainto_tsquery()
+  ts_headline(abstract,'', 'ShortWord=5, MinWords=50, MaxWords=60') as abstract,
+  ts_headline(mfti.fulltext, '',
+              'StartSel=<b>, StopSel=</b>, ShortWord=5, MinWords=50, MaxWords=60') as headline
 -- Only retrieve the most recent published modules.
 FROM
-  latest_modules AS lm
+  latest_modules AS lm 
+  NATURAL JOIN abstracts AS ab 
+  NATURAL LEFT JOIN modulefti AS mfti
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
      module_ident,
