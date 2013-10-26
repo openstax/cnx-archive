@@ -29,8 +29,10 @@ SELECT
   weight, rank,
   keys as _keys, '' as matched, '' as fields,
   ts_headline(abstract,plainto_tsquery(%(text_terms)s), 'ShortWord=5, MinWords=50, MaxWords=60') as abstract,
-  ts_headline(mfti.fulltext, plainto_tsquery(%(text_terms)s),
-              'StartSel=<b>, StopSel=</b>, ShortWord=5, MinWords=50, MaxWords=60') as headline
+  -- until we actually do something with it
+  -- ts_headline(mfti.fulltext, plainto_tsquery(%(text_terms)s),
+  --            'StartSel=<b>, StopSel=</b>, ShortWord=5, MinWords=50, MaxWords=60') as headline
+  '' as headline
 -- Only retrieve the most recent published modules.
 FROM
   latest_modules AS lm 
