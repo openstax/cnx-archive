@@ -437,6 +437,8 @@ def _build_search(structured_query, weights):
         stmt, args = weighted_select.prepare(structured_query.terms)
         queries.append(stmt)
         arguments.update(args)
+    text_terms = ' '.join([term for ttype,term in structured_query.terms if ttype == 'text'])
+    arguments.update({'text_terms':text_terms})
     queries = '\nUNION ALL\n'.join([q for q in queries if q is not None])
 
     # Add the arguments for filtering.
