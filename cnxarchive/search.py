@@ -48,11 +48,17 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('title', 10),
     ])
 SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
-def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql'):
+def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql',
+                   remove_comments=False):
     path = os.path.join(root, '{}{}'.format(name, extension))
     with open(path, 'r') as fp:
-        return fp.read()
-SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql')
+        if remove_comments:
+            file = '\n'.join([l for l in fp if not l.startswith('--')])
+        else:
+            file = fp.read()
+    return file
+SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql',
+                                             remove_comments=True)
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
 SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
 QUERY_FIELD_ITEM_SEPARATOR = ';--;'
