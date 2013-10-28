@@ -5,10 +5,37 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import datetime
+import time
 import unittest
 
 import psycopg2
 from . import *
+
+
+class MiscellaneousFunctionsTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def test_iso8601(self, cursor):
+        # Exams the iso8601 SQL function.
+        cursor.execute("SELECT date_trunc('second', current_timestamp), iso8601(current_timestamp);")
+        current, iso8601 = cursor.fetchone()
+        # We need to make the date timezone aware, which is what the 'Z' does,
+        #   but the parsing statement can't do anything with that.
+        # We'll use psycopg2's tzinfo classes for simplicity.
+        from psycopg2.tz import FixedOffsetTimezone
+        value = datetime.datetime(*time.strptime(iso8601,
+                                                 "%Y-%m-%dT%H:%M:%SZ")[:6],
+                                   tzinfo=FixedOffsetTimezone())
+        self.assertEqual(current, value)
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
