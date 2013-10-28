@@ -248,11 +248,6 @@ def get_export(environ, start_response):
     start_response(status, headers)
     return [file_content]
 
-MEDIA_TYPES = {
-        'Collection': 'book',
-        'Module': 'page',
-        }
-
 
 def search(environ, start_response):
     """Search API
