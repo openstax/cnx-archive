@@ -61,6 +61,7 @@ SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql',
                                              remove_comments=True)
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
 SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
+SEARCH_QUERY = _read_sql_file('query')
 QUERY_FIELD_ITEM_SEPARATOR = ';--;'
 QUERY_FIELD_PAIR_SEPARATOR = '-::-'
 
@@ -448,10 +449,7 @@ def _build_search(structured_query, weights):
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
-    search_query_filepath = os.path.join(SQL_DIRECTORY,
-                                         'search', 'query.sql')
-    with open(search_query_filepath, 'r') as fb:
-        statement = fb.read().format(queries, filters, sorts)
+    statement = SEARCH_QUERY.format(queries, filters, sorts)
     return (statement, arguments)
 
 
