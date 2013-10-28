@@ -303,8 +303,8 @@ def search(environ, start_response):
             'title': record['title'],
             'authors': [a['id'] for a in record['authors']],
             'keywords': record['keywords'],
-            'summarySnippet': record.highlighted_abstract,
-            'bodySnippet': record.highlighted_fulltext,
+            'summarySnippet': record['abstract'],
+            'bodySnippet': record['headline'],
             'pubDate': record['pubDate'],
             })
     result_limits = []
