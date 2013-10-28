@@ -8,13 +8,13 @@
 -- arguments: id:string; version:string
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
-  m.uuid AS id, 
+  m.uuid AS id,
   concat_ws('.', m.major_version, m.minor_version) AS current_version,
   -- can't use "version" as we need it in GROUP BY clause and it causes a
   -- "column name is ambiguous" error
 
   m.name as title,
-  m.created as created, m.revised as revised,
+  iso8601(m.created) as created, iso8601(m.revised) as revised,
   m.stateid, m.doctype,
   (SELECT row_to_json(license) AS license FROM (
         SELECT l.code, l.version, l.name, l.url
@@ -60,7 +60,7 @@ FROM (SELECT
   ARRAY(
     SELECT row_to_json(history_info) FROM (
         SELECT concat_ws('.', m1.major_version, m1.minor_version) AS version,
-            m1.revised, m1.submitlog AS changes,
+            iso8601(m1.revised) AS revised, m1.submitlog AS changes,
             (SELECT row_to_json(publisher) AS publisher FROM (
                     SELECT id, email, firstname, othername, surname, fullname, title, suffix, website
                     FROM users WHERE users.id::text = m1.submitter
