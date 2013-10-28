@@ -25,6 +25,14 @@ from .search import (
 logger = logging.getLogger('cnxarchive')
 
 
+class ExportError(Exception):
+    pass
+
+
+# #################### #
+#   Helper functions   #
+# #################### #
+
 def get_content_metadata(id, version, cursor):
     """Return metadata related to the content from the database
     """
@@ -43,6 +51,94 @@ def get_content_metadata(id, version, cursor):
         return result
     except (TypeError, IndexError,):  # None returned
         raise httpexceptions.HTTPNotFound()
+
+
+
+def is_latest(cursor, id, version):
+    cursor.execute(SQL['get-module-versions'], {'id': id})
+    try:
+        latest_version = cursor.fetchone()[0]
+        return latest_version == version
+    except (TypeError, IndexError,): # None returned
+        raise httpexceptions.HTTPNotFound()
+
+
+TYPE_INFO = []
+def get_type_info():
+    if TYPE_INFO:
+        return
+    for line in get_settings()['exports-allowable-types'].splitlines():
+        if not line.strip():
+            continue
+        type_name, type_info = line.strip().split(':', 1)
+        type_info = type_info.split(',', 3)
+        TYPE_INFO.append((type_name, {
+            'type_name': type_name,
+            'file_extension': type_info[0],
+            'mimetype': type_info[1],
+            'user_friendly_name': type_info[2],
+            'description': type_info[3],
+            }))
+
+def get_export_allowable_types(cursor, exports_dirs, id, version):
+    """Return export types
+    """
+    get_type_info()
+
+    for type_name, type_info in TYPE_INFO:
+        try:
+            filename, mimetype, file_content = get_export_file(cursor,
+                    id, version, type_name, exports_dirs)
+            yield {
+                'format': type_info['user_friendly_name'],
+                'filename': filename,
+                'details': type_info['description'],
+                'path': '/exports/{}@{}.{}'.format(id, version, type_name),
+                }
+        except ExportError as e:
+            # file not found, so don't include it
+            pass
+
+
+def get_export_file(cursor, id, version, type, exports_dirs):
+    get_type_info()
+    type_info = dict(TYPE_INFO)
+
+    if type not in type_info:
+        raise ExportError("invalid type '{}' requested.".format(type))
+
+    if not version:
+        cursor.execute(SQL['get-module-versions'], {'id': id})
+        try:
+            latest_version = cursor.fetchone()[0]
+        except (TypeError, IndexError,): # None returned
+            raise ExportError("version was not supplied and could not be "
+                    "discovered.")
+        raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
+            id, latest_version, type))
+
+    metadata = get_content_metadata(id, version, cursor)
+    file_extension = type_info[type]['file_extension']
+    mimetype = type_info[type]['mimetype']
+    filename = '{}-{}.{}'.format(id, version, file_extension)
+    slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
+            file_extension)
+
+    for exports_dir in exports_dirs:
+        try:
+            with open(os.path.join(exports_dir, filename), 'r') as file:
+                return (slugify_title_filename, mimetype, file.read())
+        except IOError:
+            # to be handled by the else part below if unable to find file in
+            # any of the export dirs
+            pass
+    else:
+        raise ExportError('{}@{}.{} not found'.format(id, version, type))
+
+
+# ######### #
+#   Views   #
+# ######### #
 
 def get_content(environ, start_response):
     """Retrieve a piece of content using the ident-hash (uuid@version)."""
@@ -138,91 +234,6 @@ def get_extra(environ, start_response):
     return [json.dumps(results)]
 
 
-def is_latest(cursor, id, version):
-    cursor.execute(SQL['get-module-versions'], {'id': id})
-    try:
-        latest_version = cursor.fetchone()[0]
-        return latest_version == version
-    except (TypeError, IndexError,): # None returned
-        raise httpexceptions.HTTPNotFound()
-
-
-TYPE_INFO = []
-def get_type_info():
-    if TYPE_INFO:
-        return
-    for line in get_settings()['exports-allowable-types'].splitlines():
-        if not line.strip():
-            continue
-        type_name, type_info = line.strip().split(':', 1)
-        type_info = type_info.split(',', 3)
-        TYPE_INFO.append((type_name, {
-            'type_name': type_name,
-            'file_extension': type_info[0],
-            'mimetype': type_info[1],
-            'user_friendly_name': type_info[2],
-            'description': type_info[3],
-            }))
-
-def get_export_allowable_types(cursor, exports_dirs, id, version):
-    """Return export types
-    """
-    get_type_info()
-
-    for type_name, type_info in TYPE_INFO:
-        try:
-            filename, mimetype, file_content = get_export_file(cursor,
-                    id, version, type_name, exports_dirs)
-            yield {
-                'format': type_info['user_friendly_name'],
-                'filename': filename,
-                'details': type_info['description'],
-                'path': '/exports/{}@{}.{}'.format(id, version, type_name),
-                }
-        except ExportError as e:
-            # file not found, so don't include it
-            pass
-
-
-class ExportError(Exception):
-    pass
-
-
-def get_export_file(cursor, id, version, type, exports_dirs):
-    get_type_info()
-    type_info = dict(TYPE_INFO)
-
-    if type not in type_info:
-        raise ExportError("invalid type '{}' requested.".format(type))
-
-    if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
-        try:
-            latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,): # None returned
-            raise ExportError("version was not supplied and could not be "
-                    "discovered.")
-        raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
-            id, latest_version, type))
-
-    metadata = get_content_metadata(id, version, cursor)
-    file_extension = type_info[type]['file_extension']
-    mimetype = type_info[type]['mimetype']
-    filename = '{}-{}.{}'.format(id, version, file_extension)
-    slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
-            file_extension)
-
-    for exports_dir in exports_dirs:
-        try:
-            with open(os.path.join(exports_dir, filename), 'r') as file:
-                return (slugify_title_filename, mimetype, file.read())
-        except IOError:
-            # to be handled by the else part below if unable to find file in
-            # any of the export dirs
-            pass
-    else:
-        raise ExportError('{}@{}.{} not found'.format(id, version, type))
-
 def get_export(environ, start_response):
     """Retrieve an export file."""
     settings = get_settings()
@@ -312,6 +323,7 @@ def search(environ, start_response):
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
     return [json.dumps(results)]
+
 
 def get_config(environ, start_response):
     """Return a dict with config values for webview
