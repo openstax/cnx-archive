@@ -236,7 +236,7 @@ SEARCH_RESULTS = {
         u'items': [
             {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
                           u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
-             u'bodySnippet': u'<b>College</b> <b>Physics</b>\n\nPreface to <b>College</b> <b>Physics</b>\n    About OpenStax <b>College</b>\nOpenStax <b>College</b> is a non-profit organization committed to improving student access to quality learning materials. Our free textbooks are developed and peer-reviewed by educators to ensure they are readable, accurate, and meet the scope and sequence requirements of modern',
+             u'bodySnippet': None,
              u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
              u'keywords': [u'college physics',
                            u'introduction',
