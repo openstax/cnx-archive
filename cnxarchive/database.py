@@ -30,6 +30,7 @@ DB_SCHEMA_FILES = (
     # Functions for collections
     'shred_collxml.sql',
     'tree_to_json.sql',
+    'common-functions.sql',
     'hits-functions.sql',
     )
 

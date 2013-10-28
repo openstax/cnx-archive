@@ -1,3 +1,10 @@
+-- ###
+-- Copyright (c) 2013, Rice University
+-- This software is subject to the provisions of the GNU Affero General
+-- Public License version 3 (AGPLv3).
+-- See LICENCE.txt for details.
+-- ###
+
 CREATE OR REPLACE FUNCTION tree_to_json(TEXT, TEXT) RETURNS TEXT as $$
 select string_agg(toc,'
 '

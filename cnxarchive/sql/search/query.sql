@@ -11,7 +11,7 @@ SELECT
   END AS version,
   language,
   lm.portal_type as "mediaType",
-  lm.created as "pubDate",
+  iso8601(lm.created) as "pubDate",
   ARRAY(SELECT k.word FROM keywords as k, modulekeywords as mk
         WHERE mk.module_ident = lm.module_ident
               AND mk.keywordid = k.keywordid) as keywords,

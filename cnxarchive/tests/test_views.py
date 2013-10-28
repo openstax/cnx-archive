@@ -27,7 +27,7 @@ COLLECTION_METADATA = {
                   u'firstname': u'OpenStax College', u'title': None,
                   u'othername': None,
                   }],
-    u'created': u'2013-07-31 12:07:20.342798-07',
+    u'created': u'2013-07-31T19:07:20Z',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
     u'language': u'en',
@@ -61,7 +61,7 @@ COLLECTION_METADATA = {
     u'parentAuthors': [],
     u'parentId': None,
     u'parentVersion': '',
-    u'revised': u'2013-08-31 12:07:20.342798-07',
+    u'revised': u'2013-08-31T19:07:20Z',
     u'stateid': None,
     u'submitlog': u'New version 1.7',
     u'submitter': {
@@ -80,7 +80,7 @@ COLLECTION_METADATA = {
     u'history': [
         {
             u'version': u'1.7',
-            u'revised': u'2013-08-31 12:07:20.342798-07',
+            u'revised': u'2013-08-31T19:07:20Z',
             u'changes': 'New version 1.7',
             u'publisher': {
                 u'website': None, u'surname': None,
@@ -93,7 +93,7 @@ COLLECTION_METADATA = {
             },
         {
             u'version': u'1.6',
-            u'revised': u'2013-07-31 12:07:20.342798-07',
+            u'revised': u'2013-07-31T19:07:20Z',
             u'changes': 'Updated something',
             u'publisher': {
                 u'website': None, u'surname': None,
@@ -161,7 +161,7 @@ MODULE_METADATA = {
                   u'firstname': u'OpenStax College', u'title': None,
                   u'othername': None,
                   }],
-    u'created': u'2013-07-31 12:07:24.856663-07',
+    u'created': u'2013-07-31T19:07:24Z',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
     u'language': u'en',
@@ -195,7 +195,7 @@ MODULE_METADATA = {
     u'parentAuthors': [],
     u'parentId': None,
     u'parentVersion': '',
-    u'revised': u'2013-07-31 12:07:24.856663-07',
+    u'revised': u'2013-07-31T19:07:24Z',
     u'stateid': None,
     u'submitlog': u'Added more examples',
     u'submitter': {
@@ -214,7 +214,7 @@ MODULE_METADATA = {
     u'history': [
         {
             u'version': u'8',
-            u'revised': u'2013-07-31 12:07:24.856663-07',
+            u'revised': u'2013-07-31T19:07:24Z',
             u'changes': u'Added more examples',
             u'publisher': {
                 u'website': None, u'surname': None,
@@ -242,7 +242,7 @@ SEARCH_RESULTS = {
                            u'introduction',
                            u'physics'],
              u'mediaType': u'Module',
-             u'pubDate': u'2013-07-31 12:07:20.542211-07',
+             u'pubDate': u'2013-07-31T19:07:20Z',
              u'summarySnippet': None,
              u'title': u'Preface to College Physics'},
             {u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
@@ -297,7 +297,7 @@ SEARCH_RESULTS = {
                            u'wave optics',
                            u'work'],
              u'mediaType': u'Collection',
-             u'pubDate': u'2013-07-31 12:07:20.342798-07',
+             u'pubDate': u'2013-07-31T19:07:20Z',
              u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
              u'title': u'College Physics'},
             ],
@@ -484,7 +484,7 @@ class ViewsTestCase(unittest.TestCase):
         # History should only include displayed version and older versions
         self.assertEqual(content['history'], [{
             u'version': u'1.6',
-            u'revised': u'2013-07-31 12:07:20.342798-07',
+            u'revised': u'2013-07-31T19:07:20Z',
             u'changes': 'Updated something',
             u'publisher': {
                 u'website': None, u'surname': None,
