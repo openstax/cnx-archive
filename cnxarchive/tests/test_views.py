@@ -733,6 +733,28 @@ class ViewsTestCase(unittest.TestCase):
                 ('Content-type', 'application/json'))
         self.assertEqual(json.loads(output)['isLatest'], False)
 
+    def test_extra_wo_version(self):
+        # Request the extras for a document, but without specifying
+        #   the version. The expectation is that this will redirect to the
+        #   latest version.
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.7'
+        requested_ident_hash = id
+        expected_ident_hash = "{}@{}".format(id, version)
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': requested_ident_hash}
+
+        # Call the target
+        from ..views import get_extra
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_extra(environ, self._start_response)
+        exception = raiser.exception
+        expected_location = "/extra/{}".format(expected_ident_hash)
+        self.assertEqual(exception.headers,
+                         [('Location', expected_location)])
+
     def test_search(self):
         # Build the request
         environ = self._make_environ()

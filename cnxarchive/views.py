@@ -53,7 +53,6 @@ def get_content_metadata(id, version, cursor):
         raise httpexceptions.HTTPNotFound()
 
 
-
 def is_latest(cursor, id, version):
     cursor.execute(SQL['get-module-versions'], {'id': id})
     try:
@@ -79,6 +78,7 @@ def get_type_info():
             'user_friendly_name': type_info[2],
             'description': type_info[3],
             }))
+
 
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types
@@ -225,6 +225,16 @@ def get_extra(environ, start_response):
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
+            if not version:
+                cursor.execute(SQL['get-module-versions'], {'id': id})
+                try:
+                    latest_version = cursor.fetchone()[0]
+                except (TypeError, IndexError,):  # None returned
+                    logger.debug("version was not supplied "
+                                 "and could not be discovered.")
+                    raise httpexceptions.HTTPNotFound()
+                raise httpexceptions.HTTPFound('/extra/{}@{}' \
+                        .format(id, latest_version,))
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
