@@ -1,4 +1,4 @@
--- arguements query:string
+-- arguments query:string
 SELECT row_to_json(combined_rows) as results
 FROM (
 
@@ -32,11 +32,11 @@ SELECT
   -- until we actually do something with it
   -- ts_headline(mfti.fulltext, plainto_tsquery(%(text_terms)s),
   --            'StartSel=<b>, StopSel=</b>, ShortWord=5, MinWords=50, MaxWords=60') as headline
-  '' as headline
+  NULL as headline
 -- Only retrieve the most recent published modules.
 FROM
   latest_modules AS lm 
-  NATURAL JOIN abstracts AS ab 
+  NATURAL LEFT JOIN abstracts AS ab 
   NATURAL LEFT JOIN modulefti AS mfti
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
