@@ -755,6 +755,30 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(exception.headers,
                          [('Location', expected_location)])
 
+    def test_extra_not_found(self):
+        # Test version not found
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '1.1'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
+        from ..views import get_extra
+        self.assertRaises(httpexceptions.HTTPNotFound, get_extra, environ,
+                self._start_response)
+
+        # Test id not found
+        id = 'c694e5cc-47bd-41a4-b319-030647d93440'
+        version = '1.1'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+
+        self.assertRaises(httpexceptions.HTTPNotFound, get_extra, environ,
+                self._start_response)
+
     def test_search(self):
         # Build the request
         environ = self._make_environ()
