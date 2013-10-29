@@ -33,6 +33,20 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
+def redirect_to_latest(cursor, id, path_format_string):
+    """Redirect to latest version of a module / collection using the provided
+    path (path_format_string should look like '/contents/{}@{}'
+    """
+    cursor.execute(SQL['get-module-versions'], {'id': id})
+    try:
+        latest_version = cursor.fetchone()[0]
+    except (TypeError, IndexError,): # None returned
+        logger.debug("version was not supplied and could not be discovered.")
+        raise httpexceptions.HTTPNotFound()
+    raise httpexceptions.HTTPFound(path_format_string \
+            .format(id, latest_version))
+
+
 def get_content_metadata(id, version, cursor):
     """Return metadata related to the content from the database
     """
@@ -149,15 +163,7 @@ def get_content(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                cursor.execute(SQL['get-module-versions'], {'id': id})
-                try:
-                    latest_version = cursor.fetchone()[0]
-                except (TypeError, IndexError,): # None returned
-                    logger.debug("version was not supplied "
-                                 "and could not be discovered.")
-                    raise httpexceptions.HTTPNotFound()
-                raise httpexceptions.HTTPFound('/contents/{}@{}' \
-                        .format(id, latest_version,))
+                redirect_to_latest(cursor, id, '/contents/{}@{}')
             result = get_content_metadata(id, version, cursor)
             # FIXME The 'mediaType' value will be changing to mimetypes
             #       in the near future.
@@ -226,15 +232,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                cursor.execute(SQL['get-module-versions'], {'id': id})
-                try:
-                    latest_version = cursor.fetchone()[0]
-                except (TypeError, IndexError,):  # None returned
-                    logger.debug("version was not supplied "
-                                 "and could not be discovered.")
-                    raise httpexceptions.HTTPNotFound()
-                raise httpexceptions.HTTPFound('/extra/{}@{}' \
-                        .format(id, latest_version,))
+                redirect_to_latest(cursor, id, '/extra/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
