@@ -232,6 +232,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[1], 'Collection')
         self.assertEqual(data[2], 'c1')
         self.assertEqual(data[3], '3a5344bd-410d-4553-a951-87bccd996822')
+        self.assertEqual(data[4], '1.10')
         self.assertEqual(data[5], 'Name of c1')
         self.assertEqual(str(data[6]), '2013-07-31 12:00:00-07:00')
         self.assertNotEqual(str(data[7]), '2013-10-03 21:59:12-07:00')
