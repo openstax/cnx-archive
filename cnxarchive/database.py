@@ -163,23 +163,23 @@ def republish_collection(next_minor_version, collection_ident, cursor,
     the module_ident of the row inserted
     """
     sql = '''
-    INSERT INTO modules (portal_type, moduleid, uuid, name, created, revised,
+    INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
         abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
         authors,maintainers,licensors,parentauthors,google_analytics,buylink,
         major_version, minor_version)
-        SELECT m.portal_type, m.moduleid, m.uuid, m.name, m.created, {},
+        SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
         m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
         m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
-        m.google_analytics, m.buylink, m.major_version, {}
+        m.google_analytics, m.buylink, m.major_version, %s
         FROM modules m
-        WHERE m.module_ident = {}
+        WHERE m.module_ident = %s
     RETURNING module_ident
     '''
     if revised is None:
-        sql = sql.format('CURRENT_TIMESTAMP', '%s', '%s')
+        sql = sql.format('CURRENT_TIMESTAMP')
         params = [next_minor_version, collection_ident]
     else:
-        sql = sql.format('%s', '%s', '%s')
+        sql = sql.format('%s')
         params = [revised, next_minor_version, collection_ident]
     cursor.execute(sql, params)
     results = cursor.fetchone()[0]
