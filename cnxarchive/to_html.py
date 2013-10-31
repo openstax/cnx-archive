@@ -54,6 +54,12 @@ SELECT module_ident FROM modules AS m
 """
 
 
+class ReferenceError(Exception):
+    """Raised when there is a problem with a reference, either illegal
+    usage or missing.
+    """
+
+
 def _split_ref(ref):
     """Returns a valid id and version from the '/<id>@<version>' syntax.
     If version is empty, 'latest' will be assigned.
@@ -104,7 +110,12 @@ def fix_reference_urls(db_connection, document_ident, html):
         with db_connection.cursor() as cursor:
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
                            (document_ident, filename,))
-            info = cursor.fetchone()[0]
+            try:
+                info = cursor.fetchone()[0]
+            except TypeError:
+                raise ReferenceError(
+                        "Missing resource at document ident '{}' "
+                        "with filename '{}'.".format(document_ident, filename))
         if isinstance(info, basestring):
             info = json.loads(info)
         return info
@@ -246,7 +257,8 @@ def produce_html_for_module(db_connection, cursor, ident):
                                         BytesIO(index_html))
     except Exception as exc:
         # TODO Log the exception in more detail.
-        message = exc.message
+        message = "While attempting to transform the content we ran into " \
+                  "an error: " + exc.message
     else:
         # Insert the collection.html into the database.
         payload = (memoryview(index_html),)
