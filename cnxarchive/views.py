@@ -134,7 +134,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
     mimetype = type_info[type]['mimetype']
-    filename = '{}-{}.{}'.format(id, version, file_extension)
+    filename = '{}@{}.{}'.format(id, version, file_extension)
     slugify_title_filename = '{}.{}'.format(slugify(metadata['title']),
             file_extension)
 

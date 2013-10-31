@@ -574,7 +574,7 @@ class ViewsTestCase(unittest.TestCase):
         version = '1.7'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
-        filename = "{}-{}.{}".format(id, version, type)
+        filename = "{}@{}.{}".format(id, version, type)
 
         # Build the request.
         environ = self._make_environ()
@@ -596,7 +596,7 @@ class ViewsTestCase(unittest.TestCase):
         id = '56f1c5c1-4014-450d-a477-2121e276beca'
         version = '8'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}-{}.pdf'.format(id, version)
+        filename = '{}@{}.pdf'.format(id, version)
         environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
                                            'type': 'pdf'
                                            }
