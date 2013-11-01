@@ -159,7 +159,7 @@ class ToHtmlTestCase(unittest.TestCase):
         message_dict = dict(values)
         self.assertIsNotNone(message_dict[ident])
         self.assertEqual(message_dict[ident],
-                         u"Failed to parse QName 'md:tit47:', " \
+                         u"While attempting to transform the content we ran into an error: Failed to parse QName 'md:tit47:', " \
                              "line 11, column 12")
 
     def test_module_transform_of_references(self):
