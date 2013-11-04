@@ -333,19 +333,19 @@ def search(environ, start_response):
     return [json.dumps(results)]
 
 
-def get_config(environ, start_response):
-    """Return a dict with config values for webview
+def extras(environ, start_response):
+    """Return a dict with archive metadata for webview
     """
     settings = get_settings()
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-subject-list'])
             subjects = [{'id': s[0], 'name': s[1]} for s in cursor.fetchall()]
-    config = {
+    metadata = {
             'subjects': subjects,
             }
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
-    return [json.dumps(config)]
+    return [json.dumps(metadata)]
