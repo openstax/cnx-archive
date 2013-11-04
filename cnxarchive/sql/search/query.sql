@@ -1,4 +1,4 @@
--- arguments query:string
+-- arguments text_terms:string "%(text_terms)s"
 SELECT row_to_json(combined_rows) as results
 FROM (
 
@@ -12,7 +12,7 @@ SELECT
   END AS version,
   language,
   lm.portal_type as "mediaType",
-  iso8601(lm.created) as "pubDate",
+  iso8601(lm.revised) as "pubDate",
   ARRAY(SELECT k.word FROM keywords as k, modulekeywords as mk
         WHERE mk.module_ident = lm.module_ident
               AND mk.keywordid = k.keywordid) as keywords,
@@ -38,6 +38,7 @@ FROM
   latest_modules AS lm 
   NATURAL LEFT JOIN abstracts AS ab 
   NATURAL LEFT JOIN modulefti AS mfti
+  NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
      module_ident,
