@@ -232,7 +232,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, '/extra/{}@{}')
+                redirect_to_latest(cursor, id, '/extras/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)

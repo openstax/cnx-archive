@@ -751,7 +751,7 @@ class ViewsTestCase(unittest.TestCase):
         with self.assertRaises(httpexceptions.HTTPFound) as raiser:
             get_extra(environ, self._start_response)
         exception = raiser.exception
-        expected_location = "/extra/{}".format(expected_ident_hash)
+        expected_location = "/extras/{}".format(expected_ident_hash)
         self.assertEqual(exception.headers,
                          [('Location', expected_location)])
 
