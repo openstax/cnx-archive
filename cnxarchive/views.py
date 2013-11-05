@@ -232,7 +232,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, '/extra/{}@{}')
+                redirect_to_latest(cursor, id, '/extras/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
@@ -333,19 +333,43 @@ def search(environ, start_response):
     return [json.dumps(results)]
 
 
-def get_config(environ, start_response):
-    """Return a dict with config values for webview
+def _get_subject_list(cursor):
+    """Return all subjects (tags) in the database except "internal" scheme
+    """
+    subject = None
+    last_tagid = None
+    cursor.execute(SQL['get-subject-list'])
+    for s in cursor.fetchall():
+        tagid, tagname, portal_type, count = s
+
+        if tagid != last_tagid:
+            # It's a new subject, create a new dict and initialize count
+            if subject:
+                yield subject
+            subject = {'id': tagid,
+                       'name': tagname,
+                       'count': {'module': 0, 'collection': 0},
+                      }
+            last_tagid = tagid
+
+        if tagid == last_tagid and portal_type:
+            # Just need to update the count
+            subject['count'][portal_type.lower()] = count
+
+    if subject:
+        yield subject
+
+
+def extras(environ, start_response):
+    """Return a dict with archive metadata for webview
     """
     settings = get_settings()
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-subject-list'])
-            subjects = [{'id': s[0], 'name': s[1]} for s in cursor.fetchall()]
-    config = {
-            'subjects': subjects,
-            }
+            metadata = {'subjects': list(_get_subject_list(cursor)),
+                       }
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
-    return [json.dumps(config)]
+    return [json.dumps(metadata)]

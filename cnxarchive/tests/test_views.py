@@ -751,7 +751,7 @@ class ViewsTestCase(unittest.TestCase):
         with self.assertRaises(httpexceptions.HTTPFound) as raiser:
             get_extra(environ, self._start_response)
         exception = raiser.exception
-        expected_location = "/extra/{}".format(expected_ident_hash)
+        expected_location = "/extras/{}".format(expected_ident_hash)
         self.assertEqual(exception.headers,
                          [('Location', expected_location)])
 
@@ -993,19 +993,32 @@ class ViewsTestCase(unittest.TestCase):
                 }
             })
 
-        def test_get_config(self):
-            # Build the request
-            environ = self._make_environ()
+    def test_extras(self):
+        # Build the request
+        environ = self._make_environ()
 
-            # Call the view
-            from ..views import get_config
-            config = get_config(environ, self._start_response)[0]
-            config = json.loads(config)
-            self.assertEqual(config, {
-                u'subjects': [{'id': 1, u'name': u'Arts'},
-                              {'id': 2, u'name': u'Business'},
-                              {'id': 3, u'name': u'Humanities'},
-                              {'id': 4, u'name': u'Mathematics and Statistics'},
-                              {'id': 5, u'name': u'Science and Technology'},
-                              {'id': 6, u'name': u'Social Sciences'},]
-                })
+        # Call the view
+        from ..views import extras
+        metadata = extras(environ, self._start_response)[0]
+        metadata = json.loads(metadata)
+        self.assertEqual(metadata, {
+            u'subjects': [{u'id': 1, u'name': u'Arts',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 2, u'name': u'Business',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 3, u'name': u'Humanities',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 4, u'name': u'Mathematics and Statistics',
+                           u'count': {u'module': 7, u'collection': 1},
+                          },
+                          {u'id': 5, u'name': u'Science and Technology',
+                           u'count': {u'module': 6, u'collection': 1},
+                          },
+                          {u'id': 6, u'name': u'Social Sciences',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                         ]
+            })

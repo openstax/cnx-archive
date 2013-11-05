@@ -6,7 +6,10 @@
 -- ###
 
 -- arguments:
-SELECT tagid, tag as tags
-FROM tags
-WHERE scheme != 'internal'
-ORDER BY tag;
+SELECT t.tagid, t.tag, lm.portal_type, COUNT(lm.module_ident)
+FROM moduletags mt
+    JOIN latest_modules lm ON mt.module_ident = lm.module_ident
+    RIGHT JOIN tags t ON mt.tagid = t.tagid
+WHERE t.scheme != 'internal'
+GROUP BY t.tagid, lm.portal_type
+ORDER BY t.tag;
