@@ -469,11 +469,14 @@ def _build_search(structured_query, weights):
             filter_list.append(filter_stmt)
     filters = ' AND '.join(filter_list)
 
+    limits = ''
     if not queries: # all filter term case
         key_list=[]
         for key,value in structured_query.filters:
             key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value,key)))
         keys = QUERY_FIELD_ITEM_SEPARATOR.join(key_list)
+        if 'subject' in keys:
+            limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
         queries  = "SELECT module_ident, 1 as weight, '{}'::text as keys from latest_modules".format(keys)
 
     # Add the arguments for sorting.
@@ -488,7 +491,7 @@ def _build_search(structured_query, weights):
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
-    statement = SEARCH_QUERY.format(queries, filters, sorts)
+    statement = SEARCH_QUERY.format(limits, queries, filters, sorts)
     return (statement, arguments)
 
 

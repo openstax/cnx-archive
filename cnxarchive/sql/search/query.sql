@@ -38,7 +38,7 @@ FROM
   latest_modules AS lm 
   NATURAL LEFT JOIN abstracts AS ab 
   NATURAL LEFT JOIN modulefti AS mfti
-  NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags
+  {}
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
      module_ident,
