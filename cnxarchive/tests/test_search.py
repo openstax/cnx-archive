@@ -390,7 +390,7 @@ class SearchTestCase(unittest.TestCase):
         for year, ids in pub_year_mods.iteritems():
             cursor.execute(
                     "UPDATE latest_modules "
-                    "SET created = '{}-07-31 12:00:00.000000-07'"
+                    "SET revised = '{}-07-31 12:00:00.000000-07'"
                     "WHERE uuid IN %s RETURNING module_ident".format(year),
                     [tuple(ids)])
 
@@ -444,7 +444,7 @@ class SearchTestCase(unittest.TestCase):
                 # Update two modules in include a creation date.
                 for id, date in expectations:
                     cursor.execute(
-                        "UPDATE latest_modules SET (created) = (%s) "
+                        "UPDATE latest_modules SET (revised) = (%s) "
                         "WHERE uuid = %s::uuid;", (date, id))
             db_connection.commit()
 
