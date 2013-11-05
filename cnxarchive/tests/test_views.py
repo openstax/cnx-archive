@@ -1002,10 +1002,23 @@ class ViewsTestCase(unittest.TestCase):
         metadata = extras(environ, self._start_response)[0]
         metadata = json.loads(metadata)
         self.assertEqual(metadata, {
-            u'subjects': [{u'id': 1, u'name': u'Arts'},
-                          {u'id': 2, u'name': u'Business'},
-                          {u'id': 3, u'name': u'Humanities'},
-                          {u'id': 4, u'name': u'Mathematics and Statistics'},
-                          {u'id': 5, u'name': u'Science and Technology'},
-                          {u'id': 6, u'name': u'Social Sciences'},]
+            u'subjects': [{u'id': 1, u'name': u'Arts',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 2, u'name': u'Business',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 3, u'name': u'Humanities',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                          {u'id': 4, u'name': u'Mathematics and Statistics',
+                           u'count': {u'module': 7, u'collection': 1},
+                          },
+                          {u'id': 5, u'name': u'Science and Technology',
+                           u'count': {u'module': 6, u'collection': 1},
+                          },
+                          {u'id': 6, u'name': u'Social Sciences',
+                           u'count': {u'module': 0, u'collection': 0},
+                          },
+                         ]
             })
