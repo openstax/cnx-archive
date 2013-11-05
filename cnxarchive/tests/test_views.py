@@ -588,7 +588,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
-                         "attached; filename=college-physics.pdf")
+                         "attached; filename=college-physics-{}.pdf".format(version))
         with open(os.path.join(TEST_DATA_DIRECTORY, 'exports', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
@@ -605,7 +605,7 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
-                         "attached; filename=elasticity-stress-and-strain.pdf")
+                         "attached; filename=elasticity-stress-and-strain-{}.pdf".format(version))
         with open(os.path.join(TEST_DATA_DIRECTORY, 'exports2', filename), 'r') as file:
             self.assertEqual(export, file.read())
 
@@ -685,19 +685,19 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(json.loads(output)['downloads'], [
             {
                 u'format': u'PDF',
-                u'filename': u'college-physics.pdf',
+                u'filename': u'college-physics-{}.pdf'.format(version),
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'path': u'/exports/{}@{}.pdf'.format(id, version),
                 },
             {
                 u'format': u'EPUB',
-                u'filename': u'college-physics.epub',
+                u'filename': u'college-physics-{}.epub'.format(version),
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'path': u'/exports/{}@{}.epub'.format(id, version),
                 },
             {
                 u'format': u'Offline ZIP',
-                u'filename': u'college-physics.zip',
+                u'filename': u'college-physics-{}.zip'.format(version),
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'path': u'/exports/{}@{}.zip'.format(id, version),
                 },
