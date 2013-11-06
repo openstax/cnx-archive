@@ -26,9 +26,9 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID','subject',)
 SORT_VALUES_MAPPING = {
-    'pubdate': 'created DESC',
+    'pubdate': 'revised DESC',
     'version': 'version DESC',
     'popularity': 'rank DESC NULLS LAST',
     }
@@ -195,12 +195,12 @@ def _apply_query_type(records, query, query_type):
     Returns the revised list of records, unmatched terms, and matched terms.
     """
     # These all get revised an returned at the end.
-    query = list(set(query))  # Ensure a unique queue list
+    query = list(set(query))  # Ensure a unique query list
     matched_terms = []
     unmatched_terms = query
     revised_records = records
 
-    if records:
+    if records and query: # no query implies limit-only case
         #: List of records that match all terms.
         all_matched_records = []
         term_matches = []
@@ -362,10 +362,13 @@ def _transmute_filter(keyword, value):
         return ('portal_type = %({})s', type_name)
 
     elif keyword == 'pubYear':
-        return ('extract(year from created) = %({})s', int(value))
+        return ('extract(year from revised) = %({})s', int(value))
 
     elif keyword == 'authorID':
         return ('%({})s = ANY(authors)', value)
+
+    elif keyword == 'subject':
+        return ('%({})s = tag', value)
 
 
 def _transmute_sort(sort_value):
@@ -436,22 +439,22 @@ def _build_search(structured_query, weights):
     query_weight_order = DEFAULT_SEARCH_WEIGHTS.keys()
 
     # Roll over the weight sequence.
-    queries = []
+    query_list = []
     while query_weight_order:
         weight_name = query_weight_order.pop(0)
         weighted_select = _make_weighted_select(weight_name,
                                                 weights[weight_name])
         stmt, args = weighted_select.prepare(structured_query.terms)
-        queries.append(stmt)
+        query_list.append(stmt)
         arguments.update(args)
     text_terms = ' '.join([term for ttype,term in structured_query.terms if ttype == 'text'])
     arguments.update({'text_terms':text_terms})
-    queries = '\nUNION ALL\n'.join([q for q in queries if q is not None])
+    queries = '\nUNION ALL\n'.join([q for q in query_list if q is not None])
 
     # Add the arguments for filtering.
-    filters = []
+    filter_list = []
     if structured_query.filters:
-        if len(filters) == 0: filters.append('')  # For SQL AND joining.
+        if len(filter_list) == 0: filter_list.append('')  # For SQL AND joining.
         for i, (keyword, value) in enumerate(structured_query.filters):
             arg_name = "{}_{}".format(keyword, i)
             # These key values are special in that they don't,
@@ -463,8 +466,19 @@ def _build_search(structured_query, weights):
                 continue
             arguments[arg_name] = match_value
             filter_stmt = filter_stmt.format(arg_name)
-            filters.append(filter_stmt)
-    filters = ' AND '.join(filters)
+            filter_list.append(filter_stmt)
+    filters = ' AND '.join(filter_list)
+
+    limits = ''
+    if not queries: # all filter term case
+        key_list=[]
+        for key,value in structured_query.filters:
+            key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value,key)))
+        keys = QUERY_FIELD_ITEM_SEPARATOR.join(key_list)
+        if 'subject' in keys:
+            limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
+        queries  = "SELECT module_ident, 1 as weight, '{}'::text as keys from latest_modules".format(keys)
+
     # Add the arguments for sorting.
     sorts = []
     if structured_query.sorts:
@@ -477,7 +491,7 @@ def _build_search(structured_query, weights):
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
-    statement = SEARCH_QUERY.format(queries, filters, sorts)
+    statement = SEARCH_QUERY.format(limits, queries, filters, sorts)
     return (statement, arguments)
 
 
@@ -509,6 +523,5 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
         with db_connection.cursor() as cursor:
             cursor.execute(statement, arguments)
             search_results = cursor.fetchall()
-
     # Wrap the SQL results.
     return QueryResults(search_results, query, query_type)

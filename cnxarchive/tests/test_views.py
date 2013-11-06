@@ -297,7 +297,7 @@ SEARCH_RESULTS = {
                            u'wave optics',
                            u'work'],
              u'mediaType': u'Collection',
-             u'pubDate': u'2013-07-31T19:07:20Z',
+             u'pubDate': u'2013-08-31T19:07:20Z',
              u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
              u'title': u'College Physics'},
             ],
