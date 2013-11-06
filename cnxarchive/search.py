@@ -323,7 +323,10 @@ class QueryResults(Sequence):
             year = date[:4]
             counts.setdefault(year, 0)
             counts[year] += 1
-        return counts.iteritems()
+        counts = counts.items()
+        # Sort pubYear in reverse chronological order
+        counts.sort(lambda a, b: cmp(a[0], b[0]), reverse=True)
+        return counts
 
 
 def _transmute_filter(keyword, value):

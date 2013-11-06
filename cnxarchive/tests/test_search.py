@@ -109,15 +109,18 @@ class SearchModelTestCase(unittest.TestCase):
 
         self.assertEqual(results.counts['author'],
                          [(open_stax_college, 15), (osc_physics, 1)])
+
         # Check counts for publication year.
-        pub_years = dict(results.counts['pubYear'])
-        self.assertEqual(pub_years, {u'2013': 15})
+        pub_years = list(results.counts['pubYear'])
+        self.assertEqual(pub_years, [(u'2013', 12), (u'2012', 1), (u'2011', 2)])
+
         # Check the subject counts.
         subjects = dict(results.counts['subject'])
         self.assertEqual(subjects,
                          {u'Mathematics and Statistics': 8,
                           u'Science and Technology': 7,
                           })
+
         # Check the keyword counts.
         keywords = dict(results.counts['keyword'])
         self.assertEqual(keywords['Modern physics'], 2)
