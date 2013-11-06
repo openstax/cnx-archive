@@ -687,19 +687,22 @@ class ViewsTestCase(unittest.TestCase):
                 u'format': u'PDF',
                 u'filename': u'college-physics-{}.pdf'.format(version),
                 u'details': u'PDF file, for viewing content offline and printing.',
-                u'path': u'/exports/{}@{}.pdf'.format(id, version),
+                u'path': u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
+                    id, version, version),
                 },
             {
                 u'format': u'EPUB',
                 u'filename': u'college-physics-{}.epub'.format(version),
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'path': u'/exports/{}@{}.epub'.format(id, version),
+                u'path': u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
+                    id, version, version),
                 },
             {
                 u'format': u'Offline ZIP',
                 u'filename': u'college-physics-{}.zip'.format(version),
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'path': u'/exports/{}@{}.zip'.format(id, version),
+                u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
+                    id, version, version),
                 },
             ])
 
