@@ -24,6 +24,7 @@ __all__ = (
 # Set the timezone for the postgresql client so that we get the times in the
 # right timezone (America/Whitehorse is -07 in summer and -08 in winter)
 os.environ['PGTZ'] = 'America/Whitehorse'
+os.environ['TZ'] = 'America/Whitehorse'
 
 here = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA_DIRECTORY = os.path.join(here, 'data')
