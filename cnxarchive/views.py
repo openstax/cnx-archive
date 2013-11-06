@@ -107,7 +107,8 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 'format': type_info['user_friendly_name'],
                 'filename': filename,
                 'details': type_info['description'],
-                'path': '/exports/{}@{}.{}'.format(id, version, type_name),
+                'path': '/exports/{}@{}.{}/{}'.format(id, version, type_name,
+                                                      filename),
                 }
         except ExportError as e:
             # file not found, so don't include it
