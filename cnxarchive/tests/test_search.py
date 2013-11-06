@@ -77,6 +77,14 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(record.highlighted_fulltext, expected)
 
     def test_result_counts(self):
+        # Set the test to return top 5 keywords
+        from .. import search
+        old_max_values_for_keywords = search.MAX_VALUES_FOR_KEYWORDS
+        def reset_max_values_for_keywords():
+            search.MAX_VALUES_FOR_KEYWORDS = old_max_values_for_keywords
+        self.addCleanup(reset_max_values_for_keywords)
+        search.MAX_VALUES_FOR_KEYWORDS = 5
+
         # Verify the counts on the results object.
         query = [('text', 'physics')]
         results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
@@ -119,10 +127,14 @@ class SearchModelTestCase(unittest.TestCase):
                           u'Science and Technology': 7,
                           })
         # Check the keyword counts.
-        keywords = dict(results.counts['keyword'])
-        self.assertEqual(keywords['Modern physics'], 2)
-        self.assertEqual(keywords['particle physics'], 1)
-        self.assertEqual(keywords['force'], 3)
+        keywords = results.counts['keyword']
+        self.assertEqual(len(keywords), 5)
+        self.assertEqual(keywords, [(u'force', 3),
+                                    (u'friction', 4),
+                                    (u'Modern physics', 2),
+                                    (u'Quantum mechanics', 2),
+                                    (u'Scientific method', 2),
+                                   ])
 
 
 class SearchTestCase(unittest.TestCase):
