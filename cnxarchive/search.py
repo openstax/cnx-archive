@@ -27,6 +27,8 @@ __all__ = ('search', 'Query',)
 
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID','subject',)
+# The maximum number of keywords to return in the search result counts
+MAX_VALUES_FOR_KEYWORDS = 200
 SORT_VALUES_MAPPING = {
     'pubdate': 'revised DESC',
     'version': 'version DESC',
@@ -253,7 +255,8 @@ class QueryResults(Sequence):
         self.counts = {
             'mediaType': self._count_media(),
             'subject': self._count_field('subjects'),
-            'keyword': self._count_field('keywords'),
+            'keyword': self._count_field('keywords',
+                                         max_results=MAX_VALUES_FOR_KEYWORDS),
             'author': self._count_authors(),
             'pubYear': self._count_publication_year(),
             }
@@ -269,17 +272,28 @@ class QueryResults(Sequence):
     def __len__(self):
         return len(self._records)
 
-    def _count_field(self, field_name, sorted=True):
+    def _count_field(self, field_name, sorted=True, max_results=None):
         counts = {}
         for rec in self._records:
             for value in rec[field_name]:
                 counts.setdefault(value, 0)
                 counts[value] += 1
-        if sorted:
+
+        if max_results:
+            # limit the number of results we return
             counts = counts.items()
+            # sort counts by the count with highest count first
+            counts.sort(lambda a, b: cmp(a[1], b[1]), reverse=True)
+            counts = counts[:max_results]
+
+        if sorted:
+            if isinstance(counts, dict):
+                counts = counts.items()
+            # Sort counts by the name alphabetically
             counts.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
         else:
             counts = counts.iteritems()
+
         return counts
 
     def _count_media(self):
