@@ -823,6 +823,27 @@ class ViewsTestCase(unittest.TestCase):
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
 
+    def test_search_with_subject(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=title:"college physics" subject:"Science and Technology"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['query'], {
+            u'limits': [{u'title': u'college physics'},
+                        {u'subject': 'Science and Technology'},
+                       ],
+            u'sort': []})
+        self.assertEqual(results['results']['total'], 1)
+
     def test_search_highlight_abstract(self):
         # Build the request
         environ = self._make_environ()
