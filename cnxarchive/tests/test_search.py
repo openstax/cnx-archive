@@ -410,6 +410,19 @@ class SearchTestCase(unittest.TestCase):
                     "WHERE uuid IN %s RETURNING module_ident".format(year),
                     [tuple(ids)])
 
+    def test_pubYear_limit(self):
+        self._pubYear_setup()
+
+        # Test for limit only results with pubYear 2013
+        query_params = [('pubYear', '2013')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 12)
+        self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
+        self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
+        self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
+
     def test_pubYear_filter(self):
         self._pubYear_setup()
 

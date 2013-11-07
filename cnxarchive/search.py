@@ -106,7 +106,6 @@ class Query(Sequence):
             return ''
 
         # terms will be all the search terms that don't have a field
-        # terms is the
         terms = re.sub(r'[^\s:]*:("[^"]*"|[^\s]*)', f, query_string)
         query_string = '{}" {}'.format(terms.strip(), ' '.join(fields))
         return query_string
@@ -487,13 +486,13 @@ def _build_search(structured_query, weights):
     filters = ' AND '.join(filter_list)
 
     limits = ''
+    if 'subject' in [key for key,value in structured_query.filters]:
+        limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
     if not queries: # all filter term case
         key_list=[]
         for key,value in structured_query.filters:
             key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value,key)))
         keys = QUERY_FIELD_ITEM_SEPARATOR.join(key_list)
-        if 'subject' in keys:
-            limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
         queries  = "SELECT module_ident, 1 as weight, '{}'::text as keys from latest_modules".format(keys)
 
     # Add the arguments for sorting.
