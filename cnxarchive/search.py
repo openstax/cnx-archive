@@ -26,7 +26,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID','subject',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
 # The maximum number of keywords to return in the search result counts
 MAX_VALUES_FOR_KEYWORDS = 200
 SORT_VALUES_MAPPING = {
@@ -254,12 +254,16 @@ class QueryResults(Sequence):
         self._matched_terms = applied_results[2]
         self.counts = {
             'mediaType': self._count_media(),
-            'subject': self._count_field('subjects'),
             'keyword': self._count_field('keywords',
                                          max_results=MAX_VALUES_FOR_KEYWORDS),
             'author': self._count_authors(),
             'pubYear': self._count_publication_year(),
             }
+
+        # Only add subject filters if the search is not filtered by subject
+        terms = [t[0] for t in query.terms]
+        if 'subject' not in terms:
+            self.counts['subject'] = self._count_field('subjects')
 
     def __repr__(self):
         s = "<{} with '{}' results>".format(self.__class__.__name__,
