@@ -13,6 +13,7 @@ import uuid
 import psycopg2
 
 from . import *
+from ..search import DEFAULT_QUERY_TYPE
 
 
 with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
@@ -440,6 +441,42 @@ class SearchTestCase(unittest.TestCase):
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 1)
+        self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
+
+    def test_term_and_subject(self):
+        query_params = [('text', 'physics'),
+                        ('subject', 'Science and Technology')]
+
+        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 7)
+        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                                      '56f1c5c1-4014-450d-a477-2121e276beca',
+                                      'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
+                                      '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
+                                      '26346a42-84b9-48ad-9f6a-62303c16ad41',
+                                      'f6024d8a-1868-44c7-ab65-45419ef54881',
+                                      'c0a76659-c311-405f-9a99-15c71af39325',
+                                     ])
+
+    def test_subject_and_subject(self):
+        query_params = [('subject', 'Science and Technology'),
+                        ('subject', 'Mathematics and Statistics')]
+
+        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597'])
+
+    def test_subject_authorID_term(self):
+        query_params = [('text', 'physics'),
+                        ('subject', 'Mathematics and Statistics'),
+                        # "OSC Physics Maintainer"
+                        ('authorID', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
+
+        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(result_ids), 1)
         self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
 
     def test_sort_filter_on_pubdate(self):
