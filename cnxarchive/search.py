@@ -26,7 +26,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID','subject',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
 # The maximum number of keywords to return in the search result counts
 MAX_VALUES_FOR_KEYWORDS = 200
 SORT_VALUES_MAPPING = {
