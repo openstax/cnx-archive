@@ -304,26 +304,8 @@ SEARCH_RESULTS = {
         u'total': 2,
         u'limits': [
             {u'count': 2, u'pubYear': u'2013'},
-            {u'author': {u'email': u'info@openstaxcollege.org',
-                         u'firstname': u'OpenStax College',
-                         u'fullname': u'OpenStax College',
-                         u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                         u'othername': None,
-                         u'suffix': None,
-                         u'surname': None,
-                         u'title': None,
-                         u'website': None},
-             u'count': 2},
-            {u'author': {u'email': u'info@openstaxcollege.org',
-                         u'firstname': u'College',
-                         u'fullname': u'OSC Physics Maintainer',
-                         u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                         u'othername': None,
-                         u'suffix': None,
-                         u'surname': u'Physics',
-                         u'title': None,
-                         u'website': None},
-             u'count': 1},
+            {u'count': 2, u'subject': u'Mathematics and Statistics'},
+            {u'count': 1, u'subject': u'Science and Technology'},
             {u'count': 1,
              u'mediaType': u'application/vnd.org.cnx.collection'},
             {u'count': 1, u'mediaType': u'application/vnd.org.cnx.module'},
@@ -379,8 +361,26 @@ SEARCH_RESULTS = {
             {u'count': 1, u'keyword': u'vision and optical instruments'},
             {u'count': 1, u'keyword': u'wave optics'},
             {u'count': 1, u'keyword': u'work'},
-            {u'count': 2, u'subject': u'Mathematics and Statistics'},
-            {u'count': 1, u'subject': u'Science and Technology'}],
+            {u'author': {u'email': u'info@openstaxcollege.org',
+                         u'firstname': u'OpenStax College',
+                         u'fullname': u'OpenStax College',
+                         u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                         u'othername': None,
+                         u'suffix': None,
+                         u'surname': None,
+                         u'title': None,
+                         u'website': None},
+             u'count': 2},
+            {u'author': {u'email': u'info@openstaxcollege.org',
+                         u'firstname': u'College',
+                         u'fullname': u'OSC Physics Maintainer',
+                         u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                         u'othername': None,
+                         u'suffix': None,
+                         u'surname': u'Physics',
+                         u'title': None,
+                         u'website': None},
+             u'count': 1}],
         }
     }
 
@@ -822,6 +822,10 @@ class ViewsTestCase(unittest.TestCase):
             u'limits': [{u'subject': u'Science and Technology'}],
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
+        # Don't display any more subject filtering
+        subject_filters = [l for l in results['results']['limits']
+                           if 'subject' in l]
+        self.assertEqual(subject_filters, [])
 
     def test_search_with_subject(self):
         # Build the request
@@ -843,6 +847,10 @@ class ViewsTestCase(unittest.TestCase):
                        ],
             u'sort': []})
         self.assertEqual(results['results']['total'], 1)
+        # Don't display any more subject filtering
+        subject_filters = [l for l in results['results']['limits']
+                           if 'subject' in l]
+        self.assertEqual(subject_filters, [])
 
     def test_search_highlight_abstract(self):
         # Build the request
