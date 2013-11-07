@@ -996,6 +996,90 @@ class ViewsTestCase(unittest.TestCase):
                 }
             })
 
+    def test_search_type_page_or_module(self):
+        # Test searching "page"
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=title:"college physics" type:page'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query']['limits'][-1], {u'type': u'page'})
+        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['items'][0]['mediaType'],
+                         'Module')
+
+        # Test searching "module"
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = r'q="college physics" type:module'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query']['limits'][-1], {u'type': u'module'})
+        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['items'][0]['mediaType'],
+                         'Module')
+
+    def test_search_type_book_or_collection(self):
+        # Test searching "book"
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=title:physics type:book'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query']['limits'][-1], {u'type': u'book'})
+        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['items'][0]['mediaType'],
+                         'Collection')
+
+        # Test searching "collection"
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = r'q=title:physics type:collection'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'type': u'collection'})
+        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['items'][0]['mediaType'],
+                         'Collection')
+
+
     def test_extras(self):
         # Build the request
         environ = self._make_environ()

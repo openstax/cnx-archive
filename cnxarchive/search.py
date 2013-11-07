@@ -369,9 +369,9 @@ def _transmute_filter(keyword, value):
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
 
     if keyword == 'type':
-        if value == 'book':
+        if value in ['book', 'collection']:
             type_name = 'Collection'
-        elif value == 'page':
+        elif value in ['page', 'module']:
             type_name = 'Module'
         else:
             raise ValueError("Invalid filter value '{}' for filter '{}'." \
