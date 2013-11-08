@@ -6,8 +6,9 @@
 # See LICENCE.txt for details.
 # ###
 """Upgrades for munging/transforming Connexions XML formats to HTML."""
-import json
 import os
+import re
+import json
 from io import BytesIO
 
 import rhaptos.cnxmlutils
@@ -42,8 +43,8 @@ SELECT row_to_json(row) FROM (
                       WHERE module_ident = %s AND filename = %s )
 ) row;
 """
-SQL_MODULE_BY_ID_STATEMENT = """\
-SELECT uuid FROM modules WHERE moduleid = %s
+SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = """\
+SELECT uuid, version FROM modules WHERE moduleid = %s
 """
 DEFAULT_ID_SELECT_QUERY = """\
 SELECT module_ident FROM modules AS m
@@ -54,104 +55,182 @@ SELECT module_ident FROM modules AS m
 """
 
 
-class ReferenceError(Exception):
-    """Raised when there is a problem with a reference, either illegal
-    usage or missing.
-    """
+class BaseReferenceException(Exception):
+    """Not for direct use, but used to subclass other exceptions."""
+
+    def __init__(self, message, document_ident, reference):
+        self.document_ident = document_ident
+        self.reference = reference
+        message = "{}: document={}, reference={}" \
+                .format(message, self.document_ident, self.reference)
+        super(BaseReferenceException, self).__init__(message)
 
 
-def _split_ref(ref):
-    """Returns a valid id and version from the '/<id>@<version>' syntax.
-    If version is empty, 'latest' will be assigned.
+class ReferenceNotFound(BaseReferenceException):
+    """Used when a reference to a resource can't be found."""
+
+
+class InvalidReference(BaseReferenceException):
+    """Used when a reference by all known accounts appears to be invalid."""
+
+    def __init__(self, document_ident, reference):
+        msg = "Invalid reference value"
+        super(InvalidReference, self).__init__(msg, document_ident, reference)
+
+
+PATH_REFERENCE_REGEX = re.compile(
+    r'^(/?(content/)?(?P<module>(m|col)\d{5})(/(?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
+    re.IGNORECASE)
+MODULE_REFERENCE = 'module-reference'
+RESOURCE_REFERENCE = 'resource-reference'
+
+
+def parse_reference(ref):
+    """Parse the reference to a reference type and type specific value.
+    A module-reference value contains the id, version and fragment.
+    A resource-reference value resource filename.
     """
-    ref = ref.lstrip('/')
-    split_value = ref.split('@')
+    match = PATH_REFERENCE_REGEX.match(ref)
     try:
-        id = split_value[0]
-    except IndexError:
-        raise ValueError("Unable find the module id for '{}'." \
-                             .format(module_ref))
+        # Dictionary keyed by named groups, None values for no match
+        matches = match.groupdict()
+    except:  # None type
+        raise ValueError("Unable to parse reference with value '{}'" \
+                         .format(ref))
 
-    try:
-        version = split_value[1]
-    except IndexError:
-        # None'ify the version on empty string.
-        version = None
+    # We've got a match, but what kind of thing is it.
+    if matches['module']:
+        type = MODULE_REFERENCE
+        # FIXME value[2] reserved for url fragment.
+        value = (matches['module'], matches['version'], None)
+    elif matches['resource']:
+        type = RESOURCE_REFERENCE
+        value = matches['resource']
+    return type, value
 
-    if id == '':
-        raise ValueError("Missing values")
 
-    return id, version
+class ReferenceResolver:
 
-def get_module_uuid(db_connection, module):
-    with db_connection.cursor() as cursor:
-        cursor.execute(SQL_MODULE_BY_ID_STATEMENT,
-                       (module,))
-        uuid = None
-        result = cursor.fetchone()
-        if result:
-            uuid=result[0]
-    return uuid
+    def __init__(self, db_connection, document_ident, html):
+        self.db_connection = db_connection
+        self.document_ident = document_ident
+        self.document = etree.parse(html).getroot()
+        self.namespaces = self.document.nsmap.copy()
+        self.namespaces['html'] = self.namespaces.pop(None)
 
-def fix_reference_urls(db_connection, document_ident, html):
-    """Fix the document's internal references to other documents and
-    resources.
+    def __call__(self):
+        messages = []
+        messages.extend(self.fix_img_references())
+        messages.extend(self.fix_anchor_references())
+        messages = [e.message for e in messages]
+        return etree.tostring(self.document), messages
 
-    The database connection, passed as ``db_connection`` is used to lookup
-    resources by both filename and the given ``document_ident``, which is
-    the document's 'module_ident' value.
+    @classmethod
+    def fix_reference_urls(cls, db_connection, document_ident, html):
+        resolver = cls(db_connection, document_ident, html)
+        return resolver()
 
-    Returns a modified version of the html document.
-    """
-    xml = etree.parse(html)
-    xml_doc = xml.getroot()
+    def get_uuid_n_version(self, module_id, version=None):
+        with self.db_connection.cursor() as cursor:
+            cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
+                           (module_id,))
+            try:
+                uuid, version = cursor.fetchone()
+            except (TypeError, ValueError):  # None or unpack problem
+                uuid, version = (None, None,)
+        return uuid, version
 
-    def get_resource_info(filename):
-        with db_connection.cursor() as cursor:
+    def get_resource_info(self, filename):
+        with self.db_connection.cursor() as cursor:
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
-                           (document_ident, filename,))
+                           (self.document_ident, filename,))
             try:
                 info = cursor.fetchone()[0]
             except TypeError:
-                raise ReferenceError(
-                        "Missing resource at document ident '{}' "
-                        "with filename '{}'.".format(document_ident, filename))
-        if isinstance(info, basestring):
-            info = json.loads(info)
-        return info
+                raise ReferenceNotFound(
+                    "Missing resource with filename '{}'." \
+                        .format(filename),
+                    self.document_ident, filename)
+            else:
+                if isinstance(info, basestring):
+                    info = json.loads(info)
+                return info
 
-    # Namespace reworking...
-    namespaces = xml_doc.nsmap.copy()
-    namespaces['html'] = namespaces.pop(None)
+    def apply_xpath(self, xpath):
+        """Apply an XPath statement to the document."""
+        return self.document.xpath(xpath, namespaces=self.namespaces)
 
-    # Fix references to resources.
-    for img in xml_doc.xpath('//html:img', namespaces=namespaces):
-        filename = img.get('src')
-        info = get_resource_info(filename)
-        img.set('src', '../resources/{}'.format(info['hash'],))
+    def _should_ignore_reference(self, ref):
+        """Given an href string, determine if it should be ignored.
+        For example, external links and mailto references should be ignored.
+        """
+        ref = ref.strip()
+        should_ignore = not ref \
+                        or ref.startswith('#') \
+                        or ref.startswith('http') \
+                        or ref.startswith('mailto') \
+                        or ref.startswith('file') \
+                        or ref.startswith('/help')
+        return should_ignore
 
-    # Fix references to documents.
-    for anchor in xml_doc.xpath('//html:a', namespaces=namespaces):
-        ref = anchor.get('href')
-        if (ref.startswith('#') or ref.startswith('http')) \
-           and not ref.startswith('/'):
-            continue
-        id, version = _split_ref(ref)
-        # FIXME We need a better way to determine if the link is a
-        #       module or resource reference. Probably some way to
-        #       add an attribute in the xsl.
-        #       The try & except can be removed after we fix this.
-        try:
-            uuid = get_module_uuid(db_connection, id)
-        except TypeError:
-            uuid= None
-        if uuid:
-            anchor.set('href', '/contents/{}@{}'.format(uuid, version))
-        else:
-            info = get_resource_info(ref)
-            anchor.set('href', '../resources/{}'.format(info['hash'],))
+    def fix_img_references(self):
+        """Fix references to interal resources."""
+        # Catch the invalid, unparsable, etc. references.
+        bad_references = []
 
-    return etree.tostring(xml_doc)
+        for img in self.apply_xpath('//html:img'):
+            filename = img.get('src')
+            if not filename or self._should_ignore_reference(filename):
+                continue
+
+            try:
+                info = self.get_resource_info(filename)
+            except ReferenceNotFound as exc:
+                bad_references.append(exc)
+            else:
+                img.set('src', '../resources/{}'.format(info['hash'],))
+        return bad_references
+
+    def fix_anchor_references(self):
+        """Fix references to internal documents and resources."""
+        # Catch the invalid, unparsable, etc. references.
+        bad_references = []
+
+        for anchor in self.apply_xpath('//html:a'):
+            ref = anchor.get('href')
+            if not ref or self._should_ignore_reference(ref):
+                continue
+
+            try:
+                ref_type, payload = parse_reference(ref)
+            except ValueError:
+                exc = InvalidReference(self.document_ident, ref)
+                bad_references.append(exc)
+                continue
+
+            if ref_type == MODULE_REFERENCE:
+                module_id, version, url_frag = payload
+                uuid, version = self.get_uuid_n_version(module_id, version)
+                if uuid is None:
+                    bad_references.append(
+                        ReferenceNotFound("Unable to find a reference to "
+                                          "'{}' at version '{}'." \
+                                              .format(module_id, version),
+                                          self.document_ident, ref))
+                else:
+                    url_frag = url_frag and url_frag or ''
+                    path = '/contents/{}@{}{}'.format(uuid, version, url_frag)
+                    anchor.set('href', path)
+            elif ref_type == RESOURCE_REFERENCE:
+                try:
+                    info = self.get_resource_info(payload)
+                except ReferenceNotFound as exc:
+                    bad_references.append(exc)
+                else:
+                    anchor.set('href', '../resources/{}'.format(info['hash'],))
+        return bad_references
+
+fix_reference_urls = ReferenceResolver.fix_reference_urls
 
 
 def transform_cnxml_to_html(cnxml):
@@ -253,14 +332,16 @@ def produce_html_for_module(db_connection, cursor, ident):
         cnxml = cnxml[:]
     try:
         index_html = transform_cnxml_to_html(cnxml)
-        # Fix up content references to cnx-archive specific urls.
-        index_html = fix_reference_urls(db_connection, ident,
-                                        BytesIO(index_html))
     except Exception as exc:
         # TODO Log the exception in more detail.
         message = "While attempting to transform the content we ran into " \
                   "an error: " + exc.message
     else:
+        # Fix up content references to cnx-archive specific urls.
+        index_html, bad_refs = fix_reference_urls(db_connection, ident,
+                                                  BytesIO(index_html))
+        message = 'Invalid References: {}' \
+            .format('; '.join(bad_refs))
         # Insert the collection.html into the database.
         payload = (memoryview(index_html),)
         cursor.execute("INSERT INTO files (file) VALUES (%s) "
