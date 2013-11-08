@@ -383,8 +383,7 @@ def _transmute_filter(keyword, value):
     elif keyword == 'authorID':
         return ('%({})s = ANY(authors)', value)
 
-    elif keyword == 'subject':
-        return ('%({})s = tag', value)
+    return None, None
 
 
 def _transmute_sort(sort_value):
@@ -480,14 +479,28 @@ def _build_search(structured_query, weights):
             except ValueError:
                 del structured_query.filters[i]
                 continue
-            arguments[arg_name] = match_value
-            filter_stmt = filter_stmt.format(arg_name)
-            filter_list.append(filter_stmt)
+            if filter_stmt:
+                arguments[arg_name] = match_value
+                filter_stmt = filter_stmt.format(arg_name)
+                filter_list.append(filter_stmt)
     filters = ' AND '.join(filter_list)
 
     limits = ''
-    if 'subject' in [key for key,value in structured_query.filters]:
+    groupby = ''
+    having_list = []
+    having = ''
+    subject_filters = [value for key,value in structured_query.filters if key == 'subject']
+    if subject_filters:
         limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
+        groupby = '''GROUP BY lm.name, lm.uuid, lm.portal_type, lm.authors,
+             lm.major_version, lm.minor_version, language, lm.revised, 
+             ab.abstract, weight, rank, lm.module_ident, weighted.keys'''
+
+        for subj in subject_filters:
+            having_list.append("'{}' = ANY(array_agg(tag))".format(subj))
+        having = 'HAVING ' + ' AND '.join(having_list)
+    groupby = '\n'.join((groupby,having))
+    
     if not queries: # all filter term case
         key_list=[]
         for key,value in structured_query.filters:
@@ -507,7 +520,7 @@ def _build_search(structured_query, weights):
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
-    statement = SEARCH_QUERY.format(limits, queries, filters, sorts)
+    statement = SEARCH_QUERY.format(limits, queries, filters, groupby, sorts)
     return (statement, arguments)
 
 

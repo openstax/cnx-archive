@@ -52,6 +52,7 @@ FROM
 WHERE
   weighted.module_ident = lm.module_ident
   {}
+  {}
 ORDER BY {}
 
 ) as combined_rows

@@ -504,13 +504,13 @@ class SearchTestCase(unittest.TestCase):
         results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 7)
-        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                                      '56f1c5c1-4014-450d-a477-2121e276beca',
-                                      'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
-                                      '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                                      '26346a42-84b9-48ad-9f6a-62303c16ad41',
-                                      'f6024d8a-1868-44c7-ab65-45419ef54881',
-                                      'c0a76659-c311-405f-9a99-15c71af39325',
+        self.assertEqual(result_ids, [u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                                      u'56f1c5c1-4014-450d-a477-2121e276beca',
+                                      u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
+                                      u'f6024d8a-1868-44c7-ab65-45419ef54881',
+                                      u'26346a42-84b9-48ad-9f6a-62303c16ad41',
+                                      u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
+                                      u'c0a76659-c311-405f-9a99-15c71af39325',
                                      ])
 
     def test_subject_and_subject(self):
