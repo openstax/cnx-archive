@@ -11,7 +11,7 @@ import os
 import psycopg2
 import re
 
-from .to_html import get_module_uuid, produce_html_for_module
+from .to_html import produce_html_for_module
 
 
 CONNECTION_SETTINGS_KEY = 'db-connection-string'
@@ -67,6 +67,17 @@ def initdb(settings):
             for filepath in sql_constants:
                 with open(filepath, 'r') as f:
                     cursor.execute(f.read())
+
+
+def get_module_uuid(db_connection, moduleid):
+    with db_connection.cursor() as cursor:
+        cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
+                       (moduleid,))
+        uuid = None
+        result = cursor.fetchone()
+        if result:
+            uuid=result[0]
+    return uuid
 
 def get_current_module_ident(moduleid, cursor):
     sql = '''SELECT m.module_ident FROM modules m
