@@ -156,8 +156,9 @@ def fix_reference_urls(db_connection, document_ident, html):
 
 def transform_cnxml_to_html(cnxml):
     """Transforms raw cnxml content to html."""
+    xml_parser = etree.XMLParser(resolve_entities=False)
     gen_xsl = lambda f: etree.XSLT(etree.parse(f))
-    cnxml = etree.parse(BytesIO(cnxml))
+    cnxml = etree.parse(BytesIO(cnxml), xml_parser)
 
     # Transform the content to html.
     cnxml_to_html_filepath = os.path.join(XSL_DIRECTORY, 'cnxml-to-html5.xsl')
