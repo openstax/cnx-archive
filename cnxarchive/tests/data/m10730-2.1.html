@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+
+  Effective Length
+  
+  2.1
+  2002/07/10
+  2003-01-13
+  
+    
+      Joanna
+      
+      Gonzalez
+      joannag@owlnet.rice.edu
+    
+  
+
+  
+    
+      Joanna
+      
+      Gonzalez
+      joannag@owlnet.rice.edu
+    
+  
+  
+  
+    effective length
+    K
+  
+
+  (Blank Abstract)
+
+
+  
+
+   
+    Define effective length
+    
+     The equations for critical buckling load include the variable KL which is the effective length.  K is the effective length factor.  Values for K vary depending on the load and type of supports of a member.  A listing of the values can be found in the Manual on page 16.1-189 in Table C-C2.1.  For instance, the value for K with the condition that both ends of a column are rotation free and translation fixed (pinned) is 1.0.
+    
+   
+
+   
+    Technical vs. recommended values of K
+    
+     "Two values for K are given: a theoretical value and a recommended design value to be used when the ideal end condition is approximated.  Hence, unless a 'fixed' end is perfectly fixed, the more conservative design values are to be used.  Only under the most extraordinary circumstances would the use of the theoretical values be justified.  Note, however, that the theoretical and recommended design values are the same for conditions (d) and (f) in the Commentary Table C-C2.1.  The reason is that any deviation from a perfectly frictionless hinge or pin introduces rotational restraint and tends to reduce K.  Therefore use of the theoretical values in these two cases is conservative."
+    LRFD Steel Design Second Edition: William T. Segui, 1999
+    
+
+    
+     The larger the effective length, the less strength there is in a column.  So, if there is a choice of effective lengths, the larger value will give the more conservative strength value.
+    
+   
+
+   
+    Actual length vs. effective length
+    
+     Sometimes the actual length of a member differs from the effective length.  This is true when a member is supported somewhere in the middle in addition to at the two ends.  The effective length then, is the length from one support to another.  Also, a member can be supported two different ways in two different axes.  For example, a column can be supported at the top in the bottom while looking at it in the x-direction, but braced in the middle when looking at it from the y-direction.  We refer to the distance between the supports in the y-direction and the x-direction as 
+    
+     
+      
+       L
+       y
+      
+     
+    
+    and 
+    
+     
+      
+       L
+       x
+      
+     
+    
+    , respectively.
+    
+   
+
+   
+    Using KL(x)
+    
+     The design strengths given in the column load tables beginning on page 4-21 are based on the effective length with respect to the y-axis.  A procedure was developed (as follows) to use
+     
+      
+       
+        
+         
+          K
+          x
+         
+        
+        L
+      
+     
+        
+
+    in the tabulated values.  
+       
+
+    
+     The tablulated values in chapter 4 of the Manual are in terms of the y-axis being the stong axis.  This means they are based on the values of KL being equal to KyL.  However, if a situation occurs where one would need the values of KL with respect to the x-axis, the following procedure can be used.
+    
+
+    
+     The KL as tabulated is equal to either 
+     
+      
+       
+        
+         
+          K
+          y
+         
+        
+        L
+      
+     
+     or 
+     
+      
+       
+        
+         
+          
+           
+            K
+            x
+           
+          
+          L
+        
+        
+         
+          
+           
+            r
+            x
+           
+          
+          /
+          
+           
+            r
+            y
+           
+          
+        
+       
+      
+        .  We can obtain 
+     
+      
+       
+        
+         
+          
+           
+            K
+            x
+           
+          
+          L
+        
+        
+         
+          
+           
+            r
+            x
+           
+          
+          /
+          
+           
+            r
+            y
+           
+          
+        
+      
+     
+        by:
+        
+         
+          
+           
+            
+             
+              
+               (KL)y
+               
+                
+                 r
+                 y
+                
+               
+             
+           
+             
+         
+         
+          
+           
+            
+             y
+             
+              
+               
+                
+                 r
+                 y
+                
+               
+               
+                
+                 r
+                 x
+                
+               
+             
+           
+          
+         
+         
+          
+           
+            
+             (KL)y
+             
+                
+                 KL
+                 
+                  
+                   
+                    
+                     r
+                     y
+                    
+                   
+                   
+                    
+                     r
+                     x
+                    
+                   
+                 
+               
+           
+          
+         
+         
+          
+
+
+           
+            
+             
+              
+               
+                
+                 K
+                 x
+                
+               
+               L
+             
+             
+              
+               
+                
+                 r
+                 x
+                
+               
+               /
+               
+                
+                 r
+                 y
+                
+               
+             
+           
+(KL)y
+
+          
+                   
+        
+
+    
+   
+  
+  
+
+
+</html>

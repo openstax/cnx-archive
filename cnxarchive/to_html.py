@@ -232,12 +232,20 @@ class ReferenceResolver:
 
 fix_reference_urls = ReferenceResolver.fix_reference_urls
 
+def fixup_cnxml(cnxml):
+    """Fix up cnxml so transformation will work
+    """
+    if '<m:' in cnxml and 'xmlns:m=' not in cnxml:
+        # To fix "Namespace prefix m on math is not defined",
+        # remove the prefix
+        cnxml = cnxml.replace('<m:', '<').replace('</m:', '</')
+    return cnxml
 
 def transform_cnxml_to_html(cnxml):
     """Transforms raw cnxml content to html."""
     xml_parser = etree.XMLParser(resolve_entities=False)
     gen_xsl = lambda f: etree.XSLT(etree.parse(f))
-    cnxml = etree.parse(BytesIO(cnxml), xml_parser)
+    cnxml = etree.parse(BytesIO(fixup_cnxml(cnxml)), xml_parser)
 
     # Transform the content to html.
     cnxml_to_html_filepath = os.path.join(XSL_DIRECTORY, 'cnxml-to-html5.xsl')

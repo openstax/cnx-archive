@@ -29,19 +29,23 @@ class TransformTests(unittest.TestCase):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
 
-        index_xml_filepath = os.path.join(TESTING_DATA_DIR,
-                                          'm42033-1.3.cnxml')
-        index_html_filepath = os.path.join(TESTING_DATA_DIR,
-                                           'm42033-1.3.html')
+        filenames_to_test = ['m42033-1.3', 'm10730-2.1']
 
-        with open(index_xml_filepath, 'r') as fp:
-            index_xml = fp.read()
-        from ..to_html import transform_cnxml_to_html
-        index_html = transform_cnxml_to_html(index_xml)
+        for filename in filenames_to_test:
 
-        with open(index_html_filepath, 'r') as fp:
-            expected_result = fp.read()
-        self.assertMultiLineEqual(index_html, expected_result)
+            index_xml_filepath = os.path.join(TESTING_DATA_DIR,
+                                              '{}.cnxml'.format(filename))
+            index_html_filepath = os.path.join(TESTING_DATA_DIR,
+                                               '{}.html'.format(filename))
+
+            with open(index_xml_filepath, 'r') as fp:
+                index_xml = fp.read()
+            from ..to_html import transform_cnxml_to_html
+            index_html = transform_cnxml_to_html(index_xml)
+
+            with open(index_html_filepath, 'r') as fp:
+                expected_result = fp.read()
+            self.assertMultiLineEqual(index_html, expected_result)
 
 
 class ToHtmlTestCase(unittest.TestCase):
