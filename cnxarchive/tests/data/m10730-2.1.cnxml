@@ -1,0 +1,298 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE module PUBLIC "-//CNX//DTD CNXML 0.4 plus MathML//EN" "http://cnx.rice.edu/cnxml/0.4/DTD/cnxml_mathml.dtd">
+
+<module id='effectivelength'>
+  <name>Effective Length</name>
+  <metadata xmlns:md="http://cnx.rice.edu/mdml/0.4">
+  <md:version>2.1</md:version>
+  <md:created>2002/07/10</md:created>
+  <md:revised>2003-01-13</md:revised>
+  <md:authorlist>
+    <md:author id="Joanna">
+      <md:firstname>Joanna</md:firstname>
+      
+      <md:surname>Gonzalez</md:surname>
+      <md:email>joannag@owlnet.rice.edu</md:email>
+    </md:author>
+  </md:authorlist>
+
+  <md:maintainerlist>
+    <md:maintainer id="Joanna">
+      <md:firstname>Joanna</md:firstname>
+      
+      <md:surname>Gonzalez</md:surname>
+      <md:email>joannag@owlnet.rice.edu</md:email>
+    </md:maintainer>
+  </md:maintainerlist>
+  
+  <md:keywordlist>
+    <md:keyword>effective length</md:keyword>
+    <md:keyword>K</md:keyword>
+  </md:keywordlist>
+
+  <md:abstract>(Blank Abstract)</md:abstract>
+</metadata>
+
+  <content>
+
+   <section id='defines'>
+    <name>Define effective length</name>
+    <para id='define'>
+     The equations for critical buckling load include the variable KL which is the <emphasis>effective length</emphasis>.  K is the <emphasis>effective length factor</emphasis>.  Values for <emphasis>K</emphasis> vary depending on the load and type of supports of a member.  A listing of the values can be found in the <emphasis>Manual</emphasis> on page <term>16.1-189</term> in Table C-C2.1.  For instance, the value for <emphasis>K</emphasis> with the condition that both ends of a column are rotation free and translation fixed (pinned) is 1.0.
+    </para>
+   </section>
+
+   <section id='sconservative'>
+    <name>Technical vs. recommended values of K</name>
+    <para id='conservative'>
+     "Two values for <emphasis>K</emphasis> are given: a theoretical value and a recommended design value to be used when the ideal end condition is approximated.  Hence, unless a 'fixed' end is perfectly fixed, the more conservative design values are to be used.  Only under the most extraordinary circumstances would the use of the theoretical values be justified.  Note, however, that the theoretical and recommended design values are the same for conditions (d) and (f) in the Commentary Table C-C2.1.  The reason is that any deviation from a perfectly frictionless hinge or pin introduces rotational restraint and tends to reduce <emphasis>K</emphasis>.  Therefore use of the theoretical values in these two cases is conservative."
+    <cite>LRFD Steel Design Second Edition: William T. Segui, 1999</cite>
+    </para>
+
+    <para id='note'>
+     <note type='note'>The larger the effective length, the less strength there is in a column.  So, if there is a choice of effective lengths, the larger value will give the more conservative strength value.</note>
+    </para>
+   </section>
+
+   <section id='smore'>
+    <name>Actual length vs. effective length</name>
+    <para id='more'>
+     Sometimes the actual length of a member differs from the effective length.  This is true when a member is supported somewhere in the middle in addition to at the two ends.  The effective length then, is the length from one support to another.  Also, a member can be supported two different ways in two different axes.  For example, a column can be supported at the top in the bottom while looking at it in the x-direction, but braced in the middle when looking at it from the y-direction.  We refer to the distance between the supports in the y-direction and the x-direction as 
+    <m:math>
+     <m:ci>
+      <m:msub>
+       <m:mi>L</m:mi>
+       <m:mi>y</m:mi>
+      </m:msub>
+     </m:ci>
+    </m:math>
+    and 
+    <m:math>
+     <m:ci>
+      <m:msub>
+       <m:mi>L</m:mi>
+       <m:mi>x</m:mi>
+      </m:msub>
+     </m:ci>
+    </m:math>
+    , respectively.
+    </para>
+   </section>
+
+   <section id='skl'>
+    <name>Using KL(x)</name>
+    <para id='para'>
+     The design strengths given in the column load tables beginning on page <term>4-21</term> are based on the effective length with respect to the y-axis.  A procedure was developed (as follows) to use
+     <m:math>
+      <m:apply>
+       <m:times/>
+        <m:ci>
+         <m:msub>
+          <m:mi>K</m:mi>
+          <m:mi>x</m:mi>
+         </m:msub>
+        </m:ci>
+        <m:ci>L</m:ci>
+      </m:apply>
+     </m:math>
+        
+
+    in the tabulated values.  
+    </para>   
+
+    <para id='tab'>
+     The tablulated values in chapter 4 of the <emphasis>Manual</emphasis> are in terms of the y-axis being the stong axis.  This means they are based on the values of KL being equal to KyL.  However, if a situation occurs where one would need the values of KL with respect to the x-axis, the following procedure can be used.
+    </para>
+
+    <para id='eqns'>
+     The KL as tabulated is equal to either 
+     <m:math>
+      <m:apply>
+       <m:times/>
+        <m:ci>
+         <m:msub>
+          <m:mi>K</m:mi>
+          <m:mi>y</m:mi>
+         </m:msub>
+        </m:ci>
+        <m:ci>L</m:ci>
+      </m:apply>
+     </m:math>
+     or 
+     <m:math>
+      <m:apply>
+       <m:divide/>
+        <m:apply>
+         <m:times/>
+          <m:ci>
+           <m:msub>
+            <m:mi>K</m:mi>
+            <m:mi>x</m:mi>
+           </m:msub>
+          </m:ci>
+          <m:ci>L</m:ci>
+        </m:apply>
+        <m:apply>
+         <m:times/>
+          <m:ci>
+           <m:msub>
+            <m:mi>r</m:mi>
+            <m:mi>x</m:mi>
+           </m:msub>
+          </m:ci>
+          <m:ci>/</m:ci>
+          <m:ci>
+           <m:msub>
+            <m:mi>r</m:mi>
+            <m:mi>y</m:mi>
+           </m:msub>
+          </m:ci>
+        </m:apply>
+       </m:apply>
+      </m:math>
+        .  We can obtain 
+     <m:math>
+      <m:apply>
+       <m:divide/>
+        <m:apply>
+         <m:times/>
+          <m:ci>
+           <m:msub>
+            <m:mi>K</m:mi>
+            <m:mi>x</m:mi>
+           </m:msub>
+          </m:ci>
+          <m:ci>L</m:ci>
+        </m:apply>
+        <m:apply>
+         <m:times/>
+          <m:ci>
+           <m:msub>
+            <m:mi>r</m:mi>
+            <m:mi>x</m:mi>
+           </m:msub>
+          </m:ci>
+          <m:ci>/</m:ci>
+          <m:ci>
+           <m:msub>
+            <m:mi>r</m:mi>
+            <m:mi>y</m:mi>
+           </m:msub>
+          </m:ci>
+        </m:apply>
+      </m:apply>
+     </m:math>
+        by:
+        <list type='enumerated' id='list1'>
+         <item>
+          <m:math>
+           <m:apply>
+            <m:eq/>
+             <m:apply>
+              <m:divide/>
+               <m:ci>(KL)y</m:ci>
+               <m:ci>
+                <m:msub>
+                 <m:mi>r</m:mi>
+                 <m:mi>y</m:mi>
+                </m:msub>
+               </m:ci>
+             </m:apply>
+           </m:apply>
+          </m:math>   
+         </item>
+         <item>
+          <m:math>
+           <m:apply>
+            <m:eq/>
+             <m:ci>y</m:ci>
+             <m:apply>
+              <m:divide/>
+               <m:ci>
+                <m:msub>
+                 <m:mi>r</m:mi>
+                 <m:mi>y</m:mi>
+                </m:msub>
+               </m:ci>
+               <m:ci>
+                <m:msub>
+                 <m:mi>r</m:mi>
+                 <m:mi>x</m:mi>
+                </m:msub>
+               </m:ci>
+             </m:apply>
+           </m:apply>
+          </m:math>
+         </item>
+         <item>
+          <m:math>
+           <m:apply>
+            <m:eq/>
+             <m:ci>(KL)y</m:ci>
+             <m:apply>
+                <m:times/>
+                 <m:ci>KL</m:ci>
+                 <m:apply>
+                  <m:divide/>
+                   <m:ci>
+                    <m:msub>
+                     <m:mi>r</m:mi>
+                     <m:mi>y</m:mi>
+                    </m:msub>
+                   </m:ci>
+                   <m:ci>
+                    <m:msub>
+                     <m:mi>r</m:mi>
+                     <m:mi>x</m:mi>
+                    </m:msub>
+                   </m:ci>
+                 </m:apply>
+               </m:apply>
+           </m:apply>
+          </m:math>
+         </item>
+         <item>
+          <m:math>
+<m:apply>
+<m:eq/>
+           <m:apply>
+            <m:divide/>
+             <m:apply>
+              <m:times/>
+               <m:ci>
+                <m:msub>
+                 <m:mi>K</m:mi>
+                 <m:mi>x</m:mi>
+                </m:msub>
+               </m:ci>
+               <m:ci>L</m:ci>
+             </m:apply>
+             <m:apply>
+              <m:times/>
+               <m:ci>
+                <m:msub>
+                 <m:mi>r</m:mi>
+                 <m:mi>x</m:mi>
+                </m:msub>
+               </m:ci>
+               <m:ci>/</m:ci>
+               <m:ci>
+                <m:msub>
+                 <m:mi>r</m:mi>
+                 <m:mi>y</m:mi>
+                </m:msub>
+               </m:ci>
+             </m:apply>
+           </m:apply>
+<m:ci>(KL)y</m:ci>
+</m:apply>
+          </m:math>
+         </item>          
+        </list>
+
+    </para>
+   </section>
+  </content>
+  
+</module>
+
