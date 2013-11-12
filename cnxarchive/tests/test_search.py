@@ -91,11 +91,13 @@ class SearchModelTestCase(unittest.TestCase):
         results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
 
         self.assertEqual(len(results), 15)
-        # Check the mediaType counts.
+        # Check the type counts.
         from ..utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
-        media_types = dict(results.counts['mediaType'])
-        self.assertEqual(media_types[MODULE_MIMETYPE], 14)
-        self.assertEqual(media_types[COLLECTION_MIMETYPE], 1)
+        types = results.counts['type']
+        self.assertEqual(types, [
+            (('Book', {u'mediaType': COLLECTION_MIMETYPE}), 1),
+            (('Page', {u'mediaType': MODULE_MIMETYPE}), 14),
+            ])
         # Check the author counts
         osc_physics = {u'email': u'info@openstaxcollege.org',
                        u'firstname': u'College',
@@ -117,7 +119,8 @@ class SearchModelTestCase(unittest.TestCase):
                              u'email': u'info@openstaxcollege.org'}
 
         self.assertEqual(results.counts['author'],
-                         [(open_stax_college, 15), (osc_physics, 1)])
+                         [((open_stax_college['id'], open_stax_college), 15),
+                          ((osc_physics['id'], osc_physics), 1)])
 
         # Check counts for publication year.
         pub_years = list(results.counts['pubYear'])
