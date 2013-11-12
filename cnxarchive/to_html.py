@@ -78,11 +78,26 @@ class InvalidReference(BaseReferenceException):
         super(InvalidReference, self).__init__(msg, document_ident, reference)
 
 
+class CnxmlVersionNotSupportedException(Exception):
+    """Raised when dealing with cnxml versions that we don't support"""
+    message = 'CNXML version not supported'
+
+    def __str__(self):
+        return self.message
+
+
 PATH_REFERENCE_REGEX = re.compile(
     r'^(/?(content/)?(?P<module>(m|col)\d{5})(/(?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
     re.IGNORECASE)
 MODULE_REFERENCE = 'module-reference'
 RESOURCE_REFERENCE = 'resource-reference'
+
+
+def check_cnxml_version_supported(cnxml):
+    supported_versions = ('0.6', '0.7')
+    m = re.search('cnxml-version="([^"]*)"', cnxml)
+    if not m or m.group(1) not in supported_versions:
+        raise CnxmlVersionNotSupportedException
 
 
 def parse_reference(ref):
@@ -235,6 +250,8 @@ fix_reference_urls = ReferenceResolver.fix_reference_urls
 
 def transform_cnxml_to_html(cnxml):
     """Transforms raw cnxml content to html."""
+    check_cnxml_version_supported(cnxml)
+
     xml_parser = etree.XMLParser(resolve_entities=False)
     gen_xsl = lambda f: etree.XSLT(etree.parse(f))
     cnxml = etree.parse(BytesIO(cnxml), xml_parser)
