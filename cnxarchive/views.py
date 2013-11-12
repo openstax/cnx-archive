@@ -324,8 +324,19 @@ def search(environ, start_response):
             })
     result_limits = []
     for count_name, values in db_results.counts.items():
+        if not values:
+            continue
+        result_limits.append({'tag': count_name,
+                              'values': []})
         for keyword, count in values:
-            result_limits.append({count_name:keyword, 'count': count})
+            value = {}
+            if isinstance(keyword, tuple):
+                value['value'] = keyword[0]
+                value['meta'] = keyword[1]
+            else:
+                value['value'] = keyword
+            value['count'] = count
+            result_limits[-1]['values'].append(value)
     results['results']['limits'] = result_limits
 
     status = '200 OK'
