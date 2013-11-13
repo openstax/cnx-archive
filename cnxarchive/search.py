@@ -516,7 +516,7 @@ def _build_search(structured_query, weights):
             #   in the database.
             stmt = _transmute_sort(sort)
             sorts.append(stmt)
-    sorts.append('weight DESC')
+    sorts.extend(('weight DESC','uuid DESC'))
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
