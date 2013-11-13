@@ -253,7 +253,7 @@ class QueryResults(Sequence):
         self._unmatched_terms = applied_results[1]
         self._matched_terms = applied_results[2]
         self.counts = {
-            'mediaType': self._count_media(),
+            'type': self._count_media(),
             'subject': self._count_field('subjects'),
             'keyword': self._count_field('keywords',
                                          max_results=MAX_VALUES_FOR_KEYWORDS),
@@ -303,7 +303,10 @@ class QueryResults(Sequence):
             }
         for rec in self._records:
             counts[portaltype_to_mimetype(rec['mediaType'])] += 1
-        return counts.iteritems()
+        return [(('Book', {'mediaType': COLLECTION_MIMETYPE}),
+                 counts[COLLECTION_MIMETYPE]),
+                (('Page', {'mediaType': MODULE_MIMETYPE}),
+                 counts[MODULE_MIMETYPE])]
 
     def _count_authors(self):
         counts = {}
@@ -317,12 +320,14 @@ class QueryResults(Sequence):
         authors = []
         for uid, count in counts.iteritems():
             author = uid_author[uid]
-            authors.append((author, count))
+            authors.append(((uid, author), count))
 
         def sort_name(a, b):
-            result = cmp(a[0]['surname'], b[0]['surname'])
+            (uid_a, author_a), count_a = a
+            (uid_b, author_b), count_b = b
+            result = cmp(author_a['surname'], author_b['surname'])
             if result == 0:
-                result = cmp(a[0]['firstname'], b[0]['firstname'])
+                result = cmp(author_a['firstname'], author_b['firstname'])
             return result
         # Sort authors by surname then first name
         authors.sort(sort_name)
