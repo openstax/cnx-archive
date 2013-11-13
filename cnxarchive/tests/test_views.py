@@ -306,7 +306,7 @@ SEARCH_RESULTS = {
             {u'tag': u'pubYear',
              u'values': [{u'value': u'2013',
                           u'count': 2}]},
-            {u'tag': u'author',
+            {u'tag': u'authorID',
              u'values': [{u'value': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                           u'count': 2,
                           u'meta': {u'email': u'info@openstaxcollege.org',

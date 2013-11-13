@@ -118,7 +118,7 @@ class SearchModelTestCase(unittest.TestCase):
                              u'fullname': u'OpenStax College',
                              u'email': u'info@openstaxcollege.org'}
 
-        self.assertEqual(results.counts['author'],
+        self.assertEqual(results.counts['authorID'],
                          [((open_stax_college['id'], open_stax_college), 15),
                           ((osc_physics['id'], osc_physics), 1)])
 
