@@ -257,7 +257,7 @@ class QueryResults(Sequence):
             'subject': self._count_field('subjects'),
             'keyword': self._count_field('keywords',
                                          max_results=MAX_VALUES_FOR_KEYWORDS),
-            'author': self._count_authors(),
+            'authorID': self._count_authors(),
             'pubYear': self._count_publication_year(),
             }
 
