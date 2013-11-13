@@ -21,7 +21,7 @@ Install the PostgreSQL database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will require a ``PostgreSQL`` install
-that is greater than or equal to version 9.3.
+that is greater than or equal to version **9.3**.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
 
@@ -64,10 +64,13 @@ assuming you have both `PostgresApp` and
 ::
 
     brew install libxml2 libxslt
+    which psql # Make sure this returns: /Applications/Postgres93.app/Contents/MacOS/bin/psql
+               # Otherwise, you may need to add this path to ~/.profile
     git clone https://github.com/petere/plxslt
     cd plxslt
     export PKG_CONFIG_PATH=/usr/local/opt/libxml2/lib/pkgconfig:/usr/local/opt/libxslt/lib/pkgconfig
     make && make install
+    cd ..
 
 On a Debian based system, the installation is as follows::
 
@@ -75,6 +78,7 @@ On a Debian based system, the installation is as follows::
     git clone https://github.com/petere/plxslt
     cd plxslt
     make && make install
+    cd ..
 
 Set up the database and user
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -99,12 +103,28 @@ the default cluster, as defined above)::
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
     createdb -U postgres -O cnxarchive cnxarchive
 
+**OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
+
 Installing the application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Note**: cnx-archive requires the packages in this section to be installed
 with the system python. Specifically it needs to be installed to the python
 that postgresql uses for python triggers.
+
+**OSX Development Note:** (Use at your own risk!) Instead of installing system python packages (so Postgres has access to them) you can link your virtualenv site-packages directory to your Home sitepackages dir::
+
+    # Create the virtualenv dirs
+    virtualenv .
+    # Note: replace `getusersitepackages` with `getsitepackages[-1]` if postgres is not running as you
+    USER_SITEPACKAGES=$(python -c 'import site;print(site.getusersitepackages())')
+    # Make sure the user/system site-packages dir exists.
+    mkdir -p ${USER_SITEPACKAGES}
+    # Link the virtualenv site-packages to the user/system
+    ln -s ./lib/python2.7/site-packages ${USER_SITEPACKAGES}
+    # Start up the virtualenv
+    source bin/activate
+    # Follow the steps below
 
 Before installing cnx-archive, you need to first install the
 dependencies that have not been released to the public package repositories::
