@@ -340,9 +340,10 @@ def produce_html_for_module(db_connection, cursor, ident):
         # Fix up content references to cnx-archive specific urls.
         index_html, bad_refs = fix_reference_urls(db_connection, ident,
                                                   BytesIO(index_html))
-        message = 'Invalid References: {}' \
-            .format('; '.join(bad_refs))
-        # Insert the collection.html into the database.
+        if bad_refs:
+            message = 'Invalid References: {}'.format('; '.join(bad_refs))
+
+        # Insert the index.html into the database.
         payload = (memoryview(index_html),)
         cursor.execute("INSERT INTO files (file) VALUES (%s) "
                        "RETURNING fileid;", payload)
