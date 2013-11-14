@@ -175,7 +175,7 @@ class ToHtmlTestCase(unittest.TestCase):
             with open(content_filepath, 'r') as fb:
                 content = transform_cnxml_to_html(fb.read())
                 content = BytesIO(content)
-                content = fix_reference_urls(db_connection, ident, content)
+                content, bad_refs = fix_reference_urls(db_connection, ident, content)
 
         # Read the content for the reference changes.
         expected_img_ref = '<img src="../resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
