@@ -16,7 +16,7 @@ from lxml import etree
 
 PARSER_OPTIONS={ 'load_dtd':True,
                 'resolve_entities':True,
-                'no_network':True,
+#                'no_network':True,  don't force loading our cnxml/DTD packages
                 'attribute_defaults':False,
                 }
 
