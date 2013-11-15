@@ -133,41 +133,47 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.fail("Not implemented. " \
                   "See https://github.com/Connexions/cnx-upgrade/issues/23")
 
-    def test_module_transform_w_invalid_data(self):
-        # Case to test for an unsuccessful transformation of a module from
-        #   cnxml to html.
-        ident = 2  # m42955
-        # Hack a chunk out of the file to ensure it fails.
+    def _make_document_data_invalid(self, ident=2, filename='index.cnxml'):
+        """Hacks a chunk out of the file given as ``filename``
+        at module with the given ``ident``.
+        This to ensure a transform failure.
+        """
+        ##ident = 2  # m42955
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT file from files "
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = %s "
-                               "         AND filename = 'index.cnxml');",
-                               (ident,))
+                               "         AND filename = %s);",
+                               (ident, filename))
                 index_cnxml = cursor.fetchone()[0][:]
                 # Make a mess of things...
                 content = index_cnxml[:600] + index_cnxml[700:]
-                payload = (psycopg2.Binary(content), ident,)
+                payload = (psycopg2.Binary(content), ident, filename,)
                 cursor.execute("UPDATE files SET file = %s "
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = %s "
-                               "         AND filename = 'index.cnxml');",
+                               "         AND filename = %s);",
                                payload)
             db_connection.commit()
+        return ident
 
-        from ..to_html import produce_html_for_modules
-        with psycopg2.connect(self.connection_string) as db_connection:
-            values = [v for v in produce_html_for_modules(db_connection)]
-            db_connection.commit()
+    def test_transform_w_invalid_data(self):
+        # Case to test for an unsuccessful transformation of a module.
+        #   The xml is invalid, therefore the transform cannot succeed.
+        ident = self._make_document_data_invalid()
 
-        message_dict = dict(values)
-        self.assertIsNotNone(message_dict[ident])
-        self.assertEqual(message_dict[ident],
-                         u"While attempting to transform the content we ran into an error: Failed to parse QName 'md:tit47:', " \
-                             "line 11, column 12")
+        with self.assertRaises(Exception) as caught_exc:
+            self.call_target(ident)
+
+        exception = caught_exc.exception
+        from lxml.etree import XMLSyntaxError
+        self.assertTrue(isinstance(exception, XMLSyntaxError))
+        self.assertEqual(
+                exception.message,
+                u"Failed to parse QName 'md:tit47:', line 11, column 12")
 
     def test_module_transform_of_references(self):
         # Case to test that a document's internal references have
