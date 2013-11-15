@@ -67,39 +67,6 @@ class ToHtmlTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
-    # def test_collection_transform(self):
-    #     # Case to test for a successful tranformation of a collection from
-    #     #   collxml to html.
-    #     from ..to_html import produce_html_for_collections
-    #     with psycopg2.connect(self.connection_string) as db_connection:
-    #         iterator = produce_html_for_collections(db_connection)
-    #         collection_id, message = iterator.next()
-    #         db_connection.commit()
-
-    #     with psycopg2.connect(self.connection_string) as db_connection:
-    #         with db_connection.cursor() as cursor:
-    #             cursor.execute("SELECT file FROM files "
-    #                            "  WHERE fileid = "
-    #                            "    (SELECT fileid FROM module_files "
-    #                            "       WHERE module_ident = %s "
-    #                            "         AND filename = 'collection.html');",
-    #                            (collection_id,))
-    #             collection_html = cursor.fetchone()[0][:]
-    #     # We only need to test that the file got transformed and placed
-    #     #   placed in the database, the transform itself should be verified.
-    #     #   independent of this code.
-    #     self.assertTrue(collection_html.find('<html') >= 0)
-
-    # def test_collection_transform_w_invalid_data(self):
-    #     # Case to test for an unsuccessful tranformation of a collection from
-    #     #   collxml to html.
-    #     pass
-
-    # def test_collection_transform_exists(self):
-    #     # Case to test for a successful tranformation with an existing
-    #     #   transform from collxml to html has already been done.
-    #     pass
-
     def test_module_transform(self):
         # Case to test for a successful tranformation of a module from
         #   cnxml to html.
