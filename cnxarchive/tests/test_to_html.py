@@ -44,7 +44,7 @@ class TransformTests(unittest.TestCase):
         self.assertMultiLineEqual(index_html, expected_result)
 
 
-class ToHtmlTestCase(unittest.TestCase):
+class ModuleToHtmlTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
     @classmethod
@@ -66,6 +66,48 @@ class ToHtmlTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    def call_target(self, *args, **kwargs):
+        """Call the target function. This wrapping takes care of the
+        connection parameters.
+        """
+        from ..to_html import produce_html_for_module
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                return produce_html_for_module(db_connection, cursor,
+                                               *args, **kwargs)
+
+    def test_cnxml_source_missing(self):
+        # Case to test that we catch/raise exceptions when the source
+        #   CNXML file for a document can't be found.
+        ident, filename = 2, 'index.cnxml'
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("DELETE FROM module_files "
+                               "WHERE module_ident = %s AND filename = %s;",
+                               (ident, filename,))
+            db_connection.commit()
+
+        from ..to_html import DocumentOrSourceMissing
+        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+            self.call_target(ident, filename)
+        exception = caught_exc.exception
+
+        self.assertEqual(exception.document_ident, ident)
+        self.assertEqual(exception.filename, filename)
+
+    def test_missing_document(self):
+        # Case to test that we catch/raise exceptions when the document
+        #   can't be found.
+        ident, filename = 0, 'index.cnxml'
+
+        from ..to_html import DocumentOrSourceMissing
+        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+            self.call_target(ident, filename)
+        exception = caught_exc.exception
+
+        self.assertEqual(exception.document_ident, ident)
+        self.assertEqual(exception.filename, filename)
 
     def test_module_transform(self):
         # Case to test for a successful tranformation of a module from

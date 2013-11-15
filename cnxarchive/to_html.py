@@ -59,6 +59,20 @@ SELECT module_ident FROM modules AS m
 """
 
 
+class DocumentOrSourceMissing(Exception):
+    """Used to signify that the document or source XML document
+    cannot be found.
+    """
+
+    def __init__(self, document_ident, filename):
+        self.document_ident = document_ident
+        self.filename = filename
+        msg = "Cannot find document (at ident: {}) " \
+              "or file with filename '{}'." \
+              .format(self.document_ident, self.filename)
+        super(DocumentOrSourceMissing, self).__init__(msg)
+
+
 class BaseReferenceException(Exception):
     """Not for direct use, but used to subclass other exceptions."""
 
@@ -259,52 +273,51 @@ def transform_cnxml_to_html(cnxml):
     return html
 
 
-def produce_html_for_module(db_connection, cursor, ident):
-    message = None
-    # FIXME There is a better way to join this information, but
-    #       for the sake of testing scope stick with the simple yet
-    #       redundant lookups.
+def produce_html_for_module(db_connection, cursor, ident,
+                            source_filename='index.cnxml'):
+    """Produce and 'index.html' file for the module at ``ident``.
+    Raises exceptions when the transform cannot be completed.
+    Returns a message containing warnings and other information that
+    does not effect the HTML content, but may affect the user experience
+    of it.
+    """
+    cursor.execute("SELECT convert_from(file, 'utf-8') "
+                   "FROM module_files "
+                   "     NATURAL LEFT JOIN files "
+                   "WHERE module_ident = %s "
+                   "      AND filename = %s;",
+                   (ident, source_filename,))
     try:
-        cursor.execute("SELECT filename, fileid FROM module_files "
-                       "  WHERE module_ident = %s;", (ident,))
-    except Exception as e:
-        message = e.message
-    else:
-        file_metadata = dict(cursor.fetchall())
-        file_id = file_metadata['index.cnxml']
-        # Grab the file for transformation.
-        cursor.execute("SELECT file FROM files WHERE fileid = %s;",
-                       (file_id,))
-        cnxml = cursor.fetchone()[0]
-        cnxml = cnxml[:]
-    try:
-        index_html = transform_cnxml_to_html(cnxml)
-    except Exception as exc:
-        # TODO Log the exception in more detail.
-        message = "While attempting to transform the content we ran into " \
-                  "an error: " + exc.message
-    else:
-        # Fix up content references to cnx-archive specific urls.
-        index_html, bad_refs = fix_reference_urls(db_connection, ident,
-                                                  BytesIO(index_html))
-        if bad_refs:
-            message = 'Invalid References: {}'.format('; '.join(bad_refs))
+        cnxml = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
+    except TypeError:  # None returned
+        raise DocumentOrSourceMissing(ident, source_filename)
 
-        # Insert the index.html into the database.
-        payload = (memoryview(index_html),)
-        cursor.execute("INSERT INTO files (file) VALUES (%s) "
-                       "RETURNING fileid;", payload)
-        html_file_id = cursor.fetchone()[0]
-        cursor.execute("INSERT INTO module_files "
-                       "  (module_ident, fileid, filename, mimetype) "
-                       "  VALUES (%s, %s, %s, %s);",
-                       (ident, html_file_id,
-                        'index.html', 'text/html',))
+    # Transform the content.
+    index_html = transform_cnxml_to_html(cnxml)
+
+    # Fix up content references to cnx-archive specific urls.
+    index_html, bad_refs = fix_reference_urls(db_connection, ident,
+                                              BytesIO(index_html))
+    if bad_refs:
+        message = 'Invalid References: {}'.format('; '.join(bad_refs))
+    else:
+        message = None
+
+    # Insert the index.html into the database.
+    payload = (memoryview(index_html),)
+    cursor.execute("INSERT INTO files (file) VALUES (%s) "
+                   "RETURNING fileid;", payload)
+    html_file_id = cursor.fetchone()[0]
+    cursor.execute("INSERT INTO module_files "
+                   "  (module_ident, fileid, filename, mimetype) "
+                   "  VALUES (%s, %s, %s, %s);",
+                   (ident, html_file_id, 'index.html', 'text/html',))
     return message
 
 
 def produce_html_for_modules(db_connection,
-                             id_select_query=DEFAULT_ID_SELECT_QUERY):
+                             id_select_query=DEFAULT_ID_SELECT_QUERY,
+                             source_filename='index.cnxml'):
     """Produce HTML files of existing module documents. This will
     do the work on all modules in the database.
 
@@ -320,7 +333,12 @@ def produce_html_for_modules(db_connection,
 
     for ident in idents:
         with db_connection.cursor() as cursor:
-            message = produce_html_for_module(db_connection, cursor, ident)
+            try:
+                produce_html_for_module(db_connection, cursor, ident,
+                                        source_filename)
+            except Exception as exc:
+                message = exc.message
+            else:
+                message = ''
         yield (ident, message)
-
     raise StopIteration
