@@ -413,6 +413,19 @@ class SearchTestCase(unittest.TestCase):
                     "WHERE uuid IN %s RETURNING module_ident".format(year),
                     [tuple(ids)])
 
+    def test_pubYear_limit(self):
+        self._pubYear_setup()
+
+        # Test for limit only results with pubYear 2013
+        query_params = [('pubYear', '2013')]
+
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 12)
+        self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
+        self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
+        self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
+
     def test_pubYear_filter(self):
         self._pubYear_setup()
 
@@ -492,15 +505,15 @@ class SearchTestCase(unittest.TestCase):
                         ('subject', 'Science and Technology')]
 
         results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
-        result_ids = [r['id'] for r in results]
+        result_weights = [(r['id'],r['weight']) for r in results]
         self.assertEqual(len(results), 7)
-        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                                      '56f1c5c1-4014-450d-a477-2121e276beca',
-                                      'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
-                                      '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                                      '26346a42-84b9-48ad-9f6a-62303c16ad41',
-                                      'f6024d8a-1868-44c7-ab65-45419ef54881',
-                                      'c0a76659-c311-405f-9a99-15c71af39325',
+        self.assertEqual(result_weights, [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597',221),
+                                      (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',21),
+                                      (u'56f1c5c1-4014-450d-a477-2121e276beca',21),
+                                      (u'f6024d8a-1868-44c7-ab65-45419ef54881',20),
+                                      (u'c0a76659-c311-405f-9a99-15c71af39325',20),
+                                      (u'26346a42-84b9-48ad-9f6a-62303c16ad41',20),
+                                      (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',20),
                                      ])
 
     def test_subject_and_subject(self):
