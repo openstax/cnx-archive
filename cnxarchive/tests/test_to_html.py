@@ -175,10 +175,33 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                 exception.message,
                 u"Failed to parse QName 'md:tit47:', line 11, column 12")
 
-    def test_module_transform_of_references(self):
+
+class ReferenceResolutionTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.connection_string = cls.fixture._connection_string
+        cls._db_connection = psycopg2.connect(cls.connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+                cursor.execute(fp.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test_reference_rewrites(self):
         # Case to test that a document's internal references have
         #   been rewritten to the cnx-archive's read-only API routes.
-
         ident = 3
         from ..to_html import (
             fix_reference_urls, transform_cnxml_to_html)
