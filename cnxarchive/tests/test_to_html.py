@@ -109,15 +109,12 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.assertEqual(exception.document_ident, ident)
         self.assertEqual(exception.filename, filename)
 
-    def test_module_transform(self):
+    def test_success(self):
         # Case to test for a successful tranformation of a module from
         #   cnxml to html.
-        from ..to_html import produce_html_for_modules
-        with psycopg2.connect(self.connection_string) as db_connection:
-            values = [v for v in produce_html_for_modules(db_connection)]
-            db_connection.commit()
+        ident, filename = 2, 'index.cnxml'  # m42955
+        self.call_target(ident)
 
-        ident = 2  # m42955
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT file FROM files "
@@ -132,8 +129,9 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   independent of this code.
         self.assertTrue(index_html.find('<html') >= 0)
 
-    def test_module_transform_exists(self):
-        pass
+    def test_exists(self):
+        self.fail("Not implemented. " \
+                  "See https://github.com/Connexions/cnx-upgrade/issues/23")
 
     def test_module_transform_w_invalid_data(self):
         # Case to test for an unsuccessful transformation of a module from
