@@ -25,6 +25,10 @@ class TransformTests(unittest.TestCase):
 
     maxDiff = 40000
 
+    def call_target(self, *args, **kwargs):
+        from ..to_html import transform_cnxml_to_html
+        return transform_cnxml_to_html(*args, **kwargs)
+
     def test_cnxml_to_html(self):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
@@ -36,12 +40,23 @@ class TransformTests(unittest.TestCase):
 
         with open(index_xml_filepath, 'r') as fp:
             index_xml = fp.read()
-        from ..to_html import transform_cnxml_to_html
-        index_html = transform_cnxml_to_html(index_xml)
+        index_html = self.call_target(index_xml)
 
         with open(index_html_filepath, 'r') as fp:
             expected_result = fp.read()
         self.assertMultiLineEqual(index_html, expected_result)
+
+    def test_module_transform_entity_expansion(self):
+        # Case to test that a document's internal entities have been
+        # deref'ed from the DTD and expanded
+
+        from ..to_html import transform_cnxml_to_html
+        content_filepath = os.path.join(TESTING_DATA_DIR,
+                                        'm10761-2.3.cnxml')
+        with open(content_filepath, 'r') as fb:
+            content = self.call_target(fb.read())
+        # &#995; is expansion of &lambda;
+        self.assertTrue(content.find('&#955;') >= 0)
 
 
 class ModuleToHtmlTestCase(unittest.TestCase):
@@ -220,18 +235,4 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         self.assertTrue(content.find(expected_internal_ref) >= 0)
         expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
-
-    def test_module_transform_entity_expansion(self):
-        # Case to test that a document's internal entities have been
-        # deref'ed from the DTD and expanded
-
-        from ..to_html import (
-            fix_reference_urls, transform_cnxml_to_html)
-        with psycopg2.connect(self.connection_string) as db_connection:
-            content_filepath = os.path.join(TESTING_DATA_DIR,
-                                            'm10761-2.3.cnxml')
-            with open(content_filepath, 'r') as fb:
-                content = transform_cnxml_to_html(fb.read())
-            # &#995; is expansion of &lambda;
-            self.assertTrue(content.find('&#955;') >= 0)
 
