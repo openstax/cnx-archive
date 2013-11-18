@@ -1,0 +1,258 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE document PUBLIC "-//CNX//DTD CNXML 0.5 plus MathML//EN" "http://cnx.rice.edu/cnxml/0.5/DTD/cnxml_mathml.dtd">
+
+  <document xmlns="http://cnx.rice.edu/cnxml"
+    xmlns:md="http://cnx.rice.edu/mdml/0.4"
+    xmlns:m="http://www.w3.org/1998/Math/MathML"
+    id="m10761">
+    <name>Flange Local Buckling</name>
+    <metadata xmlns:md="http://cnx.rice.edu/mdml/0.4">
+  <md:version>2.3</md:version>
+  <md:created>2002/07/29</md:created>
+  <md:revised>2003/07/25 10:04:34 GMT-5</md:revised>
+  <md:authorlist>
+      <md:author id="terk">
+      <md:firstname>Michael</md:firstname>
+      
+      <md:surname>Terk</md:surname>
+      <md:email>terk@rice.edu</md:email>
+    </md:author>
+  </md:authorlist>
+
+  <md:maintainerlist>
+    <md:maintainer id="Joanna">
+      <md:firstname>Joanna</md:firstname>
+      
+      <md:surname>Gonzalez</md:surname>
+      <md:email>joannag@owlnet.rice.edu</md:email>
+    </md:maintainer>
+    <md:maintainer id="terk">
+      <md:firstname>Michael</md:firstname>
+      
+      <md:surname>Terk</md:surname>
+      <md:email>terk@rice.edu</md:email>
+    </md:maintainer>
+    <md:maintainer id="jsilv">
+      <md:firstname>Jeffrey</md:firstname>
+      
+      <md:surname>Silverman</md:surname>
+      <md:email>jsilv@rice.edu</md:email>
+    </md:maintainer>
+  </md:maintainerlist>
+  
+  <md:keywordlist>
+    <md:keyword>beam</md:keyword>
+    <md:keyword>buckling</md:keyword>
+    <md:keyword>flange</md:keyword>
+    <md:keyword>limit state</md:keyword>
+    <md:keyword>local</md:keyword>
+  </md:keywordlist>
+
+  <md:abstract>(Blank Abstract)</md:abstract>
+</metadata>
+
+    <content>
+
+      <section id='intro'>
+	<name>Introduction to Flange Local Buckling</name>
+	<para id='intro2'>
+	  The fourth limit state for beams is Flange Local Buckling,
+	  or FLB for short.  It is exactly the same as Web Local
+	  Buckling, except the width-thickness ratio is in terms of
+	  the flange and not the web.  This type of buckling occurs
+	  when the width-thickness ratio is not large enough to
+	  withstand the moment on the beam.  The way to prevent this
+	  type of buckling is to limit the with-thickness ratio.
+	</para>
+
+	<para id='intro3'>
+	  The limits can be computed for flange local buckling.  The
+	  width-thickness ratio is compared to
+	  <m:math>
+	    <m:ci>
+	      <m:msub>
+		<m:mi>&lambda;</m:mi>
+		<m:mi>p</m:mi>
+	      </m:msub>
+	    </m:ci>
+	  </m:math> 
+	  and 
+	  <m:math>
+	    <m:ci>
+	      <m:msub>
+		<m:mi>&lambda;</m:mi>
+		<m:mi>r</m:mi>
+	      </m:msub>
+	    </m:ci>
+	  </m:math>
+	  .  Then the maximum moment can be calculated.
+	</para>
+      </section>
+
+      <section id='eqns'>
+	<name>Equations to determine FLB</name>
+	<figure id='eqns1'>
+	  <media type="image/bmp" src="compactgraph.bmp"/>
+	  <caption>The graph illustrates the options for FLB</caption>
+	</figure>
+
+	<para id='eqns2'>
+	  When,
+	  <equation id='eqns3'> 
+	    <m:math>
+	      <m:apply>
+		<m:lt/>
+		<m:apply>
+		  <m:divide/>
+		  <m:ci>b</m:ci>
+		  <m:ci>t</m:ci>
+		</m:apply>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>&lambda;</m:mi>
+		    <m:mi>p</m:mi>
+		  </m:msub>
+		</m:ci>
+	      </m:apply>
+	    </m:math>
+	  </equation>
+	  there is no FLB and the cross section is compact because,
+	  <equation id='eqns4'>
+	    <m:math>
+	      <m:apply>
+		<m:eq/>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>M</m:mi>
+		    <m:mi>n</m:mi>
+		  </m:msub>
+		</m:ci>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>M</m:mi>
+		    <m:mi>p</m:mi>
+		  </m:msub>
+		</m:ci>    
+	      </m:apply>
+	    </m:math>
+	  </equation>
+
+	  <equation id='eqns5'>
+	    <m:math>
+	      <m:apply>
+		<m:leq/>
+		<m:apply>
+		  <m:eq/>
+		  <m:ci>
+		    <m:msub>
+		      <m:mi>M</m:mi>
+		      <m:mi>p</m:mi>
+		    </m:msub>
+		  </m:ci>
+		  <m:apply>
+		    <m:times/>
+		    <m:ci>
+		      <m:msub>
+			<m:mi>F</m:mi>
+			<m:mi>y</m:mi>
+		      </m:msub>
+		    </m:ci>
+		    <m:ci>Z</m:ci>
+		  </m:apply>
+		</m:apply>
+		<m:apply>
+		  <m:times/>
+		  <m:cn>1.5</m:cn>
+		  <m:ci>
+		    <m:msub>
+		      <m:mi>M</m:mi>
+		      <m:mi>y</m:mi>
+		    </m:msub>
+		  </m:ci>
+		</m:apply>
+	      </m:apply>
+	    </m:math>
+	  </equation>
+
+	  from the yielding state.
+	</para>
+	
+	<para id='eqns6'>
+	  When,
+	  <equation id='eqns7'>
+	    <m:math>
+	      <m:apply>
+		<m:lt/>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>&lambda;</m:mi>
+		    <m:mi>p</m:mi>
+		  </m:msub>
+		</m:ci>
+		<m:apply>
+		  <m:divide/>
+		  <m:ci>b</m:ci>
+		  <m:ci>t</m:ci>
+		</m:apply>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>&lambda;</m:mi>
+		    <m:mi>r</m:mi>
+		  </m:msub>
+		</m:ci>
+	      </m:apply>
+	    </m:math>
+	  </equation>
+	  the graph is linear, and therefore a linear interpolation between
+	  <m:math>
+	    <m:ci>
+	      <m:msub>
+		<m:mi>M</m:mi>
+		<m:mi>p</m:mi>
+	      </m:msub>
+	    </m:ci>
+	  </m:math>
+	  and
+	  <m:math>
+	    <m:ci>
+	      <m:msub>
+		<m:mi>M</m:mi>
+		<m:mi>y</m:mi>
+	      </m:msub>
+	    </m:ci>
+	  </m:math>
+	  is used for the maximum moment.
+	</para>
+	
+	<para id='eqns8'>
+	  And finally, when
+	  <m:equation id='eqns9'>
+	    <m:math>
+	      <m:apply>
+		<m:gt/>
+		<m:apply>
+		  <m:divide/>
+		  <m:ci>b</m:ci>
+		  <m:ci>t</m:ci>
+		</m:apply>
+		<m:ci>
+		  <m:msub>
+		    <m:mi>&lambda;</m:mi>
+		    <m:mi>r</m:mi>
+		  </m:msub>
+		</m:ci>
+	      </m:apply>
+	    </m:math>
+	  </m:equation>
+	  the graph is non-linear, the flange is non-slender, and
+	  there is an equation to find the maximum moment in Appendix
+	  F of the Specification section of the
+	  <emphasis>Manual</emphasis> (page 16.1-96).
+	</para>
+      </section>
+
+
+    </content>
+    
+  </document>
+

@@ -184,3 +184,18 @@ class ToHtmlTestCase(unittest.TestCase):
         self.assertTrue(content.find(expected_internal_ref) >= 0)
         expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
+
+    def test_module_transform_entity_expansion(self):
+        # Case to test that a document's internal entities have been
+        # deref'ed from the DTD and expanded
+
+        from ..to_html import (
+            fix_reference_urls, transform_cnxml_to_html)
+        with psycopg2.connect(self.connection_string) as db_connection:
+            content_filepath = os.path.join(TESTING_DATA_DIR,
+                                            'm10761-2.3.cnxml')
+            with open(content_filepath, 'r') as fb:
+                content = transform_cnxml_to_html(fb.read())
+            # &#995; is expansion of &lambda;
+            self.assertTrue(content.find('&#955;') >= 0)
+
