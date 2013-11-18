@@ -14,11 +14,6 @@ from io import BytesIO
 import rhaptos.cnxmlutils
 from lxml import etree
 
-PARSER_OPTIONS={ 'load_dtd':True,
-                'resolve_entities':True,
-                'no_network':False,  # don't force loading our cnxml/DTD packages
-                'attribute_defaults':False,
-                }
 
 __all__ = (
     'transform_cnxml_to_html',
@@ -26,6 +21,12 @@ __all__ = (
     )
 
 
+XML_PARSER_OPTIONS = {
+    'load_dtd': True,
+    'resolve_entities': True,
+    'no_network': False,   # don't force loading our cnxml/DTD packages
+    'attribute_defaults': False,
+    }
 HTML_TEMPLATE_FOR_CNXML = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -253,7 +254,7 @@ fix_reference_urls = ReferenceResolver.fix_reference_urls
 
 def transform_cnxml_to_html(cnxml):
     """Transforms raw cnxml content to html."""
-    xml_parser = etree.XMLParser(**PARSER_OPTIONS)
+    xml_parser = etree.XMLParser(**XML_PARSER_OPTIONS)
     gen_xsl = lambda f: etree.XSLT(etree.parse(f))
     cnxml = etree.parse(BytesIO(cnxml), xml_parser)
 
