@@ -144,6 +144,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   independent of this code.
         self.assertTrue(index_html.find('<html') >= 0)
 
+    @unittest.expectedFailure
     def test_exists(self):
         self.fail("Not implemented. " \
                   "See https://github.com/Connexions/cnx-upgrade/issues/23")
