@@ -176,7 +176,7 @@ class SearchTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def call_target(self, query_params, query_type='OR'):
+    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE):
         # Single point of import failure.
         from ..search import search, Query
         self.query = Query(query_params)
@@ -363,7 +363,7 @@ class SearchTestCase(unittest.TestCase):
         # Test the results of a search on fulltext.
         query_params = [('fulltext', 'uncertainty'), ('fulltext', 'rotation')]
 
-        results = self.call_target(query_params)
+        results = self.call_target(query_params, query_type='OR')
         self.assertEqual(len(results), 6)
         # Ensure the record with both values is the top result.
         self.assertEqual(results[0]['id'],
@@ -453,7 +453,7 @@ class SearchTestCase(unittest.TestCase):
         self._pubYear_setup()
         query_params = [('pubYear', '2010')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 2)
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
@@ -462,7 +462,7 @@ class SearchTestCase(unittest.TestCase):
     def test_type_without_term(self):
         query_params = [('type', 'book')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 1)
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597'])
@@ -495,7 +495,7 @@ class SearchTestCase(unittest.TestCase):
         self._language_setup()
         query_params = [('language', 'fr')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 1)
         self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
@@ -504,7 +504,7 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('text', 'physics'),
                         ('subject', 'Science and Technology')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_weights = [(r['id'],r['weight']) for r in results]
         self.assertEqual(len(results), 7)
         self.assertEqual(result_weights, [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597',221),
@@ -520,7 +520,7 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('subject', 'Science and Technology'),
                         ('subject', 'Mathematics and Statistics')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 1)
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597'])
@@ -531,7 +531,7 @@ class SearchTestCase(unittest.TestCase):
                         # "OSC Physics Maintainer"
                         ('authorID', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
 
-        results = self.call_target(query_params, DEFAULT_QUERY_TYPE)
+        results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(result_ids), 1)
         self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
