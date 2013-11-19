@@ -25,6 +25,10 @@ class TransformTests(unittest.TestCase):
 
     maxDiff = 40000
 
+    def call_target(self, *args, **kwargs):
+        from ..to_html import transform_cnxml_to_html
+        return transform_cnxml_to_html(*args, **kwargs)
+
     def test_cnxml_to_html(self):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
@@ -36,15 +40,26 @@ class TransformTests(unittest.TestCase):
 
         with open(index_xml_filepath, 'r') as fp:
             index_xml = fp.read()
-        from ..to_html import transform_cnxml_to_html
-        index_html = transform_cnxml_to_html(index_xml)
+        index_html = self.call_target(index_xml)
 
         with open(index_html_filepath, 'r') as fp:
             expected_result = fp.read()
         self.assertMultiLineEqual(index_html, expected_result)
 
+    def test_module_transform_entity_expansion(self):
+        # Case to test that a document's internal entities have been
+        # deref'ed from the DTD and expanded
 
-class ToHtmlTestCase(unittest.TestCase):
+        from ..to_html import transform_cnxml_to_html
+        content_filepath = os.path.join(TESTING_DATA_DIR,
+                                        'm10761-2.3.cnxml')
+        with open(content_filepath, 'r') as fb:
+            content = self.call_target(fb.read())
+        # &#995; is expansion of &lambda;
+        self.assertTrue(content.find('&#955;') >= 0)
+
+
+class ModuleToHtmlTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
     @classmethod
@@ -67,48 +82,54 @@ class ToHtmlTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
-    # def test_collection_transform(self):
-    #     # Case to test for a successful tranformation of a collection from
-    #     #   collxml to html.
-    #     from ..to_html import produce_html_for_collections
-    #     with psycopg2.connect(self.connection_string) as db_connection:
-    #         iterator = produce_html_for_collections(db_connection)
-    #         collection_id, message = iterator.next()
-    #         db_connection.commit()
-
-    #     with psycopg2.connect(self.connection_string) as db_connection:
-    #         with db_connection.cursor() as cursor:
-    #             cursor.execute("SELECT file FROM files "
-    #                            "  WHERE fileid = "
-    #                            "    (SELECT fileid FROM module_files "
-    #                            "       WHERE module_ident = %s "
-    #                            "         AND filename = 'collection.html');",
-    #                            (collection_id,))
-    #             collection_html = cursor.fetchone()[0][:]
-    #     # We only need to test that the file got transformed and placed
-    #     #   placed in the database, the transform itself should be verified.
-    #     #   independent of this code.
-    #     self.assertTrue(collection_html.find('<html') >= 0)
-
-    # def test_collection_transform_w_invalid_data(self):
-    #     # Case to test for an unsuccessful tranformation of a collection from
-    #     #   collxml to html.
-    #     pass
-
-    # def test_collection_transform_exists(self):
-    #     # Case to test for a successful tranformation with an existing
-    #     #   transform from collxml to html has already been done.
-    #     pass
-
-    def test_module_transform(self):
-        # Case to test for a successful tranformation of a module from
-        #   cnxml to html.
-        from ..to_html import produce_html_for_modules
+    def call_target(self, *args, **kwargs):
+        """Call the target function. This wrapping takes care of the
+        connection parameters.
+        """
+        from ..to_html import produce_html_for_module
         with psycopg2.connect(self.connection_string) as db_connection:
-            values = [v for v in produce_html_for_modules(db_connection)]
+            with db_connection.cursor() as cursor:
+                return produce_html_for_module(db_connection, cursor,
+                                               *args, **kwargs)
+
+    def test_cnxml_source_missing(self):
+        # Case to test that we catch/raise exceptions when the source
+        #   CNXML file for a document can't be found.
+        ident, filename = 2, 'index.cnxml'
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("DELETE FROM module_files "
+                               "WHERE module_ident = %s AND filename = %s;",
+                               (ident, filename,))
             db_connection.commit()
 
-        ident = 2  # m42955
+        from ..to_html import DocumentOrSourceMissing
+        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+            self.call_target(ident, filename)
+        exception = caught_exc.exception
+
+        self.assertEqual(exception.document_ident, ident)
+        self.assertEqual(exception.filename, filename)
+
+    def test_missing_document(self):
+        # Case to test that we catch/raise exceptions when the document
+        #   can't be found.
+        ident, filename = 0, 'index.cnxml'
+
+        from ..to_html import DocumentOrSourceMissing
+        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+            self.call_target(ident, filename)
+        exception = caught_exc.exception
+
+        self.assertEqual(exception.document_ident, ident)
+        self.assertEqual(exception.filename, filename)
+
+    def test_success(self):
+        # Case to test for a successful tranformation of a module from
+        #   cnxml to html.
+        ident, filename = 2, 'index.cnxml'  # m42955
+        self.call_target(ident)
+
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT file FROM files "
@@ -123,49 +144,80 @@ class ToHtmlTestCase(unittest.TestCase):
         #   independent of this code.
         self.assertTrue(index_html.find('<html') >= 0)
 
-    def test_module_transform_exists(self):
-        pass
+    @unittest.expectedFailure
+    def test_exists(self):
+        self.fail("Not implemented. " \
+                  "See https://github.com/Connexions/cnx-upgrade/issues/23")
 
-    def test_module_transform_w_invalid_data(self):
-        # Case to test for an unsuccessful transformation of a module from
-        #   cnxml to html.
-        ident = 2  # m42955
-        # Hack a chunk out of the file to ensure it fails.
+    def _make_document_data_invalid(self, ident=2, filename='index.cnxml'):
+        """Hacks a chunk out of the file given as ``filename``
+        at module with the given ``ident``.
+        This to ensure a transform failure.
+        """
+        ##ident = 2  # m42955
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT file from files "
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = %s "
-                               "         AND filename = 'index.cnxml');",
-                               (ident,))
+                               "         AND filename = %s);",
+                               (ident, filename))
                 index_cnxml = cursor.fetchone()[0][:]
                 # Make a mess of things...
                 content = index_cnxml[:600] + index_cnxml[700:]
-                payload = (psycopg2.Binary(content), ident,)
+                payload = (psycopg2.Binary(content), ident, filename,)
                 cursor.execute("UPDATE files SET file = %s "
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = %s "
-                               "         AND filename = 'index.cnxml');",
+                               "         AND filename = %s);",
                                payload)
             db_connection.commit()
+        return ident
 
-        from ..to_html import produce_html_for_modules
-        with psycopg2.connect(self.connection_string) as db_connection:
-            values = [v for v in produce_html_for_modules(db_connection)]
-            db_connection.commit()
+    def test_transform_w_invalid_data(self):
+        # Case to test for an unsuccessful transformation of a module.
+        #   The xml is invalid, therefore the transform cannot succeed.
+        ident = self._make_document_data_invalid()
 
-        message_dict = dict(values)
-        self.assertIsNotNone(message_dict[ident])
-        self.assertEqual(message_dict[ident],
-                         u"While attempting to transform the content we ran into an error: Failed to parse QName 'md:tit47:', " \
-                             "line 11, column 12")
+        with self.assertRaises(Exception) as caught_exc:
+            self.call_target(ident)
 
-    def test_module_transform_of_references(self):
+        exception = caught_exc.exception
+        from lxml.etree import XMLSyntaxError
+        self.assertTrue(isinstance(exception, XMLSyntaxError))
+        self.assertEqual(
+                exception.message,
+                u"Failed to parse QName 'md:tit47:', line 11, column 12")
+
+
+class ReferenceResolutionTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.connection_string = cls.fixture._connection_string
+        cls._db_connection = psycopg2.connect(cls.connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+                cursor.execute(fp.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test_reference_rewrites(self):
         # Case to test that a document's internal references have
         #   been rewritten to the cnx-archive's read-only API routes.
-
         ident = 3
         from ..to_html import (
             fix_reference_urls, transform_cnxml_to_html)
@@ -184,18 +236,4 @@ class ToHtmlTestCase(unittest.TestCase):
         self.assertTrue(content.find(expected_internal_ref) >= 0)
         expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
-
-    def test_module_transform_entity_expansion(self):
-        # Case to test that a document's internal entities have been
-        # deref'ed from the DTD and expanded
-
-        from ..to_html import (
-            fix_reference_urls, transform_cnxml_to_html)
-        with psycopg2.connect(self.connection_string) as db_connection:
-            content_filepath = os.path.join(TESTING_DATA_DIR,
-                                            'm10761-2.3.cnxml')
-            with open(content_filepath, 'r') as fb:
-                content = transform_cnxml_to_html(fb.read())
-            # &#995; is expansion of &lambda;
-            self.assertTrue(content.find('&#955;') >= 0)
 
