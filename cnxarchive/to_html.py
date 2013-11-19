@@ -97,6 +97,17 @@ class InvalidReference(BaseReferenceException):
         super(InvalidReference, self).__init__(msg, document_ident, reference)
 
 
+class IndexHtmlExistsError(Exception):
+    """Raised when index.html for an ident already exists but we are not
+    overwriting it
+    """
+
+    def __init__(self, document_ident):
+        message = 'index.html already exists for document {}'.format(
+                document_ident)
+        super(IndexHtmlExistsError, self).__init__(message)
+
+
 PATH_REFERENCE_REGEX = re.compile(
     r'^(/?(content/)?(?P<module>(m|col)\d{5})(/(?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
     re.IGNORECASE)
@@ -275,7 +286,8 @@ def transform_cnxml_to_html(cnxml):
 
 
 def produce_html_for_module(db_connection, cursor, ident,
-                            source_filename='index.cnxml'):
+                            source_filename='index.cnxml',
+                            overwrite_html=False):
     """Produce and 'index.html' file for the module at ``ident``.
     Raises exceptions when the transform cannot be completed.
     Returns a message containing warnings and other information that
@@ -292,6 +304,23 @@ def produce_html_for_module(db_connection, cursor, ident,
         cnxml = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
     except TypeError:  # None returned
         raise DocumentOrSourceMissing(ident, source_filename)
+
+    # Remove index.html if overwrite_html is True and if it exists
+    cursor.execute('SELECT fileid FROM module_files '
+                   'WHERE module_ident = %s '
+                   '      AND filename = %s',
+                   (ident, 'index.html'))
+    index_html_id = cursor.fetchone()
+    if index_html_id:
+        index_html_id = index_html_id[0]
+        if index_html_id:
+            if overwrite_html:
+                cursor.execute('DELETE FROM module_files WHERE fileid = %s',
+                               (index_html_id,))
+                cursor.execute('DELETE FROM files WHERE fileid = %s',
+                               (index_html_id,))
+            else:
+                raise IndexHtmlExistsError(ident)
 
     # Transform the content.
     index_html = transform_cnxml_to_html(cnxml)
@@ -318,7 +347,8 @@ def produce_html_for_module(db_connection, cursor, ident,
 
 def produce_html_for_modules(db_connection,
                              id_select_query=DEFAULT_ID_SELECT_QUERY,
-                             source_filename='index.cnxml'):
+                             source_filename='index.cnxml',
+                             overwrite_html=False):
     """Produce HTML files of existing module documents. This will
     do the work on all modules in the database.
 
@@ -335,11 +365,10 @@ def produce_html_for_modules(db_connection,
     for ident in idents:
         with db_connection.cursor() as cursor:
             try:
-                produce_html_for_module(db_connection, cursor, ident,
-                                        source_filename)
+                message = produce_html_for_module(db_connection, cursor, ident,
+                                                  source_filename,
+                                                  overwrite_html)
             except Exception as exc:
                 message = exc.message
-            else:
-                message = ''
         yield (ident, message)
     raise StopIteration

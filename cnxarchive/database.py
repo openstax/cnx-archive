@@ -286,9 +286,7 @@ def add_module_file(plpy, td):
     if len(results) == 0:
         with plpydbapi.connect() as db_connection:
             with db_connection.cursor() as cursor:
-                message = produce_html_for_module(db_connection, cursor, td['new']['module_ident'])
-                if message:
-                    plpy.error(message)
+                produce_html_for_module(db_connection, cursor, td['new']['module_ident'])
             db_connection.commit()
     return
 

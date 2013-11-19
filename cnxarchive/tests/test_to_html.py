@@ -144,17 +144,85 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   independent of this code.
         self.assertTrue(index_html.find('<html') >= 0)
 
-    @unittest.expectedFailure
-    def test_exists(self):
-        self.fail("Not implemented. " \
-                  "See https://github.com/Connexions/cnx-upgrade/issues/23")
+    def test_module_transform_remove_index_html(self):
+        # Test when overwrite_html is True, the index.html is removed from the
+        # database before a new one is added
+
+        # Create an index.html for module_ident 2
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('INSERT INTO files (file) '
+                               '(SELECT file FROM files WHERE fileid = 1) '
+                               'RETURNING fileid')
+                fileid = cursor.fetchone()[0]
+                cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+                               "%s, 'index.html', 'text/html')", (fileid,))
+            db_connection.commit()
+
+        msg = self.call_target(2, overwrite_html=True)
+
+        # Assert there are no error messages
+        self.assertEqual(msg, None)
+
+        # Check cnxml is transformed to html
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT fileid, file FROM files "
+                               "  WHERE fileid = "
+                               "    (SELECT fileid FROM module_files "
+                               "       WHERE module_ident = 2 "
+                               "         AND filename = 'index.html');")
+                index_html_id, index_html = cursor.fetchone()
+                index_html = index_html[:]
+        # We only need to test that the file got transformed and placed
+        #   placed in the database, the transform itself should be verified.
+        #   independent of this code.
+        self.assertTrue(index_html.find('<html') >= 0)
+
+        # Assert index.html has been replaced
+        self.assertNotEqual(fileid, index_html_id)
+
+    def test_module_transform_index_html_exists(self):
+        # Test when overwrite_html is False, the index.html causes an error when a
+        # new one is generated
+
+        # Create an index.html for module_ident 2
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('INSERT INTO files (file) '
+                               'SELECT file FROM files WHERE fileid = 1 '
+                               'RETURNING fileid')
+                fileid = cursor.fetchone()[0]
+                cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+                               "%s, 'index.html', 'text/html')", (fileid,))
+            db_connection.commit()
+
+        from ..to_html import IndexHtmlExistsError
+
+        with self.assertRaises(IndexHtmlExistsError) as e:
+            self.call_target(2, overwrite_html=False)
+
+        # Check the error message
+        self.assertEqual(e.exception.message,
+                         'index.html already exists for document 2')
+
+        # Assert index.html is not deleted
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT fileid FROM files "
+                               "  WHERE fileid = "
+                               "    (SELECT fileid FROM module_files "
+                               "       WHERE module_ident = 2 "
+                               "         AND filename = 'index.html');")
+                index_html_id = cursor.fetchone()[0]
+
+        self.assertEqual(fileid, index_html_id)
 
     def _make_document_data_invalid(self, ident=2, filename='index.cnxml'):
         """Hacks a chunk out of the file given as ``filename``
         at module with the given ``ident``.
         This to ensure a transform failure.
         """
-        ##ident = 2  # m42955
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT file from files "
