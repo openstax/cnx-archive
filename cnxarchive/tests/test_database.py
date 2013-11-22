@@ -1336,12 +1336,30 @@ class DocumentHitsTestCase(unittest.TestCase):
         return hits
 
     @db_connect
-    def test_recency_function(self, cursor):
+    def test_recency_function_w_no_document_hits(self, cursor):
         # Exam the function out puts a date.
 
         # At the time of this writting the recency is one week.
         from datetime import datetime, timedelta
         then = datetime.today() - timedelta(7)
+
+        cursor.execute("SELECT get_recency_date();")
+        value = cursor.fetchone()[0]
+        # We're mostly checking by the day rather than by time,
+        #   so checking by date should be sufficient.
+        self.assertEqual(then.date(), value.date())
+
+    @db_connect
+    def test_recency_function_w_document_hits(self, cursor):
+        # Exam the function out puts a date.
+
+        self.create_hits()
+        cursor.execute('SELECT MAX(end_timestamp) FROM document_hits')
+        max_end_timestamp = cursor.fetchone()[0]
+
+        # At the time of this writting the recency is one week.
+        from datetime import datetime, timedelta
+        then = max_end_timestamp - timedelta(7)
 
         cursor.execute("SELECT get_recency_date();")
         value = cursor.fetchone()[0]
