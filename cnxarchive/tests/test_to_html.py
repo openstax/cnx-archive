@@ -9,6 +9,7 @@ import os
 import sys
 import unittest
 from io import BytesIO
+import re
 
 import psycopg2
 
@@ -29,34 +30,41 @@ class TransformTests(unittest.TestCase):
         from ..to_html import transform_cnxml_to_html
         return transform_cnxml_to_html(*args, **kwargs)
 
+    def get_file(self, filename):
+        path = os.path.join(TESTING_DATA_DIR, filename)
+        with open(path, 'r') as fp:
+            return fp.read()
+
     def test_cnxml_to_html(self):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
 
-        index_xml_filepath = os.path.join(TESTING_DATA_DIR,
-                                          'm42033-1.3.cnxml')
-        index_html_filepath = os.path.join(TESTING_DATA_DIR,
-                                           'm42033-1.3.html')
+        cnxml = self.get_file('m42033-1.3.cnxml')
+        content = self.call_target(cnxml)
 
-        with open(index_xml_filepath, 'r') as fp:
-            index_xml = fp.read()
-        index_html = self.call_target(index_xml)
-
-        with open(index_html_filepath, 'r') as fp:
-            expected_result = fp.read()
-        self.assertMultiLineEqual(index_html, expected_result)
+        self.assertMultiLineEqual(content, self.get_file('m42033-1.3.html'))
 
     def test_module_transform_entity_expansion(self):
         # Case to test that a document's internal entities have been
         # deref'ed from the DTD and expanded
 
-        from ..to_html import transform_cnxml_to_html
-        content_filepath = os.path.join(TESTING_DATA_DIR,
-                                        'm10761-2.3.cnxml')
-        with open(content_filepath, 'r') as fb:
-            content = self.call_target(fb.read())
+        cnxml = self.get_file('m10761-2.3.cnxml')
+        content = self.call_target(cnxml)
+
         # &#995; is expansion of &lambda;
         self.assertTrue(content.find('&#955;') >= 0)
+
+    def test_module_transform_image_with_print_width(self):
+        cnxml = self.get_file('m31947-1.3.cnxml')
+
+        content = self.call_target(cnxml)
+
+        # Assert <img> tag is generated
+        img = re.search('(<img [^>]*>)', content)
+        self.assertTrue(img is not None)
+        img = img.group(1)
+        self.assertTrue('src="graphics1.jpg"' in img)
+        self.assertTrue('data-print-width="6.5in"' in img)
 
 
 class ModuleToHtmlTestCase(unittest.TestCase):
