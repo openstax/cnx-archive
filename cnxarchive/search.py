@@ -373,6 +373,7 @@ def _transmute_filter(keyword, value):
         raise ValueError("Invalid filter keyword '{}'.".format(keyword))
 
     if keyword == 'type':
+        value = value.lower()
         if value in ['book', 'collection']:
             type_name = 'Collection'
         elif value in ['page', 'module']:
