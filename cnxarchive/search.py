@@ -27,8 +27,10 @@ __all__ = ('search', 'Query',)
 
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
-# The maximum number of keywords to return in the search result counts
-MAX_VALUES_FOR_KEYWORDS = 200
+# The maximum number of keywords and authors to return in the search result
+# counts
+MAX_VALUES_FOR_KEYWORDS = 100
+MAX_VALUES_FOR_AUTHORS = 100
 SORT_VALUES_MAPPING = {
     'pubdate': 'revised DESC',
     'version': 'version DESC',
@@ -256,7 +258,7 @@ class QueryResults(Sequence):
             'subject': self._count_field('subjects'),
             'keyword': self._count_field('keywords',
                                          max_results=MAX_VALUES_FOR_KEYWORDS),
-            'authorID': self._count_authors(),
+            'authorID': self._count_authors(max_results=MAX_VALUES_FOR_AUTHORS),
             'pubYear': self._count_publication_year(),
             }
 
@@ -307,7 +309,7 @@ class QueryResults(Sequence):
                 (('Page', {'mediaType': MODULE_MIMETYPE}),
                  counts[MODULE_MIMETYPE])]
 
-    def _count_authors(self):
+    def _count_authors(self, max_results=None):
         counts = {}
         uid_author = {} # look up author record by uid
         for rec in self._records:
@@ -320,6 +322,12 @@ class QueryResults(Sequence):
         for uid, count in counts.iteritems():
             author = uid_author[uid]
             authors.append(((uid, author), count))
+
+        if max_results:
+            # limit the number of results we return
+            # sort counts by the count with highest count first
+            authors.sort(lambda a, b: cmp(a[1], b[1]), reverse=True)
+            authors = authors[:max_results]
 
         def sort_name(a, b):
             (uid_a, author_a), count_a = a

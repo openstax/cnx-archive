@@ -143,6 +143,32 @@ class SearchModelTestCase(unittest.TestCase):
                                     (u'Scientific method', 2),
                                    ])
 
+    def test_result_counts_with_author_limit(self):
+        # Set the test to return top 1 author
+        from .. import search
+        old_max_values_for_authors = search.MAX_VALUES_FOR_AUTHORS
+        self.addCleanup(setattr, search, 'MAX_VALUES_FOR_AUTHORS',
+                        old_max_values_for_authors)
+        search.MAX_VALUES_FOR_AUTHORS = 1
+
+        query = [('text', 'physics')]
+        results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
+
+        open_stax_college = {u'website': None,
+                             u'surname': None,
+                             u'suffix': None,
+                             u'firstname': u'OpenStax College',
+                             u'title': None,
+                             u'othername': None,
+                             u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                             u'fullname': u'OpenStax College',
+                             u'email': u'info@openstaxcollege.org'}
+
+        # Check there is only one author returned
+        authors = results.counts['authorID']
+        self.assertEqual(authors,
+                         [((open_stax_college['id'], open_stax_college), 15)])
+
 
 class SearchTestCase(unittest.TestCase):
     fixture = postgresql_fixture
