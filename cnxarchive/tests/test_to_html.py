@@ -111,8 +111,8 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                                (ident, filename,))
             db_connection.commit()
 
-        from ..to_html import DocumentOrSourceMissing
-        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+        from ..to_html import MissingDocumentOrSource
+        with self.assertRaises(MissingDocumentOrSource) as caught_exc:
             self.call_target(ident, filename)
         exception = caught_exc.exception
 
@@ -124,8 +124,8 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   can't be found.
         ident, filename = 0, 'index.cnxml'
 
-        from ..to_html import DocumentOrSourceMissing
-        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+        from ..to_html import MissingDocumentOrSource
+        with self.assertRaises(MissingDocumentOrSource) as caught_exc:
             self.call_target(ident, filename)
         exception = caught_exc.exception
 

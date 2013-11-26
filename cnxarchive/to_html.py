@@ -60,7 +60,7 @@ SELECT module_ident FROM modules AS m
 """
 
 
-class DocumentOrSourceMissing(Exception):
+class MissingDocumentOrSource(Exception):
     """Used to signify that the document or source XML document
     cannot be found.
     """
@@ -71,7 +71,7 @@ class DocumentOrSourceMissing(Exception):
         msg = "Cannot find document (at ident: {}) " \
               "or file with filename '{}'." \
               .format(self.document_ident, self.filename)
-        super(DocumentOrSourceMissing, self).__init__(msg)
+        super(MissingDocumentOrSource, self).__init__(msg)
 
 
 class BaseReferenceException(Exception):
@@ -303,7 +303,7 @@ def produce_html_for_module(db_connection, cursor, ident,
     try:
         cnxml = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
     except TypeError:  # None returned
-        raise DocumentOrSourceMissing(ident, source_filename)
+        raise MissingDocumentOrSource(ident, source_filename)    
 
     # Remove index.html if overwrite_html is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
