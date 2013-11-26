@@ -263,23 +263,31 @@ class ReferenceResolver:
 fix_reference_urls = ReferenceResolver.fix_reference_urls
 
 
-def transform_cnxml_to_html(cnxml):
+_gen_xsl = lambda f: etree.XSLT(etree.parse(os.path.join(XSL_DIRECTORY, f)))
+CNXML_TO_HTML_XSL = _gen_xsl('cnxml-to-html5.xsl')
+CNXML_TO_HTML_METADATA_XSL = _gen_xsl('cnxml-to-html5-metadata.xsl')
+DEFAULT_XMLPARSER = etree.XMLParser(**XML_PARSER_OPTIONS)
+
+
+def _transform_cnxml_to_html_body(xml):
+    """Transform the cnxml XML (``etree.ElementTree``) content body to html.
+    """
+    return CNXML_TO_HTML_XSL(xml)
+
+
+def _transform_cnxml_to_html_metadata(xml):
+    """Transform the cnxml XML (``etree.ElementTree``) metadata to html."""
+    return CNXML_TO_HTML_METADATA_XSL(xml)
+
+
+def transform_cnxml_to_html(cnxml, xml_parser=DEFAULT_XMLPARSER):
     """Transforms raw cnxml content to html."""
-    xml_parser = etree.XMLParser(**XML_PARSER_OPTIONS)
-    gen_xsl = lambda f: etree.XSLT(etree.parse(f))
     cnxml = etree.parse(BytesIO(cnxml), xml_parser)
 
     # Transform the content to html.
-    cnxml_to_html_filepath = os.path.join(XSL_DIRECTORY, 'cnxml-to-html5.xsl')
-    cnxml_to_html = gen_xsl(cnxml_to_html_filepath)
-    content = cnxml_to_html(cnxml)
-
+    content = _transform_cnxml_to_html_body(cnxml)
     # Transform the metadata to html.
-    cnxml_to_html_metadata_filepath = os.path.join(
-            XSL_DIRECTORY,
-            'cnxml-to-html5-metadata.xsl')
-    cnxml_to_html_metadata = gen_xsl(cnxml_to_html_metadata_filepath)
-    metadata = cnxml_to_html_metadata(cnxml)
+    metadata = _transform_cnxml_to_html_metadata(cnxml)
 
     html = HTML_TEMPLATE_FOR_CNXML.format(metadata=metadata, content=content)
     return html
