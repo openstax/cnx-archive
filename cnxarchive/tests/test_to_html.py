@@ -18,6 +18,7 @@ from . import postgresql_fixture
 
 here = os.path.abspath(os.path.dirname(__file__))
 TESTING_DATA_DIR = os.path.join(here, 'data')
+TESTING_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR, 'data.sql')
 TESTING_LEGACY_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR,
                                             'legacy-data.sql')
 
@@ -68,6 +69,138 @@ class TransformTests(unittest.TestCase):
         img = img.group(1)
         self.assertTrue('src="graphics1.jpg"' in img)
         self.assertTrue('data-print-width="6.5in"' in img)
+
+
+class AbstractToHtmlTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.connection_string = cls.fixture._connection_string
+        cls._db_connection = psycopg2.connect(cls.connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
+                cursor.execute(fp.read())
+        self._db_connection.commit()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def call_target(self, *args, **kwargs):
+        """Call the target function. This wrapping takes care of the
+        connection parameters.
+        """
+        from ..to_html import produce_html_for_abstract
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                return produce_html_for_abstract(db_connection, cursor,
+                                                 *args, **kwargs)
+
+    def test_success(self):
+        # Case to test for a successful tranformation of an abstract from
+        #   cnxml to html.
+        document_ident, abstractid = 2, 2  # m42955
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">A number list: <ul class="list"><li class="item">one</li><li class="item">two</li><li class="item">three</li></ul></div>'
+        self.assertEqual(html, expected)
+
+    def test_success_w_reference(self):
+        # Case with an abstract containing an internal reference.
+        document_ident, abstractid = 3, 3
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4"'
+        self.assertTrue(html.find(expected) >= 0)
+
+    def test_success_w_cnxml_root_element(self):
+        # Case with an abstract that contains an outter xml element
+        #   (e.g. <para>).
+        document_ident, abstractid = 4, 4
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds"><p class="para">A link to the <a href="http://example.com">outside world</a>.</p></div>'
+        self.assertEqual(html, expected)
+
+    def test_success_w_no_cnxml(self):
+        # Case that ensures plaintext abstracts get wrapped with xml
+        #   and include the various namespaces.
+        document_ident, abstractid = 5, 5
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">A rather short plaintext abstract.</div>'
+        self.assertEqual(html, expected)
+
+    def test_success_w_empty(self):
+        # Case that ensures an empty abstract is saved as an empty html
+        #   entry.
+        document_ident, abstractid = 6, 6
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        self.assertEqual(html, None)
+
+    def test_failure_on_nonexistent_document(self):
+        # Case to ensure failure the requested document doesn't exist.
+        document_ident, abstractid = 50, 50
+
+        with self.assertRaises(ValueError) as caught_exception:
+            self.call_target(document_ident)
+        exception = caught_exception.exception
+        # Just ensure that we aren't blind when the exception is raised.
+        self.assertTrue(exception.message.find(str(document_ident)) >= 0)
+
+    def test_failure_on_missing_abstract(self):
+        # Case to ensure failure when an abstract is missing.
+        document_ident, abstractid = 5, 5
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("UPDATE modules SET (abstractid) = (null) "
+                               "WHERE module_ident = %s;",
+                               (document_ident,))
+                cursor.execute("DELETE FROM abstracts WHERE abstractid = %s;",
+                               (abstractid,))
+
+        from ..to_html import MissingAbstract
+        with self.assertRaises(MissingAbstract) as caught_exception:
+            self.call_target(document_ident)
 
 
 class ModuleToHtmlTestCase(unittest.TestCase):

@@ -74,6 +74,16 @@ class MissingDocumentOrSource(Exception):
         super(MissingDocumentOrSource, self).__init__(msg)
 
 
+class MissingAbstract(Exception):
+    """Used to signify that the abstract is missing from a document entry."""
+
+    def __init__(self, document_ident):
+        self.document_ident = document_ident
+        msg = "Cannot find abstract for document (at ident: {})." \
+                .format(self.document_ident)
+        super(MissingAbstract, self).__init__(msg)
+
+
 class BaseReferenceException(Exception):
     """Not for direct use, but used to subclass other exceptions."""
 
@@ -146,7 +156,11 @@ class ReferenceResolver:
         self.document_ident = document_ident
         self.document = etree.parse(html).getroot()
         self.namespaces = self.document.nsmap.copy()
-        self.namespaces['html'] = self.namespaces.pop(None)
+        if None in self.namespaces:
+            # The xpath method on an Element doesn't like 'None' namespaces.
+            self.namespaces.pop(None)
+            # The None namespace is assumed to be xhtml, redeclared below.
+        self.namespaces['html'] = 'http://www.w3.org/1999/xhtml'
 
     def __call__(self):
         messages = []
@@ -291,6 +305,65 @@ def transform_cnxml_to_html(cnxml, xml_parser=DEFAULT_XMLPARSER):
 
     html = HTML_TEMPLATE_FOR_CNXML.format(metadata=metadata, content=content)
     return html
+
+def produce_html_for_abstract(db_connection, cursor, document_ident):
+    """Produce html for the abstract by the given ``document_ident``."""
+    cursor.execute("SELECT abstractid, abstract "
+                   "FROM modules NATURAL LEFT JOIN abstracts "
+                   "WHERE module_ident = %s;",
+                   (document_ident,))
+    try:
+        abstractid, abstract = cursor.fetchone()
+    except TypeError:  # None returned
+        # This means the document doesn't exist.
+        raise ValueError("No document at ident: {}".format(document_ident))
+    if abstractid is None:
+        raise MissingAbstract(document_ident)
+
+    warning_messages = None
+    # Transform the abstract.
+    if abstract:
+        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content><para id="abstract-transform">{}</para></content></document>'.format(abstract)
+        # Does it have a wrapping tag?
+        cnxml = etree.parse(BytesIO(abstract), DEFAULT_XMLPARSER)
+        abstract_html = _transform_cnxml_to_html_body(cnxml)
+
+        # FIXME The transform should include the default html namespace.
+        #       Replace the root element to include the default namespace.
+        nsmap = abstract_html.getroot().nsmap.copy()
+        xhtml_namespace = 'http://www.w3.org/1999/xhtml'
+        nsmap[None] = xhtml_namespace
+        nsmap['html'] = xhtml_namespace
+        root= etree.Element('html', nsmap=nsmap)
+        root.append(abstract_html.getroot())
+        # FIXME This includes fixes to the xml to include the neccessary bits.
+        container = abstract_html.xpath('/body/p[@id="abstract-transform"]')[0]
+        container.tag = 'div'
+        del container.attrib['id']
+        del container.attrib['class']
+
+        # Re-assign and stringify to what it should be without the fixes.
+        abstract_html = etree.tostring(root)
+
+        # Then fix up content references in the abstract.
+        fixed_html, bad_refs = fix_reference_urls(db_connection,
+                                                  document_ident,
+                                                  BytesIO(abstract_html))
+        if bad_refs:
+            warning_messages += 'Invalid References (Abstract): {}' \
+                    .format('; '.join(bad_refs))
+        # Now unwrap it and stringify again.
+        nsmap.pop(None)  # xpath doesn't accept an empty namespace.
+        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:body/html:div", namespaces=nsmap)[0])
+    else:
+        html = None
+
+    # Upate the abstract.
+    if html:
+        cursor.execute("UPDATE abstracts SET (html) = (%s) "
+                       "WHERE abstractid = %s;",
+                       (html, abstractid,))
+    return warning_messages
 
 
 def produce_html_for_module(db_connection, cursor, ident,
