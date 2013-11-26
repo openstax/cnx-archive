@@ -35,20 +35,23 @@ class TransformTests(unittest.TestCase):
         with open(path, 'r') as fp:
             return fp.read()
 
-    def test_cnxml_to_html(self):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
 
+    def test_success(self):
+        # Case to test the transformation of cnxml to html.
         cnxml = self.get_file('m42033-1.3.cnxml')
+        html = self.get_file('m42033-1.3.html')
+
         content = self.call_target(cnxml)
 
-        self.assertMultiLineEqual(content, self.get_file('m42033-1.3.html'))
+        self.assertMultiLineEqual(content, html)
 
     def test_module_transform_entity_expansion(self):
         # Case to test that a document's internal entities have been
-        # deref'ed from the DTD and expanded
-
+        #   deref'ed from the DTD and expanded
         cnxml = self.get_file('m10761-2.3.cnxml')
+
         content = self.call_target(cnxml)
 
         # &#995; is expansion of &lambda;

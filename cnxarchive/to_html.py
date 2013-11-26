@@ -330,16 +330,15 @@ def produce_html_for_module(db_connection, cursor, ident,
             else:
                 raise IndexHtmlExistsError(ident)
 
+    warning_messages = None
     # Transform the content.
     index_html = transform_cnxml_to_html(cnxml)
-
     # Fix up content references to cnx-archive specific urls.
     index_html, bad_refs = fix_reference_urls(db_connection, ident,
                                               BytesIO(index_html))
     if bad_refs:
-        message = 'Invalid References: {}'.format('; '.join(bad_refs))
-    else:
-        message = None
+        warning_messages = 'Invalid References: {}' \
+                .format('; '.join(bad_refs))
 
     # Insert the index.html into the database.
     payload = (memoryview(index_html),)
@@ -350,7 +349,7 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, html_file_id, 'index.html', 'text/html',))
-    return message
+    return warning_messages
 
 
 def produce_html_for_modules(db_connection,
