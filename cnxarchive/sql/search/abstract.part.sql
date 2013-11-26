@@ -13,4 +13,4 @@ FROM
 WHERE
   cm.abstractid = a.abstractid
   AND
-  a.abstract ~* req(%({0})s::text)
+  a.html ~* req(%({0})s::text)

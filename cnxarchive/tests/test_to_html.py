@@ -89,6 +89,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
         with self._db_connection.cursor() as cursor:
             with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
+                cursor.execute("UPDATE abstracts SET (html) = (null);")
         self._db_connection.commit()
 
     def tearDown(self):
