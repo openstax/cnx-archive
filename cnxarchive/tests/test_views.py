@@ -153,7 +153,7 @@ COLLECTION_JSON_TREE = {
 MODULE_METADATA = {
     u'roles': None,
     u'subject': u'Science and Technology',
-    u'abstract': None,
+    u'abstract': '',
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
                   u'email': u'info@openstaxcollege.org',
