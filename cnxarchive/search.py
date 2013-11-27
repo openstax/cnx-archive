@@ -273,6 +273,31 @@ class QueryResults(Sequence):
     def __len__(self):
         return len(self._records)
 
+    @property
+    def auxiliary(self):
+        return {'authors': self._auxiliary_authors}
+
+    @property
+    def _auxiliary_authors(self):
+        attr_name = '_aux_authors'
+        if hasattr(self, attr_name):
+            return getattr(self, attr_name)
+
+        # Used to make the dict hashable for a set([]).
+        class hashabledict(dict):
+            def __hash__(self):
+                return hash(tuple(sorted(self.items())))
+
+        authors = set([])
+        for rec in self._records:
+            for author in rec['authors']:
+                # The author is in dict format, just use it.
+                authors.add(hashabledict(author))
+
+        authors = list(authors)
+        setattr(self, attr_name, authors)
+        return getattr(self, attr_name)
+
     def _count_field(self, field_name, sorted=True, max_results=None):
         counts = {}
         for rec in self._records:
