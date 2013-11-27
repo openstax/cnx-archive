@@ -117,8 +117,8 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">A number list: <ul class="list"><li class="item">one</li><li class="item">two</li><li class="item">three</li></ul></div>'
-        self.assertEqual(html, expected)
+        transformed_contents = '<ul class="list"><li class="item">one</li><li class="item">two</li><li class="item">three</li></ul>'
+        self.assertTrue(html.find(transformed_contents) >= 0)
 
     def test_success_w_reference(self):
         # Case with an abstract containing an internal reference.
@@ -146,8 +146,8 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds"><p class="para">A link to the <a href="http://example.com">outside world</a>.</p></div>'
-        self.assertEqual(html, expected)
+        transformed_contents = '<p class="para">A link to the <a href="http://example.com">outside world</a>.</p>'
+        self.assertTrue(html.find(transformed_contents) >= 0)
 
     def test_success_w_no_cnxml(self):
         # Case that ensures plaintext abstracts get wrapped with xml
@@ -161,8 +161,10 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        expected = '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">A rather short plaintext abstract.</div>'
-        self.assertEqual(html, expected)
+        transformed_contents = 'A rather short plaintext abstract.</div>'
+        # Check for the ending wrapper tag, but not the initial one, because
+        #   the namespaces are unordered and can't reliably be tested.
+        self.assertTrue(html.find(transformed_contents) >= 0)
 
     def test_success_w_empty(self):
         # Case that ensures an empty abstract is saved as an empty html
