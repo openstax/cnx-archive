@@ -346,7 +346,7 @@ class QueryResults(Sequence):
         authors = []
         for uid, count in counts.iteritems():
             author = uid_author[uid]
-            authors.append(((uid, author), count))
+            authors.append(((uid, author,), count))
 
         if max_results:
             # limit the number of results we return
@@ -363,6 +363,7 @@ class QueryResults(Sequence):
             return result
         # Sort authors by surname then first name
         authors.sort(sort_name)
+        authors = [(a[0][0], a[1],) for a in authors]
         return authors
 
     def _count_publication_year(self):

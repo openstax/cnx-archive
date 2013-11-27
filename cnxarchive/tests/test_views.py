@@ -308,27 +308,9 @@ SEARCH_RESULTS = {
                           u'count': 2}]},
             {u'tag': u'authorID',
              u'values': [{u'value': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                          u'count': 2,
-                          u'meta': {u'email': u'info@openstaxcollege.org',
-                                    u'firstname': u'OpenStax College',
-                                    u'fullname': u'OpenStax College',
-                                    u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                                    u'othername': None,
-                                    u'suffix': None,
-                                    u'surname': None,
-                                    u'title': None,
-                                    u'website': None}},
+                          u'count': 2},
                          {u'value': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                          u'count': 1,
-                          u'meta': {u'email': u'info@openstaxcollege.org',
-                                    u'firstname': u'College',
-                                    u'fullname': u'OSC Physics Maintainer',
-                                    u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                                    u'othername': None,
-                                    u'suffix': None,
-                                    u'surname': u'Physics',
-                                    u'title': None,
-                                    u'website': None}},
+                          u'count': 1},
             ]},
             {u'tag': u'type',
              u'values': [{u'value': u'Book',
@@ -396,8 +378,9 @@ SEARCH_RESULTS = {
              u'values': [{u'count': 2, u'value': u'Mathematics and Statistics'},
                          {u'count': 1, u'value': u'Science and Technology'},
             ]},
-        ]}
-    }
+        ],
+    },
+}
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
