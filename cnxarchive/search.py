@@ -19,6 +19,7 @@ from . import get_settings
 from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
+    PORTALTYPE_TO_MIMETYPE_MAPPING,
     )
 
 
@@ -275,7 +276,9 @@ class QueryResults(Sequence):
 
     @property
     def auxiliary(self):
-        return {'authors': self._auxiliary_authors}
+        return {'authors': self._auxiliary_authors,
+                'types': self._auxiliary_types,
+                }
 
     @property
     def _auxiliary_authors(self):
@@ -297,6 +300,13 @@ class QueryResults(Sequence):
         authors = list(authors)
         setattr(self, attr_name, authors)
         return getattr(self, attr_name)
+
+    @property
+    def _auxiliary_types(self):
+        # If we ever add types beyond book and page,
+        #   we'll want to change this.
+        return [{'id': k, 'mediaType': v}
+                for k, v in PORTALTYPE_TO_MIMETYPE_MAPPING.items()]
 
     def _count_field(self, field_name, sorted=True, max_results=None):
         counts = {}
@@ -329,10 +339,9 @@ class QueryResults(Sequence):
             }
         for rec in self._records:
             counts[portaltype_to_mimetype(rec['mediaType'])] += 1
-        return [(('Book', {'mediaType': COLLECTION_MIMETYPE}),
-                 counts[COLLECTION_MIMETYPE]),
-                (('Page', {'mediaType': MODULE_MIMETYPE}),
-                 counts[MODULE_MIMETYPE])]
+        return [(COLLECTION_MIMETYPE, counts[COLLECTION_MIMETYPE],),
+                (MODULE_MIMETYPE, counts[MODULE_MIMETYPE],),
+                ]
 
     def _count_authors(self, max_results=None):
         counts = {}
