@@ -1,24 +1,13 @@
 language: python
 python:
   - "2.7"
+addons:
+  postgresql: "9.3"
 before_install:
-  # Postgres 9.3 install
-  - psql --version
-  - sudo /etc/init.d/postgresql stop
-  - sudo apt-get -y --purge remove postgresql libpq-dev libpq5 postgresql-client-common postgresql-common
-  - sudo rm -rf /var/lib/postgresql
-  - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-  - sudo sh -c "echo deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main 9.3 >> /etc/apt/sources.list.d/postgresql.list"
-  - sudo apt-get update -qq
-  - sudo apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::="--force-confnew" install postgresql-9.3 postgresql-server-dev-9.3 postgresql-client-9.3 postgresql-contrib-9.3 postgresql-plpython-9.3
-  - sudo chmod 777 /etc/postgresql/9.3/main/pg_hba.conf
-  - sudo echo "local   all         postgres                          trust" > /etc/postgresql/9.3/main/pg_hba.conf
-  - sudo echo "local   all         all                               trust" >> /etc/postgresql/9.3/main/pg_hba.conf
-  - sudo echo "host    all         all         127.0.0.1/32          trust" >> /etc/postgresql/9.3/main/pg_hba.conf
-  - sudo echo "host    all         all         ::1/128               trust" >> /etc/postgresql/9.3/main/pg_hba.conf
-  - sudo /etc/init.d/postgresql restart
+  # Install the 'plpython' extension language
+  - sudo apt-get install postgresql-plpython-9.3
   # Install the 'plxslt' extension language
-  - sudo apt-get install libxml2-dev libxslt-dev
+  - sudo apt-get install libxml2-dev libxslt-dev postgresql-server-dev-9.3
   - git clone https://github.com/petere/plxslt.git
   - cd plxslt && sudo make && sudo make install && cd ..
   # Install cnx-query-grammar
@@ -40,7 +29,6 @@ before_script:
   - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
 script:
   - /usr/bin/python -m unittest discover
-
 env:
   - TESTING_CONFIG="testing.ini"
 notifications:
