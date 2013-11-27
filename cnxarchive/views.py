@@ -338,6 +338,8 @@ def search(environ, start_response):
             value['count'] = count
             result_limits[-1]['values'].append(value)
     results['results']['limits'] = result_limits
+    # Add the supplemental result information.
+    results['results']['auxiliary'] = db_results.auxiliary
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
