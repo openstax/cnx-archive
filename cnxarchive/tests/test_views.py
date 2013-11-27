@@ -298,7 +298,7 @@ SEARCH_RESULTS = {
                            u'work'],
              u'mediaType': u'Collection',
              u'pubDate': u'2013-08-31T19:07:20Z',
-             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
+             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ',
              u'title': u'College Physics'},
             ],
         u'total': 2,
@@ -881,9 +881,10 @@ class ViewsTestCase(unittest.TestCase):
                 'customizable title includes learning objectives, concept '
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
-                'problems.')
+                'problems. ')
         self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
 
+        # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'
 
         from ..views import search
@@ -896,7 +897,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['results']['items'][0]['summarySnippet'],
-                'This introductory, algebra-based, two-semester college physics '
+                ' This introductory, algebra-based, two-semester college physics '
                 'book is grounded with real-world examples, illustrations, and '
                 'explanations to help students grasp key, fundamental physics '
                 'concepts. This online, fully editable and customizable title '
