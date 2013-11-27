@@ -983,7 +983,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
                 u'limits': [{u'text': u'你好'}],
                 u'sort': [],
@@ -995,16 +995,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]},
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'id': u'Collection',
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'id': u'Module',
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_punctuations(self):
         environ = self._make_environ()
@@ -1019,11 +1027,9 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
-                u'limits': [
-                    {u'text': ur":\.+'?"},
-                    ],
+                u'limits': [{u'text': ur":\.+'?"}],
                 u'sort': [],
                 },
             u'results': {
@@ -1033,16 +1039,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]},
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'id': u'Collection',
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'id': u'Module',
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_unbalanced_quotes(self):
         environ = self._make_environ()
@@ -1056,7 +1070,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
                 u'limits': [
                     {u'text': u'a phrase'},
@@ -1072,16 +1086,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]}
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'id': u'Collection',
+                         u'mediaType': u'application/vnd.org.cnx.collection'},
+                        {u'id': u'Module',
+                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_type_page_or_module(self):
         # Test searching "page"
