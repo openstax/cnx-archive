@@ -18,6 +18,7 @@ from . import postgresql_fixture
 
 here = os.path.abspath(os.path.dirname(__file__))
 TESTING_DATA_DIR = os.path.join(here, 'data')
+TESTING_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR, 'data.sql')
 TESTING_LEGACY_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR,
                                             'legacy-data.sql')
 
@@ -35,20 +36,23 @@ class TransformTests(unittest.TestCase):
         with open(path, 'r') as fp:
             return fp.read()
 
-    def test_cnxml_to_html(self):
         # Case to test the transformation of cnxml to html.
         # FIXME This transformation shouldn't even be in this package.
 
+    def test_success(self):
+        # Case to test the transformation of cnxml to html.
         cnxml = self.get_file('m42033-1.3.cnxml')
+        html = self.get_file('m42033-1.3.html')
+
         content = self.call_target(cnxml)
 
-        self.assertMultiLineEqual(content, self.get_file('m42033-1.3.html'))
+        self.assertMultiLineEqual(content, html)
 
     def test_module_transform_entity_expansion(self):
         # Case to test that a document's internal entities have been
-        # deref'ed from the DTD and expanded
-
+        #   deref'ed from the DTD and expanded
         cnxml = self.get_file('m10761-2.3.cnxml')
+
         content = self.call_target(cnxml)
 
         # &#995; is expansion of &lambda;
@@ -65,6 +69,141 @@ class TransformTests(unittest.TestCase):
         img = img.group(1)
         self.assertTrue('src="graphics1.jpg"' in img)
         self.assertTrue('data-print-width="6.5in"' in img)
+
+
+class AbstractToHtmlTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.connection_string = cls.fixture._connection_string
+        cls._db_connection = psycopg2.connect(cls.connection_string)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._db_connection.close()
+
+    def setUp(self):
+        self.fixture.setUp()
+        # Load the database with example legacy data.
+        with self._db_connection.cursor() as cursor:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
+                cursor.execute(fp.read())
+                cursor.execute("UPDATE abstracts SET (html) = (null);")
+        self._db_connection.commit()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def call_target(self, *args, **kwargs):
+        """Call the target function. This wrapping takes care of the
+        connection parameters.
+        """
+        from ..to_html import produce_html_for_abstract
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                return produce_html_for_abstract(db_connection, cursor,
+                                                 *args, **kwargs)
+
+    def test_success(self):
+        # Case to test for a successful tranformation of an abstract from
+        #   cnxml to html.
+        document_ident, abstractid = 2, 2  # m42955
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        transformed_contents = '<ul class="list"><li class="item">one</li><li class="item">two</li><li class="item">three</li></ul>'
+        self.assertTrue(html.find(transformed_contents) >= 0)
+
+    def test_success_w_reference(self):
+        # Case with an abstract containing an internal reference.
+        document_ident, abstractid = 3, 3
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4"'
+        self.assertTrue(html.find(expected) >= 0)
+
+    def test_success_w_cnxml_root_element(self):
+        # Case with an abstract that contains an outter xml element
+        #   (e.g. <para>).
+        document_ident, abstractid = 4, 4
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        transformed_contents = '<p class="para">A link to the <a href="http://example.com">outside world</a>.</p>'
+        self.assertTrue(html.find(transformed_contents) >= 0)
+
+    def test_success_w_no_cnxml(self):
+        # Case that ensures plaintext abstracts get wrapped with xml
+        #   and include the various namespaces.
+        document_ident, abstractid = 5, 5
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        transformed_contents = 'A rather short plaintext abstract.</div>'
+        # Check for the ending wrapper tag, but not the initial one, because
+        #   the namespaces are unordered and can't reliably be tested.
+        self.assertTrue(html.find(transformed_contents) >= 0)
+
+    def test_success_w_empty(self):
+        # Case that ensures an empty abstract is saved as an empty html
+        #   entry.
+        document_ident, abstractid = 6, 6
+        self.call_target(document_ident)
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT html FROM abstracts "
+                               "  WHERE abstractid = %s;",
+                               (abstractid,))
+                html = cursor.fetchone()[0]
+        self.assertEqual(html, None)
+
+    def test_failure_on_nonexistent_document(self):
+        # Case to ensure failure the requested document doesn't exist.
+        document_ident, abstractid = 50, 50
+
+        with self.assertRaises(ValueError) as caught_exception:
+            self.call_target(document_ident)
+        exception = caught_exception.exception
+        # Just ensure that we aren't blind when the exception is raised.
+        self.assertTrue(exception.message.find(str(document_ident)) >= 0)
+
+    def test_failure_on_missing_abstract(self):
+        # Case to ensure failure when an abstract is missing.
+        document_ident, abstractid = 5, 5
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("UPDATE modules SET (abstractid) = (null) "
+                               "WHERE module_ident = %s;",
+                               (document_ident,))
+                cursor.execute("DELETE FROM abstracts WHERE abstractid = %s;",
+                               (abstractid,))
+
+        from ..to_html import MissingAbstract
+        with self.assertRaises(MissingAbstract) as caught_exception:
+            self.call_target(document_ident)
 
 
 class ModuleToHtmlTestCase(unittest.TestCase):
@@ -111,8 +250,8 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                                (ident, filename,))
             db_connection.commit()
 
-        from ..to_html import DocumentOrSourceMissing
-        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+        from ..to_html import MissingDocumentOrSource
+        with self.assertRaises(MissingDocumentOrSource) as caught_exc:
             self.call_target(ident, filename)
         exception = caught_exc.exception
 
@@ -124,8 +263,8 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   can't be found.
         ident, filename = 0, 'index.cnxml'
 
-        from ..to_html import DocumentOrSourceMissing
-        with self.assertRaises(DocumentOrSourceMissing) as caught_exc:
+        from ..to_html import MissingDocumentOrSource
+        with self.assertRaises(MissingDocumentOrSource) as caught_exc:
             self.call_target(ident, filename)
         exception = caught_exc.exception
 

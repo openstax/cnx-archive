@@ -26,7 +26,7 @@ FROM (SELECT
         WHERE users.id::text = m.submitter
     ) AS submitter_row),
   m.submitlog, m.portal_type as "mediaType",
-  a.abstract,
+  a.html AS abstract,
   p.uuid AS "parentId",
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
 
@@ -79,7 +79,7 @@ WHERE
   concat_ws('.', m.major_version, m.minor_version) = %(version)s
 GROUP BY
   m.moduleid, m.portal_type, current_version, m.name, m.created, m.revised,
-  a.abstract, m.stateid, m.doctype, l.code, l.name, l.version, l.url,
+  a.html, m.stateid, m.doctype, l.code, l.name, l.version, l.url,
   m.module_ident, m.submitter, m.submitlog, p.uuid, "parentVersion", m.authors,
   m.licensors, m.maintainers, m.parentauthors, m.language, m.google_analytics
 ) combined_rows ;

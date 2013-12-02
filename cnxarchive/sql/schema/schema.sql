@@ -31,7 +31,8 @@ CREATE TABLE moduleoptionalroles (
 
 CREATE TABLE "abstracts" (
 	"abstractid" serial PRIMARY KEY,
-	"abstract" text NOT NULL
+	"abstract" text NOT NULL,
+	html text
 );
 
 CREATE TABLE "modulestates" (

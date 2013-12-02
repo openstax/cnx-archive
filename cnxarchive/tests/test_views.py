@@ -19,7 +19,7 @@ from .. import httpexceptions
 COLLECTION_METADATA = {
     u'roles': None,
     u'subject': u'Mathematics and Statistics,Science and Technology',
-    u'abstract': u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.',
+    u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
                   u'email': u'info@openstaxcollege.org',
@@ -298,7 +298,7 @@ SEARCH_RESULTS = {
                            u'work'],
              u'mediaType': u'Collection',
              u'pubDate': u'2013-08-31T19:07:20Z',
-             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems.',
+             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ',
              u'title': u'College Physics'},
             ],
         u'total': 2,
@@ -881,9 +881,10 @@ class ViewsTestCase(unittest.TestCase):
                 'customizable title includes learning objectives, concept '
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
-                'problems.')
+                'problems. ')
         self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
 
+        # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'
 
         from ..views import search
@@ -896,7 +897,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['results']['items'][0]['summarySnippet'],
-                'This introductory, algebra-based, two-semester college physics '
+                ' This introductory, algebra-based, two-semester college physics '
                 'book is grounded with real-world examples, illustrations, and '
                 'explanations to help students grasp key, fundamental physics '
                 'concepts. This online, fully editable and customizable title '
