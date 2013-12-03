@@ -2,7 +2,7 @@
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-    <xsl:include href="http://cnx.rice.edu/technology/mathml/stylesheet/cnxmathmlc2p.xsl"/>
+    <xsl:include href="content2presentation-files/cnxmathmlc2p.xsl"/>
 
     <xsl:output omit-xml-declaration="yes" method="xml"/>
 
