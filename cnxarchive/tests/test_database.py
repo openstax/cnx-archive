@@ -13,6 +13,29 @@ import psycopg2
 from . import *
 
 
+class InitializeDBTestCase(unittest.TestCase):
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test_initdb_on_already_initialized_db(self):
+        # Case for testing the `initdb` raises a discernible error
+        #   when the the database is already initialized.
+        # The fixture has initialized the database, so we only need to
+        #   run the function.
+        from ..database import initdb
+        settings = get_app_settings(TESTING_CONFIG)
+        with self.assertRaises(psycopg2.InternalError) as caught_exception:
+            initdb(settings)
+        self.assertEqual(caught_exception.exception.message,
+                         'Database is already initialized.\n')
+
+
 class MiscellaneousFunctionsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
