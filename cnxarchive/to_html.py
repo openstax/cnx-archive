@@ -14,6 +14,8 @@ from io import BytesIO
 import rhaptos.cnxmlutils
 from lxml import etree
 
+import cnxarchive
+
 
 __all__ = (
     'transform_cnxml_to_html',
@@ -36,6 +38,9 @@ HTML_TEMPLATE_FOR_CNXML = """\
 """
 RHAPTOS_CNXMLUTILS_DIR = os.path.dirname(rhaptos.cnxmlutils.__file__)
 XSL_DIRECTORY = os.path.abspath(os.path.join(RHAPTOS_CNXMLUTILS_DIR, 'xsl'))
+CNXARCHIVE_DIR = os.path.dirname(cnxarchive.__file__)
+MATHML_XSL_PATH = os.path.abspath(os.path.join(
+    CNXARCHIVE_DIR, 'xsl', 'content2presentation.xsl'))
 
 SQL_MODULE_ID_TO_MODULE_IDENT = """\
 SELECT module_ident FROM modules
@@ -277,8 +282,9 @@ class ReferenceResolver:
 fix_reference_urls = ReferenceResolver.fix_reference_urls
 
 
-_gen_xsl = lambda f: etree.XSLT(etree.parse(os.path.join(XSL_DIRECTORY, f)))
+_gen_xsl = lambda f, d=XSL_DIRECTORY: etree.XSLT(etree.parse(os.path.join(d, f)))
 CNXML_TO_HTML_XSL = _gen_xsl('cnxml-to-html5.xsl')
+MATHML_XSL = _gen_xsl(MATHML_XSL_PATH, '.')
 CNXML_TO_HTML_METADATA_XSL = _gen_xsl('cnxml-to-html5-metadata.xsl')
 DEFAULT_XMLPARSER = etree.XMLParser(**XML_PARSER_OPTIONS)
 
@@ -286,6 +292,8 @@ DEFAULT_XMLPARSER = etree.XMLParser(**XML_PARSER_OPTIONS)
 def _transform_cnxml_to_html_body(xml):
     """Transform the cnxml XML (``etree.ElementTree``) content body to html.
     """
+    # Tranform content MathML to presentation MathML so MathJax can display it
+    xml = MATHML_XSL(xml)
     return CNXML_TO_HTML_XSL(xml)
 
 
