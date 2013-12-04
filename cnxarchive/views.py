@@ -279,11 +279,7 @@ def search(environ, start_response):
         u'results': {
             u'items': [],
             u'total': 0,
-            u'limits': [{u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+            u'limits': [],
             },
         })
 

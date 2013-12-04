@@ -305,7 +305,7 @@ class QueryResults(Sequence):
     def _auxiliary_types(self):
         # If we ever add types beyond book and page,
         #   we'll want to change this.
-        return [{'id': k, 'mediaType': v}
+        return [{'id': v, 'name': k}
                 for k, v in PORTALTYPE_TO_MIMETYPE_MAPPING.items()]
 
     def _count_field(self, field_name, sorted=True, max_results=None):

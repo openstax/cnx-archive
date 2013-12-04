@@ -401,10 +401,10 @@ SEARCH_RESULTS = {
                  u'website': None}
             ],
             u'types': [
-                {u'id': u'Collection',
-                 u'mediaType': u'application/vnd.org.cnx.collection'},
-                {u'id': u'Module',
-                 u'mediaType': u'application/vnd.org.cnx.module'},
+                {u'name': u'Collection',
+                 u'id': u'application/vnd.org.cnx.collection'},
+                {u'name': u'Module',
+                 u'id': u'application/vnd.org.cnx.module'},
             ],
         },
     },
@@ -934,12 +934,7 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
-                u'limits': [
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+                u'limits': [],
                 },
             }))
 
@@ -962,12 +957,7 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
-                u'limits': [
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+                u'limits': [],
                 },
             }))
 
@@ -1004,10 +994,10 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'id': u'Collection',
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'id': u'Module',
-                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
                 },
@@ -1048,10 +1038,10 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'id': u'Collection',
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'id': u'Module',
-                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
                 },
@@ -1095,10 +1085,10 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'id': u'Collection',
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'id': u'Module',
-                         u'mediaType': u'application/vnd.org.cnx.module'},
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
                 },
