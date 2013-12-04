@@ -88,7 +88,7 @@ class SearchModelTestCase(unittest.TestCase):
 
         # Verify the counts on the results object.
         query = [('text', 'physics')]
-        results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
+        results = self.make_queryresults(RAW_QUERY_RECORDS, query)
 
         self.assertEqual(len(results), 15)
         # Check the type counts.
@@ -152,7 +152,7 @@ class SearchModelTestCase(unittest.TestCase):
         search.MAX_VALUES_FOR_AUTHORS = 1
 
         query = [('text', 'physics')]
-        results = self.make_queryresults(RAW_QUERY_RECORDS, query, 'OR')
+        results = self.make_queryresults(RAW_QUERY_RECORDS, query)
 
         open_stax_college = {u'website': None,
                              u'surname': None,
@@ -389,9 +389,9 @@ class SearchTestCase(unittest.TestCase):
         # Test the results of a search on fulltext.
         query_params = [('fulltext', 'uncertainty'), ('fulltext', 'rotation')]
 
-        results = self.call_target(query_params, query_type='OR')
-        self.assertEqual(len(results), 6)
-        # Ensure the record with both values is the top result.
+        results = self.call_target(query_params)
+        self.assertEqual(len(results), 1)
+        # Ensure the record with both values is the only result.
         self.assertEqual(results[0]['id'],
                          'ae3e18de-638d-4738-b804-dc69cd4db3a3')
 
