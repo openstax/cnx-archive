@@ -381,7 +381,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm42119', 'f3c9ab70-a916-4d8c-9256-42953287b4e9', NULL,
         'New Version', '2013-09-13 15:10:43.000000+02' ,
-        '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
+        '2013-09-13 15:10:43.000000+02', 6, 11, '', '', '', NULL, NULL,
         'en', '{}', '{}', '{}', NULL, NULL, NULL, 2, NULL) RETURNING module_ident''')
 
         new_module_ident = cursor.fetchone()[0]
