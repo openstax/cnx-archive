@@ -445,10 +445,10 @@ class ReferenceResolutionTestCase(unittest.TestCase):
                 content, bad_refs = fix_reference_urls(db_connection, ident, content)
 
         # Read the content for the reference changes.
-        expected_img_ref = '<img src="../resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
+        expected_img_ref = '<img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
         self.assertTrue(content.find(expected_img_ref) >= 0)
         expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7">'
         self.assertTrue(content.find(expected_internal_ref) >= 0)
-        expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
+        expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
