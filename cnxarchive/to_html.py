@@ -19,7 +19,7 @@ import cnxarchive
 
 __all__ = (
     'transform_cnxml_to_html',
-    'produce_html_for_module', 'produce_html_for_modules',
+    'produce_html_for_module', 'produce_html_for_abstract',
     )
 
 
@@ -55,13 +55,6 @@ SELECT row_to_json(row) FROM (
 """
 SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = """\
 SELECT uuid, version FROM modules WHERE moduleid = %s
-"""
-DEFAULT_ID_SELECT_QUERY = """\
-SELECT module_ident FROM modules AS m
-  WHERE portal_type = 'Module'
-        AND NOT EXISTS (SELECT 1 FROM module_files
-                          WHERE module_ident = m.module_ident
-                                AND filename = 'index.html');
 """
 
 
@@ -366,7 +359,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     else:
         html = None
 
-    # Upate the abstract.
+    # Update the abstract.
     if html:
         cursor.execute("UPDATE abstracts SET (html) = (%s) "
                        "WHERE abstractid = %s;",
@@ -431,32 +424,3 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, html_file_id, 'index.html', 'text/html',))
     return warning_messages
-
-
-def produce_html_for_modules(db_connection,
-                             id_select_query=DEFAULT_ID_SELECT_QUERY,
-                             source_filename='index.cnxml',
-                             overwrite_html=False):
-    """Produce HTML files of existing module documents. This will
-    do the work on all modules in the database.
-
-    Yields a state tuple after each module is handled.
-    The state tuple contains the id of the module that was transformed
-    and either None when no errors have occured
-    or a message containing information about the issue.
-    """
-    with db_connection.cursor() as cursor:
-        cursor.execute(id_select_query)
-        # Note, the "ident" is different from the "id" in our tables.
-        idents = [v[0] for v in cursor.fetchall()]
-
-    for ident in idents:
-        with db_connection.cursor() as cursor:
-            try:
-                message = produce_html_for_module(db_connection, cursor, ident,
-                                                  source_filename,
-                                                  overwrite_html)
-            except Exception as exc:
-                message = exc.message
-        yield (ident, message)
-    raise StopIteration
