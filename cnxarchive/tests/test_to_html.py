@@ -19,8 +19,6 @@ from . import postgresql_fixture
 here = os.path.abspath(os.path.dirname(__file__))
 TESTING_DATA_DIR = os.path.join(here, 'data')
 TESTING_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR, 'data.sql')
-TESTING_LEGACY_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR,
-                                            'legacy-data.sql')
 
 
 class TransformTests(unittest.TestCase):
@@ -131,7 +129,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4"'
+        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4"'
         self.assertTrue(html.find(expected) >= 0)
 
     def test_success_w_cnxml_root_element(self):
@@ -222,7 +220,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.fixture.setUp()
         # Load the database with example legacy data.
         with self._db_connection.cursor() as cursor:
-            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
         self._db_connection.commit()
 
@@ -275,6 +273,12 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Case to test for a successful tranformation of a module from
         #   cnxml to html.
         ident, filename = 2, 'index.cnxml'  # m42955
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
         self.call_target(ident)
 
         with psycopg2.connect(self.connection_string) as db_connection:
@@ -298,6 +302,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Create an index.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
+
                 cursor.execute('INSERT INTO files (file) '
                                '(SELECT file FROM files WHERE fileid = 1) '
                                'RETURNING fileid')
@@ -336,6 +344,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Create an index.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
+
                 cursor.execute('INSERT INTO files (file) '
                                'SELECT file FROM files WHERE fileid = 1 '
                                'RETURNING fileid')
@@ -396,6 +408,13 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   The xml is invalid, therefore the transform cannot succeed.
         ident = self._make_document_data_invalid()
 
+        # Delete ident index.html
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('DELETE FROM module_files WHERE '
+                               'module_ident = %s AND filename = %s',
+                               [ident, 'index.html'])
+
         with self.assertRaises(Exception) as caught_exc:
             self.call_target(ident)
 
@@ -423,7 +442,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         self.fixture.setUp()
         # Load the database with example legacy data.
         with self._db_connection.cursor() as cursor:
-            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
         self._db_connection.commit()
 
@@ -445,10 +464,10 @@ class ReferenceResolutionTestCase(unittest.TestCase):
                 content, bad_refs = fix_reference_urls(db_connection, ident, content)
 
         # Read the content for the reference changes.
-        expected_img_ref = '<img src="../resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
+        expected_img_ref = '<img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
         self.assertTrue(content.find(expected_img_ref) >= 0)
-        expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7">'
+        expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7">'
         self.assertTrue(content.find(expected_internal_ref) >= 0)
-        expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
+        expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 

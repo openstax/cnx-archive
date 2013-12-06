@@ -54,7 +54,12 @@ SELECT row_to_json(row) FROM (
 ) row;
 """
 SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = """\
-SELECT uuid, version FROM modules WHERE moduleid = %s
+SELECT uuid, concat_ws('.', major_version, minor_version) FROM latest_modules
+WHERE moduleid = %s
+"""
+SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT = """\
+SELECT uuid, concat_ws('.', major_version, minor_version) FROM modules
+WHERE moduleid = %s and version = %s
 """
 DEFAULT_ID_SELECT_QUERY = """\
 SELECT module_ident FROM modules AS m
@@ -124,7 +129,7 @@ class IndexHtmlExistsError(Exception):
 
 
 PATH_REFERENCE_REGEX = re.compile(
-    r'^(/?(content/)?(?P<module>(m|col)\d{5})(/(?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
+    r'^(/?(content/)?(?P<module>(m|col)\d{5})([/@](?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
     re.IGNORECASE)
 MODULE_REFERENCE = 'module-reference'
 RESOURCE_REFERENCE = 'resource-reference'
@@ -181,8 +186,12 @@ class ReferenceResolver:
 
     def get_uuid_n_version(self, module_id, version=None):
         with self.db_connection.cursor() as cursor:
-            cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
-                           (module_id,))
+            if version:
+                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT,
+                               (module_id, version))
+            else:
+                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
+                               (module_id,))
             try:
                 uuid, version = cursor.fetchone()
             except (TypeError, ValueError):  # None or unpack problem
@@ -237,7 +246,7 @@ class ReferenceResolver:
             except ReferenceNotFound as exc:
                 bad_references.append(exc)
             else:
-                img.set('src', '../resources/{}'.format(info['hash'],))
+                img.set('src', '/resources/{}'.format(info['hash'],))
         return bad_references
 
     def fix_anchor_references(self):
@@ -276,7 +285,7 @@ class ReferenceResolver:
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
-                    anchor.set('href', '../resources/{}'.format(info['hash'],))
+                    anchor.set('href', '/resources/{}'.format(info['hash'],))
         return bad_references
 
 fix_reference_urls = ReferenceResolver.fix_reference_urls
@@ -430,6 +439,12 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, html_file_id, 'index.html', 'text/html',))
+    abs_warning_messages = produce_html_for_abstract(db_connection, cursor, ident)
+    if abs_warning_messages:
+        if warning_messages:
+            warning_messages = '\n'.join((abs_warning_messages,warning_messages))
+        else:
+            warning_messages = abs_warning_messages
     return warning_messages
 
 
