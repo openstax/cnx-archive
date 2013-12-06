@@ -54,7 +54,12 @@ SELECT row_to_json(row) FROM (
 ) row;
 """
 SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = """\
-SELECT uuid, version FROM modules WHERE moduleid = %s
+SELECT uuid, concat_ws('.', major_version, minor_version) FROM latest_modules
+WHERE moduleid = %s
+"""
+SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT = """\
+SELECT uuid, concat_ws('.', major_version, minor_version) FROM modules
+WHERE moduleid = %s and version = %s
 """
 DEFAULT_ID_SELECT_QUERY = """\
 SELECT module_ident FROM modules AS m
@@ -124,7 +129,7 @@ class IndexHtmlExistsError(Exception):
 
 
 PATH_REFERENCE_REGEX = re.compile(
-    r'^(/?(content/)?(?P<module>(m|col)\d{5})(/(?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
+    r'^(/?(content/)?(?P<module>(m|col)\d{5})([/@](?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
     re.IGNORECASE)
 MODULE_REFERENCE = 'module-reference'
 RESOURCE_REFERENCE = 'resource-reference'
@@ -181,8 +186,12 @@ class ReferenceResolver:
 
     def get_uuid_n_version(self, module_id, version=None):
         with self.db_connection.cursor() as cursor:
-            cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
-                           (module_id,))
+            if version:
+                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT,
+                               (module_id, version))
+            else:
+                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
+                               (module_id,))
             try:
                 uuid, version = cursor.fetchone()
             except (TypeError, ValueError):  # None or unpack problem

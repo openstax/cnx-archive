@@ -129,7 +129,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@1.4"'
+        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4"'
         self.assertTrue(html.find(expected) >= 0)
 
     def test_success_w_cnxml_root_element(self):
@@ -466,7 +466,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         # Read the content for the reference changes.
         expected_img_ref = '<img src="../resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
         self.assertTrue(content.find(expected_img_ref) >= 0)
-        expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@1.7">'
+        expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7">'
         self.assertTrue(content.find(expected_internal_ref) >= 0)
         expected_resource_ref = '<a href="../resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
