@@ -279,11 +279,7 @@ def search(environ, start_response):
         u'results': {
             u'items': [],
             u'total': 0,
-            u'limits': [{u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+            u'limits': [],
             },
         })
 
@@ -304,8 +300,8 @@ def search(environ, start_response):
     db_results = database_search(query, query_type)
 
     results = {}
-    limits = [{keyword: value} for keyword, value in query.terms]
-    limits.extend([{keyword: value} for keyword, value in query.filters])
+    limits = [{'tag': k, 'value': v} for k, v in query.terms]
+    limits.extend([{'tag': k, 'value': v} for k, v in query.filters])
     results['query'] = {
             'limits': limits,
             'sort': query.sorts,
@@ -329,15 +325,11 @@ def search(environ, start_response):
         result_limits.append({'tag': count_name,
                               'values': []})
         for keyword, count in values:
-            value = {}
-            if isinstance(keyword, tuple):
-                value['value'] = keyword[0]
-                value['meta'] = keyword[1]
-            else:
-                value['value'] = keyword
-            value['count'] = count
+            value = {'value': keyword, 'count': count}
             result_limits[-1]['values'].append(value)
     results['results']['limits'] = result_limits
+    # Add the supplemental result information.
+    results['results']['auxiliary'] = db_results.auxiliary
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]

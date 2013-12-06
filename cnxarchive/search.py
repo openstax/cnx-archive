@@ -19,6 +19,7 @@ from . import get_settings
 from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
+    PORTALTYPE_TO_MIMETYPE_MAPPING,
     )
 
 
@@ -273,6 +274,40 @@ class QueryResults(Sequence):
     def __len__(self):
         return len(self._records)
 
+    @property
+    def auxiliary(self):
+        return {'authors': self._auxiliary_authors,
+                'types': self._auxiliary_types,
+                }
+
+    @property
+    def _auxiliary_authors(self):
+        attr_name = '_aux_authors'
+        if hasattr(self, attr_name):
+            return getattr(self, attr_name)
+
+        # Used to make the dict hashable for a set([]).
+        class hashabledict(dict):
+            def __hash__(self):
+                return hash(tuple(sorted(self.items())))
+
+        authors = set([])
+        for rec in self._records:
+            for author in rec['authors']:
+                # The author is in dict format, just use it.
+                authors.add(hashabledict(author))
+
+        authors = list(authors)
+        setattr(self, attr_name, authors)
+        return getattr(self, attr_name)
+
+    @property
+    def _auxiliary_types(self):
+        # If we ever add types beyond book and page,
+        #   we'll want to change this.
+        return [{'id': v, 'name': k}
+                for k, v in PORTALTYPE_TO_MIMETYPE_MAPPING.items()]
+
     def _count_field(self, field_name, sorted=True, max_results=None):
         counts = {}
         for rec in self._records:
@@ -304,10 +339,9 @@ class QueryResults(Sequence):
             }
         for rec in self._records:
             counts[portaltype_to_mimetype(rec['mediaType'])] += 1
-        return [(('Book', {'mediaType': COLLECTION_MIMETYPE}),
-                 counts[COLLECTION_MIMETYPE]),
-                (('Page', {'mediaType': MODULE_MIMETYPE}),
-                 counts[MODULE_MIMETYPE])]
+        return [(COLLECTION_MIMETYPE, counts[COLLECTION_MIMETYPE],),
+                (MODULE_MIMETYPE, counts[MODULE_MIMETYPE],),
+                ]
 
     def _count_authors(self, max_results=None):
         counts = {}
@@ -321,7 +355,7 @@ class QueryResults(Sequence):
         authors = []
         for uid, count in counts.iteritems():
             author = uid_author[uid]
-            authors.append(((uid, author), count))
+            authors.append(((uid, author,), count))
 
         if max_results:
             # limit the number of results we return
@@ -338,6 +372,7 @@ class QueryResults(Sequence):
             return result
         # Sort authors by surname then first name
         authors.sort(sort_name)
+        authors = [(a[0][0], a[1],) for a in authors]
         return authors
 
     def _count_publication_year(self):

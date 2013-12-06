@@ -229,7 +229,7 @@ MODULE_METADATA = {
     }
 SEARCH_RESULTS = {
     u'query': {
-        u'limits': [{u'text': u'college physics'}],
+        u'limits': [{u'tag': u'text', u'value': u'college physics'}],
         u'sort': [u'version'],
         },
     u'results': {
@@ -308,36 +308,18 @@ SEARCH_RESULTS = {
                           u'count': 2}]},
             {u'tag': u'authorID',
              u'values': [{u'value': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                          u'count': 2,
-                          u'meta': {u'email': u'info@openstaxcollege.org',
-                                    u'firstname': u'OpenStax College',
-                                    u'fullname': u'OpenStax College',
-                                    u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                                    u'othername': None,
-                                    u'suffix': None,
-                                    u'surname': None,
-                                    u'title': None,
-                                    u'website': None}},
+                          u'count': 2},
                          {u'value': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                          u'count': 1,
-                          u'meta': {u'email': u'info@openstaxcollege.org',
-                                    u'firstname': u'College',
-                                    u'fullname': u'OSC Physics Maintainer',
-                                    u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                                    u'othername': None,
-                                    u'suffix': None,
-                                    u'surname': u'Physics',
-                                    u'title': None,
-                                    u'website': None}},
+                          u'count': 1},
             ]},
             {u'tag': u'type',
-             u'values': [{u'value': u'Book',
-                          u'count': 1,
-                          u'meta': {u'mediaType': u'application/vnd.org.cnx.collection'}},
-                         {u'value': u'Page',
-                          u'count': 1,
-                          u'meta': {u'mediaType': u'application/vnd.org.cnx.module'}},
-            ]},
+             u'values': [
+                 {u'value': u'application/vnd.org.cnx.collection',
+                  u'count': 1},
+                 {u'value': u'application/vnd.org.cnx.module',
+                  u'count': 1},
+                 ],
+             },
             {u'tag': u'keyword',
              u'values': [{u'count': 1, u'value': u'ac circuits'},
                          {u'count': 1, u'value': u'atomic physics'},
@@ -396,8 +378,37 @@ SEARCH_RESULTS = {
              u'values': [{u'count': 2, u'value': u'Mathematics and Statistics'},
                          {u'count': 1, u'value': u'Science and Technology'},
             ]},
-        ]}
-    }
+        ],
+        u'auxiliary': {
+            u'authors': [
+                {u'email': u'info@openstaxcollege.org',
+                 u'firstname': u'OpenStax College',
+                 u'fullname': u'OpenStax College',
+                 u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                 u'othername': None,
+                 u'suffix': None,
+                 u'surname': None,
+                 u'title': None,
+                 u'website': None},
+                {u'email': u'info@openstaxcollege.org',
+                 u'firstname': u'College',
+                 u'fullname': u'OSC Physics Maintainer',
+                 u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                 u'othername': None,
+                 u'suffix': None,
+                 u'surname': u'Physics',
+                 u'title': None,
+                 u'website': None}
+            ],
+            u'types': [
+                {u'name': u'Collection',
+                 u'id': u'application/vnd.org.cnx.collection'},
+                {u'name': u'Module',
+                 u'id': u'application/vnd.org.cnx.module'},
+            ],
+        },
+    },
+}
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
@@ -834,7 +845,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
-            u'limits': [{u'subject': u'Science and Technology'}],
+            u'limits': [{u'tag': u'subject', u'value': u'Science and Technology'}],
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
 
@@ -853,9 +864,10 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
-            u'limits': [{u'title': u'college physics'},
-                        {u'subject': 'Science and Technology'},
-                       ],
+            u'limits': [
+                {u'tag': u'title', u'value': u'college physics'},
+                {u'tag': u'subject', u'value': 'Science and Technology'},
+                ],
             u'sort': []})
         self.assertEqual(results['results']['total'], 1)
 
@@ -924,12 +936,7 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
-                u'limits': [
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+                u'limits': [],
                 },
             }))
 
@@ -952,12 +959,7 @@ class ViewsTestCase(unittest.TestCase):
             u'results': {
                 u'items': [],
                 u'total': 0,
-                u'limits': [
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.collection'},
-                        {u'count': 0,
-                         u'mediaType': u'application/vnd.org.cnx.module'},
-                        ],
+                u'limits': [],
                 },
             }))
 
@@ -973,9 +975,9 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
-                u'limits': [{u'text': u'你好'}],
+                u'limits': [{u'tag': u'text', u'value': u'你好'}],
                 u'sort': [],
                 },
             u'results': {
@@ -985,16 +987,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]},
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_punctuations(self):
         environ = self._make_environ()
@@ -1009,11 +1019,9 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
-                u'limits': [
-                    {u'text': ur":\.+'?"},
-                    ],
+                u'limits': [{u'tag': u'text', u'value': ur":\.+'?"}],
                 u'sort': [],
                 },
             u'results': {
@@ -1023,16 +1031,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]},
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_unbalanced_quotes(self):
         environ = self._make_environ()
@@ -1046,12 +1062,12 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
-        self.assertEqual(json.loads(results), {
+        expected = {
             u'query': {
                 u'limits': [
-                    {u'text': u'a phrase'},
-                    {u'text': u'something else'},
-                    {u'author': 'first last'},
+                    {u'tag': u'text', u'value': u'a phrase'},
+                    {u'tag': u'text', u'value': u'something else'},
+                    {u'tag': u'author', u'value': 'first last'},
                     ],
                 u'sort': [u'pubDate'],
                 },
@@ -1062,16 +1078,24 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'type',
                      u'values': [
                          {u'count': 0,
-                          u'value': 'Book',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.collection'}},
+                          u'value': u'application/vnd.org.cnx.collection'},
                          {u'count': 0,
-                          u'value': 'Page',
-                          u'meta': {
-                              u'mediaType': u'application/vnd.org.cnx.module'}},
-                    ]}
-                ]}
-            })
+                          u'value': u'application/vnd.org.cnx.module'},
+                         ],
+                     },
+                    ],
+                u'auxiliary': {
+                    u'authors': [],
+                    u'types': [
+                        {u'name': u'Collection',
+                         u'id': u'application/vnd.org.cnx.collection'},
+                        {u'name': u'Module',
+                         u'id': u'application/vnd.org.cnx.module'},
+                        ],
+                    }, 
+                },
+            }
+        self.assertEqual(json.loads(results), expected)
 
     def test_search_type_page_or_module(self):
         # Test searching "page"
@@ -1089,7 +1113,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'page'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'page'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Module')
@@ -1109,7 +1134,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'module'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'module'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Module')
@@ -1130,7 +1156,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'book'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'book'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')
@@ -1151,7 +1178,7 @@ class ViewsTestCase(unittest.TestCase):
 
         results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
-                         {u'type': u'collection'})
+                         {u'tag': u'type', u'value': u'collection'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')

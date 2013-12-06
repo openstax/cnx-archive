@@ -95,8 +95,8 @@ class SearchModelTestCase(unittest.TestCase):
         from ..utils import MODULE_MIMETYPE, COLLECTION_MIMETYPE
         types = results.counts['type']
         self.assertEqual(types, [
-            (('Book', {u'mediaType': COLLECTION_MIMETYPE}), 1),
-            (('Page', {u'mediaType': MODULE_MIMETYPE}), 14),
+            (COLLECTION_MIMETYPE, 1,),
+            (MODULE_MIMETYPE, 14,),
             ])
         # Check the author counts
         osc_physics = {u'email': u'info@openstaxcollege.org',
@@ -118,9 +118,8 @@ class SearchModelTestCase(unittest.TestCase):
                              u'fullname': u'OpenStax College',
                              u'email': u'info@openstaxcollege.org'}
 
-        self.assertEqual(results.counts['authorID'],
-                         [((open_stax_college['id'], open_stax_college), 15),
-                          ((osc_physics['id'], osc_physics), 1)])
+        expected = [(open_stax_college['id'], 15,), (osc_physics['id'], 1,)]
+        self.assertEqual(results.counts['authorID'], expected)
 
         # Check counts for publication year.
         pub_years = list(results.counts['pubYear'])
@@ -166,8 +165,22 @@ class SearchModelTestCase(unittest.TestCase):
 
         # Check there is only one author returned
         authors = results.counts['authorID']
-        self.assertEqual(authors,
-                         [((open_stax_college['id'], open_stax_college), 15)])
+        self.assertEqual(authors, [(open_stax_college['id'], 15,)])
+
+    def test_auxiliary_authors(self):
+        # Check that the query results object contains a list of all the
+        #   authors that appear in the results.
+        from .. import search
+        query = [('text', 'physics')]
+        results = self.make_queryresults(RAW_QUERY_RECORDS, query)
+
+        # Simple quantity check before quality.
+        authors = results.auxiliary['authors']
+        self.assertEqual(len(authors), 2)
+        # Check the contents after sorting the results.
+        authors = sorted(authors, key=lambda x: x['id'])
+        expected = [{u'website': None, u'surname': u'Physics', u'suffix': None, u'firstname': u'College', u'title': None, u'othername': None, u'fullname': u'OSC Physics Maintainer', u'email': u'info@openstaxcollege.org', u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1'}, {u'website': None, u'surname': None, u'suffix': None, u'firstname': u'OpenStax College', u'title': None, u'othername': None, u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org', u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'}]
+        self.assertEqual(authors, expected)
 
 
 class SearchTestCase(unittest.TestCase):
