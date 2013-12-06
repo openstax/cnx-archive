@@ -6,6 +6,7 @@ python:
 addons:
   postgresql: "9.3"
 before_install:
+  - sudo apt-get update
   # Install the 'plpython' extension language
   - sudo apt-get install postgresql-plpython-9.3
   # Install the 'plxslt' extension language
