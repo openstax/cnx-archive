@@ -19,8 +19,6 @@ from . import postgresql_fixture
 here = os.path.abspath(os.path.dirname(__file__))
 TESTING_DATA_DIR = os.path.join(here, 'data')
 TESTING_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR, 'data.sql')
-TESTING_LEGACY_DATA_SQL_FILE = os.path.join(TESTING_DATA_DIR,
-                                            'legacy-data.sql')
 
 
 class TransformTests(unittest.TestCase):
@@ -222,7 +220,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.fixture.setUp()
         # Load the database with example legacy data.
         with self._db_connection.cursor() as cursor:
-            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
         self._db_connection.commit()
 
@@ -275,6 +273,12 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Case to test for a successful tranformation of a module from
         #   cnxml to html.
         ident, filename = 2, 'index.cnxml'  # m42955
+
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
         self.call_target(ident)
 
         with psycopg2.connect(self.connection_string) as db_connection:
@@ -298,6 +302,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Create an index.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
+
                 cursor.execute('INSERT INTO files (file) '
                                '(SELECT file FROM files WHERE fileid = 1) '
                                'RETURNING fileid')
@@ -336,6 +344,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         # Create an index.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
+                # delete module_ident 2 index.html
+                cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
+                               "AND filename = 'index.html'")
+
                 cursor.execute('INSERT INTO files (file) '
                                'SELECT file FROM files WHERE fileid = 1 '
                                'RETURNING fileid')
@@ -396,6 +408,13 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   The xml is invalid, therefore the transform cannot succeed.
         ident = self._make_document_data_invalid()
 
+        # Delete ident index.html
+        with psycopg2.connect(self.connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('DELETE FROM module_files WHERE '
+                               'module_ident = %s AND filename = %s',
+                               [ident, 'index.html'])
+
         with self.assertRaises(Exception) as caught_exc:
             self.call_target(ident)
 
@@ -423,7 +442,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         self.fixture.setUp()
         # Load the database with example legacy data.
         with self._db_connection.cursor() as cursor:
-            with open(TESTING_LEGACY_DATA_SQL_FILE, 'rb') as fp:
+            with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
         self._db_connection.commit()
 
