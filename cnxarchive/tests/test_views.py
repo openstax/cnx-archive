@@ -229,7 +229,7 @@ MODULE_METADATA = {
     }
 SEARCH_RESULTS = {
     u'query': {
-        u'limits': [{u'text': u'college physics'}],
+        u'limits': [{u'tag': u'text', u'value': u'college physics'}],
         u'sort': [u'version'],
         },
     u'results': {
@@ -845,7 +845,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
-            u'limits': [{u'subject': u'Science and Technology'}],
+            u'limits': [{u'tag': u'subject', u'value': u'Science and Technology'}],
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
 
@@ -864,9 +864,10 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
-            u'limits': [{u'title': u'college physics'},
-                        {u'subject': 'Science and Technology'},
-                       ],
+            u'limits': [
+                {u'tag': u'title', u'value': u'college physics'},
+                {u'tag': u'subject', u'value': 'Science and Technology'},
+                ],
             u'sort': []})
         self.assertEqual(results['results']['total'], 1)
 
@@ -975,7 +976,7 @@ class ViewsTestCase(unittest.TestCase):
 
         expected = {
             u'query': {
-                u'limits': [{u'text': u'你好'}],
+                u'limits': [{u'tag': u'text', u'value': u'你好'}],
                 u'sort': [],
                 },
             u'results': {
@@ -1019,7 +1020,7 @@ class ViewsTestCase(unittest.TestCase):
 
         expected = {
             u'query': {
-                u'limits': [{u'text': ur":\.+'?"}],
+                u'limits': [{u'tag': u'text', u'value': ur":\.+'?"}],
                 u'sort': [],
                 },
             u'results': {
@@ -1063,9 +1064,9 @@ class ViewsTestCase(unittest.TestCase):
         expected = {
             u'query': {
                 u'limits': [
-                    {u'text': u'a phrase'},
-                    {u'text': u'something else'},
-                    {u'author': 'first last'},
+                    {u'tag': u'text', u'value': u'a phrase'},
+                    {u'tag': u'text', u'value': u'something else'},
+                    {u'tag': u'author', u'value': 'first last'},
                     ],
                 u'sort': [u'pubDate'],
                 },
@@ -1111,7 +1112,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'page'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'page'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Module')
@@ -1131,7 +1133,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'module'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'module'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Module')
@@ -1152,7 +1155,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
 
         results = json.loads(results)
-        self.assertEqual(results['query']['limits'][-1], {u'type': u'book'})
+        self.assertEqual(results['query']['limits'][-1],
+                         {u'tag': u'type', u'value': u'book'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')
@@ -1173,7 +1177,7 @@ class ViewsTestCase(unittest.TestCase):
 
         results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
-                         {u'type': u'collection'})
+                         {u'tag': u'type', u'value': u'collection'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')

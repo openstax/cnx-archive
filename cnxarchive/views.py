@@ -300,8 +300,8 @@ def search(environ, start_response):
     db_results = database_search(query, query_type)
 
     results = {}
-    limits = [{keyword: value} for keyword, value in query.terms]
-    limits.extend([{keyword: value} for keyword, value in query.filters])
+    limits = [{'tag': k, 'value': v} for k, v in query.terms]
+    limits.extend([{'tag': k, 'value': v} for k, v in query.filters])
     results['query'] = {
             'limits': limits,
             'sort': query.sorts,
