@@ -13,6 +13,8 @@ FROM (SELECT
   -- can't use "version" as we need it in GROUP BY clause and it causes a
   -- "column name is ambiguous" error
 
+  m.moduleid as legacy_id,
+  m.version as legacy_version,
   m.name as title,
   iso8601(m.created) as created, iso8601(m.revised) as revised,
   m.stateid, m.doctype,
