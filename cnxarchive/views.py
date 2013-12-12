@@ -136,19 +136,32 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     file_extension = type_info[type]['file_extension']
     mimetype = type_info[type]['mimetype']
     filename = '{}@{}.{}'.format(id, version, file_extension)
+    legacy_id = metadata['legacy_id']
+    legacy_version = metadata['legacy_version']
+    legacy_filename = '{}-{}.{}'.format(legacy_id, legacy_version, 
+            file_extension)
     slugify_title_filename = '{}-{}.{}'.format(slugify(metadata['title']), 
             version, file_extension)
 
     for exports_dir in exports_dirs:
+        filepath = os.path.join(exports_dir, filename)
+        legacy_filepath = os.path.join(exports_dir, legacy_filename)
         try:
-            with open(os.path.join(exports_dir, filename), 'r') as file:
+            with open(filepath, 'r') as file:
                 return (slugify_title_filename, mimetype, file.read())
         except IOError:
-            # to be handled by the else part below if unable to find file in
-            # any of the export dirs
-            pass
+            # Let's see if the legacy file's there and make the new link if so
+            #FIXME remove this code when we retire legacy
+            try:
+                with open(legacy_filepath, 'r') as file:
+                    os.link(legacy_filepath,filepath)
+                    return (slugify_title_filename, mimetype, file.read())
+            except IOError:
+                # to be handled by the else part below if unable to find file 
+                # in any of the export dirs
+                pass
     else:
-        raise ExportError('{}@{}.{} not found'.format(id, version, type))
+        raise ExportError('{} not found'.format(filename))
 
 
 # ######### #

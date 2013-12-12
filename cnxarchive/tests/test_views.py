@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import glob
 import os
 import json
 import unittest
@@ -729,6 +730,48 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
                     id, version, version),
+                },
+            ])
+
+    def test_extra_downloads_with_legacy_filenames(self):
+        # Tests for finding legacy filenames after a module is published from
+        # the legacy site
+        id = '209deb1f-1a46-4369-9e0d-18674cf58a3e' # m42955
+        version = '7' # legacy_version: 1.7
+        requested_ident_hash = '{}@{}'.format(id, version)
+
+        # Remove the generated files after the test
+        def remove_generated_files():
+            for f in glob.glob('{}/exports2/{}@{}.*'.format(
+                TEST_DATA_DIRECTORY, id, version)):
+                os.unlink(f)
+        self.addCleanup(remove_generated_files)
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': requested_ident_hash}
+
+        # Call the target
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
+
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output)['downloads'], [
+            {
+                u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
+                    .format(id, version),
+                u'format': u'PDF',
+                u'details': u'PDF file, for viewing content offline and printing.',
+                u'filename': u'preface-to-college-physics-7.pdf',
+                },
+            {
+                u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
+                    .format(id, version),
+                u'format': u'EPUB',
+                u'details': u'Electronic book format file, for viewing on mobile devices.',
+                u'filename': u'preface-to-college-physics-7.epub',
                 },
             ])
 
