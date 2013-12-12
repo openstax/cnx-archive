@@ -392,11 +392,14 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(cursor.fetchone()[0], 19)
 
         # Test that the module inserted has the right major and minor versions
-        cursor.execute('''SELECT major_version, minor_version FROM modules 
+        cursor.execute('''SELECT major_version, minor_version, uuid FROM modules 
             WHERE portal_type = 'Module' ORDER BY module_ident DESC''')
-        major, minor = cursor.fetchone()
+        major, minor, uuid = cursor.fetchone()
         self.assertEqual(major, 2)
         self.assertEqual(minor, None)
+        # Test that the module inserted has the same uuid as an older version of m42955
+        self.assertEqual(uuid, '209deb1f-1a46-4369-9e0d-18674cf58a3e')
+
 
         # Test that the latest row in modules is a collection with updated
         # version
