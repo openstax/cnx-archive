@@ -322,7 +322,7 @@ def search(environ, start_response):
     results['results'] = {'total': len(db_results), 'items': []}
     for record in db_results:
         results['results']['items'].append({
-            'id': record['id'],
+            'id': '{}@{}'.format(record['id'],record['version']),
             'mediaType': record['mediaType'],
             'title': record['title'],
             'authors': [a['id'] for a in record['authors']],

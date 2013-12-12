@@ -237,7 +237,7 @@ SEARCH_RESULTS = {
         u'items': [
             {u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
              u'bodySnippet': None,
-             u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+             u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
              u'keywords': [u'college physics',
                            u'physics',
                            u'friction',
@@ -293,7 +293,7 @@ SEARCH_RESULTS = {
             {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
                           u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
              u'bodySnippet': None,
-             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
              u'keywords': [u'college physics',
                            u'introduction',
                            u'physics'],
@@ -399,7 +399,7 @@ SEARCH_RESULTS = {
                  u'suffix': None,
                  u'surname': u'Physics',
                  u'title': None,
-                 u'website': None}
+                 u'website': None},
             ],
             u'types': [
                 {u'name': u'Collection',
