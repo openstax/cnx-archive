@@ -329,8 +329,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         new_collection_id = results[0]
         self.assertEqual(results[1], 'Collection') # portal_type
         self.assertEqual(results[5], 'College Physics') # name
-        self.assertEqual(results[-2], 1) # major_version
-        self.assertEqual(results[-1], 8) # minor_version
+        self.assertEqual(results[-2], 7) # major_version
+        self.assertEqual(results[-1], 2) # minor_version
 
         cursor.execute('SELECT nodeid FROM trees '
                 'WHERE parent_id IS NULL ORDER BY nodeid DESC')

@@ -73,14 +73,14 @@ COLLECTION_METADATA = {
         u'fullname': u'OpenStax College',
         u'email': u'info@openstaxcollege.org'},
     u'mediaType': u'application/vnd.org.cnx.collection',
-    u'version': u'1.7',
+    u'version': u'7.1',
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
     u'legacy_id':u'col11406',
     u'legacy_version':u'1.7',
     u'history': [
         {
-            u'version': u'1.7',
+            u'version': u'7.1',
             u'revised': u'2013-08-31T19:07:20Z',
             u'changes': 'New version 1.7',
             u'publisher': {
@@ -93,7 +93,7 @@ COLLECTION_METADATA = {
                 },
             },
         {
-            u'version': u'1.6',
+            u'version': u'6.1',
             u'revised': u'2013-07-31T19:07:20Z',
             u'changes': 'Updated something',
             u'publisher': {
@@ -108,7 +108,7 @@ COLLECTION_METADATA = {
         ],
     }
 COLLECTION_JSON_TREE = {
-    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@1.7',
+    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
     u'title': u'College Physics',
     u'contents': [
         {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
@@ -235,17 +235,6 @@ SEARCH_RESULTS = {
         },
     u'results': {
         u'items': [
-            {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                          u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
-             u'bodySnippet': None,
-             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
-             u'keywords': [u'college physics',
-                           u'introduction',
-                           u'physics'],
-             u'mediaType': u'Module',
-             u'pubDate': u'2013-07-31T19:07:20Z',
-             u'summarySnippet': None,
-             u'title': u'Preface to College Physics'},
             {u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
              u'bodySnippet': None,
              u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
@@ -301,6 +290,17 @@ SEARCH_RESULTS = {
              u'pubDate': u'2013-08-31T19:07:20Z',
              u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ',
              u'title': u'College Physics'},
+            {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                          u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
+             u'bodySnippet': None,
+             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             u'keywords': [u'college physics',
+                           u'introduction',
+                           u'physics'],
+             u'mediaType': u'Module',
+             u'pubDate': u'2013-07-31T19:07:20Z',
+             u'summarySnippet': None,
+             u'title': u'Preface to College Physics'},
             ],
         u'total': 2,
         u'limits': [
@@ -467,7 +467,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_collection_content(self):
         # Test for retrieving a piece of content.
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.7'
+        version = '7.1'
 
         # Build the request environment.
         environ = self._make_environ()
@@ -496,7 +496,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_history_metadata(self):
         # Test for the history field in the metadata
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.6'
+        version = '6.1'
 
         # Build the request environment
         environ = self._make_environ()
@@ -510,7 +510,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # History should only include displayed version and older versions
         self.assertEqual(content['history'], [{
-            u'version': u'1.6',
+            u'version': u'6.1',
             u'revised': u'2013-07-31T19:07:20Z',
             u'changes': 'Updated something',
             u'publisher': {
@@ -598,7 +598,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.7'
+        version = '7.1'
         type = 'pdf'
         ident_hash = '{}@{}'.format(id, version)
         filename = "{}@{}.{}".format(id, version, type)
@@ -678,7 +678,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.6'
+        version = '6.1'
 
         # Build the request
         environ = self._make_environ()
@@ -697,7 +697,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_get_extra_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.7'
+        version = '7.1'
 
         # Build the request
         environ = self._make_environ()
@@ -777,7 +777,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_extra_latest(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.7'
+        version = '7.1'
 
         # Build the request
         environ = self._make_environ()
@@ -791,7 +791,7 @@ class ViewsTestCase(unittest.TestCase):
                 ('Content-type', 'application/json'))
         self.assertEqual(json.loads(output)['isLatest'], True)
 
-        version = '1.6'
+        version = '6.1'
 
         # Build the request
         environ = self._make_environ()
@@ -810,7 +810,7 @@ class ViewsTestCase(unittest.TestCase):
         #   the version. The expectation is that this will redirect to the
         #   latest version.
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '1.7'
+        version = '7.1'
         requested_ident_hash = id
         expected_ident_hash = "{}@{}".format(id, version)
 
