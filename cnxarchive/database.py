@@ -11,7 +11,7 @@ import os
 import psycopg2
 import re
 
-from .to_html import produce_html_for_module
+from .to_html import produce_html_for_module, produce_html_for_abstract
 
 
 CONNECTION_SETTINGS_KEY = 'db-connection-string'
@@ -309,14 +309,17 @@ def add_module_file(plpy, td):
     if filename != 'index.cnxml':
         return
 
+    module_ident = td['new']['module_ident']
+
     stmt = plpy.prepare('''SELECT * FROM module_files
     WHERE filename = 'index.html' AND module_ident = $1''', ['integer'])
-    results = plpy.execute(stmt, [td['new']['module_ident']])
+    results = plpy.execute(stmt, [module_ident])
 
     if len(results) == 0:
         with plpydbapi.connect() as db_connection:
             with db_connection.cursor() as cursor:
-                produce_html_for_module(db_connection, cursor, td['new']['module_ident'])
+                produce_html_for_module(db_connection, cursor, module_ident)
+                produce_html_for_abstract(db_connection, cursor, module_ident)
             db_connection.commit()
     return
 

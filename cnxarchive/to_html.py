@@ -432,10 +432,4 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, html_file_id, 'index.html', 'text/html',))
-    abs_warning_messages = produce_html_for_abstract(db_connection, cursor, ident)
-    if abs_warning_messages:
-        if warning_messages:
-            warning_messages = '\n'.join((abs_warning_messages,warning_messages))
-        else:
-            warning_messages = abs_warning_messages
     return warning_messages

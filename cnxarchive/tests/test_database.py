@@ -321,12 +321,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         old_n_modules = cursor.fetchone()[0]
 
         # Insert abstract
-        cursor.execute('''
-        INSERT INTO abstracts 
-        (abstractid, abstract) 
-        VALUES 
-        (20802, 'Here is my <emphasis>string</emphasis> summary.')
-        ''')
+        cursor.execute("INSERT INTO abstracts (abstractid, abstract) VALUES (20802, '')")
 
         # Insert a new module
         cursor.execute('''
@@ -455,13 +450,21 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_module_files(self, cursor):
+        # Insert abstract with cnxml
+        cursor.execute('''
+        INSERT INTO abstracts 
+        (abstractid, abstract) 
+        VALUES 
+        (20802, 'Here is my <emphasis>string</emphasis> summary.')
+        ''')
+
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules
         (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
         VALUES (
         'm42119', 'Module', '1.2', 'New Version', '2013-09-13 15:10:43.000000+02' ,
-        '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
+        '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, 20802, NULL, 11, '', NULL, '',
         'en', NULL) RETURNING module_ident''')
 
         new_module_ident = cursor.fetchone()[0]
@@ -517,6 +520,15 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Test that the index.html contains html
         html = index_htmls[0][0][:]
         self.assert_('<html' in html)
+
+        # Test that html abstract is generated
+        cursor.execute('''SELECT abstract, html FROM abstracts
+            WHERE abstractid = 20802''')
+        abstract, html = cursor.fetchone()
+        self.assertEqual(abstract,
+                'Here is my <emphasis>string</emphasis> summary.')
+        self.assert_('Here is my <strong class="emphasis">string</strong> summary.'
+                in html)
 
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):
