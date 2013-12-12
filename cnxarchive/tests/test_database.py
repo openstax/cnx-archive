@@ -276,24 +276,87 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[22], 10)
         self.assertEqual(data[23], 3)
 
+    def test_set_version(self):
+        from ..database import set_version
+
+        # set_version for modules
+        td = {
+                'new': {
+                    'portal_type': 'Module',
+                    'major_version': 1,
+                    'minor_version': None,
+                    'version': '1.13',
+                    }
+                }
+        modified = set_version(td['new']['portal_type'], td['new']['version'], td)
+        self.assertEqual(modified, 'MODIFY')
+        self.assertEqual(td['new'], {
+            'portal_type': 'Module',
+            'major_version': 13,
+            'minor_version': None,
+            'version': '1.13',
+            })
+
+        # set_version for collections
+        td = {
+                'new': {
+                    'portal_type': 'Collection',
+                    'major_version': 1,
+                    'minor_version': None,
+                    'version': '1.100',
+                    }
+                }
+        modified = set_version(td['new']['portal_type'], td['new']['version'], td)
+        self.assertEqual(modified, 'MODIFY')
+        self.assertEqual(td['new'], {
+            'portal_type': 'Collection',
+            'major_version': 100,
+            'minor_version': 1,
+            'version': '1.100',
+            })
+
     @db_connect
     def test_insert_new_module(self, cursor):
         cursor.execute('SELECT COUNT(*) FROM modules')
         old_n_modules = cursor.fetchone()[0]
 
+        # Insert abstract
+        cursor.execute("INSERT INTO abstracts (abstractid, abstract) VALUES (20802, '')")
+
         # Insert a new module
         cursor.execute('''
-        INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, NULL, 'Name of m1',
-        '2013-10-14 17:41:40.000000+02', '2013-10-14 17:41:40.000000+02',
-        NULL, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, NULL
+        INSERT INTO modules
+        (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
+        VALUES (
+         'm47638', 
+         'Module', 
+         '1.13',
+         'test convert', 
+         '2013-12-09T16:57:29Z', 
+         '2013-12-09T17:14:08Z', 
+         ARRAY ['user1'], 
+         ARRAY ['user1'],
+         ARRAY ['user1'],
+         20802,
+         null,
+         7, 
+         '', 
+         'user1',
+         'Created module',
+         'en',
+         null
         )''')
 
         # module_republished trigger should not insert anything
         cursor.execute('SELECT COUNT(*) FROM modules')
         n_modules = cursor.fetchone()[0]
         self.assertEqual(n_modules, old_n_modules + 1)
+
+        # Check that major and minor version are set correctly
+        cursor.execute('SELECT major_version, minor_version FROM modules ORDER BY module_ident DESC')
+        major, minor = cursor.fetchone()
+        self.assertEqual(major, 13)
+        self.assertEqual(minor, None)
 
     @db_connect
     def test_module(self, cursor):
@@ -310,17 +373,28 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         # Insert a new version of an existing module
         cursor.execute('''
-        INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm42955', '209deb1f-1a46-4369-9e0d-18674cf58a3e', NULL,
-        'Preface to College Physics', '2013-09-13 15:10:43.000000+02' ,
-        '2013-09-13 15:10:43.000000+02', NULL, 11, '', '', '', NULL, NULL,
-        'en', '{}', '{}', '{}', NULL, NULL, NULL, 2, 0) RETURNING module_ident''')
+        INSERT INTO modules
+        (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
+        VALUES (
+        'm42955', 'Module', '1.2', 'Preface to College Physics', '2013-09-13 15:10:43.000000+02' ,
+        '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
+        'en', NULL) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
 
         # After the new module is inserted, there should be a new module and a
         # new collection
         cursor.execute('SELECT COUNT(*) FROM modules')
         self.assertEqual(cursor.fetchone()[0], 19)
+
+        # Test that the module inserted has the right major and minor versions
+        cursor.execute('''SELECT major_version, minor_version, uuid FROM modules 
+            WHERE portal_type = 'Module' ORDER BY module_ident DESC''')
+        major, minor, uuid = cursor.fetchone()
+        self.assertEqual(major, 2)
+        self.assertEqual(minor, None)
+        # Test that the module inserted has the same uuid as an older version of m42955
+        self.assertEqual(uuid, '209deb1f-1a46-4369-9e0d-18674cf58a3e')
+
 
         # Test that the latest row in modules is a collection with updated
         # version
@@ -329,8 +403,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         new_collection_id = results[0]
         self.assertEqual(results[1], 'Collection') # portal_type
         self.assertEqual(results[5], 'College Physics') # name
-        self.assertEqual(results[-2], 1) # major_version
-        self.assertEqual(results[-1], 8) # minor_version
+        self.assertEqual(results[-2], 7) # major_version
+        self.assertEqual(results[-1], 2) # minor_version
 
         cursor.execute('SELECT nodeid FROM trees '
                 'WHERE parent_id IS NULL ORDER BY nodeid DESC')
@@ -376,13 +450,22 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_module_files(self, cursor):
+        # Insert abstract with cnxml
+        cursor.execute('''
+        INSERT INTO abstracts 
+        (abstractid, abstract) 
+        VALUES 
+        (20802, 'Here is my <emphasis>string</emphasis> summary.')
+        ''')
+
         # Insert a new version of an existing module
         cursor.execute('''
-        INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm42119', 'f3c9ab70-a916-4d8c-9256-42953287b4e9', NULL,
-        'New Version', '2013-09-13 15:10:43.000000+02' ,
-        '2013-09-13 15:10:43.000000+02', 6, 11, '', '', '', NULL, NULL,
-        'en', '{}', '{}', '{}', NULL, NULL, NULL, 2, NULL) RETURNING module_ident''')
+        INSERT INTO modules
+        (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
+        VALUES (
+        'm42119', 'Module', '1.2', 'New Version', '2013-09-13 15:10:43.000000+02' ,
+        '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, 20802, NULL, 11, '', NULL, '',
+        'en', NULL) RETURNING module_ident''')
 
         new_module_ident = cursor.fetchone()[0]
 
@@ -437,6 +520,15 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Test that the index.html contains html
         html = index_htmls[0][0][:]
         self.assert_('<html' in html)
+
+        # Test that html abstract is generated
+        cursor.execute('''SELECT abstract, html FROM abstracts
+            WHERE abstractid = 20802''')
+        abstract, html = cursor.fetchone()
+        self.assertEqual(abstract,
+                'Here is my <emphasis>string</emphasis> summary.')
+        self.assert_('Here is my <strong class="emphasis">string</strong> summary.'
+                in html)
 
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):
