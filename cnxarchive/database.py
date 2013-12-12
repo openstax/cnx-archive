@@ -89,7 +89,9 @@ def get_current_module_ident(moduleid, cursor):
 
 def get_minor_version(module_ident, cursor):
     sql = '''SELECT m.minor_version
-            FROM modules m WHERE m.module_ident = %s'''
+            FROM modules m 
+            WHERE m.module_ident = %s
+            ORDER BY m.revised DESC'''
     cursor.execute(sql, [module_ident])
     results = cursor.fetchone()[0]
     return results
@@ -196,6 +198,29 @@ def republish_collection(next_minor_version, collection_ident, cursor,
     results = cursor.fetchone()[0]
     return results
 
+def set_version(portal_type, legacy_version, td):
+    """Sets the major_version and minor_version if they are not set
+    """
+    major = td['new']['major_version']
+    minor = td['new']['minor_version']
+    modified = 'OK'
+    legacy_major, legacy_minor = legacy_version.split('.')
+
+    if portal_type == 'Collection':
+        # For collections, both major and minor needs to be set
+        modified = 'MODIFY'
+        td['new']['major_version'] = int(legacy_minor)
+        if td['new']['minor_version'] is None:
+            td['new']['minor_version'] = 1
+
+    elif portal_type == 'Module':
+        # For modules, major should be set and minor should be None
+        modified = 'MODIFY'
+        td['new']['major_version'] = int(legacy_minor)
+        td['new']['minor_version'] = None
+
+    return modified
+
 def republish_module(td, cursor, db_connection):
     """When a module is republished, the versions of the collections that it is
     part of will need to be updated (a minor update).
@@ -214,6 +239,9 @@ def republish_module(td, cursor, db_connection):
     portal_type = td['new']['portal_type']
     modified = 'OK'
     moduleid = td['new']['moduleid']
+    legacy_version = td['new']['version']
+
+    modified = set_version(portal_type, legacy_version, td)
 
     current_module_ident = get_current_module_ident(moduleid, cursor)
     if current_module_ident:
@@ -237,6 +265,8 @@ def republish_module(td, cursor, db_connection):
             collection_id: new_ident,
             current_module_ident: td['new']['module_ident'],
             }, cursor)
+
+    return modified
 
 def republish_module_trigger(plpy, td):
     """Postgres database trigger for republishing a module
