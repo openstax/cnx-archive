@@ -191,12 +191,12 @@ def get_content(environ, start_response):
                 result['tree'] = json.loads(tree)
             else:
                 # Grab the html content.
-                args = dict(id=id, filename='index.html')
+                args = dict(id=id, filename='index.cnxml.html')
                 cursor.execute(SQL['get-resource-by-filename'], args)
                 try:
                     content = cursor.fetchone()[0]
                 except (TypeError, IndexError,):  # None returned
-                    logger.debug("module found, but 'index.html' is missing.")
+                    logger.debug("module found, but 'index.cnxml.html' is missing.")
                     raise httpexceptions.HTTPNotFound()
                 result['content'] = content[:]
 

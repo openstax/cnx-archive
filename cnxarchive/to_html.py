@@ -111,12 +111,12 @@ class InvalidReference(BaseReferenceException):
 
 
 class IndexHtmlExistsError(Exception):
-    """Raised when index.html for an ident already exists but we are not
+    """Raised when index.cnxml.html for an ident already exists but we are not
     overwriting it
     """
 
     def __init__(self, document_ident):
-        message = 'index.html already exists for document {}'.format(
+        message = 'index.cnxml.html already exists for document {}'.format(
                 document_ident)
         super(IndexHtmlExistsError, self).__init__(message)
 
@@ -377,7 +377,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
 def produce_html_for_module(db_connection, cursor, ident,
                             source_filename='index.cnxml',
                             overwrite_html=False):
-    """Produce and 'index.html' file for the module at ``ident``.
+    """Produce and 'index.cnxml.html' file for the module at ``ident``.
     Raises exceptions when the transform cannot be completed.
     Returns a message containing warnings and other information that
     does not effect the HTML content, but may affect the user experience
@@ -394,11 +394,11 @@ def produce_html_for_module(db_connection, cursor, ident,
     except TypeError:  # None returned
         raise MissingDocumentOrSource(ident, source_filename)    
 
-    # Remove index.html if overwrite_html is True and if it exists
+    # Remove index.cnxml.html if overwrite_html is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
                    'WHERE module_ident = %s '
                    '      AND filename = %s',
-                   (ident, 'index.html'))
+                   (ident, 'index.cnxml.html'))
     index_html_id = cursor.fetchone()
     if index_html_id:
         index_html_id = index_html_id[0]
@@ -421,7 +421,7 @@ def produce_html_for_module(db_connection, cursor, ident,
         warning_messages = 'Invalid References: {}' \
                 .format('; '.join(bad_refs))
 
-    # Insert the index.html into the database.
+    # Insert the index.cnxml.html into the database.
     payload = (memoryview(index_html),)
     cursor.execute("INSERT INTO files (file) VALUES (%s) "
                    "RETURNING fileid;", payload)
@@ -429,5 +429,5 @@ def produce_html_for_module(db_connection, cursor, ident,
     cursor.execute("INSERT INTO module_files "
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
-                   (ident, html_file_id, 'index.html', 'text/html',))
+                   (ident, html_file_id, 'index.cnxml.html', 'text/html',))
     return warning_messages

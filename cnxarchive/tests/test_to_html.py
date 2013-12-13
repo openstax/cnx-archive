@@ -276,9 +276,9 @@ class ModuleToHtmlTestCase(unittest.TestCase):
 
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                # delete module_ident 2 index.html
+                # delete module_ident 2 index.cnxml.html
                 cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
-                               "AND filename = 'index.html'")
+                               "AND filename = 'index.cnxml.html'")
         self.call_target(ident)
 
         with psycopg2.connect(self.connection_string) as db_connection:
@@ -287,7 +287,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = %s "
-                               "         AND filename = 'index.html');",
+                               "         AND filename = 'index.cnxml.html');",
                                (ident,))
                 index_html = cursor.fetchone()[0][:]
         # We only need to test that the file got transformed and placed
@@ -296,22 +296,22 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.assertTrue(index_html.find('<html') >= 0)
 
     def test_module_transform_remove_index_html(self):
-        # Test when overwrite_html is True, the index.html is removed from the
-        # database before a new one is added
+        # Test when overwrite_html is True, the index.cnxml.html is removed
+        # from the database before a new one is added
 
-        # Create an index.html for module_ident 2
+        # Create an index.cnxml.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                # delete module_ident 2 index.html
+                # delete module_ident 2 index.cnxml.html
                 cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
-                               "AND filename = 'index.html'")
+                               "AND filename = 'index.cnxml.html'")
 
                 cursor.execute('INSERT INTO files (file) '
                                '(SELECT file FROM files WHERE fileid = 1) '
                                'RETURNING fileid')
                 fileid = cursor.fetchone()[0]
                 cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
-                               "%s, 'index.html', 'text/html')", (fileid,))
+                               "%s, 'index.cnxml.html', 'text/html')", (fileid,))
             db_connection.commit()
 
         msg = self.call_target(2, overwrite_html=True)
@@ -326,7 +326,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = 2 "
-                               "         AND filename = 'index.html');")
+                               "         AND filename = 'index.cnxml.html');")
                 index_html_id, index_html = cursor.fetchone()
                 index_html = index_html[:]
         # We only need to test that the file got transformed and placed
@@ -338,22 +338,22 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         self.assertNotEqual(fileid, index_html_id)
 
     def test_module_transform_index_html_exists(self):
-        # Test when overwrite_html is False, the index.html causes an error when a
-        # new one is generated
+        # Test when overwrite_html is False, the index.cnxml.html causes an
+        # error when a new one is generated
 
-        # Create an index.html for module_ident 2
+        # Create an index.cnxml.html for module_ident 2
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
-                # delete module_ident 2 index.html
+                # delete module_ident 2 index.cnxml.html
                 cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
-                               "AND filename = 'index.html'")
+                               "AND filename = 'index.cnxml.html'")
 
                 cursor.execute('INSERT INTO files (file) '
                                'SELECT file FROM files WHERE fileid = 1 '
                                'RETURNING fileid')
                 fileid = cursor.fetchone()[0]
                 cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
-                               "%s, 'index.html', 'text/html')", (fileid,))
+                               "%s, 'index.cnxml.html', 'text/html')", (fileid,))
             db_connection.commit()
 
         from ..to_html import IndexHtmlExistsError
@@ -363,16 +363,16 @@ class ModuleToHtmlTestCase(unittest.TestCase):
 
         # Check the error message
         self.assertEqual(e.exception.message,
-                         'index.html already exists for document 2')
+                         'index.cnxml.html already exists for document 2')
 
-        # Assert index.html is not deleted
+        # Assert index.cnxml.html is not deleted
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT fileid FROM files "
                                "  WHERE fileid = "
                                "    (SELECT fileid FROM module_files "
                                "       WHERE module_ident = 2 "
-                               "         AND filename = 'index.html');")
+                               "         AND filename = 'index.cnxml.html');")
                 index_html_id = cursor.fetchone()[0]
 
         self.assertEqual(fileid, index_html_id)
@@ -408,12 +408,12 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         #   The xml is invalid, therefore the transform cannot succeed.
         ident = self._make_document_data_invalid()
 
-        # Delete ident index.html
+        # Delete ident index.cnxml.html
         with psycopg2.connect(self.connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute('DELETE FROM module_files WHERE '
                                'module_ident = %s AND filename = %s',
-                               [ident, 'index.html'])
+                               [ident, 'index.cnxml.html'])
 
         with self.assertRaises(Exception) as caught_exc:
             self.call_target(ident)
