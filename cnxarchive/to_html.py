@@ -111,12 +111,12 @@ class InvalidReference(BaseReferenceException):
 
 
 class IndexHtmlExistsError(Exception):
-    """Raised when index.html for an ident already exists but we are not
+    """Raised when index.cnxml.html for an ident already exists but we are not
     overwriting it
     """
 
     def __init__(self, document_ident):
-        message = 'index.html already exists for document {}'.format(
+        message = 'index.cnxml.html already exists for document {}'.format(
                 document_ident)
         super(IndexHtmlExistsError, self).__init__(message)
 
@@ -333,7 +333,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     warning_messages = None
     # Transform the abstract.
     if abstract:
-        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content><para id="abstract-transform">{}</para></content></document>'.format(abstract)
+        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
         # Does it have a wrapping tag?
         cnxml = etree.parse(BytesIO(abstract), DEFAULT_XMLPARSER)
         abstract_html = _transform_cnxml_to_html_body(cnxml)
@@ -347,10 +347,8 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
         root= etree.Element('html', nsmap=nsmap)
         root.append(abstract_html.getroot())
         # FIXME This includes fixes to the xml to include the neccessary bits.
-        container = abstract_html.xpath('/body/p[@id="abstract-transform"]')[0]
+        container = abstract_html.xpath('/body')[0]
         container.tag = 'div'
-        del container.attrib['id']
-        del container.attrib['class']
 
         # Re-assign and stringify to what it should be without the fixes.
         abstract_html = etree.tostring(root)
@@ -364,7 +362,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
                     .format('; '.join(bad_refs))
         # Now unwrap it and stringify again.
         nsmap.pop(None)  # xpath doesn't accept an empty namespace.
-        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:body/html:div", namespaces=nsmap)[0])
+        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:div", namespaces=nsmap)[0])
     else:
         html = None
 
@@ -379,7 +377,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
 def produce_html_for_module(db_connection, cursor, ident,
                             source_filename='index.cnxml',
                             overwrite_html=False):
-    """Produce and 'index.html' file for the module at ``ident``.
+    """Produce and 'index.cnxml.html' file for the module at ``ident``.
     Raises exceptions when the transform cannot be completed.
     Returns a message containing warnings and other information that
     does not effect the HTML content, but may affect the user experience
@@ -396,11 +394,11 @@ def produce_html_for_module(db_connection, cursor, ident,
     except TypeError:  # None returned
         raise MissingDocumentOrSource(ident, source_filename)    
 
-    # Remove index.html if overwrite_html is True and if it exists
+    # Remove index.cnxml.html if overwrite_html is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
                    'WHERE module_ident = %s '
                    '      AND filename = %s',
-                   (ident, 'index.html'))
+                   (ident, 'index.cnxml.html'))
     index_html_id = cursor.fetchone()
     if index_html_id:
         index_html_id = index_html_id[0]
@@ -423,7 +421,7 @@ def produce_html_for_module(db_connection, cursor, ident,
         warning_messages = 'Invalid References: {}' \
                 .format('; '.join(bad_refs))
 
-    # Insert the index.html into the database.
+    # Insert the index.cnxml.html into the database.
     payload = (memoryview(index_html),)
     cursor.execute("INSERT INTO files (file) VALUES (%s) "
                    "RETURNING fileid;", payload)
@@ -431,5 +429,5 @@ def produce_html_for_module(db_connection, cursor, ident,
     cursor.execute("INSERT INTO module_files "
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
-                   (ident, html_file_id, 'index.html', 'text/html',))
+                   (ident, html_file_id, 'index.cnxml.html', 'text/html',))
     return warning_messages

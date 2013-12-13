@@ -301,7 +301,7 @@ def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
     When a module file index.cnxml is added to the database, the trigger
-    transforms it into html and stores it in the database as index.html.
+    transforms it into html and stores it in the database as index.cnxml.html.
     """
     import plpydbapi
 
@@ -312,7 +312,7 @@ def add_module_file(plpy, td):
     module_ident = td['new']['module_ident']
 
     stmt = plpy.prepare('''SELECT * FROM module_files
-    WHERE filename = 'index.html' AND module_ident = $1''', ['integer'])
+    WHERE filename = 'index.cnxml.html' AND module_ident = $1''', ['integer'])
     results = plpy.execute(stmt, [module_ident])
 
     if len(results) == 0:

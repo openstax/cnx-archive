@@ -57,5 +57,5 @@ CREATE OR REPLACE FUNCTION index_fulltext_trigger()
 DROP TRIGGER IF EXISTS index_fulltext ON module_files;
 CREATE TRIGGER index_fulltext
   AFTER INSERT OR UPDATE ON module_files
-    FOR EACH row WHEN (NEW.filename = 'index.html')
+    FOR EACH row WHEN (NEW.filename = 'index.cnxml.html')
       EXECUTE PROCEDURE index_fulltext_trigger();
