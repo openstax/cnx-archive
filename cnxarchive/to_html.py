@@ -333,7 +333,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     warning_messages = None
     # Transform the abstract.
     if abstract:
-        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content><para id="abstract-transform">{}</para></content></document>'.format(abstract)
+        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
         # Does it have a wrapping tag?
         cnxml = etree.parse(BytesIO(abstract), DEFAULT_XMLPARSER)
         abstract_html = _transform_cnxml_to_html_body(cnxml)
@@ -347,10 +347,8 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
         root= etree.Element('html', nsmap=nsmap)
         root.append(abstract_html.getroot())
         # FIXME This includes fixes to the xml to include the neccessary bits.
-        container = abstract_html.xpath('/body/p[@id="abstract-transform"]')[0]
+        container = abstract_html.xpath('/body')[0]
         container.tag = 'div'
-        del container.attrib['id']
-        del container.attrib['class']
 
         # Re-assign and stringify to what it should be without the fixes.
         abstract_html = etree.tostring(root)
@@ -364,7 +362,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
                     .format('; '.join(bad_refs))
         # Now unwrap it and stringify again.
         nsmap.pop(None)  # xpath doesn't accept an empty namespace.
-        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:body/html:div", namespaces=nsmap)[0])
+        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:div", namespaces=nsmap)[0])
     else:
         html = None
 
