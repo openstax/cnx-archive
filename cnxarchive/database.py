@@ -292,6 +292,10 @@ def republish_module_trigger(plpy, td):
     with plpydbapi.connect() as db_connection:
         with db_connection.cursor() as cursor:
             modified = republish_module(td, cursor, db_connection)
+            plpy.log('modified: {}'.format(modified))
+            plpy.log('insert values:\n{}\n'.format('\n'.join([
+                '{}: {}'.format(key, value)
+                for key, value in td['new'].iteritems()])))
         db_connection.commit()
 
     return modified
@@ -318,6 +322,7 @@ def add_module_file(plpy, td):
     if len(results) == 0:
         with plpydbapi.connect() as db_connection:
             with db_connection.cursor() as cursor:
+                plpy.log('produce html and abstract html for {}'.format(module_ident))
                 produce_html_for_module(db_connection, cursor, module_ident)
                 produce_html_for_abstract(db_connection, cursor, module_ident)
             db_connection.commit()
