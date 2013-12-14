@@ -571,6 +571,46 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(e.headers, [('Location',
                 '/contents/{}@5'.format(uuid))])
 
+    def test_content_index_html(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+
+        with psycopg2.connect(self.db_connection_string) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('ALTER TABLE module_files DISABLE TRIGGER ALL')
+                cursor.execute('DELETE FROM module_files')
+                # Insert a file for version 4
+                cursor.execute('''INSERT INTO files (file) VALUES
+                    (%s) RETURNING fileid''', [memoryview('Version 4')])
+                fileid = cursor.fetchone()[0]
+                cursor.execute('''INSERT INTO module_files
+                    (module_ident, fileid, filename, mimetype) VALUES
+                    (%s, %s, 'index.cnxml.html', 'text/html')''',
+                    [16, fileid])
+                # Insert a file for version 5
+                cursor.execute('''INSERT INTO files (file) VALUES
+                    (%s) RETURNING fileid''', [memoryview('Version 5')])
+                fileid = cursor.fetchone()[0]
+                cursor.execute('''INSERT INTO module_files
+                    (module_ident, fileid, filename, mimetype) VALUES
+                    (%s, %s, 'index.cnxml.html', 'text/html')''',
+                    [15, fileid])
+
+        def get_content(version):
+            # Build the request environment
+            environ = self._make_environ()
+            routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
+            environ['wsgiorg.routing_args'] = routing_args
+
+            # Call the view
+            from ..views import get_content
+            content = get_content(environ, self._start_response)[0]
+            content = json.loads(content)
+
+            return content.pop('content')
+
+        self.assertEqual(get_content(4), 'Version 4')
+        self.assertEqual(get_content(5), 'Version 5')
+
     def test_resources(self):
         # Test the retrieval of resources contained in content.
         hash = '8c48c59e411d1e31cc0186be535fa5eb'
