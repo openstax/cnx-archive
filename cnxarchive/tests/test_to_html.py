@@ -471,3 +471,46 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
+    def test_parse_reference(self):
+        from ..to_html import (parse_reference, MODULE_REFERENCE,
+                RESOURCE_REFERENCE)
+
+        self.assertEqual(parse_reference('/m12345'),
+                (MODULE_REFERENCE, ('m12345', None, '')))
+
+        # m10278 "The Advanced CNXML"
+        self.assertEqual(parse_reference('/m9007'),
+                (MODULE_REFERENCE, ('m9007', None, '')))
+
+        # m11374 "KCL"
+        self.assertEqual(parse_reference('/m0015#current'),
+                (MODULE_REFERENCE, ('m0015', None, '#current')))
+
+        # m11351 "electron and hole density equations"
+        self.assertEqual(parse_reference('/m11332#ntypeq'),
+                (MODULE_REFERENCE, ('m11332', None, '#ntypeq')))
+
+        # m19809 "Gavin Bakers entry..."
+        self.assertEqual(parse_reference('/ m19770'),
+                (MODULE_REFERENCE, ('m19770', None, '')))
+
+        # m16562 "Flat Stanley.pdf"
+        self.assertEqual(parse_reference(' Flat Stanley.pdf'),
+                (RESOURCE_REFERENCE, ('Flat Stanley.pdf', None, None)))
+
+        # m34830 "Auto_fatalities_data.xls"
+        self.assertEqual(parse_reference('/Auto_fatalities_data.xls'),
+                (RESOURCE_REFERENCE, ('Auto_fatalities_data.xls', None, None)))
+
+        # m35999 "version 2.3 of the first module"
+        self.assertEqual(parse_reference('/m0000@2.3'),
+                (MODULE_REFERENCE, ('m0000', '2.3', '')))
+
+        # m14396 "Adding a Table..."
+        # m11837
+        # m37415
+        # m37430
+        # m10885
+        self.assertEqual(parse_reference(
+            '/content/m19610/latest/eip-edit-new-table.png'),
+            (RESOURCE_REFERENCE, ('eip-edit-new-table.png', 'm19610', None)))

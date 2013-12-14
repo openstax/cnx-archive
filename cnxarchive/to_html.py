@@ -62,6 +62,16 @@ SELECT uuid, concat_ws('.', major_version, minor_version) FROM modules
 WHERE moduleid = %s and version = %s
 """
 
+SQL_LATEST_DOCUMENT_IDENT_BY_ID = """\
+SELECT module_ident FROM latest_modules
+WHERE moduleid = %s
+"""
+
+SQL_DOCUMENT_IDENT_BY_ID_N_VERSION = """\
+SELECT module_ident FROM modules
+WHERE moduleid = %s and version = %s
+"""
+
 
 class MissingDocumentOrSource(Exception):
     """Used to signify that the document or source XML document
@@ -122,7 +132,7 @@ class IndexHtmlExistsError(Exception):
 
 
 PATH_REFERENCE_REGEX = re.compile(
-    r'^(/?(content/)?(?P<module>(m|col)\d{5})([/@](?P<version>[.\d]+))?|(?P<resource>[-.@\w\d]+))#?.*$',
+    r'^(/?(content/)? *(?P<module>(m|col)\d{4,5})([/@](?P<version>([.\d]+|latest)))?)?/?(?P<resource>[^#][ -_.@\w\d]+)?(?P<fragment>#?.*)?$',
     re.IGNORECASE)
 MODULE_REFERENCE = 'module-reference'
 RESOURCE_REFERENCE = 'resource-reference'
@@ -141,14 +151,17 @@ def parse_reference(ref):
         raise ValueError("Unable to parse reference with value '{}'" \
                          .format(ref))
 
+    version = matches['version']
+    if version == 'latest':
+        version = None
+
     # We've got a match, but what kind of thing is it.
-    if matches['module']:
-        type = MODULE_REFERENCE
-        # FIXME value[2] reserved for url fragment.
-        value = (matches['module'], matches['version'], None)
-    elif matches['resource']:
+    if matches['resource']:
         type = RESOURCE_REFERENCE
-        value = matches['resource']
+        value = (matches['resource'].strip(), matches['module'], version)
+    elif matches['module']:
+        type = MODULE_REFERENCE
+        value = (matches['module'], version, matches['fragment'])
     return type, value
 
 
@@ -191,17 +204,25 @@ class ReferenceResolver:
                 uuid, version = (None, None,)
         return uuid, version
 
-    def get_resource_info(self, filename):
+    def get_resource_info(self, filename, document_id=None, version=None):
+        document_ident = self.document_ident
         with self.db_connection.cursor() as cursor:
+            if document_id:
+                if version:
+                    cursor.execute(SQL_DOCUMENT_IDENT_BY_ID_N_VERSION, [document_id, version])
+                    document_ident = cursor.fetchone()[0]
+                else:
+                    cursor.execute(SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
+
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
-                           (self.document_ident, filename,))
+                           (document_ident, filename,))
             try:
                 info = cursor.fetchone()[0]
             except TypeError:
                 raise ReferenceNotFound(
                     "Missing resource with filename '{}'." \
                         .format(filename),
-                    self.document_ident, filename)
+                    document_ident, filename)
             else:
                 if isinstance(info, basestring):
                     info = json.loads(info)
@@ -221,7 +242,9 @@ class ReferenceResolver:
                         or ref.startswith('http') \
                         or ref.startswith('mailto') \
                         or ref.startswith('file') \
-                        or ref.startswith('/help')
+                        or ref.startswith('/help') \
+                        or ref.startswith('ftp') \
+                        or ref.startswith('javascript:')
         return should_ignore
 
     def fix_img_references(self):
@@ -235,7 +258,15 @@ class ReferenceResolver:
                 continue
 
             try:
-                info = self.get_resource_info(filename)
+                ref_type, payload = parse_reference(filename)
+                filename, module_id, version = payload
+            except ValueError:
+                exc = InvalidReference(self.document_ident, filename)
+                bad_references.append(exc)
+                continue
+
+            try:
+                info = self.get_resource_info(filename, module_id, version)
             except ReferenceNotFound as exc:
                 bad_references.append(exc)
             else:
@@ -274,7 +305,8 @@ class ReferenceResolver:
                     anchor.set('href', path)
             elif ref_type == RESOURCE_REFERENCE:
                 try:
-                    info = self.get_resource_info(payload)
+                    filename, module_id, version = payload
+                    info = self.get_resource_info(filename, module_id, version)
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
