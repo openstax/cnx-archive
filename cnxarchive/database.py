@@ -315,17 +315,24 @@ def add_module_file(plpy, td):
 
     module_ident = td['new']['module_ident']
 
-    stmt = plpy.prepare('''SELECT * FROM module_files
-    WHERE filename = 'index.cnxml.html' AND module_ident = $1''', ['integer'])
-    results = plpy.execute(stmt, [module_ident])
+    # Delete index.cnxml.html
+    stmt = plpy.prepare('''DELETE FROM module_files
+    WHERE filename = 'index.cnxml.html' AND module_ident = $1
+    RETURNING fileid''', ['integer'])
+    result = plpy.execute(stmt, [module_ident])
+    if result:
+        # There can only be one fileid returned from the above sql
+        # "module_files_idx" UNIQUE, btree (module_ident, filename)
+        fileid = result[0]['fileid']
+        stmt = plpy.prepare('DELETE FROM files WHERE fileid = $1', ['integer'])
+        plpy.execute(stmt, [fileid])
 
-    if len(results) == 0:
-        with plpydbapi.connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                plpy.log('produce html and abstract html for {}'.format(module_ident))
-                produce_html_for_module(db_connection, cursor, module_ident)
-                produce_html_for_abstract(db_connection, cursor, module_ident)
-            db_connection.commit()
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            plpy.log('produce html and abstract html for {}'.format(module_ident))
+            produce_html_for_module(db_connection, cursor, module_ident)
+            produce_html_for_abstract(db_connection, cursor, module_ident)
+        db_connection.commit()
     return
 
 def get_collection_tree(collection_ident, cursor):

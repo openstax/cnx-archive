@@ -191,7 +191,8 @@ def get_content(environ, start_response):
                 result['tree'] = json.loads(tree)
             else:
                 # Grab the html content.
-                args = dict(id=id, filename='index.cnxml.html')
+                args = dict(id=id, version=result['version'],
+                            filename='index.cnxml.html')
                 cursor.execute(SQL['get-resource-by-filename'], args)
                 try:
                     content = cursor.fetchone()[0]
