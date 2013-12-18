@@ -11,6 +11,7 @@ import unittest
 from io import BytesIO
 import re
 
+from lxml import etree
 import psycopg2
 
 from . import postgresql_fixture
@@ -470,6 +471,82 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         self.assertTrue(content.find(expected_internal_ref) >= 0)
         expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
+
+    def test_reference_resolver(self):
+        from ..to_html import ReferenceResolver
+
+        self.maxDiff = None
+        html = BytesIO('''\
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <body>
+        <a href="/m42092#xn">
+            <img src="Figure_01_00_01.jpg"/>
+        </a>
+        <a href="/ m42709@1.4">
+            <img src="/Figure_01_00_01.jpg"/>
+        </a>
+        <img src=" Figure_01_00_01.jpg"/>
+        <img src="/content/m42092/latest/PhET_Icon.png"/>
+        <img src="/content/m42092/1.4/PhET_Icon.png"/>
+        <img src="/content/m42092/1.3/PhET_Icon.png"/>
+        <span data-src="Figure_01_00_01.jpg"/>
+
+        <audio src="Figure_01_00_01.jpg" id="music" mime-type="audio/mpeg"></audio>
+
+        <video src="Figure_01_00_01.jpg" id="music" mime-type="video/mp4"></video>
+
+        <object width="400" height="400" data="Figure_01_00_01.jpg"></object>
+
+        <object width="400" height="400">
+            <embed src="Figure_01_00_01.jpg"/>
+        </object>
+
+        <audio controls="controls">
+            <source src="Figure_01_00_01.jpg" type="audio/mpeg"/>
+        </audio>
+    </body>
+</html>''')
+
+        resolver = ReferenceResolver(self._db_connection, 3,
+                                     html)
+        html, bad_references = resolver()
+        self._db_connection.commit()
+
+        self.assertEqual(bad_references, [
+            "Missing resource with filename 'PhET_Icon.png', moduleid m42092 version 1.3.: document=3, reference=PhET_Icon.png",
+            ])
+        self.assertMultiLineEqual(html, '''\
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <body>
+        <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#xn">
+            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        </a>
+        <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
+            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        </a>
+        <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb"/>
+        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb"/>
+        <img src="/content/m42092/1.3/PhET_Icon.png"/>
+        <span data-src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+
+        <audio src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" id="music" mime-type="audio/mpeg"/>
+
+        <video src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" id="music" mime-type="video/mp4"/>
+
+        <object width="400" height="400" data="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+
+        <object width="400" height="400">
+            <embed src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        </object>
+
+        <audio controls="controls">
+            <source src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" type="audio/mpeg"/>
+        </audio>
+    </body>
+</html>''')
+
 
     def test_get_resource_info(self):
         from ..to_html import ReferenceResolver, ReferenceNotFound
