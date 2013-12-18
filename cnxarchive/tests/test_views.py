@@ -493,6 +493,64 @@ class ViewsTestCase(unittest.TestCase):
         # Check the tree for accuracy.
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
 
+    @db_connect
+    def _create_empty_subcollections(self, cursor):
+        cursor.execute("INSERT INTO trees VALUES (55, 53, NULL, 'Empty Subcollections', 1)")
+        cursor.execute("INSERT INTO trees VALUES (56, 55, NULL, 'empty 1', 1)")
+        cursor.execute("INSERT INTO trees VALUES (57, 55, NULL, 'empty 2', 2)")
+        cursor.execute("INSERT INTO trees VALUES (58, 53, NULL, 'Empty Subcollection', 3)")
+
+    def test_empty_subcollection_content(self):
+        self._create_empty_subcollections()
+
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '6.1'
+
+        # Build the request environment
+        environ = self._make_environ()
+        routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view
+        from ..views import get_content
+        content = get_content(environ, self._start_response)[0]
+        content = json.loads(content)
+
+        content_tree = content.pop('tree')
+
+        self.assertEqual(content_tree, {
+            u'id': u'{}@{}'.format(uuid, version),
+            u'title': u'College Physics',
+            u'contents': [
+                {
+                    u'id': u'subcol',
+                    u'title': u'Empty Subcollections',
+                    u'contents': [
+                        {
+                            u'id': u'subcol',
+                            u'title': u'empty 1',
+                            u'contents': [],
+                            },
+                        {
+                            u'id': u'subcol',
+                            u'title': u'empty 2',
+                            u'contents': [],
+                            },
+
+                        ],
+                    },
+                {
+                    u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                    u'title': u'Preface',
+                    },
+                {
+                    u'id': u'subcol',
+                    u'title': u'Empty Subcollection',
+                    u'contents': [],
+                    },
+                ],
+            })
+
     def test_history_metadata(self):
         # Test for the history field in the metadata
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
