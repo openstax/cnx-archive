@@ -180,7 +180,7 @@ class ReferenceResolver:
 
     def __call__(self):
         messages = []
-        messages.extend(self.fix_img_references())
+        messages.extend(self.fix_media_references())
         messages.extend(self.fix_anchor_references())
         messages = [e.message for e in messages]
         return etree.tostring(self.document), messages
@@ -210,9 +210,22 @@ class ReferenceResolver:
             if document_id:
                 if version:
                     cursor.execute(SQL_DOCUMENT_IDENT_BY_ID_N_VERSION, [document_id, version])
-                    document_ident = cursor.fetchone()[0]
+                    try:
+                        document_ident = cursor.fetchone()[0]
+                    except TypeError:
+                        raise ReferenceNotFound(
+                                "Missing resource with filename '{}', moduleid {} version {}." \
+                                        .format(filename, document_id, version),
+                                document_ident, filename)
                 else:
                     cursor.execute(SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
+                    try:
+                        document_ident = cursor.fetchone()[0]
+                    except TypeError:
+                        raise ReferenceNotFound(
+                                "Missing resource with filename '{}', moduleid {} version {}." \
+                                        .format(filename, document_id, version),
+                                document_ident, filename)
 
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
                            (document_ident, filename,))
@@ -220,8 +233,8 @@ class ReferenceResolver:
                 info = cursor.fetchone()[0]
             except TypeError:
                 raise ReferenceNotFound(
-                    "Missing resource with filename '{}'." \
-                        .format(filename),
+                    "Missing resource with filename '{}', moduleid {} version {}." \
+                        .format(filename, document_id, version),
                     document_ident, filename)
             else:
                 if isinstance(info, basestring):
@@ -247,30 +260,41 @@ class ReferenceResolver:
                         or ref.startswith('javascript:')
         return should_ignore
 
-    def fix_img_references(self):
+    def fix_media_references(self):
         """Fix references to interal resources."""
         # Catch the invalid, unparsable, etc. references.
         bad_references = []
 
-        for img in self.apply_xpath('//html:img'):
-            filename = img.get('src')
-            if not filename or self._should_ignore_reference(filename):
-                continue
+        media_xpath = {
+                '//html:img': 'src',
+                '//html:audio': 'src',
+                '//html:video': 'src',
+                '//html:object': 'data',
+                '//html:object/html:embed': 'src',
+                '//html:source': 'src',
+                '//html:span': 'data-src',
+                }
 
-            try:
-                ref_type, payload = parse_reference(filename)
-                filename, module_id, version = payload
-            except ValueError:
-                exc = InvalidReference(self.document_ident, filename)
-                bad_references.append(exc)
-                continue
+        for xpath, attr in media_xpath.iteritems():
+            for elem in self.apply_xpath(xpath):
+                filename = elem.get(attr)
+                if not filename or self._should_ignore_reference(filename):
+                    continue
 
-            try:
-                info = self.get_resource_info(filename, module_id, version)
-            except ReferenceNotFound as exc:
-                bad_references.append(exc)
-            else:
-                img.set('src', '/resources/{}'.format(info['hash'],))
+                try:
+                    ref_type, payload = parse_reference(filename)
+                    filename, module_id, version = payload
+                except ValueError:
+                    exc = InvalidReference(self.document_ident, filename)
+                    bad_references.append(exc)
+                    continue
+
+                try:
+                    info = self.get_resource_info(filename, module_id, version)
+                except ReferenceNotFound as exc:
+                    bad_references.append(exc)
+                else:
+                    elem.set(attr, '/resources/{}'.format(info['hash'],))
         return bad_references
 
     def fix_anchor_references(self):
