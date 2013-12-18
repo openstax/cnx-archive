@@ -53,9 +53,39 @@ CREATE OR REPLACE FUNCTION index_fulltext_trigger()
   $$
   LANGUAGE plpgsql;
 
-
 DROP TRIGGER IF EXISTS index_fulltext ON module_files;
 CREATE TRIGGER index_fulltext
   AFTER INSERT OR UPDATE ON module_files
     FOR EACH row WHEN (NEW.filename = 'index.cnxml.html')
       EXECUTE PROCEDURE index_fulltext_trigger();
+
+CREATE OR REPLACE FUNCTION index_fulltext_upsert_trigger()
+  RETURNS TRIGGER AS $$
+  DECLARE
+    has_existing_record integer;
+  BEGIN
+
+    IF NEW.fulltext IS NOT NULL THEN
+        RETURN NEW;
+    END IF;
+
+    has_existing_record := (SELECT module_ident FROM modulefti WHERE module_ident = NEW.module_ident);
+
+    IF has_existing_record IS NULL THEN
+      INSERT INTO modulefti (module_ident, module_idx)
+        VALUES ( NEW.module_ident, NEW.module_idx);
+    ELSE
+      UPDATE modulefti SET (module_idx) = ( NEW.module_idx)
+        WHERE module_ident = NEW.module_ident;
+    END IF;
+    RETURN NEW;
+  END;
+  $$
+  LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS index_fulltext_upsert ON module_files;
+CREATE TRIGGER index_fulltext_upsert
+  BEFORE INSERT ON modulefti
+    FOR EACH row
+      EXECUTE PROCEDURE index_fulltext_upsert_trigger();
+
