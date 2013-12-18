@@ -70,13 +70,12 @@ CREATE OR REPLACE FUNCTION index_fulltext_upsert_trigger()
     END IF;
 
     has_existing_record := (SELECT module_ident FROM modulefti WHERE module_ident = NEW.module_ident);
-
     IF has_existing_record IS NULL THEN
-      INSERT INTO modulefti (module_ident, module_idx)
-        VALUES ( NEW.module_ident, NEW.module_idx);
+        return NEW;
     ELSE
       UPDATE modulefti SET (module_idx) = ( NEW.module_idx)
         WHERE module_ident = NEW.module_ident;
+      RETURN NULL;
     END IF;
     RETURN NEW;
   END;
