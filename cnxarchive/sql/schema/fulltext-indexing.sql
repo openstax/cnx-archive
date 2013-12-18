@@ -83,7 +83,7 @@ CREATE OR REPLACE FUNCTION index_fulltext_upsert_trigger()
   $$
   LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS index_fulltext_upsert ON module_files;
+DROP TRIGGER IF EXISTS index_fulltext_upsert ON modulefti;
 CREATE TRIGGER index_fulltext_upsert
   BEFORE INSERT ON modulefti
     FOR EACH row
