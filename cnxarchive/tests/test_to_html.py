@@ -471,6 +471,41 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
+    def test_get_resource_info(self):
+        from ..to_html import ReferenceResolver, ReferenceNotFound
+
+        resolver = ReferenceResolver(self._db_connection, 3,
+                                     BytesIO('<html></html>'))
+
+        # Test file not found
+        self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
+                          'PhET_Icon.png')
+
+        # Test getting a file in module 3
+        self.assertEqual(resolver.get_resource_info('Figure_01_00_01.jpg'),
+                {'hash': '38b5477eb68417a65d7fcb1bc1d6630e', 'id': 6})
+
+        # Test file not found outside of module 3
+        self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
+                          'PhET_Icon.png', document_id='m42955')
+
+        # Test getting a file in another module
+        self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
+            document_id='m42092'),
+            {'hash': '8c48c59e411d1e31cc0186be535fa5eb', 'id': 23})
+
+        # Test file not found with version
+        self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
+                          'PhET_Icon.png', document_id='m42092',
+                          version='1.3')
+
+        # Test getting a file with version
+        self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
+            document_id='m42092', version='1.4'),
+            {'hash': '8c48c59e411d1e31cc0186be535fa5eb', 'id': 23})
+
+        self._db_connection.commit()
+
     def test_parse_reference(self):
         from ..to_html import (parse_reference, MODULE_REFERENCE,
                 RESOURCE_REFERENCE)

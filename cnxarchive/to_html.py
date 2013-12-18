@@ -210,9 +210,22 @@ class ReferenceResolver:
             if document_id:
                 if version:
                     cursor.execute(SQL_DOCUMENT_IDENT_BY_ID_N_VERSION, [document_id, version])
-                    document_ident = cursor.fetchone()[0]
+                    try:
+                        document_ident = cursor.fetchone()[0]
+                    except TypeError:
+                        raise ReferenceNotFound(
+                                "Missing resource with filename '{}', moduleid {} version {}." \
+                                        .format(filename, document_id, version),
+                                document_ident, filename)
                 else:
                     cursor.execute(SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
+                    try:
+                        document_ident = cursor.fetchone()[0]
+                    except TypeError:
+                        raise ReferenceNotFound(
+                                "Missing resource with filename '{}', moduleid {} version {}." \
+                                        .format(filename, document_id, version),
+                                document_ident, filename)
 
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
                            (document_ident, filename,))
@@ -220,8 +233,8 @@ class ReferenceResolver:
                 info = cursor.fetchone()[0]
             except TypeError:
                 raise ReferenceNotFound(
-                    "Missing resource with filename '{}'." \
-                        .format(filename),
+                    "Missing resource with filename '{}', moduleid {} version {}." \
+                        .format(filename, document_id, version),
                     document_ident, filename)
             else:
                 if isinstance(info, basestring):
