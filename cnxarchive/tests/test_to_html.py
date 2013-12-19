@@ -472,6 +472,26 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
+    def test_reference_not_parseable(self):
+        ident = 3
+        from ..to_html import (
+                fix_reference_urls, transform_cnxml_to_html)
+        import glob
+        with psycopg2.connect(self.connection_string) as db_connection:
+            content_filepath = os.path.join(TESTING_DATA_DIR,
+                                            'm45070.cnxml')
+            with open(content_filepath, 'r') as fb:
+                content = transform_cnxml_to_html(fb.read())
+                content = BytesIO(content)
+                content, bad_refs = fix_reference_urls(db_connection, ident, content)
+
+        self.assertEqual(bad_refs, [
+            "Missing resource with filename 'InquiryQuestions.svg', moduleid None version None.: document=3, reference=InquiryQuestions.svg",
+            "Invalid reference value: document=3, reference=/m",
+            "Unable to find a reference to 'm43540' at version 'None'.: document=3, reference=/m43540",
+            ])
+        self.assertTrue('<a href="/m">' in content)
+
     def test_reference_resolver(self):
         from ..to_html import ReferenceResolver
 
@@ -626,3 +646,6 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         self.assertEqual(parse_reference(
             '/content/m19610/latest/eip-edit-new-table.png'),
             (RESOURCE_REFERENCE, ('eip-edit-new-table.png', 'm19610', None)))
+
+        # m45070
+        self.assertEqual(parse_reference('/m'), (None, ()))

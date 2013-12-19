@@ -162,6 +162,9 @@ def parse_reference(ref):
     elif matches['module']:
         type = MODULE_REFERENCE
         value = (matches['module'], version, matches['fragment'])
+    else:
+        type = None
+        value = ()
     return type, value
 
 
@@ -335,6 +338,10 @@ class ReferenceResolver:
                     bad_references.append(exc)
                 else:
                     anchor.set('href', '/resources/{}'.format(info['hash'],))
+            else:
+                exc = InvalidReference(self.document_ident, ref)
+                bad_references.append(exc)
+
         return bad_references
 
 fix_reference_urls = ReferenceResolver.fix_reference_urls
