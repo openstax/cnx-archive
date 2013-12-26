@@ -169,8 +169,8 @@ def get_export_file(cursor, id, version, type, exports_dirs):
 #   Views   #
 # ######### #
 
-def get_content(environ, start_response):
-    """Retrieve a piece of content using the ident-hash (uuid@version)."""
+def _get_content_json(environ, start_response):
+    """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
     ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
@@ -208,11 +208,39 @@ def get_content(environ, start_response):
     #       Until then we will do the replacement here.
     result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
 
+    return result
+
+def get_content_json(environ, start_response):
+    """Retrieve a piece of content as JSON using the ident-hash (uuid@version)."""
+
+    result = _get_content_json(environ, start_response)
+
     result = json.dumps(result)
     status = "200 OK"
     headers = [('Content-type', 'application/json',)]
     start_response(status, headers)
     return [result]
+
+def get_content_html(environ, start_response):
+    """Retrieve a piece of content as HTML using the ident-hash (uuid@version)."""
+
+    result = _get_content_json(environ, start_response)
+
+    status = "200 OK"
+    headers = [('Content-type', 'application/xhtml+xml',)]
+    start_response(status, headers)
+    return result['content']
+
+
+def get_content(environ, start_response):
+    """Retrieve a piece of content using the ident-hash (uuid@version).
+       Depending on the HTTP_ACCEPT header return HTML or JSON.
+    """
+    if 'application/xhtml+xml' in environ.get('HTTP_ACCEPT', ''):
+        return get_content_html(environ, start_response)
+
+    else:
+        return get_content_json(environ, start_response)
 
 
 def get_resource(environ, start_response):
