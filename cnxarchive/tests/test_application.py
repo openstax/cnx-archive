@@ -77,6 +77,35 @@ class RoutingTest(unittest.TestCase):
         self.assertEqual(environ['wsgiorg.routing_args'],
                          {'y': y, 'z': z})
 
+    def test_route_w_custom_regexp(self):
+        # routes with more specific regexp should be added first
+        route_func1 = faux_view_one
+        path1 = '/contents/{ident_hash:[^.]*}.html'
+        route_func2 = faux_view_two
+        path2 = '/contents/{ident_hash:[^.]*}.json'
+        # the most general regexp should be added last
+        # otherwise it'll capture all the requests
+        route_func3 = faux_view
+        path3 = '/contents/{ident_hash}'
+
+        from .. import Application
+        app = Application()
+        app.add_route(path1, route_func1)
+        app.add_route(path2, route_func2)
+        app.add_route(path3, route_func3)
+
+        environ = {'PATH_INFO': '/contents/1234abcd'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func3)
+
+        environ = {'PATH_INFO': '/contents/1234abcd.html'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func1)
+
+        environ = {'PATH_INFO': '/contents/1234abcd.json'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func2)
+
 
 class CORSTestCase(unittest.TestCase):
     """Tests for correctly enabling CORS on the server
