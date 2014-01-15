@@ -116,6 +116,7 @@ def main(global_config, **settings):
     app.add_route('/extras/{ident_hash}', 'cnxarchive.views:get_extra')
     app.add_route('/search', 'cnxarchive.views:search')
     app.add_route('/extras', 'cnxarchive.views:extras')
+    app.add_route('/sitemap.xml', 'cnxarchive.views:sitemap')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types']
     for setting in mandatory_settings:

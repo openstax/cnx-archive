@@ -20,6 +20,7 @@ from .search import (
     search as database_search, Query,
     QUERY_TYPES, DEFAULT_QUERY_TYPE,
     )
+from .sitemap import Sitemap
 
 
 logger = logging.getLogger('cnxarchive')
@@ -391,3 +392,21 @@ def extras(environ, start_response):
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
     return [json.dumps(metadata)]
+
+def sitemap(environ, start_response):
+    """Return a sitemap xml file for search engines
+    """
+    settings = get_settings()
+    xml = Sitemap()
+    hostname = environ['SERVER_NAME']
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute("select uuid||'@'||concat_ws('.',major_version,minor_version) as idver, revised  from latest_modules order by revised desc limit 50000")
+            res=cursor.fetchall()
+            for r in res:
+                xml.add_url('http://%s/contents/%s' % (hostname,r[0]),lastmod = r[1])
+
+    status = '200 OK'
+    headers = [('Content-type', 'text/xml')]
+    start_response(status, headers)
+    return [xml()]

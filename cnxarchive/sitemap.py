@@ -121,9 +121,9 @@ class UrlEntry(object):
     def generate(self):
         """Yields pieces of XML."""
         yield u'<url>\n'
-        yield u'<loc>%s</loc>\n' % escape(self.loc, True)
+        yield u'<loc>%s</loc>\n' % escape(self.loc)
         if self.lastmod and not isinstance(self.lastmod, str):
-            self.lastmod = self.lastmod.strftime('%Y-%m-%d')
+            self.lastmod = self.lastmod.strftime('%Y-%m-%dT%H:%M%z')
             yield u'<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
             yield u'<changefreq>%s</changefreq>\n' % self.changefreq
