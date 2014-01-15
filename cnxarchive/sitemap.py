@@ -17,8 +17,6 @@
             return xml.get_response()
 """
 from datetime import datetime
-# from werkzeug.utils import escape
-# from werkzeug.wrappers import BaseResponse
 
 from utils import escape
 
@@ -66,13 +64,6 @@ class Sitemap(object):
     def to_string(self):
         """Convert the sitemap into a string."""
         return u''.join(self.generate())
-
-#    def get_response(self):
-#        return BaseResponse(self.to_string(), mimetype='text/xml')
-
-#    def __call__(self, environ, start_response):
-#        """Use the class as WSGI response object."""
-#        return self.get_response()(environ, start_response)
 
     def __call__(self):
         return self.__str__()
