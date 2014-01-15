@@ -111,3 +111,9 @@ def slugify(string):
         elif cat in 'Z':
             filtered_string.append(' ')
     return re.sub('\s+', '-', ''.join(filtered_string)).lower()
+
+def escape(s):
+    """xml/html entity escaping of < > and &"""
+    s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', "&quot;")
+    return s
+
