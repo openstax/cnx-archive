@@ -91,3 +91,26 @@ class SlugifyTestCase(unittest.TestCase):
         self.assertEqual(self.call_target(u'40文字でわかる！'
                                           u'　知っておきたいビジネス理論'),
                          u'40文字でわかる-知っておきたいビジネス理論')
+
+class EscapeTestCase(unittest.TestCase):
+
+    def call_target(self, *args, **kwargs):
+        from ..utils import escape
+        return escape(*args, **kwargs)
+
+    def test_ascii(self):
+        self.assertEqual(self.call_target('How to Work for Yourself: 100 Ways'),
+                'How to Work for Yourself: 100 Ways')
+
+    def test_greater(self):
+        self.assertEqual(self.call_target('this > that'),
+                         'this &gt; that')
+
+    def test_less(self):
+        self.assertEqual(self.call_target('this < that'),
+                         'this &lt; that')
+
+    def test_amp(self):
+        self.assertEqual(self.call_target('this & that'),
+                         'this &amp; that')
+
