@@ -91,7 +91,7 @@ class UrlEntry(object):
         self.lastmod = kwargs.get('lastmod')
         self.changefreq = kwargs.get('changefreq')
         if self.changefreq and self.changefreq not in self.freq_values:
-            raise ValueError('changefreq must be one of %s' % (', '.join(freq_vaules)))
+            raise ValueError('changefreq must be one of %s' % (', '.join(self.freq_values)))
         self.priority = kwargs.get('priority')
         if self.priority and self.priority < 0.1 or self.priority > 1.0:
             raise ValueError('priority must be between 0.1 and 1.0')
@@ -109,10 +109,11 @@ class UrlEntry(object):
         """Yields pieces of XML."""
         yield u'<url>\n'
         yield u'<loc>%s</loc>\n' % escape(self.loc)
-        if self.lastmod and hasattr(self.lastmod, 'strftime'):
-            yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%dT%H:%M:%S%z')
-        else:
-            yield u'<lastmod>%s</lastmod>\n' % self.lastmod
+        if self.lastmod:
+            if  hasattr(self.lastmod, 'strftime'):
+                yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%dT%H:%M:%S%z')
+            elif isinstance(self.lastmod, str):
+                yield u'<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
             yield u'<changefreq>%s</changefreq>\n' % self.changefreq
         if self.priority and 0.0 <= self.priority <= 1.0:

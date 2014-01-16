@@ -401,6 +401,8 @@ def sitemap(environ, start_response):
     hostname = environ['SERVER_NAME']
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
+            # magic number limit comes from Google policy - will need to split
+            # to multiple sitemaps before we have more content
             cursor.execute("select uuid||'@'||concat_ws('.',major_version,minor_version) as idver, revised  from latest_modules order by revised desc limit 50000")
             res=cursor.fetchall()
             for r in res:
