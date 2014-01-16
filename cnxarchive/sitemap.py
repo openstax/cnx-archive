@@ -111,7 +111,7 @@ class UrlEntry(object):
         yield u'<loc>%s</loc>\n' % escape(self.loc)
         if self.lastmod:
             if  hasattr(self.lastmod, 'strftime'):
-                yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%dT%H:%M:%S%z')
+                yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%d')
             elif isinstance(self.lastmod, str):
                 yield u'<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
