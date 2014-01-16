@@ -1354,3 +1354,14 @@ class ViewsTestCase(unittest.TestCase):
                           },
                          ]
             })
+
+
+    def test_sitemap(self):
+        # Build the request
+        environ = self._make_environ()
+
+        # Call the view
+        from ..views import sitemap
+        sitemap = sitemap(environ, self._start_response)[0]
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'sitemap.xml'), 'r') as file:
+            self.assertEqual(sitemap, file.read())
