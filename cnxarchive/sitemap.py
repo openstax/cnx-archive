@@ -22,14 +22,6 @@ from utils import escape
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
-
-def format_iso8601(obj):
-    """Format a datetime object for iso8601"""
-    iso8601 = obj.isoformat()
-    if obj.tzinfo:
-        return iso8601
-    return iso8601 + 'Z'
-
 class Sitemap(object):
     """A helper class that creates sitemap.xml."""
 
@@ -81,7 +73,7 @@ class UrlEntry(object):
     :param loc: the localtion of the url. Required.
     :param lastmod: the time the url was modified the last time. Must be a
     :class:`datetime.datetime` object or a string representing the time in
-    ISO format, %Y-%m-%d.
+    ISO format, %Y-%m-%dT%H:%M:%S%z.
     :param changefreq: how frequently the content of the url is likely to
     change. One of ``'always'``, ``'hourly'``, ``'daily'``, ``'weekly'``,
     ``'monthly'``, ``'yearly'``, ``'never'``.
@@ -98,7 +90,11 @@ class UrlEntry(object):
         self.loc = loc
         self.lastmod = kwargs.get('lastmod')
         self.changefreq = kwargs.get('changefreq')
+        if self.changefreq and self.changefreq not in self.freq_values:
+            raise ValueError('changefreq must be one of %s' % (', '.join(freq_vaules)))
         self.priority = kwargs.get('priority')
+        if self.priority and self.priority < 0.1 or self.priority > 1.0:
+            raise ValueError('priority must be between 0.1 and 1.0')
 
         if self.loc is None:
             raise ValueError('location is required')
@@ -113,8 +109,9 @@ class UrlEntry(object):
         """Yields pieces of XML."""
         yield u'<url>\n'
         yield u'<loc>%s</loc>\n' % escape(self.loc)
-        if self.lastmod and not isinstance(self.lastmod, str):
-            self.lastmod = self.lastmod.strftime('%Y-%m-%dT%H:%M%z')
+        if self.lastmod and hasattr(self.lastmod, 'strftime'):
+            yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%dT%H:%M:%S%z')
+        else:
             yield u'<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
             yield u'<changefreq>%s</changefreq>\n' % self.changefreq
