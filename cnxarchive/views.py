@@ -398,7 +398,7 @@ def sitemap(environ, start_response):
     """
     settings = get_settings()
     xml = Sitemap()
-    hostname = environ['SERVER_NAME']
+    hostname = environ['HTTP_HOST']
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             # magic number limit comes from Google policy - will need to split
