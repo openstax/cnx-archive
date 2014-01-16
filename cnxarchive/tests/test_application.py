@@ -80,9 +80,9 @@ class RoutingTest(unittest.TestCase):
     def test_route_w_custom_regexp(self):
         # routes with more specific regexp should be added first
         route_func1 = faux_view_one
-        path1 = '/contents/{ident_hash:[^.]*}.html'
+        path1 = '/contents/{ident_hash:.*}.html'
         route_func2 = faux_view_two
-        path2 = '/contents/{ident_hash:[^.]*}.json'
+        path2 = '/contents/{ident_hash:.*}.json'
         # the most general regexp should be added last
         # otherwise it'll capture all the requests
         route_func3 = faux_view
@@ -98,11 +98,35 @@ class RoutingTest(unittest.TestCase):
         controller = app.route(environ)
         self.assertEqual(controller, route_func3)
 
+        environ = {'PATH_INFO': '/contents/1234abcd@1'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func3)
+
+        environ = {'PATH_INFO': '/contents/1234abcd@1.1'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func3)
+
         environ = {'PATH_INFO': '/contents/1234abcd.html'}
         controller = app.route(environ)
         self.assertEqual(controller, route_func1)
 
+        environ = {'PATH_INFO': '/contents/1234abcd@1.html'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func1)
+
+        environ = {'PATH_INFO': '/contents/1234abcd@1.1.html'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func1)
+
         environ = {'PATH_INFO': '/contents/1234abcd.json'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func2)
+
+        environ = {'PATH_INFO': '/contents/1234abcd@1.json'}
+        controller = app.route(environ)
+        self.assertEqual(controller, route_func2)
+
+        environ = {'PATH_INFO': '/contents/1234abcd@1.1.json'}
         controller = app.route(environ)
         self.assertEqual(controller, route_func2)
 
