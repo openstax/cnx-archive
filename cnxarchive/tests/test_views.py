@@ -1364,4 +1364,4 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import sitemap
         sitemap = sitemap(environ, self._start_response)[0]
         with open(os.path.join(TEST_DATA_DIRECTORY, 'sitemap.xml'), 'r') as file:
-            self.assertEqual(sitemap, file.read())
+            self.assertMultiLineEqual(sitemap, file.read())
