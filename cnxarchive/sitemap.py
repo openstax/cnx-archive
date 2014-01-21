@@ -93,8 +93,8 @@ class UrlEntry(object):
         if self.changefreq and self.changefreq not in self.freq_values:
             raise ValueError('changefreq must be one of %s' % (', '.join(self.freq_values)))
         self.priority = kwargs.get('priority')
-        if self.priority and self.priority < 0.1 or self.priority > 1.0:
-            raise ValueError('priority must be between 0.1 and 1.0')
+        if self.priority and self.priority < 0.0 or self.priority > 1.0:
+            raise ValueError('priority must be between 0.0 and 1.0')
 
         if self.loc is None:
             raise ValueError('location is required')
