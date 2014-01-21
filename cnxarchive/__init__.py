@@ -46,8 +46,8 @@ class Application:
     def add_route(self, template, controller, **vars):
         """Adds a route to the application. ``template`` is a route template
         writen in a simple replacement DSL (see ``template_to_regex``).
-        ``controller`` is the a string referrence to the controller function
-        (see ``load_controller`` for syntax details). Lastely, ``vars`` are
+        ``controller`` is the a string reference to the controller function
+        (see ``load_controller`` for syntax details). Lastly, ``vars`` are
         keyword arguments to pass into the routing arguments as constants.
         """
         if isinstance(controller, basestring):
@@ -110,6 +110,9 @@ def main(global_config, **settings):
     load_logging_configuration(logging_config_filepath)
 
     app = Application()
+    app.add_route('/contents/{ident_hash:.*}.html', 'cnxarchive.views:get_content_html')
+    app.add_route('/contents/{ident_hash:.*}.json', 'cnxarchive.views:get_content_json')
+    # app.add_route('/contents/{ident_hash}.snippet', 'cnxarchive.views:get_content_snippet')
     app.add_route('/contents/{ident_hash}', 'cnxarchive.views:get_content')
     app.add_route('/resources/{hash}', 'cnxarchive.views:get_resource')
     app.add_route('/exports/{ident_hash}.{type}{ignore:(/.*)?}', 'cnxarchive.views:get_export')

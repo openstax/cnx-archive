@@ -10,11 +10,16 @@ import os
 import json
 import logging
 import psycopg2
+
+from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
 from . import httpexceptions
-from .utils import split_ident_hash, portaltype_to_mimetype, slugify
+from .utils import (
+    portaltype_to_mimetype, MODULE_MIMETYPE, COLLECTION_MIMETYPE,
+    split_ident_hash, slugify,
+    )
 from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import (
     search as database_search, Query,
@@ -165,12 +170,34 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         raise ExportError('{} not found'.format(filename))
 
 
-# ######### #
-#   Views   #
-# ######### #
+HTML_WRAPPER = """\
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <body>{}</body>
+</html>
+"""
 
-def get_content(environ, start_response):
-    """Retrieve a piece of content using the ident-hash (uuid@version)."""
+
+def html_listify(tree, root_ul_element):
+    for node in tree:
+        li_elm = etree.SubElement(root_ul_element, 'li')
+        a_elm = etree.SubElement(li_elm, 'a')
+        a_elm.text = node['title']
+        if node['id'] != 'subcol':
+            # FIXME Hard coded route...
+            a_elm.set('href', '/contents/{}.html'.format(node['id']))
+        if 'contents' in node:
+            elm = etree.SubElement(li_elm, 'ul')
+            html_listify(node['contents'], elm)
+
+
+def tree_to_html(tree):
+    ul = etree.Element('ul')
+    html_listify([tree], ul)
+    return HTML_WRAPPER.format(etree.tostring(ul))
+
+
+def _get_content_json(environ, start_response):
+    """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
     ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
@@ -208,11 +235,53 @@ def get_content(environ, start_response):
     #       Until then we will do the replacement here.
     result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
 
+    return result
+
+
+# ######### #
+#   Views   #
+# ######### #
+
+def get_content_json(environ, start_response):
+    """Retrieve a piece of content as JSON using
+    the ident-hash (uuid@version).
+    """
+    result = _get_content_json(environ, start_response)
+
     result = json.dumps(result)
     status = "200 OK"
     headers = [('Content-type', 'application/json',)]
     start_response(status, headers)
     return [result]
+
+
+def get_content_html(environ, start_response):
+    """Retrieve a piece of content as HTML using
+    the ident-hash (uuid@version).
+    """
+    result = _get_content_json(environ, start_response)
+
+    media_type = result['mediaType']
+    if media_type == MODULE_MIMETYPE:
+        content = result['content']
+    elif media_type == COLLECTION_MIMETYPE:
+        content = tree_to_html(result['tree'])
+
+    status = "200 OK"
+    headers = [('Content-type', 'application/xhtml+xml',)]
+    start_response(status, headers)
+    return [content]
+
+
+def get_content(environ, start_response):
+    """Retrieve a piece of content using the ident-hash (uuid@version).
+    Depending on the HTTP_ACCEPT header return HTML or JSON.
+    """
+    if 'application/xhtml+xml' in environ.get('HTTP_ACCEPT', ''):
+        return get_content_html(environ, start_response)
+
+    else:
+        return get_content_json(environ, start_response)
 
 
 def get_resource(environ, start_response):
