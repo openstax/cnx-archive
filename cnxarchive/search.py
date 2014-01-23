@@ -298,6 +298,7 @@ class QueryResults(Sequence):
                 authors.add(hashabledict(author))
 
         authors = list(authors)
+        authors.sort(lambda x,y: cmp(y['id'],x['id']))
         setattr(self, attr_name, authors)
         return getattr(self, attr_name)
 
