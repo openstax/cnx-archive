@@ -227,14 +227,14 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('title', 'Physics')]
         results = self.call_target(query_params)
 
-        self.assertEqual(len(results), 4)
+        self.assertEqual(len(results), 5)
 
     def test_abstract_search(self):
         # Test for result on an abstract search.
         query_params = [('abstract', 'algebra')]
         results = self.call_target(query_params)
 
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
     def test_author_search(self):
@@ -413,7 +413,7 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('text', 'physics'), ('type', 'book')]
 
         results = self.call_target(query_params)
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         self.assertEqual(results[0]['id'],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
@@ -432,7 +432,7 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('text', 'physics'), ('type', 'Book')]
 
         results = self.call_target(query_params)
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 2)
         self.assertEqual(results[0]['id'],
                          'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
@@ -468,7 +468,7 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 12)
+        self.assertEqual(len(results), 13)
         self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
         self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
         self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
@@ -481,7 +481,7 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 12)
+        self.assertEqual(len(results), 13)
         self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
         self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
         self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
@@ -511,8 +511,9 @@ class SearchTestCase(unittest.TestCase):
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597'])
+        self.assertEqual(len(results), 2)
+        self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                                      'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
 
     def test_authorId_filter(self):
         # Filter results by author "OSC Physics Maintainer"
@@ -605,7 +606,7 @@ class SearchTestCase(unittest.TestCase):
             db_connection.commit()
 
         results = self.call_target(query_params)
-        self.assertEqual(len(results), 15)
+        self.assertEqual(len(results), 16)
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
 
