@@ -360,31 +360,30 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_module(self, cursor):
-        cursor.execute('SELECT nodeid FROM trees WHERE documentid = 1')
+        cursor.execute('SELECT nodeid FROM trees WHERE documentid = 18')
         old_nodeid = cursor.fetchone()[0]
-
-        cursor.execute('SELECT fileid '
-                       'FROM module_files WHERE module_ident = 1')
-        old_files = cursor.fetchall()
 
         cursor.execute('SELECT COUNT(*) FROM modules')
         old_n_modules = cursor.fetchone()[0]
-        self.assertEqual(old_n_modules, 17)
+        self.assertEqual(old_n_modules, 18)
 
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules
-        (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
-        VALUES (
-        'm42955', 'Module', '1.2', 'Preface to College Physics', '2013-09-13 15:10:43.000000+02' ,
-        '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
+        (moduleid, portal_type, version, name,
+         created, revised,
+         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog, 
+         language, parent)
+        VALUES ('m42955', 'Module', '1.2', 'Preface to College Physics',
+        '2013-09-13 15:10:43.000000+02' , '2013-09-13 15:10:43.000000+02',
+        NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
         'en', NULL) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
 
-        # After the new module is inserted, there should be a new module and a
-        # new collection
+        # After the new module is inserted, there should be a new module and two
+        # new collections
         cursor.execute('SELECT COUNT(*) FROM modules')
-        self.assertEqual(cursor.fetchone()[0], 19)
+        self.assertEqual(cursor.fetchone()[0], old_n_modules + 3)
 
         # Test that the module inserted has the right major and minor versions
         cursor.execute('''SELECT major_version, minor_version, uuid FROM modules 
@@ -402,8 +401,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         results = cursor.fetchone()
         new_collection_id = results[0]
         self.assertEqual(results[1], 'Collection') # portal_type
-        self.assertEqual(results[5], 'College Physics') # name
-        self.assertEqual(results[-2], 7) # major_version
+        self.assertEqual(results[5], 'Derived Copy of College Physics') # name
+        self.assertEqual(results[-2], 1) # major_version
         self.assertEqual(results[-1], 2) # minor_version
 
         cursor.execute('SELECT nodeid FROM trees '
@@ -438,7 +437,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         new_document_ids = {
                 # old module_ident: new module_ident
-                1: new_collection_id,
+                18: new_collection_id,
                 2: new_module_ident,
                 }
         for i, old_node in enumerate(old_tree):

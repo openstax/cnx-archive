@@ -61,6 +61,7 @@ COLLECTION_METADATA = {
     u'title': u'College Physics',
     u'parentAuthors': [],
     u'parentId': None,
+    u'parentTitle': None,
     u'parentVersion': '',
     u'revised': u'2013-08-31T19:07:20Z',
     u'stateid': None,
@@ -151,6 +152,17 @@ COLLECTION_JSON_TREE = {
          u'title': u'Glossary of Key Symbols and Notation'},
         ],
     }
+COLLECTION_DERIVED_METADATA = {
+    u'parentAuthors': [
+            {u'website': None, u'surname': None, 
+             u'suffix': None, u'firstname': u'OpenStax College', 
+             u'title': None, u'othername': None, u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8', 
+             u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org'}],
+    u'parentId': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    u'parentTitle': u'College Physics',
+    u'parentVersion': u'7.1',
+    u'title': u'Derived Copy of College Physics'
+}
 MODULE_METADATA = {
     u'roles': None,
     u'subject': u'Science and Technology',
@@ -195,6 +207,7 @@ MODULE_METADATA = {
     u'title': u'Elasticity: Stress and Strain',
     u'parentAuthors': [],
     u'parentId': None,
+    u'parentTitle': None,
     u'parentVersion': '',
     u'revised': u'2013-07-31T19:07:24Z',
     u'stateid': None,
@@ -228,188 +241,9 @@ MODULE_METADATA = {
             },
         ],
     }
-SEARCH_RESULTS = {
-    u'query': {
-        u'limits': [{u'tag': u'text', u'value': u'college physics'}],
-        u'sort': [u'version'],
-        },
-    u'results': {
-        u'items': [
-            {u'authors': [u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
-             u'bodySnippet': None,
-             u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
-             u'keywords': [u'college physics',
-                           u'physics',
-                           u'friction',
-                           u'ac circuits',
-                           u'atomic physics',
-                           u'bioelectricity',
-                           u'biological and medical applications',
-                           u'circuits',
-                           u'collisions',
-                           u'dc instruments',
-                           u'drag',
-                           u'elasticity',
-                           u'electric charge and electric field',
-                           u'electric current',
-                           u'electric potential',
-                           u'electrical technologies',
-                           u'electromagnetic induction',
-                           u'electromagnetic waves',
-                           u'energy',
-                           u'fluid dynamics',
-                           u'fluid statics',
-                           u'forces',
-                           u'frontiers of physics',
-                           u'gas laws',
-                           u'geometric optics',
-                           u'heat and transfer methods',
-                           u'kinematics',
-                           u'kinetic theory',
-                           u'linear momentum',
-                           u'magnetism',
-                           u'medical applications of nuclear physics',
-                           u'Newton\u2019s Laws of Motion',
-                           u'Ohm\u2019s Law',
-                           u'oscillatory motion and waves',
-                           u'particle physics',
-                           u'physics of hearing',
-                           u'quantum physics',
-                           u'radioactivity and nuclear physics',
-                           u'resistance',
-                           u'rotational motion and angular momentum',
-                           u'special relativity',
-                           u'statics and torque',
-                           u'temperature',
-                           u'thermodynamics',
-                           u'uniform circular motion and gravitation',
-                           u'vision and optical instruments',
-                           u'wave optics',
-                           u'work'],
-             u'mediaType': u'Collection',
-             u'pubDate': u'2013-08-31T19:07:20Z',
-             u'summarySnippet': u'algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ',
-             u'title': u'College Physics'},
-            {u'authors': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                          u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
-             u'bodySnippet': None,
-             u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
-             u'keywords': [u'college physics',
-                           u'introduction',
-                           u'physics'],
-             u'mediaType': u'Module',
-             u'pubDate': u'2013-07-31T19:07:20Z',
-             u'summarySnippet': None,
-             u'title': u'Preface to College Physics'},
-            ],
-        u'total': 2,
-        u'limits': [
-            {u'tag': u'pubYear',
-             u'values': [{u'value': u'2013',
-                          u'count': 2}]},
-            {u'tag': u'authorID',
-             u'values': [{u'value': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                          u'count': 2},
-                         {u'value': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                          u'count': 1},
-            ]},
-            {u'tag': u'type',
-             u'values': [
-                 {u'value': u'application/vnd.org.cnx.collection',
-                  u'count': 1},
-                 {u'value': u'application/vnd.org.cnx.module',
-                  u'count': 1},
-                 ],
-             },
-            {u'tag': u'keyword',
-             u'values': [{u'count': 1, u'value': u'ac circuits'},
-                         {u'count': 1, u'value': u'atomic physics'},
-                         {u'count': 1, u'value': u'bioelectricity'},
-                         {u'count': 1, u'value': u'biological and medical applications'},
-                         {u'count': 1, u'value': u'circuits'},
-                         {u'count': 2, u'value': u'college physics'},
-                         {u'count': 1, u'value': u'collisions'},
-                         {u'count': 1, u'value': u'dc instruments'},
-                         {u'count': 1, u'value': u'drag'},
-                         {u'count': 1, u'value': u'elasticity'},
-                         {u'count': 1, u'value': u'electric charge and electric field'},
-                         {u'count': 1, u'value': u'electric current'},
-                         {u'count': 1, u'value': u'electric potential'},
-                         {u'count': 1, u'value': u'electrical technologies'},
-                         {u'count': 1, u'value': u'electromagnetic induction'},
-                         {u'count': 1, u'value': u'electromagnetic waves'},
-                         {u'count': 1, u'value': u'energy'},
-                         {u'count': 1, u'value': u'fluid dynamics'},
-                         {u'count': 1, u'value': u'fluid statics'},
-                         {u'count': 1, u'value': u'forces'},
-                         {u'count': 1, u'value': u'friction'},
-                         {u'count': 1, u'value': u'frontiers of physics'},
-                         {u'count': 1, u'value': u'gas laws'},
-                         {u'count': 1, u'value': u'geometric optics'},
-                         {u'count': 1, u'value': u'heat and transfer methods'},
-                         {u'count': 1, u'value': u'introduction'},
-                         {u'count': 1, u'value': u'kinematics'},
-                         {u'count': 1, u'value': u'kinetic theory'},
-                         {u'count': 1, u'value': u'linear momentum'},
-                         {u'count': 1, u'value': u'magnetism'},
-                         {u'count': 1,
-                          u'value': u'medical applications of nuclear physics'},
-                         {u'count': 1, u'value': u'Newton\u2019s Laws of Motion'},
-                         {u'count': 1, u'value': u'Ohm\u2019s Law'},
-                         {u'count': 1, u'value': u'oscillatory motion and waves'},
-                         {u'count': 1, u'value': u'particle physics'},
-                         {u'count': 2, u'value': u'physics'},
-                         {u'count': 1, u'value': u'physics of hearing'},
-                         {u'count': 1, u'value': u'quantum physics'},
-                         {u'count': 1, u'value': u'radioactivity and nuclear physics'},
-                         {u'count': 1, u'value': u'resistance'},
-                         {u'count': 1,
-                          u'value': u'rotational motion and angular momentum'},
-                         {u'count': 1, u'value': u'special relativity'},
-                         {u'count': 1, u'value': u'statics and torque'},
-                         {u'count': 1, u'value': u'temperature'},
-                         {u'count': 1, u'value': u'thermodynamics'},
-                         {u'count': 1,
-                          u'value': u'uniform circular motion and gravitation'},
-                         {u'count': 1, u'value': u'vision and optical instruments'},
-                         {u'count': 1, u'value': u'wave optics'},
-                         {u'count': 1, u'value': u'work'},
-            ]},
-            {u'tag': u'subject',
-             u'values': [{u'count': 2, u'value': u'Mathematics and Statistics'},
-                         {u'count': 1, u'value': u'Science and Technology'},
-            ]},
-        ],
-        u'auxiliary': {
-            u'authors': [
-                {u'email': u'info@openstaxcollege.org',
-                 u'firstname': u'OpenStax College',
-                 u'fullname': u'OpenStax College',
-                 u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                 u'othername': None,
-                 u'suffix': None,
-                 u'surname': None,
-                 u'title': None,
-                 u'website': None},
-                {u'email': u'info@openstaxcollege.org',
-                 u'firstname': u'College',
-                 u'fullname': u'OSC Physics Maintainer',
-                 u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                 u'othername': None,
-                 u'suffix': None,
-                 u'surname': u'Physics',
-                 u'title': None,
-                 u'website': None},
-            ],
-            u'types': [
-                {u'name': u'Collection',
-                 u'id': u'application/vnd.org.cnx.collection'},
-                {u'name': u'Module',
-                 u'id': u'application/vnd.org.cnx.module'},
-            ],
-        },
-    },
-}
+
+with open(os.path.join(TEST_DATA_DIRECTORY, 'search_results.json'), 'r') as file:
+    SEARCH_RESULTS = json.load(file)
 
 class ViewsTestCase(unittest.TestCase):
     fixture = postgresql_fixture
@@ -493,12 +327,37 @@ class ViewsTestCase(unittest.TestCase):
         # Check the tree for accuracy.
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
 
+    def test_derived_collection(self):
+        # Test for retrieving a piece of content.
+        uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
+        version = '1.1'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from ..views import get_content
+        content = get_content(environ, self._start_response)[0]
+        content = json.loads(content)
+
+        # Remove the 'tree' from the content for separate testing.
+        content_tree = content.pop('tree')
+
+        # Check the metadata for correctness.
+        self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
+        for key in ['parentId','parentTitle','parentAuthors']:
+            self.assertEqual(content[key], COLLECTION_DERIVED_METADATA[key],
+                    'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
+                        key=key, v1=content[key], v2=COLLECTION_DERIVED_METADATA[key]))
+
     @db_connect
     def _create_empty_subcollections(self, cursor):
-        cursor.execute("INSERT INTO trees VALUES (55, 53, NULL, 'Empty Subcollections', 1)")
-        cursor.execute("INSERT INTO trees VALUES (56, 55, NULL, 'empty 1', 1)")
-        cursor.execute("INSERT INTO trees VALUES (57, 55, NULL, 'empty 2', 2)")
-        cursor.execute("INSERT INTO trees VALUES (58, 53, NULL, 'Empty Subcollection', 3)")
+        cursor.execute("INSERT INTO trees VALUES (91, 53, NULL, 'Empty Subcollections', 1)")
+        cursor.execute("INSERT INTO trees VALUES (92, 91, NULL, 'empty 1', 1)")
+        cursor.execute("INSERT INTO trees VALUES (93, 91, NULL, 'empty 2', 2)")
+        cursor.execute("INSERT INTO trees VALUES (94, 53, NULL, 'Empty Subcollection', 3)")
 
     def test_empty_subcollection_content(self):
         self._create_empty_subcollections()
@@ -996,7 +855,6 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(headers[0], ('Content-type', 'application/json'))
         results = json.loads(results)
-
         self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS.keys()))
         self.maxDiff = None
         for i in results:
@@ -1070,6 +928,15 @@ class ViewsTestCase(unittest.TestCase):
                 'opportunities to solve traditional <b>physics</b> application '
                 'problems. ')
         self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'],
+                'algebra-based, two-semester <b>college</b> <b>physics</b> book '
+                'is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental '
+                '<b>physics</b> concepts. This online, fully editable and '
+                'customizable title includes learning objectives, concept '
+                'questions, links to labs and simulations, and ample practice '
+                'opportunities to solve traditional <b>physics</b> application '
+                'problems. ')
 
         # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'
@@ -1091,7 +958,15 @@ class ViewsTestCase(unittest.TestCase):
                 'includes learning objectives, concept questions, links to labs '
                 'and simulations, and ample practice opportunities to solve '
                 'traditional')
-        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][1]['summarySnippet'],
+                ' This introductory, algebra-based, two-semester college physics '
+                'book is grounded with real-world examples, illustrations, and '
+                'explanations to help students grasp key, fundamental physics '
+                'concepts. This online, fully editable and customizable title '
+                'includes learning objectives, concept questions, links to labs '
+                'and simulations, and ample practice opportunities to solve '
+                'traditional')
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
     def test_search_no_params(self):
         environ = self._make_environ()
@@ -1333,7 +1208,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'book'})
-        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')
 
@@ -1354,7 +1229,7 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'collection'})
-        self.assertEqual(results['results']['total'], 1)
+        self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')
 

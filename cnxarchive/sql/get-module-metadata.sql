@@ -29,9 +29,6 @@ FROM (SELECT
     ) AS submitter_row),
   m.submitlog, m.portal_type as "mediaType",
   a.html AS abstract,
-  p.uuid AS "parentId",
-  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
-
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT id, email, firstname, othername, surname, fullname,
                 title, suffix, website
@@ -50,8 +47,15 @@ FROM (SELECT
          FROM users
          WHERE users.id::text = ANY (m.licensors)
          ) user_rows) as licensors,
-  COALESCE(m.parentauthors,
-           ARRAY(select ''::text where false)) as "parentAuthors",
+  p.uuid AS "parentId",
+  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
+  p.name as "parentTitle",
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT id, email, firstname, othername, surname, fullname,
+                title, suffix, website
+         FROM users
+         WHERE users.id::text = ANY (m.parentauthors)
+         ) user_rows) as "parentAuthors",
   m.language as language,
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as roles,
   list(tag) as subject,
@@ -82,6 +86,6 @@ WHERE
 GROUP BY
   m.moduleid, m.portal_type, current_version, m.name, m.created, m.revised,
   a.html, m.stateid, m.doctype, l.code, l.name, l.version, l.url,
-  m.module_ident, m.submitter, m.submitlog, p.uuid, "parentVersion", m.authors,
+  m.module_ident, m.submitter, m.submitlog, p.uuid, "parentVersion", p.name, m.authors,
   m.licensors, m.maintainers, m.parentauthors, m.language, m.google_analytics
 ) combined_rows ;
