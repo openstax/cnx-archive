@@ -58,7 +58,7 @@ FROM (SELECT
          ) user_rows) as "parentAuthors",
   m.language as language,
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) as roles,
-  list(tag) as subject,
+  ARRAY(SELECT tag FROM moduletags AS mt NATURAL JOIN tags WHERE mt.module_ident = m.module_ident) AS subjects,
   m.google_analytics as "googleAnalytics",
   m.buylink as "buyLink",
   m.moduleid as "legacy_id",
@@ -73,12 +73,12 @@ FROM (SELECT
             ) publisher)
             FROM modules m1 WHERE m1.uuid = %(id)s AND m1.revised <= m.revised
             ORDER BY m1.revised DESC
-    ) history_info) as history
+    ) history_info) as history,
+  ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
-  LEFT JOIN modules p on m.parent = p.module_ident
-  LEFT JOIN moduletags mt on m.module_ident = mt.module_ident
-  NATURAL LEFT JOIN tags, licenses l
+  LEFT JOIN modules p on m.parent = p.module_ident,
+  licenses l
 WHERE
   m.licenseid = l.licenseid AND
   m.uuid = %(id)s AND
