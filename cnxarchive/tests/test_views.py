@@ -19,7 +19,7 @@ from .. import httpexceptions
 
 COLLECTION_METADATA = {
     u'roles': None,
-    u'subject': u'Mathematics and Statistics,Science and Technology',
+    u'subjects': [u'Mathematics and Statistics', u'Science and Technology'],
     u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
@@ -107,6 +107,27 @@ COLLECTION_METADATA = {
                 },
             },
         ],
+    u'keywords': [
+        u'college physics', u'physics', u'friction', u'ac circuits',
+        u'atomic physics', u'bioelectricity',
+        u'biological and medical applications', u'circuits',
+        u'collisions', u'dc instruments', u'drag', u'elasticity',
+        u'electric charge and electric field', u'electric current',
+        u'electric potential', u'electrical technologies',
+        u'electromagnetic induction', u'electromagnetic waves', u'energy',
+        u'fluid dynamics', u'fluid statics', u'forces', u'frontiers of physics',
+        u'gas laws', u'geometric optics', u'heat and transfer methods',
+        u'kinematics', u'kinetic theory', u'linear momentum', u'magnetism',
+        u'medical applications of nuclear physics',
+        u'Newton\u2019s Laws of Motion', u'Ohm\u2019s Law',
+        u'oscillatory motion and waves', u'particle physics',
+        u'physics of hearing', u'quantum physics',
+        u'radioactivity and nuclear physics', u'resistance',
+        u'rotational motion and angular momentum', u'special relativity',
+        u'statics and torque', u'temperature', u'thermodynamics',
+        u'uniform circular motion and gravitation',
+        u'vision and optical instruments', u'wave optics', u'work',
+        ],
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
@@ -165,7 +186,7 @@ COLLECTION_DERIVED_METADATA = {
 }
 MODULE_METADATA = {
     u'roles': None,
-    u'subject': u'Science and Technology',
+    u'subjects': [u'Science and Technology'],
     u'abstract': None,
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
@@ -239,6 +260,12 @@ MODULE_METADATA = {
                 u'email': u'info@openstaxcollege.org',
                 },
             },
+        ],
+    u'keywords': [
+        u'bulk modulus', u'compression', u'deformation', u'force',
+        u'Hooke\u2019s law', u'length', u'shear modulus', u'strain', u'stress',
+        u'tension', u'Young\u2019s modulus', u'shear deformation',
+        u'tensile strength',
         ],
     }
 
@@ -320,7 +347,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
         for key in content:
             self.assertEqual(content[key], COLLECTION_METADATA[key],
-                    'content[{key}] = {v1} but COLLECTION_METADATA[{key}] = {v2}'.format(
+                    u'content[{key}] = {v1} but COLLECTION_METADATA[{key}] = {v2}'.format(
                         key=key, v1=content[key], v2=COLLECTION_METADATA[key]))
 
         self.maxDiff = 10000
@@ -349,7 +376,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
         for key in ['parentId','parentTitle','parentAuthors']:
             self.assertEqual(content[key], COLLECTION_DERIVED_METADATA[key],
-                    'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
+                    u'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
                         key=key, v1=content[key], v2=COLLECTION_DERIVED_METADATA[key]))
 
     @db_connect
@@ -462,7 +489,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
         for key in content:
             self.assertEqual(content[key], MODULE_METADATA[key],
-                    'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
+                    u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
                         key=key, v1=content[key], v2=MODULE_METADATA[key]))
 
         # Check the content is the html file.
