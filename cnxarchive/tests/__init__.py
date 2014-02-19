@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import functools
 import os
 
 import psycopg2
@@ -53,13 +54,19 @@ def db_connect(method):
         cursor.execute(some_sql)
         # some other code
     """
+    @functools.wraps(method)
     def wrapped(self, *args, **kwargs):
         from ..utils import parse_app_settings
         settings = parse_app_settings(TESTING_CONFIG)
+        has_db_connection = hasattr(self, 'db_connection')
         with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            if not has_db_connection:
+                self.db_connection = db_connection
             with db_connection.cursor() as cursor:
                 return method(self, cursor, *args, **kwargs)
             db_connection.commit()
+        if not has_db_connection:
+            delattr(self, 'db_connection')
     return wrapped
 
 
