@@ -180,12 +180,12 @@ def republish_collection(next_minor_version, collection_ident, cursor,
         abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
         authors,maintainers,licensors,parentauthors,google_analytics,buylink,
         major_version, minor_version)
-        SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
+      SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
         m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
         m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
         m.google_analytics, m.buylink, m.major_version, %s
-        FROM modules m
-        WHERE m.module_ident = %s
+      FROM modules m
+      WHERE m.module_ident = %s
     RETURNING module_ident
     '''
     if revised is None:
@@ -195,8 +195,20 @@ def republish_collection(next_minor_version, collection_ident, cursor,
         sql = sql.format('%s')
         params = [revised, next_minor_version, collection_ident]
     cursor.execute(sql, params)
-    results = cursor.fetchone()[0]
-    return results
+    new_ident = cursor.fetchone()[0]
+    cursor.execute("""\
+        INSERT INTO modulekeywords (module_ident, keywordid)
+        SELECT %s, keywordid
+        FROM modulekeywords
+        WHERE module_ident = %s""",
+                   (new_ident, collection_ident,))
+    cursor.execute("""\
+        INSERT INTO moduletags (module_ident, tagid)
+        SELECT %s, tagid
+        FROM moduletags
+        WHERE module_ident = %s""",
+                   (new_ident, collection_ident,))
+    return new_ident
 
 def set_version(portal_type, legacy_version, td):
     """Sets the major_version and minor_version if they are not set

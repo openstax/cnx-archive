@@ -276,6 +276,85 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[22], 10)
         self.assertEqual(data[23], 3)
 
+    @db_connect
+    def test_republish_collection_w_keywords(self, cursor):
+        # Ensure association of the new collection with existing keywords.
+        settings = get_app_settings(TESTING_CONFIG)
+        from ..database import CONNECTION_SETTINGS_KEY
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
+            with db_conn.cursor() as db_cursor:
+                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        from ..database import republish_collection
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
+        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
+        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
+        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
+        ) RETURNING module_ident;''')
+        collection_ident = cursor.fetchone()[0]
+        keywords = ['smoo', 'dude', 'gnarly', 'felice']
+        values_expr = ", ".join("('{}')".format(v) for v in keywords)
+        cursor.execute("""INSERT INTO keywords (word)
+        VALUES {}
+        RETURNING keywordid;""".format(values_expr))
+        keywordids = [x[0] for x in cursor.fetchall()]
+        values_expr = ", ".join(["({}, '{}')".format(collection_ident, id)
+                                 for id in keywordids])
+        cursor.execute("""INSERT INTO modulekeywords (module_ident, keywordid)
+        VALUES {};""".format(values_expr))
+        self.db_connection.commit()
+
+        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+
+        cursor.execute("""\
+        SELECT word
+        FROM modulekeywords NATURAL JOIN keywords
+        WHERE module_ident = %s""",
+            (new_ident,))
+        inserted_keywords = [x[0] for x in cursor.fetchall()]
+        self.assertEqual(sorted(inserted_keywords), sorted(keywords))
+
+    @db_connect
+    def test_republish_collection_w_subjects(self, cursor):
+        # Ensure association of the new collection with existing keywords.
+        settings = get_app_settings(TESTING_CONFIG)
+        from ..database import CONNECTION_SETTINGS_KEY
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
+            with db_conn.cursor() as db_cursor:
+                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
+        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
+        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
+        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
+        ) RETURNING module_ident;''')
+        collection_ident = cursor.fetchone()[0]
+
+        subjects = [(2, 'Business',), (3, 'Humanities',)]
+
+        values_expr = ", ".join(["({}, '{}')".format(collection_ident, id)
+                                 for id, name in subjects])
+        cursor.execute("""INSERT INTO moduletags (module_ident, tagid)
+        VALUES {};""".format(values_expr))
+        self.db_connection.commit()
+
+        from ..database import republish_collection
+        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+
+        cursor.execute("""\
+        SELECT tag
+        FROM moduletags NATURAL JOIN tags
+        WHERE module_ident = %s""",
+            (new_ident,))
+        inserted_subjects = [x[0] for x in cursor.fetchall()]
+        self.assertEqual(sorted(inserted_subjects),
+                         sorted([name for id, name in subjects]))
+
     def test_set_version(self):
         from ..database import set_version
 
