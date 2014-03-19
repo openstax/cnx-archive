@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import uuid
 import unittest
 
 
@@ -100,6 +101,69 @@ class SplitIdentTestCase(unittest.TestCase):
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
+
+
+class JoinIdentTestCase(unittest.TestCase):
+
+    def call_target(self, *args, **kwargs):
+        from ..utils import join_ident_hash
+        return join_ident_hash(*args, **kwargs)
+
+    def test(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = ('2', '4',)
+        expected = "{}@{}".format(id, '.'.join(version))
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_UUID(self):
+        id = uuid.uuid4()
+        version = None
+        expected = str(id)
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_null_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = None
+        expected = id
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_null_str_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = ''
+        expected = id
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_str_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = '2'
+        expected = "{}@{}".format(id, version)
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_major_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = ('2', None,)
+        expected = "{}@{}".format(id, version[0])
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+
+    def test_w_double_null_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = (None, None,)
+        expected = id
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
+    def test_w_invalid_version_sequence(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = ('1',)
+        with self.assertRaises(AssertionError):
+            self.call_target(id, version)
 
 
 class SlugifyTestCase(unittest.TestCase):

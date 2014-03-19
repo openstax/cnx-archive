@@ -55,6 +55,22 @@ def split_ident_hash(ident_hash, split_version=False):
     return id, version
 
 
+def join_ident_hash(id, version):
+    """Returns a valid ident_hash from the given ``id`` and ``version``
+    where ``id`` can be a string or UUID instance and ``version`` can be a
+    string or tuple of major and minor version.
+    """
+    if isinstance(id, uuid.UUID):
+        id = str(id)
+    join_args = [id]
+    if isinstance(version, (tuple, list,)):
+        assert len(version) == 2, "version sequence must be two values."
+        version = VERSION_CHAR.join([x for x in version if x is not None])
+    if version:
+        join_args.append(version)
+    return HASH_CHAR.join(join_args)
+
+
 def parse_app_settings(config_uri, name='main'):
     """Parse the settings from the config file for the application.
     The application section defaults to name 'main'.
