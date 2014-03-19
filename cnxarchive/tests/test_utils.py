@@ -24,7 +24,7 @@ class SplitIdentTestCase(unittest.TestCase):
 
     def test_complete_data(self):
         # Simple case of supplying the correct information and checking
-        #   for the correct results.
+        # for the correct results.
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2', '1.12',
             )
@@ -37,7 +37,7 @@ class SplitIdentTestCase(unittest.TestCase):
 
     def test_uuid_only(self):
         # Case where the UUID has been the only value supplied in the
-        #   ident-hash.
+        # ident-hash.
         # This is mostly testing that the version value returns None.
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2', '',
@@ -64,6 +64,42 @@ class SplitIdentTestCase(unittest.TestCase):
         from ..utils import IdentHashSyntaxError
         with self.assertRaises(IdentHashSyntaxError):
             self.call_target(ident_hash)
+
+    def test_w_split_version(self):
+        expected_id, expected_version = (
+            '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
+            ('1', '12',),
+            )
+        ident_hash = "{}@{}".format(expected_id, '.'.join(expected_version))
+
+        id, version = self.call_target(ident_hash, True)
+
+        self.assertEqual(id, expected_id)
+        self.assertEqual(version, expected_version)
+
+    def test_w_split_version_on_major_version(self):
+        expected_id, expected_version = (
+            '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
+            ('1', None,),
+            )
+        ident_hash = "{}@{}".format(expected_id, expected_version[0])
+
+        id, version = self.call_target(ident_hash, True)
+
+        self.assertEqual(id, expected_id)
+        self.assertEqual(version, expected_version)
+
+    def test_w_split_version_on_major_version(self):
+        expected_id, expected_version = (
+            '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
+            (None, None,)
+            )
+        ident_hash = expected_id
+
+        id, version = self.call_target(ident_hash, True)
+
+        self.assertEqual(id, expected_id)
+        self.assertEqual(version, expected_version)
 
 
 class SlugifyTestCase(unittest.TestCase):

@@ -10,18 +10,23 @@ import sys
 import re
 import unicodedata
 import uuid
+
 from paste.deploy import appconfig
+
+
+HASH_CHAR = '@'
+VERSION_CHAR = '.'
 
 
 class IdentHashSyntaxError(Exception):
     """Raised when the ident-hash syntax is incorrect."""
 
 
-def split_ident_hash(ident_hash):
+def split_ident_hash(ident_hash, split_version=False):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
-    if '@' not in ident_hash:
+    if HASH_CHAR not in ident_hash:
         ident_hash = '{}@'.format(ident_hash)
-    split_value = ident_hash.split('@')
+    split_value = ident_hash.split(HASH_CHAR)
     if split_value[0] == '':
         raise ValueError("Missing values")
 
@@ -38,6 +43,15 @@ def split_ident_hash(ident_hash):
                                        .format(id))
     # None'ify the version on empty string.
     version = version and version or None
+
+    if split_version:
+        if version is None:
+            version = (None, None,)
+        else:
+            split_version = version.split(VERSION_CHAR)
+            if len(split_version) == 1:
+                split_version.append(None)
+            version = tuple(split_version)
     return id, version
 
 
