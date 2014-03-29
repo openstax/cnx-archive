@@ -113,7 +113,7 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 'format': type_info['user_friendly_name'],
                 'filename': filename,
                 'details': type_info['description'],
-                'path': '/exports/{}@{}.{}/{}'.format(id, version, type_name,
+                'path': u'/exports/{}@{}.{}/{}'.format(id, version, type_name,
                                                       filename),
                 }
         except ExportError as e:
@@ -146,7 +146,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     legacy_version = metadata['legacy_version']
     legacy_filename = '{}-{}.{}'.format(legacy_id, legacy_version, 
             file_extension)
-    slugify_title_filename = '{}-{}.{}'.format(slugify(metadata['title']), 
+    slugify_title_filename = u'{}-{}.{}'.format(slugify(metadata['title']),
             version, file_extension)
 
     for exports_dir in exports_dirs:
