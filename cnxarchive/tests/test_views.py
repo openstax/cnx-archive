@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import HTMLParser
 import glob
 import os
 import json
@@ -168,7 +169,7 @@ COLLECTION_JSON_TREE = {
         {u'id': u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
          u'title': u'Selected Radioactive Isotopes'},
         {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@5',
-         u'title': u'Useful Information'},
+         u'title': u'Useful Inførmation'},
         {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
          u'title': u'Glossary of Key Symbols and Notation'},
         ],
@@ -564,14 +565,15 @@ class ViewsTestCase(unittest.TestCase):
         routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
         environ['wsgiorg.routing_args'] = routing_args
 
-        expected = """<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9@3.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7@6.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66@7.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton\'s Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2.html">Introduction: Further Applications of Newton&#8217;s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59@5.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41@6.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca@8.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881@3.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325@5.html">Useful Information</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@5.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
+        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9@3.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7@6.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66@7.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2.html">Introduction: Further Applications of Newton’s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59@5.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41@6.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca@8.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881@3.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325@5.html">Useful Inførmation</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@5.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
 
         # Call the view.
         from ..views import get_content_html
 
         # Check that the view returns the expected html
         resp_body = get_content_html(environ, self._start_response)
-        self.assertEqual(resp_body[0], expected)
+        p = HTMLParser.HTMLParser()
+        self.assertEqual(p.unescape(resp_body[0]), expected)
 
     def test_content_module_as_html(self):
         uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
@@ -844,6 +846,32 @@ class ViewsTestCase(unittest.TestCase):
         expected_location = "/extras/{}".format(expected_ident_hash)
         self.assertEqual(exception.headers,
                          [('Location', expected_location)])
+
+    def test_extra_w_utf8_characters(self):
+        id = 'c0a76659-c311-405f-9a99-15c71af39325'
+        version = '5'
+        ident_hash = '{}@{}'.format(id, version)
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash}
+
+        # Call the target
+        from ..views import get_extra
+        output = get_extra(environ, self._start_response)[0]
+        self.assertEqual(self.captured_response['status'], '200 OK')
+        self.assertEqual(self.captured_response['headers'][0],
+                ('Content-type', 'application/json'))
+        self.assertEqual(json.loads(output), {
+            u'isLatest': True,
+            u'downloads': [{
+                u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
+                    .format(id, version),
+                u'format': u'PDF',
+                u'details': u'PDF file, for viewing content offline and printing.',
+                u'filename': u'useful-inførmation-5.pdf',
+                }],
+            })
 
     def test_extra_not_found(self):
         # Test version not found
