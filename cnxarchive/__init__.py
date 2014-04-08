@@ -114,7 +114,7 @@ def main(global_config, **settings):
     app.add_route('/contents/{ident_hash:.*}.json', 'cnxarchive.views:get_content_json')
     # app.add_route('/contents/{ident_hash}.snippet', 'cnxarchive.views:get_content_snippet')
     app.add_route('/contents/{ident_hash}', 'cnxarchive.views:get_content')
-    app.add_route('/resources/{hash}', 'cnxarchive.views:get_resource')
+    app.add_route('/resources/{hash}{ignore:(/.*)?}', 'cnxarchive.views:get_resource')
     app.add_route('/exports/{ident_hash}.{type}{ignore:(/.*)?}', 'cnxarchive.views:get_export')
     app.add_route('/extras/{ident_hash}', 'cnxarchive.views:get_extra')
     app.add_route('/search', 'cnxarchive.views:search')
