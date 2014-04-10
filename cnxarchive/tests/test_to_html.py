@@ -465,11 +465,11 @@ class ReferenceResolutionTestCase(unittest.TestCase):
                 content, bad_refs = fix_reference_urls(db_connection, ident, content)
 
         # Read the content for the reference changes.
-        expected_img_ref = '<img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
+        expected_img_ref = '<img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
         self.assertTrue(content.find(expected_img_ref) >= 0)
         expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7">'
         self.assertTrue(content.find(expected_internal_ref) >= 0)
-        expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e">'
+        expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
     def test_reference_not_parseable(self):
@@ -540,29 +540,29 @@ class ReferenceResolutionTestCase(unittest.TestCase):
 <html xmlns="http://www.w3.org/1999/xhtml">
     <body>
         <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#xn">
-            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
         </a>
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
-            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
         </a>
-        <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
-        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb"/>
-        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb"/>
+        <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb/PhET_Icon.png"/>
+        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb/PhET_Icon.png"/>
         <img src="/content/m42092/1.3/PhET_Icon.png"/>
-        <span data-src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        <span data-src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
 
-        <audio src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" id="music" mime-type="audio/mpeg"/>
+        <audio src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" id="music" mime-type="audio/mpeg"/>
 
-        <video src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" id="music" mime-type="video/mp4"/>
+        <video src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" id="music" mime-type="video/mp4"/>
 
-        <object width="400" height="400" data="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+        <object width="400" height="400" data="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
 
         <object width="400" height="400">
-            <embed src="/resources/38b5477eb68417a65d7fcb1bc1d6630e"/>
+            <embed src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
         </object>
 
         <audio controls="controls">
-            <source src="/resources/38b5477eb68417a65d7fcb1bc1d6630e" type="audio/mpeg"/>
+            <source src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" type="audio/mpeg"/>
         </audio>
     </body>
 </html>''')

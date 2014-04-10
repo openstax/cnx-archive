@@ -297,7 +297,7 @@ class ReferenceResolver:
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
-                    elem.set(attr, '/resources/{}'.format(info['hash'],))
+                    elem.set(attr, '/resources/{}/{}'.format(info['hash'],filename))
         return bad_references
 
     def fix_anchor_references(self):
@@ -337,7 +337,7 @@ class ReferenceResolver:
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
-                    anchor.set('href', '/resources/{}'.format(info['hash'],))
+                    anchor.set('href', '/resources/{}/{}'.format(info['hash'],filename))
             else:
                 exc = InvalidReference(self.document_ident, ref)
                 bad_references.append(exc)
