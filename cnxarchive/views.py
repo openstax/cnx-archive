@@ -83,6 +83,7 @@ def is_latest(cursor, id, version):
 
 
 TYPE_INFO = []
+LEGACY_EXTENSION_MAP = {'epub':'epub','pdf':'pdf','zip':'complete.zip'}
 def get_type_info():
     if TYPE_INFO:
         return
@@ -145,7 +146,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     legacy_id = metadata['legacy_id']
     legacy_version = metadata['legacy_version']
     legacy_filename = '{}-{}.{}'.format(legacy_id, legacy_version, 
-            file_extension)
+            LEGACY_EXTENSION_MAP[file_extension])
     slugify_title_filename = u'{}-{}.{}'.format(slugify(metadata['title']),
             version, file_extension)
 
