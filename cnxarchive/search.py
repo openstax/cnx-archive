@@ -27,7 +27,7 @@ __all__ = ('search', 'Query',)
 
 
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID',)
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
 # The maximum number of keywords and authors to return in the search result
 # counts
 MAX_VALUES_FOR_KEYWORDS = 100
@@ -432,6 +432,9 @@ def _transmute_filter(keyword, value):
 
     elif keyword == 'authorID':
         return ('%({})s = ANY(authors)', value)
+
+    elif keyword == 'submitterID':
+        return ('submitter = %({})s', value)
 
     return None, None
 
