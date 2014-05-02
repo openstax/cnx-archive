@@ -515,6 +515,17 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
                                       'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
 
+    def test_submitterID_filter(self):
+        query_params = [('text', 'introduction'),
+                        ('submitterID', '46cf263d-2eef-42f1-8523-1b650006868a'),
+                        ]
+        results = self.call_target(query_params)
+        result_ids = [r['id'] for r in results]
+        self.assertEqual(len(results), 2)
+        self.assertEqual(sorted(result_ids),
+                         ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
+                          'd395b566-5fe3-4428-bcb2-19016e3aa3ce'])
+
     def test_authorId_filter(self):
         # Filter results by author "OSC Physics Maintainer"
         query_params = [('text', 'physics'),
