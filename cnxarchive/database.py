@@ -216,21 +216,28 @@ def set_version(portal_type, legacy_version, td):
     major = td['new']['major_version']
     minor = td['new']['minor_version']
     modified = 'OK'
-    legacy_major, legacy_minor = legacy_version.split('.')
+    if not (major and minor):
+        # new publish sets these directly
+        if legacy_version:
+            legacy_major, legacy_minor = legacy_version.split('.')
+        else:
+            legacy_major, legacy_minor = '1.1'.split('.')
 
-    if portal_type == 'Collection':
-        # For collections, both major and minor needs to be set
+        if portal_type == 'Collection':
+            # For collections, both major and minor needs to be set
+            modified = 'MODIFY'
+            td['new']['major_version'] = int(legacy_minor)
+            if td['new']['minor_version'] is None:
+                td['new']['minor_version'] = 1
+
+        elif portal_type == 'Module':
+            # For modules, major should be set and minor should be None
+            modified = 'MODIFY'
+            td['new']['major_version'] = int(legacy_minor)
+            td['new']['minor_version'] = None
+    elif not legacy_version:
         modified = 'MODIFY'
-        td['new']['major_version'] = int(legacy_minor)
-        if td['new']['minor_version'] is None:
-            td['new']['minor_version'] = 1
-
-    elif portal_type == 'Module':
-        # For modules, major should be set and minor should be None
-        modified = 'MODIFY'
-        td['new']['major_version'] = int(legacy_minor)
-        td['new']['minor_version'] = None
-
+        td['new']['version'] = '.'.join((str(minor_version), str(minor_version or '1')))
     return modified
 
 def republish_module(td, cursor, db_connection):
