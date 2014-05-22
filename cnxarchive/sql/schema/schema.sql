@@ -15,6 +15,8 @@ CREATE FUNCTION uuid_generate_v4 () RETURNS uuid LANGUAGE plpythonu AS $$ import
 
 CREATE SEQUENCE "moduleid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
 
+CREATE SEQUENCE "collectionid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+
 
 CREATE FUNCTION "comma_cat" (text,text) RETURNS text AS 'select case WHEN $2 is NULL or $2 = '''' THEN $1 WHEN $1 is NULL or $1 = '''' THEN $2 ELSE $1 || '','' || $2 END' LANGUAGE 'sql';
 
@@ -59,7 +61,8 @@ CREATE TABLE "licenses" (
        "code"		text,
        "version"	text,
        "name"		text,
-       "url"		text
+       "url"		text,
+       "is_valid_for_publication" BOOLEAN DEFAULT FALSE
 );
 
 
