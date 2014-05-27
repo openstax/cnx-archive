@@ -69,7 +69,7 @@ CREATE TABLE "licenses" (
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
-	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
+	"moduleid" text,
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
         -- please do not use version in cnx-archive code, it is only used for
         -- storing the legacy version
