@@ -248,8 +248,8 @@ def republish_module(td, cursor, db_connection):
     we need to create a collection tree for c1 v2.2 which is exactly the same
     as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
     """
-    portal_type = td['new']['portal_type']
     modified = 'OK'
+    portal_type = td['new']['portal_type']
     moduleid = td['new']['moduleid']
     legacy_version = td['new']['version']
 
@@ -299,19 +299,24 @@ def republish_module_trigger(plpy, td):
     """
     import plpydbapi
 
-    plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
+    # Determine the identifier for use in the log message.
+    identifier = None
+    if td['new']['moduleid'] is not None:
+        identifier = "moduleid = '{}'".format(td['new']['moduleid'])
+    else:
+        identifier = "uuid = '{}'".format(td['new']['uuid'])
 
     with plpydbapi.connect() as db_connection:
         with db_connection.cursor() as cursor:
-            modified = republish_module(td, cursor, db_connection)
-            plpy.log('modified: {}'.format(modified))
-            plpy.log('insert values:\n{}\n'.format('\n'.join([
-                '{}: {}'.format(key, value)
-                for key, value in td['new'].iteritems()])))
+            modified_state = republish_module(td, cursor, db_connection)
+            values = '\n'.join(['{}: {}'.format(key, value)
+                                for key, value in td['new'].iteritems()])
+        # This commit seems to be manditory, at least for the tests.
         db_connection.commit()
 
-    return modified
-
+    plpy.log("Inserted values for {} with change state '{}':\n{}\n" \
+             .format(identifier, modified_state, values))
+    return modified_state
 
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
