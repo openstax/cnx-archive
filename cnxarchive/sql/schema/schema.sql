@@ -223,6 +223,15 @@ AS $$
   return republish_module_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+
+CREATE OR REPLACE FUNCTION legacy_insert_compat ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import legacy_insert_compat_trigger
+  return legacy_insert_compat_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+
 CREATE TRIGGER module_published
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE republish_module();

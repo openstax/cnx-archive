@@ -318,6 +318,63 @@ def republish_module_trigger(plpy, td):
              .format(identifier, modified_state, values))
     return modified_state
 
+
+def legacy_insert_compat_trigger(plpy, td):
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    This correctly assigns ``moduleid`` and ``version`` values to
+    cnx-publishing publications. This includes matching the ``moduleid``
+    to previous revision when a revision publication is made.
+    """
+    modified_state = 'OK'
+    portal_type = td['new']['portal_type']
+    moduleid = td['new']['moduleid']
+    uuid = td['new']['uuid']
+    major_version = td['new']['major_version']
+    minor_version = td['new']['minor_version']
+
+    # Is this a cnx-publishing insert?
+    is_legacy_publication = moduleid is not None
+    if is_legacy_publication:
+        # Bail out.
+        return modified
+
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            # Is this a revision? If so, match up the moduleid based on uuid.
+            cursor.execute(
+                "SELECT moduleid FROM latest_modules WHERE uuid = %s::UUID",
+                (uuid,))
+            try:
+                moduleid = cursor.fetchone()[0]
+            except TypeError:
+                if portal_type == "Collection":
+                    prefix, sequence_name = 'col', "collectionid_seq"
+                else:
+                    prefix, sequence_name = 'm', "moduleid_seq"
+                cursor.execute("SELECT %s || nextval(%s)::text",
+                               (prefix, sequence_name,))
+                moduleid = cursor.fetchone()[0]
+                # FYI This is a subtransaction commit necessary have
+                # the sequence bump when ``nextval`` is used.
+                cursor.connection.commit()
+            # Set the legacy version field based on the major and minor version.
+            if portal_type == 'Collection':
+                version = "{}.{}".format(major_version, minor_version)
+            else:
+                version = "1.{}".format(major_version)
+
+    plpy.info("Fixed identifier and version for publication at '{}' " \
+              "with the following values: {} and {}" \
+              .format(uuid, moduleid, version))
+
+    modified_state = "MODIFY"
+    td['new']['moduleid'] = moduleid
+    td['new']['version'] = version
+    return modified_state
+
+
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
