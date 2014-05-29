@@ -69,6 +69,21 @@ def initdb(settings):
                     cursor.execute(f.read())
 
 
+def coalense_trigger_state(*args):
+    """Used to coalse the modified state after running one or more
+    procedures that may have modified the content.
+    """
+    states = set([a.upper() for a in args])
+    main_state = None
+    if 'MODIFY' in states:
+        main_state = 'MODIFY'
+    elif 'SKIP' in states:
+        main_state = 'SKIP'
+    else:
+        main_state = 'OK'
+    return main_state
+
+
 def get_module_uuid(db_connection, moduleid):
     with db_connection.cursor() as cursor:
         cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
@@ -370,7 +385,13 @@ def legacy_insert_compat_trigger(plpy, td):
                 cursor.connection.commit()
             # Set the legacy version field based on the major and minor version.
             if portal_type == 'Collection':
-                version = "{}.{}".format(major_version, minor_version)
+                if minor_version is None:
+                    minor_version = 1
+                    td['new']['minor_version'] = minor_version
+                if major_version is None:
+                    major_version = 1
+                    td['new']['major_version'] = major_version
+                version = "{}.{}".format(minor_version, major_version)
             else:
                 version = "1.{}".format(major_version)
 
