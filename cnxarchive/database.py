@@ -306,16 +306,23 @@ def republish_module_trigger(plpy, td):
     else:
         identifier = "uuid = '{}'".format(td['new']['uuid'])
 
+    def extract_values():
+        return '\n'.join(['{}: {}'.format(key, value)
+                          for key, value in td['new'].iteritems()])
+
     with plpydbapi.connect() as db_connection:
         with db_connection.cursor() as cursor:
-            modified_state = republish_module(td, cursor, db_connection)
-            values = '\n'.join(['{}: {}'.format(key, value)
-                                for key, value in td['new'].iteritems()])
+            try:
+                modified_state = republish_module(td, cursor, db_connection)
+            except:
+                plpy.log("Failed to insert values for {}:\n{}\n" \
+                         .format(identifier, extract_values()))
+                raise
         # This commit seems to be manditory, at least for the tests.
         db_connection.commit()
 
     plpy.log("Inserted values for {} with change state '{}':\n{}\n" \
-             .format(identifier, modified_state, values))
+             .format(identifier, modified_state, extract_values()))
     return modified_state
 
 
@@ -327,6 +334,8 @@ def legacy_insert_compat_trigger(plpy, td):
     cnx-publishing publications. This includes matching the ``moduleid``
     to previous revision when a revision publication is made.
     """
+    import plpydbapi
+
     modified_state = 'OK'
     portal_type = td['new']['portal_type']
     moduleid = td['new']['moduleid']
@@ -338,7 +347,7 @@ def legacy_insert_compat_trigger(plpy, td):
     is_legacy_publication = moduleid is not None
     if is_legacy_publication:
         # Bail out.
-        return modified
+        return modified_state
 
     with plpydbapi.connect() as db_connection:
         with db_connection.cursor() as cursor:
