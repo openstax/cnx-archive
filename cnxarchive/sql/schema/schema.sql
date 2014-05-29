@@ -216,25 +216,25 @@ CREATE TRIGGER update_latest_version
   BEFORE INSERT OR UPDATE ON modules FOR EACH ROW
   EXECUTE PROCEDURE update_latest();
 
-CREATE OR REPLACE FUNCTION republish_module ()
-  RETURNS trigger
-AS $$
-  from cnxarchive.database import republish_module_trigger
-  return republish_module_trigger(plpy, TD)
-$$ LANGUAGE plpythonu;
 
-
-CREATE OR REPLACE FUNCTION legacy_insert_compat ()
+CREATE OR REPLACE FUNCTION on_module_insert ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import legacy_insert_compat_trigger
-  return legacy_insert_compat_trigger(plpy, TD)
+  from cnxarchive.database import (
+      legacy_insert_compat_trigger,
+      republish_module_trigger,
+      coalense_trigger_state,
+      )
+  compat_modified_state = legacy_insert_compat_trigger(plpy, TD)
+  republish_modified_state = republish_module_trigger(plpy, TD)
+  return coalense_trigger_state(compat_modified_state,
+                                republish_modified_state)
 $$ LANGUAGE plpythonu;
 
-
-CREATE TRIGGER module_published
+CREATE TRIGGER module_insert
   BEFORE INSERT ON modules FOR EACH ROW
-  EXECUTE PROCEDURE republish_module();
+  EXECUTE PROCEDURE on_module_insert();
+
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
