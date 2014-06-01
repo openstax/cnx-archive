@@ -77,7 +77,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_get_current_module_ident(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute("""ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import get_current_module_ident
 
@@ -100,7 +100,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_next_version(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute("""ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import next_version
 
@@ -115,7 +115,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_get_collections(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute("""ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import get_collections
 
@@ -161,7 +161,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_rebuild_collection_tree(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute("""ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import rebuild_collection_tree
 
@@ -234,7 +234,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @db_connect
     def test_republish_collection(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute("""ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import republish_collection
 
@@ -283,7 +283,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import CONNECTION_SETTINGS_KEY
         with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
             with db_conn.cursor() as db_cursor:
-                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+                db_cursor.execute("""
+ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         from ..database import republish_collection
 
@@ -324,7 +325,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import CONNECTION_SETTINGS_KEY
         with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
             with db_conn.cursor() as db_cursor:
-                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+                db_cursor.execute("""
+ALTER TABLE modules DISABLE TRIGGER module_insert""")
 
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
@@ -764,6 +766,260 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''SELECT module_ident FROM latest_modules
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
+
+
+class LegacyCompatTriggerTestCase(unittest.TestCase):
+    """Test the legacy compotibilty trigger that fills in legacy data
+    coming from contemporary publications.
+    """
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        cursor.execute("""\
+INSERT INTO abstracts (abstract) VALUES (' ') RETURNING abstractid""")
+        self._abstract_id = cursor.fetchone()[0]
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def make_dummy_module(self, cursor, uuid=None,
+                          major_version=None, minor_version=None):
+        format_args = {}
+        params = [self._abstract_id]
+        if uuid is not None:
+            format_args['uuid'] = '%s'
+            parmas.insert(0, uuid)
+        else:
+            format_args['uuid'] = 'DEFAULT'
+        if major_version is not None:
+            format_args['major_version'] = '%s'
+            parmas.insert(1, major_version)
+        else:
+            format_args['major_version'] = 'DEFAULT'
+        if minor_version is not None:
+            format_args['minor_version'] = '%s'
+            parmas.insert(1, minor_version)
+        else:
+            format_args['minor_version'] = 'DEFAULT'
+
+        statement = """\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  ({uuid}, {major_version}, {minor_version},
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  version""".format(format_args)
+
+        cusor.execute(statement, params)
+        uuid, moduleid, version = cursor.fetchone()
+        return uuid, moduleid, version
+
+    @db_connect
+    def test_new_module(self, cursor):
+        """Verify publishing of a new module creates values for legacy fields.
+        """
+        # Insert a new module.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  moduleid,
+  version""", (self._abstract_id,))
+        moduleid, version = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(moduleid, 'm10000')
+        self.assertEqual(version, '1.1')
+
+    @db_connect
+    def test_new_collection(self, cursor):
+        """Verify publishing of a new collection creates values
+        for legacy fields.
+        """
+        # Insert a new collection.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  moduleid,
+  version""", (self._abstract_id,))
+        moduleid, version = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(moduleid, 'col10000')
+        self.assertEqual(version, '1.1')
+
+    @db_connect
+    def test_module_revision(self, cursor):
+        """Verify publishing of a module revision uses legacy field values.
+        """
+        cursor.execute("SELECT setval('moduleid_seq', 10100)")
+        id_num = cursor.fetchone()[0] + 1
+        expected_moduleid = 'm{}'.format(id_num)  # m10101
+        # Insert a new module to base a revision on.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  version""", (self._abstract_id,))
+        uuid_, moduleid, version = cursor.fetchone()
+
+        # Now insert the revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (%s, 2, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  version""", (uuid_, self._abstract_id,))
+        rev_uuid_, rev_moduleid, rev_version = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_moduleid)
+        self.assertEqual(version, '1.1')
+        self.assertEqual(rev_version, '1.2')
+
+    @db_connect
+    def test_collection_revision(self, cursor):
+        """Verify publishing of a collection revision uses legacy field values.
+        """
+        cursor.execute("SELECT setval('collectionid_seq', 10100)")
+        id_num = cursor.fetchone()[0] + 1
+        expected_moduleid = 'col{}'.format(id_num)  # col10101
+        # Insert a new module to base a revision on.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  version""", (self._abstract_id,))
+        uuid_, moduleid, version = cursor.fetchone()
+
+        # Now insert the revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (%s, 1, 2,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  version""", (uuid_, self._abstract_id,))
+        rev_uuid_, rev_moduleid, rev_version = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_moduleid)
+        self.assertEqual(version, '1.1')
+        self.assertEqual(rev_version, '1.1')
 
 
 SQL_FOR_HIT_DOCUMENTS = """

@@ -69,6 +69,21 @@ def initdb(settings):
                     cursor.execute(f.read())
 
 
+def coalense_trigger_state(*args):
+    """Used to coalse the modified state after running one or more
+    procedures that may have modified the content.
+    """
+    states = set([a.upper() for a in args])
+    main_state = None
+    if 'MODIFY' in states:
+        main_state = 'MODIFY'
+    elif 'SKIP' in states:
+        main_state = 'SKIP'
+    else:
+        main_state = 'OK'
+    return main_state
+
+
 def get_module_uuid(db_connection, moduleid):
     with db_connection.cursor() as cursor:
         cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
@@ -175,19 +190,24 @@ def republish_collection(next_minor_version, collection_ident, cursor,
     """Insert a new row for collection_ident with a new version and return
     the module_ident of the row inserted
     """
-    sql = '''
-    INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
-        abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
-        authors,maintainers,licensors,parentauthors,google_analytics,buylink,
-        major_version, minor_version)
-      SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
-        m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
-        m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
-        m.google_analytics, m.buylink, m.major_version, %s
-      FROM modules m
-      WHERE m.module_ident = %s
-    RETURNING module_ident
-    '''
+    sql = """
+INSERT INTO modules
+  (portal_type, moduleid, uuid, version, name, created, revised,
+   abstractid, licenseid, doctype, submitter, submitlog, stateid,
+   parent, language, authors, maintainers, licensors, parentauthors,
+   google_analytics, buylink,
+   major_version, minor_version)
+  SELECT
+    m.portal_type, m.moduleid, m.uuid, m.version,
+    m.name, m.created, {},
+    m.abstractid, m.licenseid, m.doctype, m.submitter,
+    m.submitlog, m.stateid, m.parent,
+    m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
+    m.google_analytics, m.buylink, m.major_version, %s
+  FROM modules m
+  WHERE m.module_ident = %s
+RETURNING module_ident
+    """
     if revised is None:
         sql = sql.format('CURRENT_TIMESTAMP')
         params = [next_minor_version, collection_ident]
@@ -248,8 +268,8 @@ def republish_module(td, cursor, db_connection):
     we need to create a collection tree for c1 v2.2 which is exactly the same
     as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
     """
-    portal_type = td['new']['portal_type']
     modified = 'OK'
+    portal_type = td['new']['portal_type']
     moduleid = td['new']['moduleid']
     legacy_version = td['new']['version']
 
@@ -299,18 +319,95 @@ def republish_module_trigger(plpy, td):
     """
     import plpydbapi
 
-    plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
+    # Determine the identifier for use in the log message.
+    identifier = None
+    if td['new']['moduleid'] is not None:
+        identifier = "moduleid = '{}'".format(td['new']['moduleid'])
+    else:
+        identifier = "uuid = '{}'".format(td['new']['uuid'])
+
+    def extract_values():
+        return '\n'.join(['{}: {}'.format(key, value)
+                          for key, value in td['new'].iteritems()])
 
     with plpydbapi.connect() as db_connection:
         with db_connection.cursor() as cursor:
-            modified = republish_module(td, cursor, db_connection)
-            plpy.log('modified: {}'.format(modified))
-            plpy.log('insert values:\n{}\n'.format('\n'.join([
-                '{}: {}'.format(key, value)
-                for key, value in td['new'].iteritems()])))
+            try:
+                modified_state = republish_module(td, cursor, db_connection)
+            except:
+                import traceback
+                plpy.log("Failed to insert values for {}:\n{}\n\n{}" \
+                         .format(identifier, extract_values(),
+                                 traceback.format_exc()))
+                raise
+        # This commit seems to be manditory, at least for the tests.
         db_connection.commit()
 
-    return modified
+    plpy.log("Inserted values for {} with change state '{}':\n{}\n" \
+             .format(identifier, modified_state, extract_values()))
+    return modified_state
+
+
+def legacy_insert_compat_trigger(plpy, td):
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    This correctly assigns ``moduleid`` and ``version`` values to
+    cnx-publishing publications. This includes matching the ``moduleid``
+    to previous revision when a revision publication is made.
+    """
+    import plpydbapi
+
+    modified_state = 'OK'
+    portal_type = td['new']['portal_type']
+    moduleid = td['new']['moduleid']
+    uuid = td['new']['uuid']
+    major_version = td['new']['major_version']
+    minor_version = td['new']['minor_version']
+
+    # Is this a cnx-publishing insert?
+    is_legacy_publication = moduleid is not None
+    if is_legacy_publication:
+        # Bail out.
+        return modified_state
+
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            # Is this a revision? If so, match up the moduleid based on uuid.
+            cursor.execute(
+                "SELECT moduleid FROM latest_modules WHERE uuid = %s::UUID",
+                (uuid,))
+            try:
+                moduleid = cursor.fetchone()[0]
+            except TypeError:
+                if portal_type == "Collection":
+                    prefix, sequence_name = 'col', "collectionid_seq"
+                else:
+                    prefix, sequence_name = 'm', "moduleid_seq"
+                cursor.execute("SELECT %s || nextval(%s)::text",
+                               (prefix, sequence_name,))
+                moduleid = cursor.fetchone()[0]
+                # FYI This is a subtransaction commit necessary have
+                # the sequence bump when ``nextval`` is used.
+                cursor.connection.commit()
+            # Set the legacy version field based on the major version.
+            if portal_type == 'Collection':
+                if minor_version is None:
+                    minor_version = 1
+                    td['new']['minor_version'] = minor_version
+                if major_version is None:
+                    major_version = 1
+                    td['new']['major_version'] = major_version
+            version = "1.{}".format(major_version)
+
+    plpy.log("Fixed identifier and version for publication at '{}' " \
+             "with the following values: {} and {}" \
+             .format(uuid, moduleid, version))
+
+    modified_state = "MODIFY"
+    td['new']['moduleid'] = moduleid
+    td['new']['version'] = version
+    return modified_state
 
 
 def add_module_file(plpy, td):

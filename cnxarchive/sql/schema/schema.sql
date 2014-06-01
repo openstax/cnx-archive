@@ -15,7 +15,7 @@ CREATE FUNCTION uuid_generate_v4 () RETURNS uuid LANGUAGE plpythonu AS $$ import
 
 CREATE SEQUENCE "moduleid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
 
-CREATE SEQUENCE "collectionid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+CREATE SEQUENCE "collectionid_seq" start 10000 increment 1 maxvalue 2147483647 minvalue 1  cache 1;
 
 
 CREATE FUNCTION "comma_cat" (text,text) RETURNS text AS 'select case WHEN $2 is NULL or $2 = '''' THEN $1 WHEN $1 is NULL or $1 = '''' THEN $2 ELSE $1 || '','' || $2 END' LANGUAGE 'sql';
@@ -69,7 +69,7 @@ CREATE TABLE "licenses" (
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
-	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
+	"moduleid" text,
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
         -- please do not use version in cnx-archive code, it is only used for
         -- storing the legacy version
@@ -216,16 +216,25 @@ CREATE TRIGGER update_latest_version
   BEFORE INSERT OR UPDATE ON modules FOR EACH ROW
   EXECUTE PROCEDURE update_latest();
 
-CREATE OR REPLACE FUNCTION republish_module ()
-  RETURNS trigger
+
+CREATE OR REPLACE FUNCTION on_module_insert ()
+  RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import republish_module_trigger
-  return republish_module_trigger(plpy, TD)
+  from cnxarchive.database import (
+      legacy_insert_compat_trigger,
+      republish_module_trigger,
+      coalense_trigger_state,
+      )
+  compat_modified_state = legacy_insert_compat_trigger(plpy, TD)
+  republish_modified_state = republish_module_trigger(plpy, TD)
+  return coalense_trigger_state(compat_modified_state,
+                                republish_modified_state)
 $$ LANGUAGE plpythonu;
 
-CREATE TRIGGER module_published
+CREATE TRIGGER module_insert
   BEFORE INSERT ON modules FOR EACH ROW
-  EXECUTE PROCEDURE republish_module();
+  EXECUTE PROCEDURE on_module_insert();
+
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
