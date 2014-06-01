@@ -335,8 +335,10 @@ def republish_module_trigger(plpy, td):
             try:
                 modified_state = republish_module(td, cursor, db_connection)
             except:
-                plpy.log("Failed to insert values for {}:\n{}\n" \
-                         .format(identifier, extract_values()))
+                import traceback
+                plpy.log("Failed to insert values for {}:\n{}\n\n{}" \
+                         .format(identifier, extract_values(),
+                                 traceback.format_exc()))
                 raise
         # This commit seems to be manditory, at least for the tests.
         db_connection.commit()
@@ -388,7 +390,7 @@ def legacy_insert_compat_trigger(plpy, td):
                 # FYI This is a subtransaction commit necessary have
                 # the sequence bump when ``nextval`` is used.
                 cursor.connection.commit()
-            # Set the legacy version field based on the major and minor version.
+            # Set the legacy version field based on the major version.
             if portal_type == 'Collection':
                 if minor_version is None:
                     minor_version = 1
@@ -400,9 +402,9 @@ def legacy_insert_compat_trigger(plpy, td):
             else:
                 version = "1.{}".format(major_version)
 
-    plpy.info("Fixed identifier and version for publication at '{}' " \
-              "with the following values: {} and {}" \
-              .format(uuid, moduleid, version))
+    plpy.log("Fixed identifier and version for publication at '{}' " \
+             "with the following values: {} and {}" \
+             .format(uuid, moduleid, version))
 
     modified_state = "MODIFY"
     td['new']['moduleid'] = moduleid
