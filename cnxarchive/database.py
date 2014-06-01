@@ -398,9 +398,7 @@ def legacy_insert_compat_trigger(plpy, td):
                 if major_version is None:
                     major_version = 1
                     td['new']['major_version'] = major_version
-                version = "{}.{}".format(minor_version, major_version)
-            else:
-                version = "1.{}".format(major_version)
+            version = "1.{}".format(major_version)
 
     plpy.log("Fixed identifier and version for publication at '{}' " \
              "with the following values: {} and {}" \

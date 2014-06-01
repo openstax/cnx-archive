@@ -1019,7 +1019,7 @@ RETURNING
         # Check the fields where correctly assigned.
         self.assertEqual(rev_moduleid, expected_moduleid)
         self.assertEqual(version, '1.1')
-        self.assertEqual(rev_version, '2.1')
+        self.assertEqual(rev_version, '1.1')
 
 
 SQL_FOR_HIT_DOCUMENTS = """
