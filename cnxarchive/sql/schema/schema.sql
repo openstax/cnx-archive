@@ -69,11 +69,11 @@ CREATE TABLE "licenses" (
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
-	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
+	"moduleid" text,
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
         -- please do not use version in cnx-archive code, it is only used for
         -- storing the legacy version
-	"version" text default '1.1',
+	"version" text,
 	"name" text NOT NULL,
 	-- The "created" column contains the date and time for the original publish
 	-- for the first version of the document.
@@ -222,6 +222,17 @@ AS $$
   from cnxarchive.database import republish_module_trigger
   return republish_module_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION assign_legacy_defaults ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import assign_legacy_defaults_trigger
+  return assign_legacy_defaults_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_defaults
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_legacy_defaults();
 
 CREATE TRIGGER module_published
   BEFORE INSERT ON modules FOR EACH ROW

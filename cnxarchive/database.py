@@ -313,6 +313,75 @@ def republish_module_trigger(plpy, td):
     return modified
 
 
+def assign_legacy_defaults_trigger(plpy, td):
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    This correctly assigns ``moduleid`` and ``version`` values to
+    cnx-publishing publications. However, this does NOT include
+    matching the ``moduleid`` to previous revision by way of ``uuid``.
+
+    This correctly updates the sequence values when a legacy publication
+    comes dictates the value. This is because legacy does not know nor
+    use the sequence values when setting legacy ``moduleid``.
+
+    If this is not a legacy publication the ``version`` will also be set
+    based on the ``major_version`` value.
+    """
+    modified_state = 'OK'
+    portal_type = td['new']['portal_type']
+    uuid = td['new']['uuid']
+    moduleid = td['new']['moduleid']
+    version = td['new']['version']
+    major_version = td['new']['major_version']
+    minor_version = td['new']['minor_version']
+
+    # Is this an insert from legacy? Legacy always supplies the version.
+    is_legacy_publication = version is not None
+
+    if moduleid is None:
+        # If the moduleid is not supplied, it is a new publication.
+        if portal_type == "Collection":
+            prefix, sequence_name = 'col', "collectionid_seq"
+        else:
+            prefix, sequence_name = 'm', "moduleid_seq"
+        plan = plpy.prepare("SELECT $1 || nextval($2)::text AS moduleid",
+                            ['text', 'text'])
+        row = plpy.execute(plan, (prefix, sequence_name,), 1)
+        moduleid = row[0]['moduleid']
+        modified_state = "MODIFY"
+        td['new']['moduleid'] = moduleid
+    elif is_legacy_publication and moduleid is not None:
+        # Set the sequence value based on what legacy gave us.
+        plan = plpy.prepare("""\
+SELECT setval($1, max(substr(moduleid, $2)::int))
+FROM (
+  SELECT moduleid from modules where portal_type = $3
+  UNION ALL
+  SELECT $4) AS all_together""", ['text', 'int', 'text', 'text'])
+        args = []
+        if portal_type == 'Collection':
+            args.append('collectionid_seq')
+            args.append(4)
+        else:
+            args.append('moduleid_seq')
+            args.append(2)
+        args.extend([portal_type, moduleid])
+        plpy.execute(plan, args)
+
+    # Set the legacy version field based on the major version.
+    if version is None:
+        version = "1.{}".format(major_version)
+        modified_state = "MODIFY"
+        td['new']['version'] = version
+
+    plpy.log("Fixed identifier and version for publication at '{}' " \
+             "with the following values: {} and {}" \
+             .format(uuid, moduleid, version))
+
+    return modified_state
+
+
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
