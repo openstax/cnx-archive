@@ -120,14 +120,14 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import get_collections
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
         collection_ident = cursor.fetchone()[0]
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c2', DEFAULT, '1.8', 'Name of c1',
+        DEFAULT, 'Collection', 'col2', DEFAULT, '1.8', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 8, 1) RETURNING module_ident''')
@@ -166,7 +166,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import rebuild_collection_tree
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
@@ -198,7 +198,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module2_ident])
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 10, 1) RETURNING module_ident''')
@@ -239,7 +239,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import republish_collection
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
@@ -253,7 +253,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         module_ident = %s''', [new_ident])
         data = cursor.fetchone()
         self.assertEqual(data[1], 'Collection')
-        self.assertEqual(data[2], 'c1')
+        self.assertEqual(data[2], 'col1')
         self.assertEqual(data[3], '3a5344bd-410d-4553-a951-87bccd996822')
         self.assertEqual(data[4], '1.10')
         self.assertEqual(data[5], 'Name of c1')
@@ -288,7 +288,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import republish_collection
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
@@ -327,7 +327,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
                 db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
