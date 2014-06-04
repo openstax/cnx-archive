@@ -299,6 +299,12 @@ def republish_module_trigger(plpy, td):
     """
     import plpydbapi
 
+    # Is this an insert from legacy? Legacy always supplies the version.
+    is_legacy_publication = td['new']['version'] is not None
+    if not is_legacy_publication:
+        # Bail out, because this trigger only applies to legacy publications.
+        return "OK"
+
     plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
 
     with plpydbapi.connect() as db_connection:
@@ -313,22 +319,20 @@ def republish_module_trigger(plpy, td):
     return modified
 
 
-def assign_legacy_defaults_trigger(plpy, td):
-    """A compatibilty trigger to fill in legacy data fields that are not
-    populated when inserting publications from cnx-publishing.
+def assign_moduleid_default_trigger(plpy, td):
+    """A compatibilty trigger to fill in legacy ``moduleid`` field when
+    defined while inserting publications.
 
-    This correctly assigns ``moduleid`` and ``version`` values to
-    cnx-publishing publications. However, this does NOT include
+    This correctly assigns ``moduleid`` value to
+    cnx-publishing publications. This does NOT include
     matching the ``moduleid`` to previous revision by way of ``uuid``.
 
     This correctly updates the sequence values when a legacy publication
-    comes dictates the value. This is because legacy does not know nor
-    use the sequence values when setting legacy ``moduleid``.
+    specifies the ``moduleid`` value. This is because legacy does not know
+    about nor use the sequence values when setting legacy ``moduleid``.
 
-    If this is not a legacy publication the ``version`` will also be set
-    based on the ``major_version`` value.
     """
-    modified_state = 'OK'
+    modified_state = "OK"
     portal_type = td['new']['portal_type']
     uuid = td['new']['uuid']
     moduleid = td['new']['moduleid']
@@ -369,15 +373,37 @@ FROM (
         args.extend([portal_type, moduleid])
         plpy.execute(plan, args)
 
-    # Set the legacy version field based on the major version.
-    if version is None:
-        version = "1.{}".format(major_version)
-        modified_state = "MODIFY"
-        td['new']['version'] = version
-
     plpy.log("Fixed identifier and version for publication at '{}' " \
              "with the following values: {} and {}" \
              .format(uuid, moduleid, version))
+
+    return modified_state
+
+
+def assign_version_default_trigger(plpy, td):
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    If this is not a legacy publication the ``version`` will be set
+    based on the ``major_version`` value.
+    """
+    modified_state = "OK"
+    portal_type = td['new']['portal_type']
+    version = td['new']['version']
+    minor_version = td['new']['minor_version']
+
+    # Set the minor version on collections, because by default it is
+    # None/Null, which is the correct default for modules.
+    if portal_type == 'Collection' and minor_version is None:
+        modified_state = "MODIFY"
+        td['new']['minor_version'] = 1
+
+    # Set the legacy version field based on the major version.
+    if version is None:
+        major_version = td['new']['major_version']
+        version = "1.{}".format(major_version)
+        modified_state = "MODIFY"
+        td['new']['version'] = version
 
     return modified_state
 

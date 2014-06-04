@@ -223,20 +223,31 @@ AS $$
   return republish_module_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
-CREATE OR REPLACE FUNCTION assign_legacy_defaults ()
+CREATE OR REPLACE FUNCTION assign_moduleid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_legacy_defaults_trigger
-  return assign_legacy_defaults_trigger(plpy, TD)
+  from cnxarchive.database import assign_moduleid_default_trigger
+  return assign_moduleid_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
-CREATE TRIGGER module_defaults
+CREATE OR REPLACE FUNCTION assign_version_default ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import assign_version_default_trigger
+  return assign_version_default_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
-  EXECUTE PROCEDURE assign_legacy_defaults();
+  EXECUTE PROCEDURE assign_moduleid_default();
 
 CREATE TRIGGER module_published
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE republish_module();
+
+CREATE TRIGGER module_version_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_version_default();
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
