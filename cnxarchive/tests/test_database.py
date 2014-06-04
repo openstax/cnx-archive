@@ -1000,6 +1000,136 @@ RETURNING
         self.assertEqual(rev_minor_ver, 1)
         self.assertEqual(rev_ver, '1.2')
 
+    @db_connect
+    def test_anti_republish_module_on_collection_revision(self, cursor):
+        """Verify publishing of a collection revision with modules included
+        in other collections. Contemporary publications should not republish
+        the modules within the current collections in the publication context.
+
+        Note, contemporary publications do NOT utilize the trigger
+        that causes minor republications of collections. This feature
+        is only enabled for legacy publications.
+
+        This introduces two collections with a shared module.
+        The goal is to publish one of the collections and not have
+        the other collection republish.
+        """
+        cursor.execute("SELECT setval('collectionid_seq', 10100)")
+        id_num = cursor.fetchone()[0]
+        expected_col_one_id = 'col{}'.format(id_num + 1)  # col10101
+        expected_col_two_id = 'col{}'.format(id_num + 2)  # col10102
+        cursor.execute("SELECT setval('moduleid_seq', 10100)")
+        id_num = cursor.fetchone()[0]
+        expected_m_one_id = 'm{}'.format(id_num + 1)  # m10101
+        expected_m_two_id = 'm{}'.format(id_num + 2)  # m10102
+
+        entries = [expected_m_one_id, expected_m_two_id,
+                   expected_col_one_id, expected_col_two_id,
+                   ]
+        for mid in entries:
+            portal_type = mid.startswith('m') and 'Module' or 'Collection'
+            # Insert a new module to base a revision on.
+            cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, %s, %s,
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  module_ident,
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (portal_type, "title for {}".format(mid), self._abstract_id,))
+            ident, uuid_, moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+            self.assertEqual(moduleid, mid)
+
+            if portal_type == 'Collection':
+                args = (ident, "**{}**".format(moduleid),)
+                cursor.execute("""\
+INSERT INTO trees
+  (nodeid, parent_id, documentid, title, childorder, latest)
+VALUES
+  (DEFAULT, NULL, %s, %s, DEFAULT, DEFAULT)
+RETURNING nodeid""", args)
+                root_node_id = cursor.fetchone()[0]
+                # Insert the tree for the collections.
+                for i, sub_mid in enumerate(entries[:2]):
+                    decendents = entries[2:]
+                    args = (root_node_id, sub_mid, sub_mid, i,)
+                    cursor.execute("""\
+INSERT INTO trees
+  (nodeid, parent_id,
+   documentid,
+   title, childorder, latest)
+VALUES
+  (DEFAULT, %s,
+   (select module_ident from latest_modules where moduleid = %s),
+   %s, %s, DEFAULT)""", args)
+
+
+        # Now insert a revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  ((SELECT uuid FROM latest_modules WHERE moduleid = %s),
+   2, NULL, %s,
+   DEFAULT, 'Module', ' MOO ',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (expected_m_one_id, expected_m_one_id, self._abstract_id,))
+        res = cursor.fetchone()
+        rev_uuid_, rev_moduleid, rev_major_ver, rev_minor_ver, rev_ver = res
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_m_one_id)
+        self.assertEqual(rev_major_ver, 2)
+        self.assertEqual(rev_minor_ver, None)
+        self.assertEqual(rev_ver, '1.2')
+
+        # Lastly check that no republications took place.
+        # This can be done by simply counting the entries. We inserted
+        # four entries (two modules and two collections) and one revision.
+        cursor.execute("""\
+SELECT portal_type, count(*)
+FROM modules
+GROUP BY portal_type""")
+        counts = dict(cursor.fetchall())
+        expected_counts = {
+            'Module': 3,
+            'Collection': 2,
+            }
+        self.assertEqual(counts, expected_counts)
+
 
 SQL_FOR_HIT_DOCUMENTS = """
 ALTER TABLE modules DISABLE TRIGGER ALL;
