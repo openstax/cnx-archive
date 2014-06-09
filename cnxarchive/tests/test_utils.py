@@ -165,6 +165,13 @@ class JoinIdentTestCase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.call_target(id, version)
 
+    def test_w_integer_version(self):
+        id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        version = (1, 2,)
+        expected = '{}@1.2'.format(id)
+        ident_hash = self.call_target(id, version)
+        self.assertEqual(expected, ident_hash)
+
 
 class SlugifyTestCase(unittest.TestCase):
 
