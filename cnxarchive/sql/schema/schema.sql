@@ -69,11 +69,11 @@ CREATE TABLE "licenses" (
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
-	"moduleid" text default 'm' || nextval('"moduleid_seq"'),
+	"moduleid" text,
         "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
         -- please do not use version in cnx-archive code, it is only used for
         -- storing the legacy version
-	"version" text default '1.1',
+	"version" text,
 	"name" text NOT NULL,
 	-- The "created" column contains the date and time for the original publish
 	-- for the first version of the document.
@@ -223,9 +223,31 @@ AS $$
   return republish_module_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+CREATE OR REPLACE FUNCTION assign_moduleid_default ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import assign_moduleid_default_trigger
+  return assign_moduleid_default_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION assign_version_default ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import assign_version_default_trigger
+  return assign_version_default_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER module_moduleid_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_moduleid_default();
+
 CREATE TRIGGER module_published
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE republish_module();
+
+CREATE TRIGGER module_version_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_version_default();
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW

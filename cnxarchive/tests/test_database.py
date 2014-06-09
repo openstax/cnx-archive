@@ -120,14 +120,14 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import get_collections
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
         collection_ident = cursor.fetchone()[0]
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c2', DEFAULT, '1.8', 'Name of c1',
+        DEFAULT, 'Collection', 'col2', DEFAULT, '1.8', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 8, 1) RETURNING module_ident''')
@@ -166,7 +166,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import rebuild_collection_tree
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
@@ -198,7 +198,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module2_ident])
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', DEFAULT, '1.9', 'Name of c1',
+        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 10, 1) RETURNING module_ident''')
@@ -239,7 +239,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import republish_collection
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
@@ -253,7 +253,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         module_ident = %s''', [new_ident])
         data = cursor.fetchone()
         self.assertEqual(data[1], 'Collection')
-        self.assertEqual(data[2], 'c1')
+        self.assertEqual(data[2], 'col1')
         self.assertEqual(data[3], '3a5344bd-410d-4553-a951-87bccd996822')
         self.assertEqual(data[4], '1.10')
         self.assertEqual(data[5], 'Name of c1')
@@ -288,7 +288,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         from ..database import republish_collection
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
@@ -327,7 +327,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
                 db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'c1', '3a5344bd-410d-4553-a951-87bccd996822',
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
         '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
         'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
@@ -764,6 +764,371 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''SELECT module_ident FROM latest_modules
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
+
+
+class LegacyCompatTriggerTestCase(unittest.TestCase):
+    """Test the legacy compotibilty trigger that fills in legacy data
+    coming from contemporary publications.
+
+    Contemporary publications MUST not set the legacy ``version``,
+    which defaults to null. They also MUST supply the moduleid,
+    but only when making a revision publication, which ties the ``uuid``
+    to the legacy ``moduleid``.
+    """
+    fixture = postgresql_fixture
+
+    @db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+        cursor.execute("""\
+INSERT INTO abstracts (abstract) VALUES (' ') RETURNING abstractid""")
+        self._abstract_id = cursor.fetchone()[0]
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @db_connect
+    def test_new_module(self, cursor):
+        """Verify publishing of a new module creates values for legacy fields.
+        """
+        # Insert a new module.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (self._abstract_id,))
+        moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(moduleid, 'm10000')
+        self.assertEqual(major_ver, 1)
+        self.assertEqual(minor_ver, None)
+        self.assertEqual(ver, '1.1')
+
+    @db_connect
+    def test_new_collection(self, cursor):
+        """Verify publishing of a new collection creates values
+        for legacy fields.
+        """
+        # Insert a new collection.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (self._abstract_id,))
+        moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(moduleid, 'col10000')
+        self.assertEqual(major_ver, 1)
+        self.assertEqual(minor_ver, 1)
+        self.assertEqual(ver, '1.1')
+
+    @db_connect
+    def test_module_revision(self, cursor):
+        """Verify publishing of a module revision uses legacy field values.
+        """
+        cursor.execute("SELECT setval('moduleid_seq', 10100)")
+        id_num = cursor.fetchone()[0] + 1
+        expected_moduleid = 'm{}'.format(id_num)  # m10101
+        # Insert a new module to base a revision on.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (self._abstract_id,))
+        uuid_, moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+        self.assertEqual(moduleid, expected_moduleid)
+
+        # Now insert the revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (%s, 2, DEFAULT, %s,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (uuid_, moduleid, self._abstract_id,))
+        res = cursor.fetchone()
+        rev_uuid_, rev_moduleid, rev_major_ver, rev_minor_ver, rev_ver = res
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_moduleid)
+        self.assertEqual(ver, '1.1')
+        self.assertEqual(rev_major_ver, 2)
+        self.assertEqual(rev_minor_ver, None)
+        self.assertEqual(rev_ver, '1.2')
+
+    @db_connect
+    def test_collection_revision(self, cursor):
+        """Verify publishing of a collection revision uses legacy field values.
+        """
+        cursor.execute("SELECT setval('collectionid_seq', 10100)")
+        id_num = cursor.fetchone()[0] + 1
+        expected_moduleid = 'col{}'.format(id_num)  # col10101
+        # Insert a new module to base a revision on.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (self._abstract_id,))
+        uuid_, moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+        self.assertEqual(moduleid, expected_moduleid)
+
+        # Now insert the revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (%s, 2, 1, %s,
+   DEFAULT, 'Collection', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (uuid_, moduleid, self._abstract_id,))
+        res = cursor.fetchone()
+        rev_uuid_, rev_moduleid, rev_major_ver, rev_minor_ver, rev_ver = res
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_moduleid)
+        self.assertEqual(ver, '1.1')
+        self.assertEqual(rev_major_ver, 2)
+        self.assertEqual(rev_minor_ver, 1)
+        self.assertEqual(rev_ver, '1.2')
+
+    @db_connect
+    def test_anti_republish_module_on_collection_revision(self, cursor):
+        """Verify publishing of a collection revision with modules included
+        in other collections. Contemporary publications should not republish
+        the modules within the current collections in the publication context.
+
+        Note, contemporary publications do NOT utilize the trigger
+        that causes minor republications of collections. This feature
+        is only enabled for legacy publications.
+
+        This introduces two collections with a shared module.
+        The goal is to publish one of the collections and not have
+        the other collection republish.
+        """
+        cursor.execute("SELECT setval('collectionid_seq', 10100)")
+        id_num = cursor.fetchone()[0]
+        expected_col_one_id = 'col{}'.format(id_num + 1)  # col10101
+        expected_col_two_id = 'col{}'.format(id_num + 2)  # col10102
+        cursor.execute("SELECT setval('moduleid_seq', 10100)")
+        id_num = cursor.fetchone()[0]
+        expected_m_one_id = 'm{}'.format(id_num + 1)  # m10101
+        expected_m_two_id = 'm{}'.format(id_num + 2)  # m10102
+
+        entries = [expected_m_one_id, expected_m_two_id,
+                   expected_col_one_id, expected_col_two_id,
+                   ]
+        for mid in entries:
+            portal_type = mid.startswith('m') and 'Module' or 'Collection'
+            # Insert a new module to base a revision on.
+            cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, %s, %s,
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  module_ident,
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (portal_type, "title for {}".format(mid), self._abstract_id,))
+            ident, uuid_, moduleid, major_ver, minor_ver, ver = cursor.fetchone()
+            self.assertEqual(moduleid, mid)
+
+            if portal_type == 'Collection':
+                args = (ident, "**{}**".format(moduleid),)
+                cursor.execute("""\
+INSERT INTO trees
+  (nodeid, parent_id, documentid, title, childorder, latest)
+VALUES
+  (DEFAULT, NULL, %s, %s, DEFAULT, DEFAULT)
+RETURNING nodeid""", args)
+                root_node_id = cursor.fetchone()[0]
+                # Insert the tree for the collections.
+                for i, sub_mid in enumerate(entries[:2]):
+                    decendents = entries[2:]
+                    args = (root_node_id, sub_mid, sub_mid, i,)
+                    cursor.execute("""\
+INSERT INTO trees
+  (nodeid, parent_id,
+   documentid,
+   title, childorder, latest)
+VALUES
+  (DEFAULT, %s,
+   (select module_ident from latest_modules where moduleid = %s),
+   %s, %s, DEFAULT)""", args)
+
+
+        # Now insert a revision.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  ((SELECT uuid FROM latest_modules WHERE moduleid = %s),
+   2, NULL, %s,
+   DEFAULT, 'Module', ' MOO ',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid,
+  moduleid,
+  major_version,
+  minor_version,
+  version""", (expected_m_one_id, expected_m_one_id, self._abstract_id,))
+        res = cursor.fetchone()
+        rev_uuid_, rev_moduleid, rev_major_ver, rev_minor_ver, rev_ver = res
+
+        # Check the fields where correctly assigned.
+        self.assertEqual(rev_moduleid, expected_m_one_id)
+        self.assertEqual(rev_major_ver, 2)
+        self.assertEqual(rev_minor_ver, None)
+        self.assertEqual(rev_ver, '1.2')
+
+        # Lastly check that no republications took place.
+        # This can be done by simply counting the entries. We inserted
+        # four entries (two modules and two collections) and one revision.
+        cursor.execute("""\
+SELECT portal_type, count(*)
+FROM modules
+GROUP BY portal_type""")
+        counts = dict(cursor.fetchall())
+        expected_counts = {
+            'Module': 3,
+            'Collection': 2,
+            }
+        self.assertEqual(counts, expected_counts)
 
 
 SQL_FOR_HIT_DOCUMENTS = """
