@@ -65,7 +65,7 @@ def join_ident_hash(id, version):
     join_args = [id]
     if isinstance(version, (tuple, list,)):
         assert len(version) == 2, "version sequence must be two values."
-        version = VERSION_CHAR.join([x for x in version if x is not None])
+        version = VERSION_CHAR.join([str(x) for x in version if x is not None])
     if version:
         join_args.append(version)
     return HASH_CHAR.join(join_args)
