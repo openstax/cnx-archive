@@ -14,6 +14,7 @@ import psycopg2
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
+from . import database
 from . import get_settings
 from . import httpexceptions
 from .utils import (
@@ -322,6 +323,7 @@ def get_extra(environ, start_response):
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
+            results['canPublish'] = database.get_module_can_publish(cursor, id)
 
     headers = [('Content-type', 'application/json')]
     start_response('200 OK', headers)

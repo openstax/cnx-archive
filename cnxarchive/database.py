@@ -457,3 +457,18 @@ def get_collection_tree(collection_ident, cursor):
     from t JOIN modules m ON t.document = m.module_ident''', [collection_ident])
     for i in cursor.fetchall():
         yield i
+
+
+def get_module_can_publish(cursor, id):
+    cursor.execute('''
+SELECT submitter, authors, maintainers, licensors
+FROM latest_modules m
+WHERE m.uuid = %s''', [id])
+    users = set([])
+    for role_users in cursor.fetchone():
+        if role_users:
+            if not isinstance(role_users, list):
+                role_users = [role_users]
+            for user in role_users:
+                users.add(user)
+    return list(users)

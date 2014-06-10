@@ -710,9 +710,14 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), {
+        output = json.loads(output)
+        output['canPublish'].sort()
+        self.assertEqual(output, {
             u'downloads': [],
             u'isLatest': False,
+            u'canPublish': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                            u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                            u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8']
             })
 
     def test_get_extra_allowable_types(self):
@@ -862,7 +867,12 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(self.captured_response['status'], '200 OK')
         self.assertEqual(self.captured_response['headers'][0],
                 ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output), {
+        output = json.loads(output)
+        output['canPublish'].sort()
+        self.assertEqual(output, {
+            u'canPublish': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                            u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                            u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
             u'isLatest': True,
             u'downloads': [{
                 u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
