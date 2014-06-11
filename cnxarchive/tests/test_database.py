@@ -1130,6 +1130,44 @@ GROUP BY portal_type""")
             }
         self.assertEqual(counts, expected_counts)
 
+    @db_connect
+    def test_new_module_wo_uuid(self, cursor):
+        """Verify legacy publishing of a new module creates a UUID
+        value and inserts a 'document_controls' entry.
+        """
+        # Insert a new module.
+        cursor.execute("""\
+INSERT INTO modules
+  (uuid, major_version, minor_version, moduleid,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, DEFAULT, DEFAULT, DEFAULT,
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{smoo, fred}', DEFAULT, '{smoo, fred}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid""", (self._abstract_id,))
+        uuid_ = cursor.fetchone()[0]
+
+        # Hopefully pull the UUID out of the 'document_controls' table.
+        cursor.execute("SELECT uuid from document_controls")
+        try:
+            controls_uuid = cursor.fetchone()[0]
+        except TypeError:
+            self.fail("the document_controls entry was not made.")
+
+        # Check the values match
+        self.assertEqual(uuid_, controls_uuid)
+
 
 SQL_FOR_HIT_DOCUMENTS = """
 ALTER TABLE modules DISABLE TRIGGER ALL;

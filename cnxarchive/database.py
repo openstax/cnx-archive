@@ -408,6 +408,26 @@ def assign_version_default_trigger(plpy, td):
     return modified_state
 
 
+def assign_uuid_default_trigger(plpy, td):
+    """A compatibilty trigger to fill in ``uuid`` column that is not
+    populated when inserting publications from legacy.
+    This default not the column itself, because the value needs
+    to be loosely associated with the ``document_controls`` entry
+    to prevent uuid collisions and bridge the pending publications gap.
+    """
+    modified_state = "OK"
+    uuid = td['new']['uuid']
+
+    if uuid is None:
+        modified_state = "MODIFY"
+        uuid_ = plpy.execute("""\
+INSERT INTO document_controls (uuid) VALUES (DEFAULT)
+RETURNING uuid""")[0]['uuid']
+        td['new']['uuid'] = uuid_
+
+    return modified_state
+
+
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 

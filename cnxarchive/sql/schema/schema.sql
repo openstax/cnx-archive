@@ -66,11 +66,22 @@ CREATE TABLE "licenses" (
 );
 
 
+CREATE TABLE "document_controls" (
+       -- An association table that is a controlled set of UUID identifiers
+       -- for document/module input. This prevents collisions between existing documents,
+       -- and publication pending documents, while still providing the publishing system
+       -- a means of assigning an identifier where the documents will eventually live.
+       "uuid" UUID PRIMARY KEY DEFAULT uuid_generate_v4()
+);
+
+
+
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
 	"portal_type" text,
 	"moduleid" text,
-        "uuid" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        -- loosely associated with ``document_controls``.
+        "uuid" uuid DEFAULT NULL,
         -- please do not use version in cnx-archive code, it is only used for
         -- storing the legacy version
 	"version" text,
@@ -237,6 +248,13 @@ AS $$
   return assign_version_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+CREATE OR REPLACE FUNCTION assign_uuid_default ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import assign_uuid_default_trigger
+  return assign_uuid_default_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
 CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_moduleid_default();
@@ -248,6 +266,10 @@ CREATE TRIGGER module_published
 CREATE TRIGGER module_version_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_version_default();
+
+CREATE TRIGGER module_uuid_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_uuid_default();
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
