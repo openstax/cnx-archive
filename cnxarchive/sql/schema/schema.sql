@@ -255,6 +255,10 @@ AS $$
   return assign_uuid_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+CREATE TRIGGER act_10_module_uuid_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_uuid_default();
+
 CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_moduleid_default();
@@ -266,10 +270,6 @@ CREATE TRIGGER module_published
 CREATE TRIGGER module_version_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_version_default();
-
-CREATE TRIGGER module_uuid_default
-  BEFORE INSERT ON modules FOR EACH ROW
-  EXECUTE PROCEDURE assign_uuid_default();
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW

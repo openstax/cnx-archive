@@ -296,6 +296,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         from ..database import republish_collection
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
@@ -345,6 +347,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         from ..database import republish_collection
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
@@ -384,6 +388,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
             with db_conn.cursor() as db_cursor:
                 db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
