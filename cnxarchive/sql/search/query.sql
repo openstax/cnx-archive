@@ -38,22 +38,22 @@ FROM
   latest_modules AS lm 
   NATURAL LEFT JOIN abstracts AS ab 
   NATURAL LEFT JOIN modulefti AS mfti
-  {}
+  {limits}
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
   (SELECT
      module_ident,
      cast (sum(weight) as bigint) as weight,
      semilist(keys) as keys
    FROM
-     ({}) as matched
+     ({queries}) as matched
    -- table join...
    GROUP BY module_ident
    ) AS weighted
 WHERE
   weighted.module_ident = lm.module_ident
-  {}
-  {}
-ORDER BY {}
+  {filters}
+  {groupby}
+ORDER BY {sorts}
 
 ) as combined_rows
 ;
