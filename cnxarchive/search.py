@@ -58,6 +58,8 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('title', 10),
     ])
 SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
+
+
 def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql',
                    remove_comments=False):
     path = os.path.join(root, '{}{}'.format(name, extension))
@@ -67,6 +69,8 @@ def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql',
         else:
             file = fp.read()
     return file
+
+
 SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql',
                                              remove_comments=True)
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
@@ -109,8 +113,9 @@ class Query(Sequence):
             # no unbalanced quotes to fix
             return query_string
 
-        fields = [] # contains what's matched by the regexp
+        fields = []  # contains what's matched by the regexp
         # e.g. fields = ['sort:pubDate', 'author:"first last"']
+
         def f(match):
             fields.append(match.string[match.start():match.end()])
             return ''
@@ -139,7 +144,7 @@ class QueryRecord(Mapping):
     """A query record wrapper to parse hit values and add behavior."""
 
     def __init__(self, **kwargs):
-        self._record = {k:v for k, v in kwargs.items()
+        self._record = {k: v for k, v in kwargs.items()
                         if k not in ('_keys', 'matched', 'fields',)}
         if self._record.get('mediaType') in PORTALTYPE_TO_MIMETYPE_MAPPING:
             self._record['mediaType'] = portaltype_to_mimetype(
@@ -215,7 +220,7 @@ def _apply_query_type(records, query, query_type):
     unmatched_terms = query
     revised_records = records
 
-    if records and query: # no query implies limit-only case
+    if records and query:  # no query implies limit-only case
         #: List of records that match all terms.
         all_matched_records = []
         term_matches = []
@@ -260,7 +265,7 @@ class QueryResults(Sequence):
     def __init__(self, rows, query, query_type=DEFAULT_QUERY_TYPE):
         if query_type not in QUERY_TYPES:
             raise ValueError("Invalid query type supplied: '{}'" \
-                                 .format(query_type))
+                             .format(query_type))
         self._query = query
         # Capture all the rows for interal usage.
         self._all_records = [QueryRecord(**r[0]) for r in rows]
@@ -275,7 +280,8 @@ class QueryResults(Sequence):
             'subject': self._count_field('subjects'),
             'keyword': self._count_field('keywords',
                                          max_results=MAX_VALUES_FOR_KEYWORDS),
-            'authorID': self._count_authors(max_results=MAX_VALUES_FOR_AUTHORS),
+            'authorID': self._count_authors(
+                max_results=MAX_VALUES_FOR_AUTHORS),
             'pubYear': self._count_publication_year(),
             }
 
@@ -314,7 +320,7 @@ class QueryResults(Sequence):
                 authors.add(hashabledict(author))
 
         authors = list(authors)
-        authors.sort(lambda x,y: cmp(y['id'],x['id']))
+        authors.sort(lambda x, y: cmp(y['id'], x['id']))
         setattr(self, attr_name, authors)
         return getattr(self, attr_name)
 
@@ -362,7 +368,7 @@ class QueryResults(Sequence):
 
     def _count_authors(self, max_results=None):
         counts = {}
-        uid_author = {} # look up author record by uid
+        uid_author = {}  # look up author record by uid
         for rec in self._records:
             for author in rec['authors']:
                 uid = author['id']
@@ -440,7 +446,7 @@ def _transmute_filter(keyword, value):
             type_name = 'Module'
         else:
             raise ValueError("Invalid filter value '{}' for filter '{}'." \
-                                 .format(value, keyword))
+                             .format(value, keyword))
         return ('portal_type = %({})s', type_name)
 
     elif keyword == 'pubYear':
@@ -549,7 +555,8 @@ def _build_search(structured_query, weights):
     # Add the arguments for filtering.
     filter_list = []
     if structured_query.filters:
-        if len(filter_list) == 0: filter_list.append('')  # For SQL AND joining.
+        if len(filter_list) == 0:
+            filter_list.append('')  # For SQL AND joining.
         for i, (keyword, value) in enumerate(structured_query.filters):
             arg_name = "{}_{}".format(keyword, i)
             # These key values are special in that they don't,
@@ -569,24 +576,27 @@ def _build_search(structured_query, weights):
     groupby = ''
     having_list = []
     having = ''
-    subject_filters = [value for key,value in structured_query.filters if key == 'subject']
+    subject_filters = [v for k, v in structured_query.filters
+                       if k == 'subject']
     if subject_filters:
         limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
         groupby = '''GROUP BY lm.name, lm.uuid, lm.portal_type, lm.authors,
-             lm.major_version, lm.minor_version, language, lm.revised, 
+             lm.major_version, lm.minor_version, language, lm.revised,
              ab.abstract, weight, rank, lm.module_ident, weighted.keys'''
 
         for subj in subject_filters:
             having_list.append("'{}' = ANY(array_agg(tag))".format(subj))
         having = 'HAVING ' + ' AND '.join(having_list)
-    groupby = '\n'.join((groupby,having))
-    
-    if not queries: # all filter term case
-        key_list=[]
-        for key,value in structured_query.filters:
-            key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value,key)))
+    groupby = '\n'.join((groupby, having,))
+
+    if not queries:  # all filter term case
+        key_list = []
+        for key, value in structured_query.filters:
+            key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value, key,)))
         keys = QUERY_FIELD_ITEM_SEPARATOR.join(key_list)
-        queries  = "SELECT module_ident, 1 as weight, '{}'::text as keys from latest_modules".format(keys)
+        queries = """\
+SELECT module_ident, 1 AS weight, '{}'::text AS keys
+FROM latest_modules""".format(keys)
 
     # Add the arguments for sorting.
     sorts = ['portal_type']
@@ -596,7 +606,7 @@ def _build_search(structured_query, weights):
             #   in the database.
             stmt = _transmute_sort(sort)
             sorts.append(stmt)
-    sorts.extend(('weight DESC','uuid DESC'))
+    sorts.extend(('weight DESC', 'uuid DESC',))
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
