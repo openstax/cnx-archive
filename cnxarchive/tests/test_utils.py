@@ -221,3 +221,30 @@ class EscapeTestCase(unittest.TestCase):
         self.assertEqual(self.call_target('this & that'),
                          'this &amp; that')
 
+
+
+class Utf8TestCase(unittest.TestCase):
+    def call_target(self, *args, **kwargs):
+        from ..utils import utf8
+        return utf8(*args, **kwargs)
+
+    def test_str(self):
+        self.assertEqual(self.call_target('inførmation'), u'inførmation')
+
+    def test_unicode(self):
+        self.assertEqual(self.call_target(u'inførmation'), u'inførmation')
+
+    def test_not_str(self):
+        self.assertEqual(self.call_target(1), 1)
+
+    def test_list(self):
+        self.assertEqual([u'infør', u'mation'],
+                         self.call_target(['infør', 'mation']))
+
+    def test_tuple(self):
+        self.assertEqual((u'infør', u'mation',),
+                         self.call_target(('infør', 'mation',)))
+
+    def test_dict(self):
+        self.assertEqual({u'inførmation': u'inførm'},
+                         self.call_target({'inførmation': 'inførm'}))
