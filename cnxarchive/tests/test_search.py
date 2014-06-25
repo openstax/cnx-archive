@@ -222,6 +222,18 @@ class SearchTestCase(unittest.TestCase):
         self.addCleanup(delattr, self, 'query')
         return search(self.query, query_type=query_type)
 
+    def test_utf8_search(self):
+        query_params = [('text', 'inførmation')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(len(results), 1)
+
+    def test_title_search_utf8(self):
+        query_params = [('title', 'inførmation')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(len(results), 1)
+
     def test_title_search(self):
         # Simple case to test for results of a basic title search.
         query_params = [('title', 'Physics')]

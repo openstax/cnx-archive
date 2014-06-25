@@ -147,3 +147,17 @@ def escape(s):
     s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', "&quot;")
     return s
 
+
+def utf8(item):
+    """Change all python2 str/bytes instances to unicode/python3 str
+    """
+    if isinstance(item, list):
+        return [utf8(i) for i in item]
+    if isinstance(item, tuple):
+        return tuple([utf8(i) for i in item])
+    if isinstance(item, dict):
+        return {utf8(k): utf8(v) for k, v in item.items()}
+    try:
+        return item.decode('utf-8')
+    except: # bare except since this method is supposed to be safe anywhere
+        return item

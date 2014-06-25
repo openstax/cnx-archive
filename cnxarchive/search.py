@@ -19,7 +19,7 @@ from . import get_settings
 from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
-    PORTALTYPE_TO_MIMETYPE_MAPPING,
+    PORTALTYPE_TO_MIMETYPE_MAPPING, utf8
     )
 
 
@@ -211,17 +211,17 @@ def _apply_query_type(records, query, query_type):
         for rec in records:
             if len(rec.matched) == len(query):
                 all_matched_records.append(rec)
-            term_matches.extend(list(rec.matched))
+            term_matches.extend(utf8(list(rec.matched)))
 
         unmatched_terms = [term for term in query
-                           if term[1] not in term_matches]
+                           if utf8(term[1]) not in term_matches]
         if unmatched_terms:
             matching_length = len(query) - len(unmatched_terms)
             #: List of records that match some of the terms.
             some_matched_records = [rec for rec in records
                                     if len(rec.matched) == matching_length]
             matched_terms = [term for term in query
-                             if term[1] in term_matches]
+                             if utf8(term[1]) in term_matches]
         else:
             some_matched_records = all_matched_records
             matched_terms = query
