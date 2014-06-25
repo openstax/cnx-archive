@@ -1,6 +1,16 @@
 -- arguments text_terms:string "%(text_terms)s"
 SELECT row_to_json(combined_rows) as results
 FROM (
+WITH weighted_query_results AS (
+  SELECT
+    module_ident,
+    cast(sum(weight) as bigint) as weight,
+    semilist(keys) as keys
+  FROM
+    ({queries}) as matched
+  -- table join...
+  GROUP BY module_ident
+  )
 
 SELECT
   lm.name as title, title_order(lm.name) as "sortTitle",
@@ -40,17 +50,9 @@ FROM
   NATURAL LEFT JOIN modulefti AS mfti
   {limits}
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
-  (SELECT
-     module_ident,
-     cast (sum(weight) as bigint) as weight,
-     semilist(keys) as keys
-   FROM
-     ({queries}) as matched
-   -- table join...
-   GROUP BY module_ident
-   ) AS weighted
+  weighted_query_results AS wqr
 WHERE
-  weighted.module_ident = lm.module_ident
+  wqr.module_ident = lm.module_ident
   {filters}
   {groupby}
 ORDER BY {sorts}
