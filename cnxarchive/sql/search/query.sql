@@ -10,8 +10,18 @@ WITH weighted_query_results AS (
     ({queries}) as matched
   -- table join...
   GROUP BY module_ident
-  )
 
+  ),
+derived_weighted_query_results AS (
+  SELECT
+    wqr.module_ident,
+    CASE WHEN lm.parent IS NULL THEN weight + 1
+         ELSE weight
+    END AS weight,
+    keys
+  FROM weighted_query_results AS wqr
+       LEFT JOIN latest_modules AS lm ON (wqr.module_ident = lm.module_ident)
+  )
 SELECT
   lm.name as title, title_order(lm.name) as "sortTitle",
   lm.uuid as id,
@@ -50,7 +60,7 @@ FROM
   NATURAL LEFT JOIN modulefti AS mfti
   {limits}
   LEFT OUTER JOIN recent_hit_ranks ON (lm.uuid = document),
-  weighted_query_results AS wqr
+  derived_weighted_query_results AS wqr
 WHERE
   wqr.module_ident = lm.module_ident
   {filters}
