@@ -367,7 +367,18 @@ CREATE TRIGGER module_file_added
   AFTER INSERT ON module_files FOR EACH ROW WHEN ( new.filename = 'index.cnxml' )
   EXECUTE PROCEDURE add_module_file();
 
-
+CREATE OR REPLACE FUNCTION html_abstract(abstract text)
+  RETURNS text
+AS $$
+  import plpydbapi
+  from cnxarchive.to_html import transform_abstract
+  db_connection = plpydbapi.connect()
+  html_abstract, warning_messages = transform_abstract(abstract, db_connection)
+  if warning_messages:
+    plpy.log(warning_messages)
+  db_connection.close()
+  return html_abstract
+$$ LANGUAGE plpythonu;
 
 CREATE TABLE modulecounts (
 	countdate date,

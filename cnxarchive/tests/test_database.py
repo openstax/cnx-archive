@@ -60,6 +60,33 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                                    tzinfo=FixedOffsetTimezone())
         self.assertEqual(current, value)
 
+    @db_connect
+    def test_html_abstract(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (3, 'A link to an <link document="m42092">interal document</link>.', '');
+        ''')
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
+        ''')
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        # set the html abstract using the html_abstract function
+        cursor.execute('UPDATE abstracts SET html = html_abstract(abstract) RETURNING html;')
+
+        # check that the abstracts have been transformed
+        html_abstract3 = cursor.fetchone()[0]
+        html_abstract3 = html_abstract3[html_abstract3.index('>') + 1:] # strip the div tag
+        self.assertEqual(html_abstract3,
+                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4">interal document</a>.</div>')
+        html_abstract4 = cursor.fetchone()[0]
+        html_abstract4 = html_abstract4[html_abstract4.index('>') + 1:] # strip the div tag
+        self.assertTrue(html_abstract4,
+                        'A link to the <a href="http://example.com">outside world</a>.</div>')
+
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
     """Tests for the postgresql triggers when a module is published

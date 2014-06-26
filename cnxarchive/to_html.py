@@ -20,6 +20,7 @@ import cnxarchive
 __all__ = (
     'transform_cnxml_to_html',
     'produce_html_for_module', 'produce_html_for_abstract',
+    'transform_abstract',
     )
 
 
@@ -396,36 +397,8 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     warning_messages = None
     # Transform the abstract.
     if abstract:
-        abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
-        # Does it have a wrapping tag?
-        cnxml = etree.parse(BytesIO(abstract), DEFAULT_XMLPARSER)
-        abstract_html = _transform_cnxml_to_html_body(cnxml)
-
-        # FIXME The transform should include the default html namespace.
-        #       Replace the root element to include the default namespace.
-        nsmap = abstract_html.getroot().nsmap.copy()
-        xhtml_namespace = 'http://www.w3.org/1999/xhtml'
-        nsmap[None] = xhtml_namespace
-        nsmap['html'] = xhtml_namespace
-        root= etree.Element('html', nsmap=nsmap)
-        root.append(abstract_html.getroot())
-        # FIXME This includes fixes to the xml to include the neccessary bits.
-        container = abstract_html.xpath('/body')[0]
-        container.tag = 'div'
-
-        # Re-assign and stringify to what it should be without the fixes.
-        abstract_html = etree.tostring(root)
-
-        # Then fix up content references in the abstract.
-        fixed_html, bad_refs = fix_reference_urls(db_connection,
-                                                  document_ident,
-                                                  BytesIO(abstract_html))
-        if bad_refs:
-            warning_messages += 'Invalid References (Abstract): {}' \
-                    .format('; '.join(bad_refs))
-        # Now unwrap it and stringify again.
-        nsmap.pop(None)  # xpath doesn't accept an empty namespace.
-        html = etree.tostring(etree.fromstring(fixed_html).xpath("/html:html/html:div", namespaces=nsmap)[0])
+        html, warning_messages = transform_abstract(abstract, db_connection,
+                                                    document_ident=document_ident)
     else:
         html = None
 
@@ -435,6 +408,42 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
                        "WHERE abstractid = %s;",
                        (html, abstractid,))
     return warning_messages
+
+
+def transform_abstract(abstract, db_connection, document_ident=None):
+    warning_messages = None
+    abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
+    # Does it have a wrapping tag?
+    cnxml = etree.parse(BytesIO(abstract), DEFAULT_XMLPARSER)
+    abstract_html = _transform_cnxml_to_html_body(cnxml)
+
+    # FIXME The transform should include the default html namespace.
+    #       Replace the root element to include the default namespace.
+    nsmap = abstract_html.getroot().nsmap.copy()
+    xhtml_namespace = 'http://www.w3.org/1999/xhtml'
+    nsmap[None] = xhtml_namespace
+    nsmap['html'] = xhtml_namespace
+    root= etree.Element('html', nsmap=nsmap)
+    root.append(abstract_html.getroot())
+    # FIXME This includes fixes to the xml to include the neccessary bits.
+    container = abstract_html.xpath('/body')[0]
+    container.tag = 'div'
+
+    # Re-assign and stringify to what it should be without the fixes.
+    abstract_html = etree.tostring(root)
+
+    # Then fix up content references in the abstract.
+    fixed_html, bad_refs = fix_reference_urls(db_connection,
+                                              document_ident,
+                                              BytesIO(abstract_html))
+
+    if bad_refs:
+        warning_messages = 'Invalid References (Abstract): {}' \
+                .format('; '.join(bad_refs))
+    # Now unwrap it and stringify again.
+    nsmap.pop(None)  # xpath doesn't accept an empty namespace.
+    return etree.tostring(etree.fromstring(fixed_html).xpath(
+        "/html:html/html:div", namespaces=nsmap)[0]), warning_messages
 
 
 def produce_html_for_module(db_connection, cursor, ident,
