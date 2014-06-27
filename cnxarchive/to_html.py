@@ -20,7 +20,7 @@ import cnxarchive
 __all__ = (
     'transform_cnxml_to_html',
     'produce_html_for_module', 'produce_html_for_abstract',
-    'transform_abstract',
+    'transform_abstract', 'transform_module_content',
     )
 
 
@@ -483,15 +483,8 @@ def produce_html_for_module(db_connection, cursor, ident,
             else:
                 raise IndexHtmlExistsError(ident)
 
-    warning_messages = None
-    # Transform the content.
-    index_html = transform_cnxml_to_html(cnxml)
-    # Fix up content references to cnx-archive specific urls.
-    index_html, bad_refs = fix_reference_urls(db_connection, ident,
-                                              BytesIO(index_html))
-    if bad_refs:
-        warning_messages = 'Invalid References: {}' \
-                .format('; '.join(bad_refs))
+    index_html, warning_messages = transform_module_content(
+            cnxml, db_connection, document_ident=ident)
 
     # Insert the index.cnxml.html into the database.
     payload = (memoryview(index_html),)
@@ -503,3 +496,17 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, html_file_id, 'index.cnxml.html', 'text/html',))
     return warning_messages
+
+
+def transform_module_content(cnxml, db_connection, document_ident=None):
+    warning_messages = None
+    # Transform the content.
+    index_html = transform_cnxml_to_html(cnxml)
+    # Fix up content references to cnx-archive specific urls.
+    index_html, bad_refs = fix_reference_urls(db_connection, document_ident,
+                                              BytesIO(index_html))
+    if bad_refs:
+        warning_messages = 'Invalid References: {}' \
+                .format('; '.join(bad_refs))
+
+    return index_html, warning_messages
