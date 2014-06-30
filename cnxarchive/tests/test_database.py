@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import datetime
+import os
 import time
 import unittest
 
@@ -86,6 +87,35 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         html_abstract4 = html_abstract4[html_abstract4.index('>') + 1:] # strip the div tag
         self.assertTrue(html_abstract4,
                         'A link to the <a href="http://example.com">outside world</a>.</div>')
+
+    @db_connect
+    def test_html_content(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
+        ''')
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        cursor.execute('SELECT fileid FROM files')
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'm42033-1.3.cnxml'), 'r') as f:
+            cursor.execute('''\
+            INSERT INTO files (file) VALUES
+            (%s) RETURNING fileid''', [memoryview(f.read())])
+            fileid = cursor.fetchone()[0]
+        cursor.execute('''\
+        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
+        (4, %s, 'index.cnxml', 'text/xml');''', [fileid])
+
+        # check that cnxml content can be transformed
+        with open(os.path.join(TEST_DATA_DIRECTORY, 'm42033-1.3.html'), 'r') as f:
+            html_content = f.read()
+        cursor.execute('''\
+        SELECT html_content(encode(file, 'escape')::text)
+        FROM files''')
+        self.assertEqual('<?xml version="1.0" encoding="UTF-8"?>\n{}\n'
+                         .format(cursor.fetchone()[0]), html_content)
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
