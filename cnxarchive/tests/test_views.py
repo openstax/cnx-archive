@@ -943,6 +943,8 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
+            u'per_page': 20,
+            u'page': 1,
             u'limits': [{u'tag': u'subject', u'value': u'Science and Technology'}],
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
@@ -962,6 +964,8 @@ class ViewsTestCase(unittest.TestCase):
         results = json.loads(results)
 
         self.assertEqual(results['query'], {
+            u'per_page': 20,
+            u'page': 1,
             u'limits': [
                 {u'tag': u'title', u'value': u'college physics'},
                 {u'tag': u'subject', u'value': 'Science and Technology'},
@@ -1047,6 +1051,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results, json.dumps({
             u'query': {
                 u'limits': [],
+                u'per_page': 20,
+                u'page': 1,
                 },
             u'results': {
                 u'items': [],
@@ -1070,6 +1076,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results, json.dumps({
             u'query': {
                 u'limits': [],
+                u'per_page': 20,
+                u'page': 1,
                 },
             u'results': {
                 u'items': [],
@@ -1094,6 +1102,8 @@ class ViewsTestCase(unittest.TestCase):
             u'query': {
                 u'limits': [{u'tag': u'text', u'value': u'你好'}],
                 u'sort': [],
+                u'per_page': 20,
+                u'page': 1,
                 },
             u'results': {
                 u'items': [],
@@ -1138,6 +1148,8 @@ class ViewsTestCase(unittest.TestCase):
             u'query': {
                 u'limits': [{u'tag': u'text', u'value': ur":\.+'?"}],
                 u'sort': [],
+                u'per_page': 20,
+                u'page': 1,
                 },
             u'results': {
                 u'items': [],
@@ -1185,6 +1197,8 @@ class ViewsTestCase(unittest.TestCase):
                     {u'tag': u'author', u'value': 'first last'},
                     ],
                 u'sort': [u'pubDate'],
+                u'per_page': 20,
+                u'page': 1,
                 },
             u'results': {
                 u'items': [],
@@ -1298,6 +1312,96 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'Collection')
 
+    def test_search_pagination(self):
+        # Test search results with pagination
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query'], {
+            'sort': [],
+            'limits': [{'tag': 'text', 'value': 'introduction'}],
+            'per_page': 3,
+            'page': 1,
+            })
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 3)
+        self.assertEqual(
+                results['results']['items'][0]['title'],
+                'Introduction to Science and the Realm of Physics, '
+                'Physical Quantities, and Units')
+        self.assertEqual(results['results']['items'][1]['title'],
+                         'Physics: An Introduction')
+        self.assertEqual(
+                results['results']['items'][2]['title'],
+                u'Introduction: Further Applications of Newton’s Laws')
+        pub_year = [limit['values'] for limit in results['results']['limits']
+                                    if limit['tag'] == 'pubYear'][0]
+        self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
+
+        # Fetch next page
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query'], {
+            'sort': [],
+            'limits': [{'tag': 'text', 'value': 'introduction'}],
+            'per_page': 3,
+            'page': 2,
+            })
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 2)
+        self.assertEqual(results['results']['items'][0]['title'],
+                         'Preface to College Physics')
+        self.assertEqual(results['results']['items'][1]['title'],
+                         'Physical Quantities and Units')
+        pub_year = [limit['values'] for limit in results['results']['limits']
+                                    if limit['tag'] == 'pubYear'][0]
+        self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
+
+        # Fetch next page
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['query'], {
+            'sort': [],
+            'limits': [{'tag': 'text', 'value': 'introduction'}],
+            'per_page': 3,
+            'page': 3,
+            })
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 0)
+        pub_year = [limit['values'] for limit in results['results']['limits']
+                                    if limit['tag'] == 'pubYear'][0]
+        self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
     def test_extras(self):
         # Build the request

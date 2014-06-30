@@ -25,6 +25,7 @@ from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import (
     search as database_search, Query,
     QUERY_TYPES, DEFAULT_QUERY_TYPE,
+    DEFAULT_PER_PAGE
     )
 from .sitemap import Sitemap
 
@@ -362,6 +363,8 @@ def search(environ, start_response):
     empty_response = json.dumps({
         u'query': {
             u'limits': [],
+            u'per_page': DEFAULT_PER_PAGE,
+            u'page': 1,
             },
         u'results': {
             u'items': [],
@@ -380,6 +383,19 @@ def search(environ, start_response):
     if query_type is None or query_type not in QUERY_TYPES:
         query_type = DEFAULT_QUERY_TYPE
 
+    try:
+        per_page = int(params.get('per_page', [])[0])
+    except (TypeError, ValueError, IndexError):
+        per_page = None
+    if per_page is None or per_page <= 0:
+        per_page = DEFAULT_PER_PAGE
+    try:
+        page = int(params.get('page', [])[0])
+    except (TypeError, ValueError, IndexError):
+        page = None
+    if page is None or page <= 0:
+        page = 1
+
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
         start_response('200 OK', [('Content-type', 'application/json')])
@@ -392,9 +408,11 @@ def search(environ, start_response):
     results['query'] = {
             'limits': limits,
             'sort': query.sorts,
+            'per_page': per_page,
+            'page': page,
             }
     results['results'] = {'total': len(db_results), 'items': []}
-    for record in db_results:
+    for record in db_results[((page - 1) * per_page):(page * per_page)]:
         results['results']['items'].append({
             'id': '{}@{}'.format(record['id'],record['version']),
             'mediaType': record['mediaType'],
