@@ -74,6 +74,8 @@ SET_OPERATORS = ('OR', 'AND', 'NOT',)
 QUERY_TYPES = ('OR', 'AND', 'weakAND',)
 DEFAULT_QUERY_TYPE = QUERY_TYPES[-1]
 
+DEFAULT_PER_PAGE = 20
+
 
 class Query(Sequence):
     """A structured respresentation of the query string"""
