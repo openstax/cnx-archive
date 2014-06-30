@@ -77,13 +77,22 @@ DEFAULT_QUERY_TYPE = QUERY_TYPES[-1]
 DEFAULT_PER_PAGE = 20
 
 
+def whitespace_fix(item):
+    if isinstance(item, list):
+        return [whitespace_fix(i) for i in item]
+    if isinstance(item, tuple):
+        return tuple([whitespace_fix(i) for i in item])
+    return re.sub('\s+', ' ', item.strip())
+
+
 class Query(Sequence):
     """A structured respresentation of the query string"""
 
     def __init__(self, query):
-        self.filters = [q for q in query if q[0] in VALID_FILTER_KEYWORDS]
+        self.filters = [whitespace_fix(q) for q in query
+                        if q[0] in VALID_FILTER_KEYWORDS]
         self.sorts = [q[1] for q in query if q[0] == 'sort']
-        self.terms = [q for q in query
+        self.terms = [whitespace_fix(q) for q in query
                       if q not in self.filters and q[0] != 'sort']
 
     def __repr__(self):

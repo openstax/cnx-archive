@@ -925,6 +925,24 @@ class ViewsTestCase(unittest.TestCase):
         for i in results:
             self.assertEqual(results[i], SEARCH_RESULTS[i])
 
+    def test_search_title_w_whitespace(self):
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=title:"   preface  to college   physics "'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['query'], {
+            u'limits': [{u'tag': u'title', u'value': u'preface to college physics'}],
+            u'sort': []})
+        self.assertEqual(results['results']['total'], 1)
+
     def test_search_only_subject(self):
         # From the Content page, we have a list of subjects (tags),
         # they link to the search page like: /search?q=subject:"Arts"
