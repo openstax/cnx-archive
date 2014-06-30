@@ -5,11 +5,11 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import cgi
 import os
 import json
 import logging
 import psycopg2
+import urlparse
 
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
@@ -370,7 +370,7 @@ def search(environ, start_response):
             },
         })
 
-    params = cgi.parse_qs(environ.get('QUERY_STRING', ''))
+    params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
     try:
         search_terms = params.get('q', [])[0]
     except IndexError:
