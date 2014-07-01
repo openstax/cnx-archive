@@ -26,6 +26,11 @@ from .utils import (
 __all__ = ('search', 'Query',)
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
+    # stopwords are all the common english words plus single characters
+    STOPWORDS = f.read().split(',') + [chr(i)
+            for i in range(ord('a'), ord('z') + 1)]
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
 # The maximum number of keywords and authors to return in the search result
@@ -210,8 +215,13 @@ def _apply_query_type(records, query, query_type):
         #: List of records that match all terms.
         all_matched_records = []
         term_matches = []
+        query_terms_wo_stopwords = [utf8(term) for ttype, term in query
+                if ttype != 'text' or term.lower() not in STOPWORDS]
+        if not query_terms_wo_stopwords:
+            query_terms_wo_stopwords = [utf8(term) for ttype, term in query]
+        query_terms_wo_stopwords.sort()
         for rec in records:
-            if len(rec.matched) == len(query):
+            if sorted(rec.matched.keys()) == query_terms_wo_stopwords:
                 all_matched_records.append(rec)
             term_matches.extend(utf8(list(rec.matched)))
 
@@ -517,8 +527,18 @@ def _build_search(structured_query, weights):
         stmt, args = weighted_select.prepare(structured_query.terms)
         query_list.append(stmt)
         arguments.update(args)
-    text_terms = ' '.join([term for ttype,term in structured_query.terms if ttype == 'text'])
-    arguments.update({'text_terms':text_terms})
+
+    # get text terms and filter out common words
+    text_terms = [term for ttype,term in structured_query.terms
+                  if ttype == 'text']
+    text_terms_wo_stopwords = [term for term in text_terms
+                               if term.lower() not in STOPWORDS]
+    # if there are other search terms (not type "text") or if the text
+    # terms do not only consist of stopwords, then use the text terms
+    # without stopwords
+    if arguments or text_terms_wo_stopwords:
+        text_terms = text_terms_wo_stopwords
+    arguments.update({'text_terms': ' '.join(text_terms)})
     queries = '\nUNION ALL\n'.join([q for q in query_list if q is not None])
 
     # Add the arguments for filtering.
