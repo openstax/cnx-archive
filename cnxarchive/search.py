@@ -135,6 +135,9 @@ class QueryRecord(Mapping):
     def __init__(self, **kwargs):
         self._record = {k:v for k, v in kwargs.items()
                         if k not in ('_keys', 'matched', 'fields',)}
+        if self._record.get('mediaType') in PORTALTYPE_TO_MIMETYPE_MAPPING:
+            self._record['mediaType'] = portaltype_to_mimetype(
+                    self._record['mediaType'])
         self.matched = {}
         self.fields = {}
         # Parse the matching fields
@@ -308,8 +311,8 @@ class QueryResults(Sequence):
     def _auxiliary_types(self):
         # If we ever add types beyond book and page,
         #   we'll want to change this.
-        return [{'id': v, 'name': k}
-                for k, v in PORTALTYPE_TO_MIMETYPE_MAPPING.items()]
+        return [{'id': COLLECTION_MIMETYPE, 'name': 'Book'},
+                {'id': MODULE_MIMETYPE, 'name': 'Page'}]
 
     def _count_field(self, field_name, sorted=True, max_results=None):
         counts = {}
@@ -341,7 +344,7 @@ class QueryResults(Sequence):
             COLLECTION_MIMETYPE: 0,
             }
         for rec in self._records:
-            counts[portaltype_to_mimetype(rec['mediaType'])] += 1
+            counts[rec['mediaType']] += 1
         return [(COLLECTION_MIMETYPE, counts[COLLECTION_MIMETYPE],),
                 (MODULE_MIMETYPE, counts[MODULE_MIMETYPE],),
                 ]
