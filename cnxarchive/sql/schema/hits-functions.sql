@@ -11,7 +11,7 @@ AS $$
     now_timestamp TIMESTAMP WITH TIME ZONE;
     past_timestamp TIMESTAMP WITH TIME ZONE;
   BEGIN
-    now_timestamp := now();
+    now_timestamp := COALESCE(MAX(end_timestamp), NOW()) FROM document_hits;
     past_timestamp := now_timestamp - interval '1 week';
     RETURN past_timestamp;
   END;
