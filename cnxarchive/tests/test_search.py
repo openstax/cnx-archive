@@ -228,6 +228,28 @@ class SearchTestCase(unittest.TestCase):
 
         self.assertEqual(len(results), 1)
 
+    def test_search_w_stopwords(self):
+        # wildcard search terms have stopwords removed
+        query_params = [('text', 'inførmation'), ('text', 'With')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(len(results), 1)
+
+    def test_search_w_only_stopwords(self):
+        # wildcard search terms with only stopwords are not removed
+        query_params = [('text', 'and'), ('text', 'the')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(len(results), 9)
+
+    def test_search_title_w_stopwords(self):
+        # search terms for specific fields are not removed even if stopwords
+        # are present
+        query_params = [('title', 'the')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(len(results), 2)
+
     def test_title_search_utf8(self):
         query_params = [('title', 'inførmation')]
         results = self.call_target(query_params)
