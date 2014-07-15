@@ -1121,9 +1121,9 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'name': u'Collection',
+                        {u'name': u'Book',
                          u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Module',
+                        {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
@@ -1167,9 +1167,9 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'name': u'Collection',
+                        {u'name': u'Book',
                          u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Module',
+                        {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
@@ -1216,9 +1216,9 @@ class ViewsTestCase(unittest.TestCase):
                 u'auxiliary': {
                     u'authors': [],
                     u'types': [
-                        {u'name': u'Collection',
+                        {u'name': u'Book',
                          u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Module',
+                        {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
                     }, 
@@ -1246,7 +1246,7 @@ class ViewsTestCase(unittest.TestCase):
                          {u'tag': u'type', u'value': u'page'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
-                         'Module')
+                         'application/vnd.org.cnx.module')
 
         # Test searching "module"
 
@@ -1267,7 +1267,7 @@ class ViewsTestCase(unittest.TestCase):
                          {u'tag': u'type', u'value': u'module'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
-                         'Module')
+                         'application/vnd.org.cnx.module')
 
     def test_search_type_book_or_collection(self):
         # Test searching "book"
@@ -1289,7 +1289,7 @@ class ViewsTestCase(unittest.TestCase):
                          {u'tag': u'type', u'value': u'book'})
         self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
-                         'Collection')
+                         'application/vnd.org.cnx.collection')
 
         # Test searching "collection"
 
@@ -1310,7 +1310,7 @@ class ViewsTestCase(unittest.TestCase):
                          {u'tag': u'type', u'value': u'collection'})
         self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
-                         'Collection')
+                         'application/vnd.org.cnx.collection')
 
     def test_search_pagination(self):
         # Test search results with pagination

@@ -70,7 +70,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Collection",
+      "mediaType": "application/vnd.org.cnx.collection",
       "pubDate": "2013-07-31T19:07:20Z",
       "sortTitle": "College Physics",
       "subjects": [
@@ -119,7 +119,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2012-07-31T19:07:20Z",
       "sortTitle": "Preface to College Physics",
       "subjects": [
@@ -181,7 +181,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2011-07-31T19:07:20Z",
       "sortTitle": "Introduction to Science and the Realm of Physics, Physical Quantities, and Units",
       "subjects": [
@@ -224,7 +224,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2011-07-31T19:07:20Z",
       "sortTitle": "Physics: An Introduction",
       "subjects": [
@@ -271,7 +271,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:21Z",
       "sortTitle": "Physical Quantities and Units",
       "subjects": [
@@ -310,7 +310,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:21Z",
       "sortTitle": "Accuracy, Precision, and Significant Figures",
       "subjects": [
@@ -345,7 +345,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:22Z",
       "sortTitle": "Approximation",
       "subjects": [
@@ -404,7 +404,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:22Z",
       "sortTitle": "Introduction: Further Applications of Newton\u2019s Laws",
       "subjects": [
@@ -447,7 +447,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:22Z",
       "sortTitle": "Friction",
       "subjects": [
@@ -486,7 +486,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:24Z",
       "sortTitle": "Drag Forces",
       "subjects": [
@@ -533,7 +533,7 @@
       ],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:24Z",
       "sortTitle": "Elasticity: Stress and Strain",
       "subjects": [
@@ -566,7 +566,7 @@
       "keywords": [],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:25Z",
       "sortTitle": "Atomic Masses",
       "subjects": [
@@ -599,7 +599,7 @@
       "keywords": [],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:25Z",
       "sortTitle": "Selected Radioactive Isotopes",
       "subjects": [
@@ -632,7 +632,7 @@
       "keywords": [],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:25Z",
       "sortTitle": "Useful Information",
       "subjects": [
@@ -665,7 +665,7 @@
       "keywords": [],
       "language": "en",
       "matched": "",
-      "mediaType": "Module",
+      "mediaType": "application/vnd.org.cnx.module",
       "pubDate": "2013-07-31T19:07:25Z",
       "sortTitle": "Glossary of Key Symbols and Notation",
       "subjects": [],

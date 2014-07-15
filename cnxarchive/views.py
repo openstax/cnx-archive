@@ -70,6 +70,12 @@ def get_content_metadata(id, version, cursor):
         # ambiguous" error
         result['version'] = result.pop('current_version')
 
+        # FIXME We currently have legacy 'portal_type' names in the database.
+        #       Future upgrades should replace the portal type with a mimetype
+        #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
+        #       Until then we will do the replacement here.
+        result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
+
         return result
     except (TypeError, IndexError,):  # None returned
         raise httpexceptions.HTTPNotFound()
@@ -210,9 +216,7 @@ def _get_content_json(environ, start_response):
             if not version:
                 redirect_to_latest(cursor, id, '/contents/{}@{}')
             result = get_content_metadata(id, version, cursor)
-            # FIXME The 'mediaType' value will be changing to mimetypes
-            #       in the near future.
-            if result['mediaType'] == 'Collection':
+            if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
                 query = SQL['get-tree-by-uuid-n-version']
                 args = dict(id=result['id'], version=result['version'])
@@ -231,12 +235,6 @@ def _get_content_json(environ, start_response):
                     logger.debug("module found, but 'index.cnxml.html' is missing.")
                     raise httpexceptions.HTTPNotFound()
                 result['content'] = content[:]
-
-    # FIXME We currently have legacy 'portal_type' names in the database.
-    #       Future upgrades should replace the portal type with a mimetype
-    #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
-    #       Until then we will do the replacement here.
-    result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
 
     return result
 
