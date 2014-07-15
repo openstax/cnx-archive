@@ -5,6 +5,7 @@ from setuptools import setup, find_packages
 install_requires = (
     'cnx-query-grammar',
     'lxml',
+    'python-memcached',
     'PasteDeploy',
     'PasteScript',
     'plpydbapi',

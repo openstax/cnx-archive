@@ -1,0 +1,55 @@
+# -*- coding: utf-8 -*-
+# ###
+# Copyright (c) 2013, Rice University
+# This software is subject to the provisions of the GNU Affero General
+# Public License version 3 (AGPLv3).
+# See LICENCE.txt for details.
+# ###
+"""Memcached utilities"""
+
+import base64
+import copy
+
+import memcache
+
+from . import get_settings
+from .search import search as database_search
+
+def search(query, query_type, nocache=False):
+    """Look up search results in cache, if not in cache, do a database search
+    and cache the result
+    """
+    settings = get_settings()
+    memcache_servers = settings['memcache-servers'].split()
+    if not memcache_servers or nocache:
+        # memcache is not enabled, do a database search directly
+        return database_search(query, query_type)
+
+    # sort query params and create a key for the search
+    search_params = []
+    search_params += copy.deepcopy(query.terms)
+    search_params += copy.deepcopy(query.filters)
+    search_params += [('sort', i) for i in query.sorts]
+    search_params.sort(key=lambda record: (record[0], record[1]))
+    search_params.append(('query_type', query_type))
+
+    # search_key should look something like:
+    # '"sort:pubDate" "text:college physics" "query_type:weakAND"'
+    search_key = ' '.join(['"{}"'.format(':'.join(param))
+                           for param in search_params])
+    # since search_key is not a valid memcached key, use base64
+    # encoding to make it into a valid key
+    mc_search_key = base64.b64encode(search_key)
+
+    # look for search results in memcache first
+    mc = memcache.Client(memcache_servers, debug=0)
+    search_results = mc.get(mc_search_key)
+    if not search_results:
+        # search results is not in memcache, do a database search
+        search_results = database_search(query, query_type)
+        # store in memcache
+        mc.set(mc_search_key, search_results,
+               time=int(settings['search-cache-expiration']))
+
+    # return search results
+    return search_results
