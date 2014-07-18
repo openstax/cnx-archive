@@ -400,9 +400,18 @@ def search(environ, start_response):
         return [empty_response]
     db_results = database_search(query, query_type)
 
+    authors = db_results.auxiliary['authors']
+    # create a mapping for author id to index in auxiliary authors list
+    author_mapping = {}
+    for i, author in enumerate(authors):
+        author_mapping[author['id']] = i
+
     results = {}
-    limits = [{'tag': k, 'value': v} for k, v in query.terms]
-    limits.extend([{'tag': k, 'value': v} for k, v in query.filters])
+    limits = []
+    for k, v in query.terms + query.filters:
+        limits.append({'tag': k, 'value': v})
+        if v in author_mapping:
+            limits[-1]['index'] = author_mapping[v]
     results['query'] = {
             'limits': limits,
             'sort': query.sorts,
@@ -410,12 +419,17 @@ def search(environ, start_response):
             'page': page,
             }
     results['results'] = {'total': len(db_results), 'items': []}
+
     for record in db_results[((page - 1) * per_page):(page * per_page)]:
         results['results']['items'].append({
             'id': '{}@{}'.format(record['id'],record['version']),
             'mediaType': record['mediaType'],
             'title': record['title'],
-            'authors': [a['id'] for a in record['authors']],
+            # provide the index in the auxiliary authors list
+            'authors': [{
+                'index': author_mapping[a['id']],
+                'id': a['id'],
+                } for a in record['authors']],
             'keywords': record['keywords'],
             'summarySnippet': record['abstract'],
             'bodySnippet': record['headline'],
@@ -429,6 +443,10 @@ def search(environ, start_response):
                               'values': []})
         for keyword, count in values:
             value = {'value': keyword, 'count': count}
+            # if it's an author, provide the index in auxiliary
+            # authors list as well
+            if keyword in author_mapping:
+                value['index'] = author_mapping[keyword]
             result_limits[-1]['values'].append(value)
     results['results']['limits'] = result_limits
     # Add the supplemental result information.
