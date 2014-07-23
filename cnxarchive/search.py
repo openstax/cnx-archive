@@ -525,11 +525,12 @@ def _build_search(structured_query, weights):
     query_list = []
     while query_weight_order:
         weight_name = query_weight_order.pop(0)
-        weighted_select = _make_weighted_select(weight_name,
-                                                weights[weight_name])
-        stmt, args = weighted_select.prepare(structured_query.terms)
-        query_list.append(stmt)
-        arguments.update(args)
+        if weights[weight_name]:
+            weighted_select = _make_weighted_select(weight_name,
+                                                    weights[weight_name])
+            stmt, args = weighted_select.prepare(structured_query.terms)
+            query_list.append(stmt)
+            arguments.update(args)
 
     # get text terms and filter out common words
     text_terms = [term for ttype,term in structured_query.terms
