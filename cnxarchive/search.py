@@ -588,7 +588,7 @@ def _build_search(structured_query, weights):
         queries  = "SELECT module_ident, 1 as weight, '{}'::text as keys from latest_modules".format(keys)
 
     # Add the arguments for sorting.
-    sorts = []
+    sorts = ['portal_type']
     if structured_query.sorts:
         for sort in structured_query.sorts:
             # These sort values are not the name of the column used
