@@ -77,6 +77,18 @@
    }, 
    {
     "bodySnippet": null, 
+    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ", 
+    "pubDate": "2013-08-31T19:07:20Z", 
+    "title": "Derived Copy of College Physics", 
+    "mediaType": "application/vnd.org.cnx.collection",
+    "authors": [
+     "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
+    ], 
+    "keywords": [], 
+    "id": "a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1"
+   },
+   {
+    "bodySnippet": null, 
     "summarySnippet": null, 
     "pubDate": "2013-07-31T19:07:20Z", 
     "title": "Preface to College Physics", 
@@ -91,18 +103,6 @@
      "physics"
     ], 
     "id": "209deb1f-1a46-4369-9e0d-18674cf58a3e@7"
-   }, 
-   {
-    "bodySnippet": null, 
-    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ", 
-    "pubDate": "2013-08-31T19:07:20Z", 
-    "title": "Derived Copy of College Physics", 
-    "mediaType": "application/vnd.org.cnx.collection",
-    "authors": [
-     "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
-    ], 
-    "keywords": [], 
-    "id": "a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1"
    }
   ], 
   "total": 3, 

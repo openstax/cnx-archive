@@ -996,8 +996,7 @@ class ViewsTestCase(unittest.TestCase):
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
                 'problems. ')
-        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
-        self.assertEqual(results['results']['items'][2]['summarySnippet'],
+        self.assertEqual(results['results']['items'][1]['summarySnippet'],
                 'algebra-based, two-semester <b>college</b> <b>physics</b> book '
                 'is grounded with real-world examples, illustrations, and '
                 'explanations to help students grasp key, fundamental '
@@ -1006,6 +1005,7 @@ class ViewsTestCase(unittest.TestCase):
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
                 'problems. ')
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
         # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'

@@ -633,7 +633,12 @@ class SearchTestCase(unittest.TestCase):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         _same_date = '2113-01-01 00:00:00 America/New_York'
-        expectations = [('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
+        expectations = [('e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                         _same_date,),
+                        ('a733d0d2-de9b-43f9-8aa9-f0895036899e',
+                         _same_date,),
+                        # first return all the books, then all the pages
+                        ('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
                          _same_date,),  # this one has a higher weight.
                         ('c8bdbabc-62b1-4a5f-b291-982ab25756d7',
                          _same_date,),
@@ -662,13 +667,17 @@ class SearchTestCase(unittest.TestCase):
         #   index in a comment to the left, just to show where it came from.
         expectations = [
             # ident: uuid
-            (8, u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),  # 10
-            (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),  # 4
-            (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),  # 5
+            # books first
+            (1, u'e79ffde3-7fb4-4af3-9ec8-df648b391597',),
+            # books with no hits applied, normal ordering expected.
+            (18, u'a733d0d2-de9b-43f9-8aa9-f0895036899e',),
+            # then pages
+            (8, u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),
+            (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),
             # No hits applied from here on, normal ordering expected.
-            (1, u'e79ffde3-7fb4-4af3-9ec8-df648b391597',),  # 1
+            (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),
             ]
-        hits_to_apply = {8: 25, 7: 15, 9: 5, 1: 0}
+        hits_to_apply = {8: 25, 7: 15, 9: 0, 1: 10, 18: 0}
 
         from datetime import datetime, timedelta
         with psycopg2.connect(self.db_connection_string) as db_connection:
