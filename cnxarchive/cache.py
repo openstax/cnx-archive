@@ -47,9 +47,20 @@ def search(query, query_type, nocache=False):
     if not search_results:
         # search results is not in memcache, do a database search
         search_results = database_search(query, query_type)
+
+        cache_length = int(settings['search-cache-expiration'])
+
+        # for particular searches, store in memcache for longer
+        if (len(search_params) == 2 and
+            # search by subject
+            search_params[0][0] == 'subject' or
+            # search single terms
+            search_params[0][0] == 'text' and ' ' not in search_params[0][1]):
+            # search with one term or one filter, plus query_type
+            cache_length = int(settings['search-long-cache-expiration'])
+
         # store in memcache
-        mc.set(mc_search_key, search_results,
-               time=int(settings['search-cache-expiration']))
+        mc.set(mc_search_key, search_results, time=cache_length)
 
     # return search results
     return search_results
