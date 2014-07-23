@@ -131,7 +131,8 @@ class Query(Sequence):
             query_string = cls.fix_quotes(query_string)
             node_tree = grammar.parse(query_string)
         structured_query = DictFormater().visit(node_tree)
-        return cls(structured_query)
+
+        return cls([t for t in structured_query if t[1] not in STOPWORDS])
 
 
 class QueryRecord(Mapping):
