@@ -215,12 +215,12 @@ class SearchTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE):
+    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE, weights=None):
         # Single point of import failure.
         from ..search import search, Query
         self.query = Query(query_params)
         self.addCleanup(delattr, self, 'query')
-        return search(self.query, query_type=query_type)
+        return search(self.query, query_type=query_type, weights=weights)
 
     def test_utf8_search(self):
         query_params = [('text', 'inførmation')]
@@ -429,7 +429,7 @@ class SearchTestCase(unittest.TestCase):
                     ([user_id], 2, 3,))
             db_connection.commit()
 
-        results = self.call_target(query_params)
+        results = self.call_target(query_params, weights={'parentauthor':5})
         self.assertEqual(len(results), 2)
 
     def test_fulltext_search(self):
