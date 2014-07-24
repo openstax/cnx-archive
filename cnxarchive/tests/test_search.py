@@ -13,7 +13,7 @@ import uuid
 import psycopg2
 
 from . import *
-from ..search import DEFAULT_QUERY_TYPE
+from ..search import DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS
 
 
 with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
@@ -215,7 +215,7 @@ class SearchTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE, weights=None):
+    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE, weights=DEFAULT_SEARCH_WEIGHTS):
         # Single point of import failure.
         from ..search import search, Query
         self.query = Query(query_params)
