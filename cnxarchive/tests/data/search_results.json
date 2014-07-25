@@ -21,7 +21,7 @@
     "title": "College Physics", 
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
-     "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
+     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
     ], 
     "keywords": [
      "college physics", 
@@ -82,7 +82,7 @@
     "title": "Derived Copy of College Physics", 
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
-     "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
+     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
     ], 
     "keywords": [], 
     "id": "a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1"
@@ -94,8 +94,8 @@
     "title": "Preface to College Physics", 
     "mediaType": "application/vnd.org.cnx.module",
     "authors": [
-     "1df3bab1-1dc7-4017-9b3a-960a87e706b1", 
-     "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
+     {"index": 1, "id": "1df3bab1-1dc7-4017-9b3a-960a87e706b1"},
+     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
     ], 
     "keywords": [
      "college physics", 
@@ -157,11 +157,13 @@
     "values": [
      {
       "count": 3, 
-      "value": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
+      "value": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
+      "index": 0
      }, 
      {
       "count": 1, 
-      "value": "1df3bab1-1dc7-4017-9b3a-960a87e706b1"
+      "value": "1df3bab1-1dc7-4017-9b3a-960a87e706b1",
+      "index": 1
      }
     ]
    }, 
