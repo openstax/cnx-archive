@@ -1060,7 +1060,7 @@ class ViewsTestCase(unittest.TestCase):
                 'includes learning objectives, concept questions, links to labs '
                 'and simulations, and ample practice opportunities to solve '
                 'traditional')
-        self.assertEqual(results['results']['items'][2]['summarySnippet'],
+        self.assertEqual(results['results']['items'][1]['summarySnippet'],
                 ' This introductory, algebra-based, two-semester college physics '
                 'book is grounded with real-world examples, illustrations, and '
                 'explanations to help students grasp key, fundamental physics '
@@ -1068,7 +1068,9 @@ class ViewsTestCase(unittest.TestCase):
                 'includes learning objectives, concept questions, links to labs '
                 'and simulations, and ample practice opportunities to solve '
                 'traditional')
-        self.assertEqual(results['results']['items'][1]['summarySnippet'], None)
+
+
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
     def test_search_no_params(self):
         environ = self._make_environ()
