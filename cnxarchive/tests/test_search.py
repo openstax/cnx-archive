@@ -598,16 +598,31 @@ class SearchTestCase(unittest.TestCase):
                         ('subject', 'Science and Technology')]
 
         results = self.call_target(query_params)
-        result_weights = [(r['id'],r['weight']) for r in results]
+        result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 7)
-        self.assertEqual(result_weights, [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597',221),
-                                      (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',21),
-                                      (u'56f1c5c1-4014-450d-a477-2121e276beca',21),
-                                      (u'f6024d8a-1868-44c7-ab65-45419ef54881',20),
-                                      (u'c0a76659-c311-405f-9a99-15c71af39325',20),
-                                      (u'26346a42-84b9-48ad-9f6a-62303c16ad41',20),
-                                      (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',20),
-                                     ])
+        self.assertEqual(result_weights,
+                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597',222),
+                          (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',22),
+                          (u'56f1c5c1-4014-450d-a477-2121e276beca',22),
+                          (u'f6024d8a-1868-44c7-ab65-45419ef54881',21),
+                          (u'c0a76659-c311-405f-9a99-15c71af39325',21),
+                          (u'26346a42-84b9-48ad-9f6a-62303c16ad41',21),
+                          (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',21),
+                          ])
+
+    def test_weighted_by_derivation_count(self):
+        """Verify weighted results by the number of derived works."""
+        query_params = [('type', 'book')]
+
+        results = self.call_target(query_params)
+        result_weights = [(r['id'], r['weight']) for r in results]
+        self.assertEqual(len(results), 2)
+        # Both of these are books, the a733d0d2 is derived from e79ffde3.
+        # Because the e79ffde3 has not derived parentage, it get's a +1 bonus.
+        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 2),
+                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', 1),
+                    ]
+        self.assertEqual(result_weights, expected)
 
     def test_subject_and_subject(self):
         query_params = [('subject', 'Science and Technology'),

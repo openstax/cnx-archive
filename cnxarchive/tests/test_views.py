@@ -1068,6 +1068,8 @@ class ViewsTestCase(unittest.TestCase):
                 'includes learning objectives, concept questions, links to labs '
                 'and simulations, and ample practice opportunities to solve '
                 'traditional')
+
+
         self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
     def test_search_no_params(self):

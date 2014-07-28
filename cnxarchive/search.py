@@ -610,7 +610,9 @@ FROM latest_modules""".format(keys)
     sorts = ', '.join(sorts)
 
     # Wrap the weighted queries with the main query.
-    statement = SEARCH_QUERY.format(limits, queries, filters, groupby, sorts)
+    fmt_args = dict(limits=limits, queries=queries, filters=filters,
+                    groupby=groupby, sorts=sorts)
+    statement = SEARCH_QUERY.format(**fmt_args)
     return (statement, arguments)
 
 
