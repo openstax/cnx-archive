@@ -5,6 +5,8 @@ python:
   - "2.7"
 addons:
   postgresql: "9.3"
+services:
+  - memcached
 before_install:
   - sudo apt-get update
   # Install the 'plpython' extension language

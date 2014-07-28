@@ -8,6 +8,7 @@
 import HTMLParser
 import glob
 import os
+import time
 import json
 import unittest
 from wsgiref.util import setup_testing_defaults
@@ -302,15 +303,23 @@ class ViewsTestCase(unittest.TestCase):
                 cursor.execute(fb.read())
         self._db_connection.commit()
 
-        self.settings['exports-directories'] = ' '.join([
-                os.path.join(TEST_DATA_DIRECTORY, 'exports'),
-                os.path.join(TEST_DATA_DIRECTORY, 'exports2')
-                ])
-        self.settings['exports-allowable-types'] = '''
-            pdf:pdf,application/pdf,PDF,PDF file, for viewing content offline and printing.
-            epub:epub,application/epub+zip,EPUB,Electronic book format file, for viewing on mobile devices.
-            zip:zip,application/zip,Offline ZIP,An offline HTML copy of the content.  Also includes XML, included media files, and other support files.
-        '''
+        # Clear all cached searches
+        import memcache
+        mc_servers = self.settings['memcache-servers'].split()
+        mc = memcache.Client(mc_servers, debug=0)
+        mc.flush_all()
+        mc.disconnect_all()
+
+        # Patch database search so that it's possible to assert call counts
+        # later
+        from .. import cache
+        original_search = cache.database_search
+        self.db_search_call_count = 0
+        def patched_search(*args, **kwargs):
+            self.db_search_call_count += 1
+            return original_search(*args, **kwargs)
+        cache.database_search = patched_search
+        self.addCleanup(setattr, cache, 'database_search', original_search)
 
     def tearDown(self):
         from .. import _set_settings
@@ -1336,6 +1345,63 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'application/vnd.org.cnx.collection')
 
+    def test_search_wo_cache(self):
+        # Patch settings so caching is disabled
+        from .. import _set_settings
+        self.settings['memcache-servers'] = ''
+        _set_settings(self.settings)
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 3)
+
+        # Fetch next page
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 2)
+
+        # Fetch next page
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+
+        results = json.loads(results)
+        self.assertEqual(results['results']['total'], 5)
+        self.assertEqual(len(results['results']['items']), 0)
+
+        # Made 4 requests, so should have called db search 4 times
+        self.assertEqual(self.db_search_call_count, 3)
+
     def test_search_pagination(self):
         # Test search results with pagination
 
@@ -1426,6 +1492,163 @@ class ViewsTestCase(unittest.TestCase):
         pub_year = [limit['values'] for limit in results['results']['limits']
                                     if limit['tag'] == 'pubYear'][0]
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
+
+        # Fetching all the pages should only query the
+        # database once because the result should already
+        # been cached in memcached
+        self.assertEqual(self.db_search_call_count, 1)
+
+    def test_search_w_nocache(self):
+        # Disable caching from url with nocache=True
+
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again (should use cache)
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again but with caching disabled
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&nocache=True'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 2)
+
+    def test_search_w_cache_expired(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Fetch next page (should use cache)
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Wait for cache to expire
+        time.sleep(30)
+
+        # Fetch the same page (cache expired)
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(self.db_search_call_count, 2)
+
+    def test_search_w_normal_cache(self):
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q="college physics"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 3)
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again (should use cache)
+        results = search(environ, self._start_response)[0]
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 3)
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again after cache is expired
+        time.sleep(20)
+        results = search(environ, self._start_response)[0]
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 3)
+        self.assertEqual(self.db_search_call_count, 2)
+
+    def test_search_w_long_cache(self):
+        # Test searches which should be cached for longer
+
+        # Build the request for subject search
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=subject:"Science and Technology"'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again (should use cache)
+        time.sleep(20)
+        results = search(environ, self._start_response)[0]
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again after cache is expired
+        time.sleep(15)
+        results = search(environ, self._start_response)[0]
+        results = json.loads(results)
+
+        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(self.db_search_call_count, 2)
 
     def test_extras(self):
         # Build the request

@@ -23,11 +23,11 @@ from .utils import (
     )
 from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import (
-    search as database_search, Query,
-    QUERY_TYPES, DEFAULT_QUERY_TYPE,
+    Query, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     DEFAULT_PER_PAGE
     )
 from .sitemap import Sitemap
+from . import cache
 
 
 logger = logging.getLogger('cnxarchive')
@@ -398,7 +398,9 @@ def search(environ, start_response):
     if not(query.filters or query.terms):
         start_response('200 OK', [('Content-type', 'application/json')])
         return [empty_response]
-    db_results = database_search(query, query_type)
+    db_results = cache.search(
+            query, query_type,
+            nocache=params.get('nocache', [''])[0].lower() == 'true')
 
     authors = db_results.auxiliary['authors']
     # create a mapping for author id to index in auxiliary authors list

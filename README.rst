@@ -105,6 +105,14 @@ the default cluster, as defined above)::
 
 **OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
 
+Install memcached (optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to use memcached, you can install memcached and configure the
+memcached servers in development.ini::
+
+    apt-get install memcached
+
 Installing the application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
