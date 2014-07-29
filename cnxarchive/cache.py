@@ -42,7 +42,7 @@ def search(query, query_type, nocache=False):
     mc_search_key = base64.b64encode(search_key)
 
     # look for search results in memcache first
-    mc = memcache.Client(memcache_servers, debug=0)
+    mc = memcache.Client(memcache_servers, server_max_value_length=128*1024*1024, debug=0)
     search_results = mc.get(mc_search_key)
     if not search_results:
         # search results is not in memcache, do a database search
