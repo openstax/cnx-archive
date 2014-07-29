@@ -43,8 +43,12 @@ def search(query, query_type, nocache=False):
 
     # look for search results in memcache first, unless nocache
     mc = memcache.Client(memcache_servers, server_max_value_length=128*1024*1024, debug=0)
+
     if not nocache:
         search_results = mc.get(mc_search_key)
+    else:
+        search_results = None
+    
     if not search_results:
         # search results is not in memcache, do a database search
         search_results = database_search(query, query_type)
