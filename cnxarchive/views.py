@@ -511,10 +511,17 @@ def sitemap(environ, start_response):
         with db_connection.cursor() as cursor:
             # magic number limit comes from Google policy - will need to split
             # to multiple sitemaps before we have more content
-            cursor.execute("select uuid||'@'||concat_ws('.',major_version,minor_version) as idver, revised  from latest_modules order by revised desc limit 50000")
+            cursor.execute("""\
+                    SELECT
+                        uuid||'@'||concat_ws('.',major_version,minor_version) AS idver,
+                        REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name), '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
+                        revised
+                    FROM latest_modules
+                    ORDER BY revised DESC LIMIT 50000""")
             res=cursor.fetchall()
             for r in res:
-                xml.add_url('http://%s/contents/%s' % (hostname,r[0]),lastmod = r[1])
+                xml.add_url('http://%s/contents/%s/%s' % (hostname,r[0], r[1]),
+                            lastmod=r[2])
 
     status = '200 OK'
     headers = [('Content-type', 'text/xml')]
