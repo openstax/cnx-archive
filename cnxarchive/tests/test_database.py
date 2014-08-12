@@ -662,7 +662,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         abstract, html = cursor.fetchone()
         self.assertEqual(abstract,
                 'Here is my <emphasis>string</emphasis> summary.')
-        self.assert_('Here is my <strong class="emphasis">string</strong> summary.'
+        self.assert_('Here is my <strong>string</strong> summary.'
                 in html)
 
     @db_connect
