@@ -41,16 +41,19 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to_latest(cursor, id, path_format_string):
+def redirect_to(cursor, id, path_format_string, version=None):
     """Redirect to latest version of a module / collection using the provided
     path (path_format_string should look like '/contents/{}@{}'
     """
-    cursor.execute(SQL['get-module-versions'], {'id': id})
-    try:
-        latest_version = cursor.fetchone()[0]
-    except (TypeError, IndexError,): # None returned
-        logger.debug("version was not supplied and could not be discovered.")
-        raise httpexceptions.HTTPNotFound()
+    if not version:
+        cursor.execute(SQL['get-module-versions'], {'id': id})
+        try:
+            latest_version = cursor.fetchone()[0]
+        except (TypeError, IndexError,): # None returned
+            logger.debug("version was not supplied and could not be discovered.")
+            raise httpexceptions.HTTPNotFound()
+    else:
+        latest_version = version
     raise httpexceptions.HTTPFound(path_format_string \
             .format(id, latest_version))
 
@@ -214,7 +217,7 @@ def _get_content_json(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, '/contents/{}@{}')
+                redirect_to(cursor, id, '/contents/{}@{}')
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
@@ -284,13 +287,33 @@ def get_content(environ, start_response):
     else:
         return get_content_json(environ, start_response)
 
+def redirect_legacy_content(environ, start_response):
+    """Redirect from legacy /content/id/version url to new /contents/uuid@version.
+    """
+    settings = get_settings()
+    routing_args = environ['wsgiorg.routing_args']
+    objid = routing_args['objid']
+    objver = routing_args.get('objver')
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            if objver:
+                args = dict(objid=objid,objver=objver)
+                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
+            else:
+                cursor.execute(SQL['get-content-from-legacy-id'], dict(objid=objid))
+            try:
+                id, version = cursor.fetchone()
+                redirect_to(cursor, id, '/contents/{}@{}', version)
+            except TypeError:  # None returned
+                raise httpexceptions.HTTPNotFound()
+
 
 def get_resource(environ, start_response):
     """Retrieve a file's data."""
     settings = get_settings()
     hash = environ['wsgiorg.routing_args']['hash']
 
-    # Do the module lookup
+    # Do the file lookup
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             args = dict(hash=hash)
@@ -318,7 +341,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, '/extras/{}@{}')
+                redirect_to(cursor, id, '/extras/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
