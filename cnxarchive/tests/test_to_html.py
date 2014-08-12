@@ -116,7 +116,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        transformed_contents = '<ul class="list"><li class="item">one</li><li class="item">two</li><li class="item">three</li></ul>'
+        transformed_contents = '<ul><li>one</li><li>two</li><li>three</li></ul>'
         self.assertTrue(html.find(transformed_contents) >= 0)
 
     def test_success_w_reference(self):
@@ -145,7 +145,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                                "  WHERE abstractid = %s;",
                                (abstractid,))
                 html = cursor.fetchone()[0]
-        transformed_contents = '<p class="para">A link to the <a href="http://example.com">outside world</a>.</p>'
+        transformed_contents = '<p>A link to the <a href="http://example.com">outside world</a>.</p>'
         self.assertTrue(html.find(transformed_contents) >= 0)
 
     def test_success_w_no_cnxml(self):
