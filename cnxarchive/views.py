@@ -13,13 +13,14 @@ import urlparse
 
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
+from cnxepub.models import flatten_tree_to_ident_hashes
 
 from . import database
 from . import get_settings
 from . import httpexceptions
 from .utils import (
     portaltype_to_mimetype, MODULE_MIMETYPE, COLLECTION_MIMETYPE,
-    split_ident_hash, slugify,
+    split_ident_hash, slugify, join_ident_hash,
     )
 from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import (
@@ -208,10 +209,11 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_content_json(environ, start_response):
+def _get_content_json(environ, start_response, ident_hash=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
-    ident_hash = environ['wsgiorg.routing_args']['ident_hash']
+    if not ident_hash:
+        ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
@@ -289,11 +291,51 @@ def get_content(environ, start_response):
 
 def redirect_legacy_content(environ, start_response):
     """Redirect from legacy /content/id/version url to new /contents/uuid@version.
+       Handles collection context (book) as well
     """
-    settings = get_settings()
     routing_args = environ['wsgiorg.routing_args']
     objid = routing_args['objid']
     objver = routing_args.get('objver')
+
+    id, version = _convert_legacy_id(objid,objver)
+
+    if not id:
+        raise httpexceptions.HTTPNotFound()
+
+    params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
+    if params.has_key('collection_context'): # page in book
+        page_ident = join_ident_hash(id,version) #save for later
+        page_id = id
+        page_version = version
+        cc=params['collection_context']
+        obj = cc[0].split('/')
+        objid = obj[0]
+        objver = None
+        if len(obj) == 2:
+            if obj[1] != 'latest':
+                objver = obj[1]
+        id, version = _convert_legacy_id(objid,objver)
+
+        if id: # Do we have a book?
+            coltree = _get_content_json(environ, start_response, ident_hash = join_ident_hash(id, version))['tree']
+            pages = list(flatten_tree_to_ident_hashes(coltree))
+            try:
+                pagenum = pages.index(page_ident) + 1
+                version = '{}:{}'.format(version,pagenum)
+            except ValueError: # this page not in this book
+                id = page_id
+                version = page_version
+        else: # no book
+            id = page_id
+            version = page_version
+
+    settings = get_settings()
+    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with db_connection.cursor() as cursor:
+            redirect_to(cursor, id, '/contents/{}@{}', version)
+
+def _convert_legacy_id(objid,objver=None):
+    settings = get_settings()
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             if objver:
@@ -303,9 +345,9 @@ def redirect_legacy_content(environ, start_response):
                 cursor.execute(SQL['get-content-from-legacy-id'], dict(objid=objid))
             try:
                 id, version = cursor.fetchone()
-                redirect_to(cursor, id, '/contents/{}@{}', version)
+                return (id, version)
             except TypeError:  # None returned
-                raise httpexceptions.HTTPNotFound()
+                return (None, None)
 
 
 def get_resource(environ, start_response):
