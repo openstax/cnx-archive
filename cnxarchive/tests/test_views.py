@@ -579,7 +579,71 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view.
         from ..views import redirect_legacy_content
 
-        # Check that the view redirects to the new url, latest version
+        # Check that the view redirects to the new url, old version
+        try:
+            redirect_legacy_content(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/contents/{}@4'.format(uuid))])
+
+    def test_legacy_bad_id_redirect(self):
+        objid = 'foobar'
+
+        import pdb; pdb.set_trace()
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'objid':objid}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view redirects to the new url, old version
+        try:
+            redirect_legacy_content(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPNotFound, e:
+            self.assertEqual(e.status, '404 Not Found')
+
+    def test_legacy_id_old_ver_collection_context(self):
+        uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
+        objid = 'm42709'
+        colid = 'col15533'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'objid':objid, 'objver':'1.4'}
+        environ['wsgiorg.routing_args'] = routing_args
+        environ['QUERY_STRING'] = 'collection_context={}/latest'.format(colid)
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view redirects to the new url, old version
+        try:
+            redirect_legacy_content(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/contents/{}@1.1:15'.format(uuid))])
+
+    def test_legacy_id_old_ver_bad_collection_context(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        objid = 'm42709'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'objid':objid, 'objver':'1.4'}
+        environ['wsgiorg.routing_args'] = routing_args
+        environ['QUERY_STRING'] = 'collection_context=col45555/latest'
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view redirects to the new url, old version
         try:
             redirect_legacy_content(environ, self._start_response)
             self.assert_(False, 'should not get here')

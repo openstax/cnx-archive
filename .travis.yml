@@ -18,6 +18,9 @@ before_install:
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
   - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
+  # Install cnx-epub
+  - git clone https://github.com/Connexions/cnx-epub.git
+  - cd cnx-epub && python setup.py install && cd ..
   # Install rhaptos.cnxmlutils
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
   - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
