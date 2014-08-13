@@ -114,8 +114,9 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         cursor.execute('''\
         SELECT html_content(encode(file, 'escape')::text)
         FROM files''')
-        self.assertEqual('<?xml version="1.0" encoding="UTF-8"?>\n{}\n'
-                         .format(cursor.fetchone()[0]), html_content)
+        self.assertMultiLineEqual(
+                '<?xml version="1.0" encoding="UTF-8"?>\n{}\n'
+                .format(cursor.fetchone()[0]), html_content)
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
