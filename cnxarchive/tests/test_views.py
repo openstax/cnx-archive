@@ -591,7 +591,6 @@ class ViewsTestCase(unittest.TestCase):
     def test_legacy_bad_id_redirect(self):
         objid = 'foobar'
 
-        import pdb; pdb.set_trace()
         # Build the request environment.
         environ = self._make_environ()
         routing_args = {'objid':objid}
