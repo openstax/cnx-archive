@@ -320,7 +320,7 @@ def redirect_legacy_content(environ, start_response):
             coltree = _get_content_json(environ, start_response, ident_hash = join_ident_hash(id, version))['tree']
             pages = list(flatten_tree_to_ident_hashes(coltree))
             try:
-                pagenum = pages.index(page_ident) + 1
+                pagenum = pages.index(page_ident) # first id is book
                 version = '{}:{}'.format(version,pagenum)
             except ValueError: # this page not in this book
                 id = page_id
