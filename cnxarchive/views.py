@@ -303,11 +303,11 @@ def redirect_legacy_content(environ, start_response):
         raise httpexceptions.HTTPNotFound()
 
     params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
-    if params.has_key('collection_context'): # page in book
+    if params.get('collection'): # page in book
         page_ident = join_ident_hash(id,version) #save for later
         page_id = id
         page_version = version
-        cc=params['collection_context']
+        cc=params['collection']
         obj = cc[0].split('/')
         objid = obj[0]
         objver = None

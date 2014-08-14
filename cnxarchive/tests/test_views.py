@@ -615,7 +615,7 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         routing_args = {'objid':objid, 'objver':'1.4'}
         environ['wsgiorg.routing_args'] = routing_args
-        environ['QUERY_STRING'] = 'collection_context={}/latest'.format(colid)
+        environ['QUERY_STRING'] = 'collection={}/latest'.format(colid)
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -637,7 +637,7 @@ class ViewsTestCase(unittest.TestCase):
         environ = self._make_environ()
         routing_args = {'objid':objid, 'objver':'1.4'}
         environ['wsgiorg.routing_args'] = routing_args
-        environ['QUERY_STRING'] = 'collection_context=col45555/latest'
+        environ['QUERY_STRING'] = 'collection=col45555/latest'
 
         # Call the view.
         from ..views import redirect_legacy_content
