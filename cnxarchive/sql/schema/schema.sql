@@ -75,6 +75,18 @@ CREATE TABLE "document_controls" (
 );
 
 
+CREATE TYPE permission_type AS ENUM (
+       'publish'
+);
+
+create table "document_acl" (
+       "uuid" UUID,
+       "user_id" TEXT,
+       "permission" permission_type NOT NULL,
+       PRIMARY KEY ("uuid", "user_id", "permission"),
+       FOREIGN KEY ("uuid") REFERENCES document_controls ("uuid")
+);
+
 
 CREATE TABLE "modules" (
 	"module_ident" serial PRIMARY KEY,
@@ -255,9 +267,20 @@ AS $$
   return assign_uuid_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+CREATE OR REPLACE FUNCTION upsert_document_acl ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import upsert_document_acl_trigger
+  return upsert_document_acl_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
 CREATE TRIGGER act_10_module_uuid_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_uuid_default();
+
+CREATE TRIGGER act_20_module_acl_upsert
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE upsert_document_acl();
 
 CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
