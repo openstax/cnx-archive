@@ -549,7 +549,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_legacy_id_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
-
+        
         # Build the request environment.
         environ = self._make_environ()
         routing_args = {'objid':objid, 'objver':'1.5'}
@@ -650,6 +650,52 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(e.status, '302 Found')
             self.assertEqual(e.headers, [('Location',
                 '/contents/{}@4'.format(uuid))])
+
+    def test_legacy_filename_redirect(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        objid = 'm42081'
+        objver = '1.8'
+        filename = 'Figure_06_03_10a.jpg'
+        md5 = '2d69d11dbfc066d94544cf5766d9b951'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'objid':objid,
+                        'objver':objver,
+                        'filename':filename}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view redirects to the resources url
+        try:
+            redirect_legacy_content(environ, self._start_response)
+            self.assert_(False, 'should not get here')
+        except httpexceptions.HTTPFound, e:
+            self.assertEqual(e.status, '302 Found')
+            self.assertEqual(e.headers, [('Location',
+                '/resources/{}/{}'.format(md5,filename))])
+
+    def test_legacy_no_such_filename_redirect(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        objid = 'm42081'
+        objver = '1.8'
+        filename = 'nothere.png'
+
+        # Build the request environment.
+        environ = self._make_environ()
+        routing_args = {'objid':objid,
+                        'objver':objver,
+                        'filename':filename}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view 404s
+        self.assertRaises(httpexceptions.HTTPNotFound,
+            redirect_legacy_content, environ, self._start_response)
 
     def test_content_index_html(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
