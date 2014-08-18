@@ -293,14 +293,30 @@ def redirect_legacy_content(environ, start_response):
     """Redirect from legacy /content/id/version url to new /contents/uuid@version.
        Handles collection context (book) as well
     """
+    settings = get_settings()
     routing_args = environ['wsgiorg.routing_args']
     objid = routing_args['objid']
     objver = routing_args.get('objver')
+    filename = routing_args.get('filename')
 
     id, version = _convert_legacy_id(objid,objver)
 
     if not id:
         raise httpexceptions.HTTPNotFound()
+
+    if filename:
+        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+            with db_connection.cursor() as cursor:
+                args = dict(id=id, version=version, filename=filename)
+                cursor.execute(SQL['get-resourceid-by-filename'], args)
+                try:
+                    res = cursor.fetchone()
+                    resourceid = res[0]
+                    raise httpexceptions.HTTPFound('/resources/{}/{}' \
+                            .format(resourceid,filename))
+                except TypeError:  # None returned
+                    raise httpexceptions.HTTPNotFound()
+
 
     params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
     if params.get('collection'): # page in book
@@ -329,7 +345,6 @@ def redirect_legacy_content(environ, start_response):
             id = page_id
             version = page_version
 
-    settings = get_settings()
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             redirect_to(cursor, id, '/contents/{}@{}', version)
