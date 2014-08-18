@@ -668,7 +668,6 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view.
         from ..views import redirect_legacy_content
 
-        import pdb;pdb.set_trace()
         # Check that the view redirects to the resources url
         try:
             redirect_legacy_content(environ, self._start_response)
