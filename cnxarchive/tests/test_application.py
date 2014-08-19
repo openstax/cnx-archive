@@ -9,6 +9,8 @@ import os
 import unittest
 from wsgiref.util import setup_testing_defaults
 
+from .. import DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS
+
 
 def faux_view(environ, start_response):
     args = ', '.join(["{}={}".format(k,v)
@@ -160,6 +162,8 @@ class CORSTestCase(unittest.TestCase):
             ('Content-type', 'text/plain'),
             ('Access-Control-Allow-Origin', '*'),
             ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+            ('Access-Control-Allow-Headers',
+             ','.join(DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS)),
             ]))
         self.assertEqual(self.kwargs, {})
 
@@ -173,7 +177,7 @@ class CORSTestCase(unittest.TestCase):
                 'REQUEST_METHOD': 'OPTIONS',
                 'PATH_INFO': '/',
                 'HTTP_ACCESS_CONTROL_REQUEST_HEADERS':
-                'origin, accept-encoding, accept-language, cache-control'
+                'origin, accept-encoding, accept-language, something-special'
                 }
         app(environ, self.start_response)
         self.assertEqual(self.args, ('200 OK', [
@@ -181,7 +185,7 @@ class CORSTestCase(unittest.TestCase):
             ('Access-Control-Allow-Origin', '*'),
             ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
             ('Access-Control-Allow-Headers',
-                'origin, accept-encoding, accept-language, cache-control'),
+             ','.join(DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS)),
             ]))
         self.assertEqual(self.kwargs, {})
 

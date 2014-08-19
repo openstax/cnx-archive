@@ -21,6 +21,19 @@ DEFAULT_LOGGING_CONFIG_FILEPATH = os.path.join(here, 'default-logging.ini')
 logger = logging.getLogger('cnxarchive')
 _settings = None
 
+DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
+    'origin',
+    'dnt',
+    'accept-encoding',
+    'accept-language',
+    'keep-alive',
+    'user-agent',
+    'x-requested-with',
+    'if-modified-since',
+    'cache-control',
+    'content-type',
+    ]
+
 def get_settings():
     """Retrieve the application settings"""
     global _settings
@@ -71,9 +84,8 @@ class Application:
         def r(status, headers, *args, **kwargs):
             headers.append(('Access-Control-Allow-Origin', '*'))
             headers.append(('Access-Control-Allow-Methods', 'GET, OPTIONS'))
-            req_headers = environ.get('HTTP_ACCESS_CONTROL_REQUEST_HEADERS')
-            if req_headers:
-                headers.append(('Access-Control-Allow-Headers', req_headers))
+            headers.append(('Access-Control-Allow-Headers',
+                            ','.join(DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS)))
             start_response(status, headers, *args, **kwargs)
         return r
 
