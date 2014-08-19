@@ -27,7 +27,7 @@ def faux_view_two(environ, start_response):
     return faux_view(environ, start_response)
 
 
-class RoutingTest(unittest.TestCase):
+class RoutingTestCase(unittest.TestCase):
 
     def test_add_route_w_fq_import(self):
         # Check that a route can be added.
@@ -131,6 +131,142 @@ class RoutingTest(unittest.TestCase):
         environ = {'PATH_INFO': '/contents/1234abcd@1.1.json'}
         controller = app.route(environ)
         self.assertEqual(controller, route_func2)
+
+    def test_route_setup(self):
+        from ..utils import parse_app_settings
+        from . import TESTING_CONFIG
+        settings = parse_app_settings(TESTING_CONFIG)
+
+        from .. import main
+        app = main({}, **settings)
+
+        tests = {
+            # controller name: (path, routing args)
+            'get_content_html': (
+                ('/contents/abcd-1234.html', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234/title.html', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '/title',
+                    }),
+                ),
+            'get_content_json': (
+                ('/contents/abcd-1234.json', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234/title.json', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '/title',
+                    }),
+                ),
+            'get_content': (
+                ('/contents/abcd-1234', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234/', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '/',
+                    }),
+                ('/contents/abcd-1234/title', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '/title',
+                    }),
+                ('/contents/abcd-1234/title/', {
+                    'ident_hash': 'abcd-1234',
+                    'ignore': '/title/',
+                    }),
+                ),
+            'get_resource': (
+                ('/resources/abcd1234', {
+                    'hash': 'abcd1234',
+                    'ignore': '',
+                    }),
+                ('/resources/abcd1234/', {
+                    'hash': 'abcd1234',
+                    'ignore': '/',
+                    }),
+                ('/resources/abcd1234/picture.jpg', {
+                    'hash': 'abcd1234',
+                    'ignore': '/picture.jpg',
+                    }),
+                ),
+            'get_export': (
+                ('/exports/abcd-1234.pdf', {
+                    'ident_hash': 'abcd-1234',
+                    'type': 'pdf',
+                    'ignore': '',
+                    }),
+                ('/exports/abcd-1234.pdf/title.pdf', {
+                    'ident_hash': 'abcd-1234',
+                    'type': 'pdf',
+                    'ignore': '/title.pdf',
+                    }),
+                ),
+            'get_extra': (
+                ('/extras/abcd-1234', {
+                    'ident_hash': 'abcd-1234',
+                    }),
+                ),
+            'search': (
+                ('/search', {}),
+                ),
+            'extras': (
+                ('/extras', {}),
+                ),
+            'sitemap': (
+                ('/sitemap.xml', {}),
+                ),
+            'redirect_legacy_content': (
+                ('/content/m12345', {
+                    'objid': 'm12345',
+                    'ignore': '',
+                    }),
+                ('/content/m12345/', {
+                    'objid': 'm12345',
+                    'ignore': '/',
+                    }),
+                ('/content/m12345/latest', {
+                    'objid': 'm12345',
+                    'ignore': '',
+                    'filename': '',
+                    }),
+                ('/content/m12345/latest/', {
+                    'objid': 'm12345',
+                    'ignore': '/',
+                    'filename': '',
+                    }),
+                ('/content/m12345/1.2', {
+                    'objid': 'm12345',
+                    'objver': '1.2',
+                    'ignore': '',
+                    'filename': '',
+                    }),
+                ('/content/m12345/1.2/', {
+                    'objid': 'm12345',
+                    'objver': '1.2',
+                    'ignore': '/',
+                    'filename': '',
+                    }),
+                ('/content/m12345/1.2/picture.jpg', {
+                    'objid': 'm12345',
+                    'objver': '1.2',
+                    'ignore': '/',
+                    'filename': 'picture.jpg',
+                    }),
+                ),
+            }
+
+        for controller_name, args in tests.items():
+            for path, routing_args in args:
+                environ = {'PATH_INFO': path}
+                controller = app.route(environ)
+                self.assertEqual(controller.__name__, controller_name)
+                self.assertEqual(environ['wsgiorg.routing_args'], routing_args)
+
 
 
 class CORSTestCase(unittest.TestCase):

@@ -133,8 +133,8 @@ def main(global_config, **settings):
     app.add_route('/extras', 'cnxarchive.views:extras')
     app.add_route('/sitemap.xml', 'cnxarchive.views:sitemap')
     app.add_route('/content/{objid}{ignore:(/)?}', 'cnxarchive.views:redirect_legacy_content')
-    app.add_route('/content/{objid}/latest{ignore:(/)?}{filename:(.*)?}', 'cnxarchive.views:redirect_legacy_content')
-    app.add_route('/content/{objid}/{objver}{ignore:(/)?}{filename:(.*)?}', 'cnxarchive.views:redirect_legacy_content')
+    app.add_route('/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}', 'cnxarchive.views:redirect_legacy_content')
+    app.add_route('/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}', 'cnxarchive.views:redirect_legacy_content')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types']
     for setting in mandatory_settings:
