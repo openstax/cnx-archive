@@ -222,11 +222,12 @@ def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
     return book_uuid, version
 
 
-def _get_content_json(environ=None, ident_hash=None):
+def _get_content_json(environ=None, ident_hash=None, pagenum=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
+    routing_args = environ and environ.get('wsgiorg.routing_args', {}) or {}
     if not ident_hash:
-        ident_hash = environ['wsgiorg.routing_args']['ident_hash']
+        ident_hash = routing_args['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
@@ -242,6 +243,20 @@ def _get_content_json(environ=None, ident_hash=None):
                 tree = cursor.fetchone()[0]
                 # Must unparse, otherwise we end up double encoding.
                 result['tree'] = json.loads(tree)
+
+                # if there's a page number, redirect to the module
+                pagenum = pagenum or routing_args.get('pagenum')
+                if pagenum:
+                    # pagenum may have : at the beginning from the url
+                    pagenum = pagenum.strip(':')
+                    pages = list(flatten_tree_to_ident_hashes(result['tree']))
+                    try:
+                        page = pages[int(pagenum)]
+                        page_id, page_version = split_ident_hash(page)
+                    except (TypeError, ValueError, IndexError):
+                        raise httpexceptions.HTTPNotFound()
+                    redirect_to(cursor, page_id, '/contents/{}@{}',
+                                version=page_version)
             else:
                 # Grab the html content.
                 args = dict(id=id, version=result['version'],

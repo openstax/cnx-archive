@@ -145,38 +145,86 @@ class RoutingTestCase(unittest.TestCase):
             'get_content_html': (
                 ('/contents/abcd-1234.html', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
                     'ignore': '',
                     }),
                 ('/contents/abcd-1234/title.html', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '/title',
+                    }),
+                ('/contents/abcd-1234:10.html', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234:10/title.html', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '/title',
                     }),
                 ),
             'get_content_json': (
                 ('/contents/abcd-1234.json', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
                     'ignore': '',
                     }),
                 ('/contents/abcd-1234/title.json', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '/title',
+                    }),
+                ('/contents/abcd-1234:10.json', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234:10/title.json', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '/title',
                     }),
                 ),
             'get_content': (
                 ('/contents/abcd-1234', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '',
+                    }),
+                ('/contents/abcd-1234:10', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '',
                     }),
                 ('/contents/abcd-1234/', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '/',
+                    }),
+                ('/contents/abcd-1234:10/', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '/',
                     }),
                 ('/contents/abcd-1234/title', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '/title',
+                    }),
+                ('/contents/abcd-1234:10/title', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '/title',
                     }),
                 ('/contents/abcd-1234/title/', {
                     'ident_hash': 'abcd-1234',
+                    'pagenum': '',
+                    'ignore': '/title/',
+                    }),
+                ('/contents/abcd-1234:10/title/', {
+                    'ident_hash': 'abcd-1234',
+                    'pagenum': ':10',
                     'ignore': '/title/',
                     }),
                 ),
