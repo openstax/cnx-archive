@@ -22,6 +22,16 @@ class IdentHashSyntaxError(Exception):
     """Raised when the ident-hash syntax is incorrect."""
 
 
+def split_legacy_hash(legacy_hash):
+    split_value = legacy_hash.split('/')
+    id = split_value[0]
+    version = None
+    if len(split_value) == 2:
+        if split_value[1] != 'latest':
+            version = split_value[1]
+    return id, version
+
+
 def split_ident_hash(ident_hash, split_version=False):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
     if HASH_CHAR not in ident_hash:
