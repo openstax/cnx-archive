@@ -133,7 +133,11 @@ class IndexHtmlExistsError(Exception):
 
 
 PATH_REFERENCE_REGEX = re.compile(
-    r'^(/?(content/)? *(?P<module>(m|col)\d{4,5})([/@](?P<version>([.\d]+|latest)))?)?/?(?P<resource>[^#][ -_.@\w\d]+)?(?P<fragment>#?.*)?$',
+    r'^(?:(https?://cnx.org)|(?P<legacy>https?://legacy.cnx.org))?(/?(content/)? *'
+    r'(?P<module>(m|col)\d{4,5})([/@](?P<version>([.\d]+|latest)))?)?/?'
+    r'(?P<resource>[^#?][ -_.@\w\d]+)?'
+    r'(?:\?collection=(?P<collection>(col\d{4,5}))(?:[/@](?P<collection_version>([.\d]+|latest)))?)?'
+    r'(?P<fragment>#?.*)?$',
     re.IGNORECASE)
 MODULE_REFERENCE = 'module-reference'
 RESOURCE_REFERENCE = 'resource-reference'
@@ -155,14 +159,22 @@ def parse_reference(ref):
     version = matches['version']
     if version == 'latest':
         version = None
+    collection_version = matches['collection_version']
+    if collection_version == 'latest':
+        collection_version = None
 
     # We've got a match, but what kind of thing is it.
-    if matches['resource']:
+    if matches['legacy']:
+        # Don't transform legacy urls if hostname is legacy.cnx.org
+        type = None
+        value = ()
+    elif matches['resource']:
         type = RESOURCE_REFERENCE
         value = (matches['resource'].strip(), matches['module'], version)
     elif matches['module']:
         type = MODULE_REFERENCE
-        value = (matches['module'], version, matches['fragment'])
+        value = (matches['module'], version, matches['collection'],
+                 collection_version, matches['fragment'])
     else:
         type = None
         value = ()
@@ -319,17 +331,32 @@ class ReferenceResolver:
                 continue
 
             if ref_type == MODULE_REFERENCE:
-                module_id, version, url_frag = payload
+                module_id, version, collection_id, collection_version, url_frag = payload
                 uuid, version = self.get_uuid_n_version(module_id, version)
+                ident_hash = '{}@{}'.format(uuid, version)
                 if uuid is None:
                     bad_references.append(
                         ReferenceNotFound("Unable to find a reference to "
                                           "'{}' at version '{}'." \
                                               .format(module_id, version),
                                           self.document_ident, ref))
-                else:
+
+                if collection_id:
+                    book_uuid, book_version = self.get_uuid_n_version(
+                            collection_id, collection_version)
+                    if book_uuid:
+                        from .views import _get_page_in_book
+                        uuid, version = _get_page_in_book(
+                                uuid, version, book_uuid, book_version)
+                        if collection_version:
+                            ident_hash = '{}@{}'.format(uuid, version)
+                        else:
+                            # remove version number
+                            page_num = version[version.index(':'):]
+                            ident_hash = '{}{}'.format(uuid, page_num)
+                if uuid:
                     url_frag = url_frag and url_frag or ''
-                    path = '/contents/{}@{}{}'.format(uuid, version, url_frag)
+                    path = '/contents/{}{}'.format(ident_hash, url_frag)
                     anchor.set('href', path)
             elif ref_type == RESOURCE_REFERENCE:
                 try:
