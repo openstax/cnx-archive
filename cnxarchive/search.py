@@ -29,8 +29,8 @@ __all__ = ('search', 'Query',)
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     # stopwords are all the common english words plus single characters
-    STOPWORDS = f.read().split(',') + [chr(i)
-            for i in range(ord('a'), ord('z') + 1)]
+    STOPWORDS = (f.read().split(',')
+                 + [chr(i) for i in range(ord('a'), ord('z') + 1)])
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
 # The maximum number of keywords and authors to return in the search result
@@ -137,7 +137,8 @@ class Query(Sequence):
             node_tree = grammar.parse(query_string)
         structured_query = DictFormater().visit(node_tree)
 
-        return cls([t for t in structured_query if t[1] not in STOPWORDS])
+        return cls([t for t in structured_query
+                    if t[1].lower() not in STOPWORDS])
 
 
 class QueryRecord(Mapping):

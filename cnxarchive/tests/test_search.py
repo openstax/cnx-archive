@@ -21,6 +21,33 @@ with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
     RAW_QUERY_RECORDS = json.load(fb)
 
 
+class QueryTestCase(unittest.TestCase):
+    """Test the non-grammar related functionality of the Query class."""
+
+    @property
+    def target_cls(self):
+        from ..search import Query
+        return Query
+
+    def call_target(self, *args, **kwargs):
+        return self.target_cls.from_raw_query(*args, **kwargs)
+
+    def test_stopword_elimination(self):
+        """Verify the removal of stopwords from the query."""
+        raw_query = "The Cat in the Hat"
+        query = self.call_target(raw_query)
+
+        expected = [('text', 'Cat'), ('text', 'Hat')]
+        self.assertEqual(expected, query.terms)
+
+    def test_w_single_letter_stopwords(self):
+        raw_query = "I am a dog"
+        query = self.call_target(raw_query)
+
+        expected = [('text', 'dog')]
+        self.assertEqual(expected, query.terms)
+
+
 class SearchModelTestCase(unittest.TestCase):
     fixture = postgresql_fixture
 
