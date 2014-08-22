@@ -175,10 +175,14 @@ def get_export_file(cursor, id, version, type, exports_dirs):
                 with open(legacy_filepath, 'r') as file:
                     os.link(legacy_filepath,filepath)
                     return (slugify_title_filename, mimetype, file.read())
-            except IOError:
+            except IOError as e:
                 # to be handled by the else part below if unable to find file 
                 # in any of the export dirs
-                pass
+                if not str(e).startswith('[Errno 2] No such file or directory:'):
+                    logger.warn('IOError when accessing legacy export filepath:\n'
+                                'exception: {}\n'
+                                'filepath: {}\n'
+                                .format(str(e), legacy_filepath))
     else:
         raise ExportError('{} not found'.format(filename))
 
