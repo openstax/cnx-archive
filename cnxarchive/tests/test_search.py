@@ -7,6 +7,7 @@
 # ###
 import os
 import json
+import datetime
 import unittest
 import uuid
 
@@ -566,6 +567,46 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(results), 2)
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
                                       '209deb1f-1a46-4369-9e0d-18674cf58a3e'])
+
+    @db_connect
+    def test_pubYear_w_timezone(self, cursor):
+        """Verify the use of pubYear with timestamps that occur 12/31 or 1/1."""
+        # See also https://github.com/Connexions/cnx-archive/issues/249
+        # Change the local tzinfo to be near 'America/Whitehorse'.
+        from .. import search
+        self.addCleanup(setattr, search, 'LOCAL_TZINFO', search.LOCAL_TZINFO)
+        from psycopg2.tz import FixedOffsetTimezone
+        local_tz = FixedOffsetTimezone(-8 * 60)
+        setattr(search, 'LOCAL_TZINFO', local_tz)
+
+        # Modify some modules to give them different year of publication.
+        # All these dates occur in 2020 according to the system time zone.
+        pub_year_mods = [
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597',
+             # Almost 2021 somewhere in mid-USA
+             datetime.datetime(2020, 12, 31, 23, 5, 0,
+                               tzinfo=FixedOffsetTimezone(-6 * 60)),),
+            ('209deb1f-1a46-4369-9e0d-18674cf58a3e',
+             # Just turned 2021 somewhere in mid-USA
+             datetime.datetime(2021, 1, 1, 0, 5, 0,
+                               tzinfo=FixedOffsetTimezone(-6 * 60)),),
+            ('f3c9ab70-a916-4d8c-9256-42953287b4e9',
+             # Almost 2020 in Alaska
+             datetime.datetime(2019, 12, 31, 23, 5, 0,
+                               tzinfo=FixedOffsetTimezone(-10 * 60)),),
+            ]
+
+        for id, date in pub_year_mods:
+            cursor.execute(
+                    "UPDATE latest_modules "
+                    "SET revised = %s "
+                    "WHERE uuid = %s", (date, id,))
+        cursor.connection.commit()
+
+        query_params = [('pubYear', '2020')]
+        results = self.call_target(query_params)
+
+        self.assertEqual(results.counts['pubYear'], [(u'2020', 3)])
 
     def test_type_without_term(self):
         query_params = [('type', 'book')]

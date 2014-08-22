@@ -10,9 +10,12 @@ import os
 import json
 import re
 from collections import Mapping, OrderedDict, Sequence
+from datetime import datetime
+from time import strptime
 
-from parsimonious.exceptions import IncompleteParseError
 import psycopg2
+from parsimonious.exceptions import IncompleteParseError
+from psycopg2.tz import FixedOffsetTimezone, LocalTimezone
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
@@ -27,6 +30,7 @@ __all__ = ('search', 'Query',)
 
 
 here = os.path.abspath(os.path.dirname(__file__))
+LOCAL_TZINFO = LocalTimezone()
 with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     # stopwords are all the common english words plus single characters
     STOPWORDS = (f.read().split(',')
@@ -405,7 +409,9 @@ class QueryResults(Sequence):
             date = rec['pubDate']
             if date is None:
                 continue
-            year = date[:4]
+            date = datetime(*strptime(date, "%Y-%m-%dT%H:%M:%SZ")[:6],
+                                      tzinfo=FixedOffsetTimezone())
+            year = unicode(date.astimezone(LOCAL_TZINFO).year)
             counts.setdefault(year, 0)
             counts[year] += 1
         counts = counts.items()
