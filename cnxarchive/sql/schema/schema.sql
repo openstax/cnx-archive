@@ -71,7 +71,9 @@ CREATE TABLE "document_controls" (
        -- for document/module input. This prevents collisions between existing documents,
        -- and publication pending documents, while still providing the publishing system
        -- a means of assigning an identifier where the documents will eventually live.
-       "uuid" UUID PRIMARY KEY DEFAULT uuid_generate_v4()
+       -- The 'licenseid' starts as NULL, but if connected to a 'modules' or 'lastest_modules' record MUST be populated, this is enforeced by a trigger.
+       "uuid" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+       "licenseid" INTEGER DEFAULT NULL
 );
 
 
