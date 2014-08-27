@@ -1201,7 +1201,7 @@ GROUP BY portal_type""")
     @db_connect
     def test_new_module_wo_uuid(self, cursor):
         """Verify legacy publishing of a new module creates a UUID
-        value and inserts a 'document_controls' entry.
+        and licenseid in a 'document_controls' entry.
         """
         # Insert a new module.
         cursor.execute("""\
@@ -1223,18 +1223,19 @@ VALUES
    DEFAULT, DEFAULT,
    DEFAULT, ' ')
 RETURNING
-  uuid""", (self._abstract_id,))
-        uuid_ = cursor.fetchone()[0]
+  uuid, licenseid""", (self._abstract_id,))
+        uuid_, license_id = cursor.fetchone()
 
         # Hopefully pull the UUID out of the 'document_controls' table.
-        cursor.execute("SELECT uuid from document_controls")
+        cursor.execute("SELECT uuid, licenseid from document_controls")
         try:
-            controls_uuid = cursor.fetchone()[0]
+            controls_uuid, controls_license_id = cursor.fetchone()
         except TypeError:
             self.fail("the document_controls entry was not made.")
 
         # Check the values match
         self.assertEqual(uuid_, controls_uuid)
+        self.assertEqual(license_id, controls_license_id)
 
 
 SQL_FOR_HIT_DOCUMENTS = """

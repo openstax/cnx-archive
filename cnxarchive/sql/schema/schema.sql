@@ -265,8 +265,8 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION assign_uuid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_uuid_default_trigger
-  return assign_uuid_default_trigger(plpy, TD)
+  from cnxarchive.database import assign_document_controls_default_trigger
+  return assign_document_controls_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION upsert_document_acl ()
