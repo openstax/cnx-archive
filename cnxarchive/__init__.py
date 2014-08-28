@@ -122,10 +122,10 @@ def main(global_config, **settings):
     load_logging_configuration(logging_config_filepath)
 
     app = Application()
-    app.add_route('/contents/{ident_hash}{ignore:(/.*)?}.html', 'cnxarchive.views:get_content_html')
-    app.add_route('/contents/{ident_hash}{ignore:(/.*)?}.json', 'cnxarchive.views:get_content_json')
+    app.add_route('/contents/{ident_hash:([^:/]*)}{pagenum:(:[0-9]+)?}{ignore:(/.*)?}.html', 'cnxarchive.views:get_content_html')
+    app.add_route('/contents/{ident_hash:([^:/]*)}{pagenum:(:[0-9]+)?}{ignore:(/.*)?}.json', 'cnxarchive.views:get_content_json')
     # app.add_route('/contents/{ident_hash}.snippet', 'cnxarchive.views:get_content_snippet')
-    app.add_route('/contents/{ident_hash}{ignore:(/.*)?}', 'cnxarchive.views:get_content')
+    app.add_route('/contents/{ident_hash:([^:/]*)}{pagenum:(:[0-9]+)?}{ignore:(/.*)?}', 'cnxarchive.views:get_content')
     app.add_route('/resources/{hash}{ignore:(/.*)?}', 'cnxarchive.views:get_resource')
     app.add_route('/exports/{ident_hash}.{type}{ignore:(/.*)?}', 'cnxarchive.views:get_export')
     app.add_route('/extras/{ident_hash}', 'cnxarchive.views:get_extra')
@@ -133,8 +133,8 @@ def main(global_config, **settings):
     app.add_route('/extras', 'cnxarchive.views:extras')
     app.add_route('/sitemap.xml', 'cnxarchive.views:sitemap')
     app.add_route('/content/{objid}{ignore:(/)?}', 'cnxarchive.views:redirect_legacy_content')
-    app.add_route('/content/{objid}/latest{ignore:(/)?}{filename:(.*)?}', 'cnxarchive.views:redirect_legacy_content')
-    app.add_route('/content/{objid}/{objver}{ignore:(/)?}{filename:(.*)?}', 'cnxarchive.views:redirect_legacy_content')
+    app.add_route('/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}', 'cnxarchive.views:redirect_legacy_content')
+    app.add_route('/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}', 'cnxarchive.views:redirect_legacy_content')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types']
     for setting in mandatory_settings:

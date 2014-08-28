@@ -505,6 +505,47 @@ class ViewsTestCase(unittest.TestCase):
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
+    def test_module_content_in_collection_context(self):
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+        page_uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
+
+        # Build the request environment
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '{}@{}'.format(uuid, version),
+                'pagenum': ':3',
+                }
+
+        # Call the view, check that it redirects to the module
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_content(environ, self._start_response)
+
+        e = raiser.exception
+        self.assertEqual(e.status, '302 Found')
+        self.assertEqual(e.headers, [
+            ('Location', '/contents/{}@4'.format(page_uuid))])
+
+    def test_module_content_in_collection_context_not_found(self):
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+
+        # Build the request environment
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '{}@{}'.format(uuid, version),
+                'pagenum': ':100',
+                }
+
+        # Call the view, check that it returns not found
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPNotFound) as raiser:
+            get_content(environ, self._start_response)
+
+        e = raiser.exception
+        self.assertEqual(e.status, '404 Not Found')
+
     def test_content_without_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
