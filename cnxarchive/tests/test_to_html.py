@@ -446,6 +446,10 @@ class ReferenceResolutionTestCase(unittest.TestCase):
             with open(TESTING_DATA_SQL_FILE, 'rb') as fp:
                 cursor.execute(fp.read())
         self._db_connection.commit()
+        from .. import _set_settings
+        from ..database import CONNECTION_SETTINGS_KEY
+        _set_settings({
+            CONNECTION_SETTINGS_KEY: self.fixture._connection_string})
 
     def tearDown(self):
         self.fixture.tearDown()
@@ -506,6 +510,12 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         <a href="/ m42709@1.4">
             <img src="/Figure_01_00_01.jpg"/>
         </a>
+        <a href="/m42092/latest?collection=col11406/latest#figure">
+            Module link with collection
+        </a>
+        <a href="/m42955/latest?collection=col11406/1.6">
+            Module link with collection and version
+        </a>
         <img src=" Figure_01_00_01.jpg"/>
         <img src="/content/m42092/latest/PhET_Icon.png"/>
         <img src="/content/m42092/1.4/PhET_Icon.png"/>
@@ -544,6 +554,12 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         </a>
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
             <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+        </a>
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:3#figure">
+            Module link with collection
+        </a>
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:1">
+            Module link with collection and version
         </a>
         <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
         <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb/PhET_Icon.png"/>
@@ -608,23 +624,29 @@ class ReferenceResolutionTestCase(unittest.TestCase):
                 RESOURCE_REFERENCE)
 
         self.assertEqual(parse_reference('/m12345'),
-                (MODULE_REFERENCE, ('m12345', None, '')))
+                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
+
+        self.assertEqual(parse_reference('/content/m12345'),
+                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
+
+        self.assertEqual(parse_reference('http://cnx.org/content/m12345'),
+                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
 
         # m10278 "The Advanced CNXML"
         self.assertEqual(parse_reference('/m9007'),
-                (MODULE_REFERENCE, ('m9007', None, '')))
+                (MODULE_REFERENCE, ('m9007', None, None, None, '')))
 
         # m11374 "KCL"
         self.assertEqual(parse_reference('/m0015#current'),
-                (MODULE_REFERENCE, ('m0015', None, '#current')))
+                (MODULE_REFERENCE, ('m0015', None, None, None, '#current')))
 
         # m11351 "electron and hole density equations"
         self.assertEqual(parse_reference('/m11332#ntypeq'),
-                (MODULE_REFERENCE, ('m11332', None, '#ntypeq')))
+                (MODULE_REFERENCE, ('m11332', None, None, None, '#ntypeq')))
 
         # m19809 "Gavin Bakers entry..."
         self.assertEqual(parse_reference('/ m19770'),
-                (MODULE_REFERENCE, ('m19770', None, '')))
+                (MODULE_REFERENCE, ('m19770', None, None, None, '')))
 
         # m16562 "Flat Stanley.pdf"
         self.assertEqual(parse_reference(' Flat Stanley.pdf'),
@@ -636,7 +658,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
 
         # m35999 "version 2.3 of the first module"
         self.assertEqual(parse_reference('/m0000@2.3'),
-                (MODULE_REFERENCE, ('m0000', '2.3', '')))
+                (MODULE_REFERENCE, ('m0000', '2.3', None, None, '')))
 
         # m14396 "Adding a Table..."
         # m11837
@@ -649,3 +671,24 @@ class ReferenceResolutionTestCase(unittest.TestCase):
 
         # m45070
         self.assertEqual(parse_reference('/m'), (None, ()))
+
+        # m45136 "legacy format"
+        self.assertEqual(parse_reference(
+            'http://cnx.org/content/m48897/latest?collection=col11441/latest'),
+            (MODULE_REFERENCE, ('m48897', None, 'col11441', None, '')))
+        self.assertEqual(parse_reference(
+            'http://cnx.org/content/m48897/1.2?collection=col11441/1.10'),
+            (MODULE_REFERENCE, ('m48897', '1.2', 'col11441', '1.10', '')))
+        self.assertEqual(parse_reference(
+            'http://cnx.org/content/m48897/1.2?collection=col11441/1.10'
+            '#figure'),
+            (MODULE_REFERENCE, ('m48897', '1.2', 'col11441', '1.10',
+             '#figure')))
+
+        # legacy.cnx.org links
+        self.assertEqual(parse_reference(
+            'http://legacy.cnx.org/content/m48897/latest'),
+            (None, ()))
+        self.assertEqual(parse_reference(
+            'http://legacy.cnx.org/content/m48897/latest?collection=col11441/'
+            'latest'), (None, ()))

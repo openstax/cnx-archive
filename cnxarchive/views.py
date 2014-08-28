@@ -20,7 +20,7 @@ from . import get_settings
 from . import httpexceptions
 from .utils import (
     portaltype_to_mimetype, MODULE_MIMETYPE, COLLECTION_MIMETYPE,
-    split_ident_hash, slugify, join_ident_hash,
+    split_ident_hash, slugify, join_ident_hash, split_legacy_hash,
     )
 from .database import CONNECTION_SETTINGS_KEY, SQL
 from .search import (
@@ -213,7 +213,20 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_content_json(environ, start_response, ident_hash=None):
+def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
+    coltree = _get_content_json(
+            ident_hash=join_ident_hash(book_uuid, book_version))['tree']
+    pages = list(flatten_tree_to_ident_hashes(coltree))
+    try:
+        # first id is book
+        pagenum = pages.index(join_ident_hash(page_uuid, page_version))
+        version = '{}:{}'.format(book_version, pagenum)
+    except ValueError: # this page not in this book
+        return page_uuid, page_version
+    return book_uuid, version
+
+
+def _get_content_json(environ=None, ident_hash=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
     if not ident_hash:
@@ -256,7 +269,7 @@ def get_content_json(environ, start_response):
     """Retrieve a piece of content as JSON using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ, start_response)
+    result = _get_content_json(environ=environ)
 
     result = json.dumps(result)
     status = "200 OK"
@@ -269,7 +282,7 @@ def get_content_html(environ, start_response):
     """Retrieve a piece of content as HTML using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ, start_response)
+    result = _get_content_json(environ=environ)
 
     media_type = result['mediaType']
     if media_type == MODULE_MIMETYPE:
@@ -324,30 +337,10 @@ def redirect_legacy_content(environ, start_response):
 
     params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
     if params.get('collection'): # page in book
-        page_ident = join_ident_hash(id,version) #save for later
-        page_id = id
-        page_version = version
-        cc=params['collection']
-        obj = cc[0].split('/')
-        objid = obj[0]
-        objver = None
-        if len(obj) == 2:
-            if obj[1] != 'latest':
-                objver = obj[1]
-        id, version = _convert_legacy_id(objid,objver)
-
-        if id: # Do we have a book?
-            coltree = _get_content_json(environ, start_response, ident_hash = join_ident_hash(id, version))['tree']
-            pages = list(flatten_tree_to_ident_hashes(coltree))
-            try:
-                pagenum = pages.index(page_ident) # first id is book
-                version = '{}:{}'.format(version,pagenum)
-            except ValueError: # this page not in this book
-                id = page_id
-                version = page_version
-        else: # no book
-            id = page_id
-            version = page_version
+        objid, objver = split_legacy_hash(params['collection'][0])
+        book_uuid, book_version = _convert_legacy_id(objid, objver)
+        if book_uuid:
+            id, version = _get_page_in_book(id, version, book_uuid, book_version)
 
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
