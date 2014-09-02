@@ -71,9 +71,23 @@ CREATE TABLE "document_controls" (
        -- for document/module input. This prevents collisions between existing documents,
        -- and publication pending documents, while still providing the publishing system
        -- a means of assigning an identifier where the documents will eventually live.
-       "uuid" UUID PRIMARY KEY DEFAULT uuid_generate_v4()
+       -- The 'licenseid' starts as NULL, but if connected to a 'modules' or 'lastest_modules' record MUST be populated, this is enforeced by a trigger.
+       "uuid" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+       "licenseid" INTEGER DEFAULT NULL
 );
 
+
+CREATE TYPE permission_type AS ENUM (
+       'publish'
+);
+
+create table "document_acl" (
+       "uuid" UUID,
+       "user_id" TEXT,
+       "permission" permission_type NOT NULL,
+       PRIMARY KEY ("uuid", "user_id", "permission"),
+       FOREIGN KEY ("uuid") REFERENCES document_controls ("uuid")
+);
 
 
 CREATE TABLE "modules" (
@@ -251,9 +265,24 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION assign_uuid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_uuid_default_trigger
-  return assign_uuid_default_trigger(plpy, TD)
+  from cnxarchive.database import assign_document_controls_default_trigger
+  return assign_document_controls_default_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION upsert_document_acl ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import upsert_document_acl_trigger
+  return upsert_document_acl_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER act_10_module_uuid_default
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE assign_uuid_default();
+
+CREATE TRIGGER act_20_module_acl_upsert
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE upsert_document_acl();
 
 CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
@@ -266,10 +295,6 @@ CREATE TRIGGER module_published
 CREATE TRIGGER module_version_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_version_default();
-
-CREATE TRIGGER module_uuid_default
-  BEFORE INSERT ON modules FOR EACH ROW
-  EXECUTE PROCEDURE assign_uuid_default();
 
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW

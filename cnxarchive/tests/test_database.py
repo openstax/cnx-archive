@@ -72,6 +72,8 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         INSERT INTO abstracts VALUES
         (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
         ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
         cursor.execute('''\
         INSERT INTO modules VALUES
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
@@ -95,6 +97,8 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         INSERT INTO abstracts VALUES
         (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
         ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
         cursor.execute('''\
         INSERT INTO modules VALUES
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
@@ -296,6 +300,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         from ..database import republish_collection
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
@@ -345,6 +351,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         from ..database import republish_collection
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
@@ -384,6 +392,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
             with db_conn.cursor() as db_cursor:
                 db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
         '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
@@ -1191,7 +1201,7 @@ GROUP BY portal_type""")
     @db_connect
     def test_new_module_wo_uuid(self, cursor):
         """Verify legacy publishing of a new module creates a UUID
-        value and inserts a 'document_controls' entry.
+        and licenseid in a 'document_controls' entry.
         """
         # Insert a new module.
         cursor.execute("""\
@@ -1213,18 +1223,19 @@ VALUES
    DEFAULT, DEFAULT,
    DEFAULT, ' ')
 RETURNING
-  uuid""", (self._abstract_id,))
-        uuid_ = cursor.fetchone()[0]
+  uuid, licenseid""", (self._abstract_id,))
+        uuid_, license_id = cursor.fetchone()
 
         # Hopefully pull the UUID out of the 'document_controls' table.
-        cursor.execute("SELECT uuid from document_controls")
+        cursor.execute("SELECT uuid, licenseid from document_controls")
         try:
-            controls_uuid = cursor.fetchone()[0]
+            controls_uuid, controls_license_id = cursor.fetchone()
         except TypeError:
             self.fail("the document_controls entry was not made.")
 
         # Check the values match
         self.assertEqual(uuid_, controls_uuid)
+        self.assertEqual(license_id, controls_license_id)
 
 
 SQL_FOR_HIT_DOCUMENTS = """
