@@ -49,7 +49,7 @@ SELECT module_ident FROM modules
 """
 SQL_RESOURCE_INFO_STATEMENT = """\
 SELECT row_to_json(row) FROM (
-  SELECT fileid as id, md5 as hash FROM files
+  SELECT fileid as id, sha1 as hash FROM files
     WHERE fileid = (SELECT fileid FROM module_files
                       WHERE module_ident = %s AND filename = %s )
 ) row;

@@ -352,10 +352,12 @@ CREATE UNIQUE INDEX modulekeywords_module_ident_keywordid_idx ON
 CREATE TABLE files (
     fileid serial PRIMARY KEY,
     md5 text,
+    sha1 text,
     file bytea
 );
 
 CREATE INDEX files_md5_idx on files (md5);
+CREATE INDEX files_sha1_idx ON files (sha1);
 
 CREATE FUNCTION update_md5() RETURNS "trigger"
     AS $$
@@ -370,6 +372,20 @@ CREATE TRIGGER update_file_md5
     BEFORE INSERT OR UPDATE ON files
     FOR EACH ROW
     EXECUTE PROCEDURE update_md5();
+
+CREATE OR REPLACE FUNCTION update_sha1()
+    RETURNS TRIGGER
+AS $$
+    import hashlib
+
+    TD['new']['sha1'] = hashlib.new('sha1', TD['new']['file']).hexdigest()
+    return 'MODIFY'
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER update_files_sha1
+    BEFORE INSERT OR UPDATE ON files
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_sha1();
 
 CREATE TABLE module_files (
     module_ident integer references modules,
