@@ -469,11 +469,11 @@ class ReferenceResolutionTestCase(unittest.TestCase):
                 content, bad_refs = fix_reference_urls(db_connection, ident, content)
 
         # Read the content for the reference changes.
-        expected_img_ref = '<img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
+        expected_img_ref = '<img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg" data-media-type="image/jpg" alt="The spiral galaxy Andromeda is shown."/>'
         self.assertTrue(content.find(expected_img_ref) >= 0)
         expected_internal_ref = '<a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7">'
         self.assertTrue(content.find(expected_internal_ref) >= 0)
-        expected_resource_ref = '<a href="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg">'
+        expected_resource_ref = '<a href="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg">'
         self.assertTrue(content.find(expected_resource_ref) >= 0)
 
     def test_reference_not_parseable(self):
@@ -550,10 +550,10 @@ class ReferenceResolutionTestCase(unittest.TestCase):
 <html xmlns="http://www.w3.org/1999/xhtml">
     <body>
         <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#xn">
-            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+            <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
-            <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+            <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
         <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:3#figure">
             Module link with collection
@@ -561,24 +561,24 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:1">
             Module link with collection and version
         </a>
-        <img src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
-        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb/PhET_Icon.png"/>
-        <img src="/resources/8c48c59e411d1e31cc0186be535fa5eb/PhET_Icon.png"/>
+        <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
+        <img src="/resources/075500ad9f71890a85fe3f7a4137ac08e2b7907c/PhET_Icon.png"/>
+        <img src="/resources/075500ad9f71890a85fe3f7a4137ac08e2b7907c/PhET_Icon.png"/>
         <img src="/content/m42092/1.3/PhET_Icon.png"/>
-        <span data-src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+        <span data-src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
 
-        <audio src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" id="music" mime-type="audio/mpeg"/>
+        <audio src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg" id="music" mime-type="audio/mpeg"/>
 
-        <video src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" id="music" mime-type="video/mp4"/>
+        <video src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg" id="music" mime-type="video/mp4"/>
 
-        <object width="400" height="400" data="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+        <object width="400" height="400" data="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
 
         <object width="400" height="400">
-            <embed src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg"/>
+            <embed src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </object>
 
         <audio controls="controls">
-            <source src="/resources/38b5477eb68417a65d7fcb1bc1d6630e/Figure_01_00_01.jpg" type="audio/mpeg"/>
+            <source src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg" type="audio/mpeg"/>
         </audio>
     </body>
 </html>''')
@@ -596,7 +596,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
 
         # Test getting a file in module 3
         self.assertEqual(resolver.get_resource_info('Figure_01_00_01.jpg'),
-                {'hash': '38b5477eb68417a65d7fcb1bc1d6630e', 'id': 6})
+                {'hash': 'd47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9', 'id': 6})
 
         # Test file not found outside of module 3
         self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
@@ -605,7 +605,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         # Test getting a file in another module
         self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
             document_id='m42092'),
-            {'hash': '8c48c59e411d1e31cc0186be535fa5eb', 'id': 23})
+            {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c', 'id': 23})
 
         # Test file not found with version
         self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
@@ -615,7 +615,7 @@ class ReferenceResolutionTestCase(unittest.TestCase):
         # Test getting a file with version
         self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
             document_id='m42092', version='1.4'),
-            {'hash': '8c48c59e411d1e31cc0186be535fa5eb', 'id': 23})
+            {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c', 'id': 23})
 
         self._db_connection.commit()
 

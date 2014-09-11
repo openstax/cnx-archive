@@ -9,5 +9,5 @@
 SELECT mf.mimetype, f.file
 FROM module_files as mf
 LEFT JOIN files f on mf.fileid = f.fileid
-WHERE f.md5 = %(hash)s
+WHERE f.sha1 = %(hash)s
 ;

@@ -656,7 +656,7 @@ class ViewsTestCase(unittest.TestCase):
         objid = 'm42081'
         objver = '1.8'
         filename = 'Figure_06_03_10a.jpg'
-        md5 = '2d69d11dbfc066d94544cf5766d9b951'
+        sha1 = '95430b74a5ee9e09037c589feb0685ee226a06b8'
 
         # Build the request environment.
         environ = self._make_environ()
@@ -675,7 +675,7 @@ class ViewsTestCase(unittest.TestCase):
         except httpexceptions.HTTPFound, e:
             self.assertEqual(e.status, '302 Found')
             self.assertEqual(e.headers, [('Location',
-                '/resources/{}/{}'.format(md5,filename))])
+                '/resources/{}/{}'.format(sha1, filename))])
 
     def test_legacy_no_such_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -774,7 +774,7 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
-        hash = '8c48c59e411d1e31cc0186be535fa5eb'
+        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
 
         # Build the request.
         environ = self._make_environ()
