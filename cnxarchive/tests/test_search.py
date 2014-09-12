@@ -13,11 +13,12 @@ import uuid
 
 import psycopg2
 
-from . import *
-from ..search import DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS
+from . import testing
 
 
-with open(os.path.join(TEST_DATA_DIRECTORY, 'raw-search-rows.json'), 'r') as fb:
+RAW_SEARCH_ROWS_FILEPATH = os.path.join(testing.DATA_DIRECTORY,
+                                        'raw-search-rows.json')
+with open(RAW_SEARCH_ROWS_FILEPATH, 'r') as fb:
     # Search results for a search on 'physics'.
     RAW_QUERY_RECORDS = json.load(fb)
 
@@ -50,31 +51,23 @@ class QueryTestCase(unittest.TestCase):
 
 
 class SearchModelTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.data_fixture
 
     @classmethod
     def setUpClass(cls):
-        from ..utils import parse_app_settings
-        cls.settings = parse_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
-        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+        cls.settings = testing.integration_test_settings()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls._db_connection.close()
-
-    def setUp(self):
+    @testing.db_connect
+    def setUp(self, cursor):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-        # Load the database with example legacy data.
-        with self._db_connection.cursor() as cursor:
-            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-                cursor.execute(fb.read())
-            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
-                cursor.execute(fb.read())
-        self._db_connection.commit()
+
+        # FIXME to be removed soon...
+        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                             'cnx-user.data.sql')
+        with open(cnxuser_data_filepath, 'r') as fb:
+            cursor.execute(fb.read())
 
     def tearDown(self):
         from .. import _set_settings
@@ -212,38 +205,36 @@ class SearchModelTestCase(unittest.TestCase):
 
 
 class SearchTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.data_fixture
 
     @classmethod
     def setUpClass(cls):
-        from ..utils import parse_app_settings
-        cls.settings = parse_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
-        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+        cls.settings = testing.integration_test_settings()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls._db_connection.close()
-
-    def setUp(self):
+    @testing.db_connect
+    def setUp(self, cursor):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-        # Load the database with example legacy data.
-        with self._db_connection.cursor() as cursor:
-            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-                cursor.execute(fb.read())
-            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
-                cursor.execute(fb.read())
-        self._db_connection.commit()
+
+        # FIXME to be removed soon...
+        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                             'cnx-user.data.sql')
+        with open(cnxuser_data_filepath, 'r') as fb:
+            cursor.execute(fb.read())
 
     def tearDown(self):
         from .. import _set_settings
         _set_settings(None)
         self.fixture.tearDown()
 
-    def call_target(self, query_params, query_type=DEFAULT_QUERY_TYPE, weights=DEFAULT_SEARCH_WEIGHTS):
+    def call_target(self, query_params, query_type=None, weights=None):
+        from ..search import DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS
+        if query_type is None:
+            query_type = DEFAULT_QUERY_TYPE
+        if weights is None:
+            weights = DEFAULT_SEARCH_WEIGHTS
+
         # Single point of import failure.
         from ..search import search, Query
         self.query = Query(query_params)
@@ -299,163 +290,157 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
-    def test_author_search(self):
+    @testing.db_connect
+    def test_author_search(self, cursor):
         # Test the results of an author search.
         user_id = str(uuid.uuid4())
         query_params = [('author', 'Jill')]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as an author.
-                cursor.execute(
-                    "UPDATE latest_modules SET (authors) = (%s) "
-                    "WHERE module_ident = %s OR module_ident = %s;",
-                    ([user_id], 2, 3,))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as an author.
+        cursor.execute(
+            "UPDATE latest_modules SET (authors) = (%s) "
+            "WHERE module_ident = %s OR module_ident = %s;",
+            ([user_id], 2, 3,))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    def test_editor_search(self):
+    @testing.db_connect
+    def test_editor_search(self, cursor):
         # Test the results of an editor search.
         user_id = str(uuid.uuid4())
         query_params = [('editor', 'jmiller@example.com')]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as an editor.
-                role_id = 5
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 2, role_id))
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 3, role_id))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as an editor.
+        role_id = 5
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 2, role_id))
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 3, role_id))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    def test_licensor_search(self):
+    @testing.db_connect
+    def test_licensor_search(self, cursor):
         # Test the results of a licensor search.
         user_id = str(uuid.uuid4())
         query_params = [('licensor', 'jmiller')]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as a licensor.
-                role_id = 2
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 2, role_id))
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 3, role_id))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as a licensor.
+        role_id = 2
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 2, role_id))
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 3, role_id))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    def test_maintainer_search(self):
+    @testing.db_connect
+    def test_maintainer_search(self, cursor):
         # Test the results of a maintainer search.
         user_id = str(uuid.uuid4())
         query_params = [('maintainer', 'Miller')]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as a maintainer.
-                cursor.execute(
-                    "UPDATE latest_modules SET (maintainers) = (%s) "
-                    "WHERE module_ident = %s OR module_ident = %s;",
-                    ([user_id], 2, 3,))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as a maintainer.
+        cursor.execute(
+            "UPDATE latest_modules SET (maintainers) = (%s) "
+            "WHERE module_ident = %s OR module_ident = %s;",
+            ([user_id], 2, 3,))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    def test_translator_search(self):
+    @testing.db_connect
+    def test_translator_search(self, cursor):
         # Test the results of a translator search.
         user_id = str(uuid.uuid4())
         query_params = [('translator', 'jmiller')]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as a translator.
-                role_id = 4
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 2, role_id))
-                cursor.execute(
-                    "INSERT INTO moduleoptionalroles"
-                    "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-                    ([user_id], 3, role_id))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as a translator.
+        role_id = 4
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 2, role_id))
+        cursor.execute(
+            "INSERT INTO moduleoptionalroles"
+            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
+            ([user_id], 3, role_id))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    def test_parentauthor_search(self):
+    @testing.db_connect
+    def test_parentauthor_search(self, cursor):
         # Test the results of a parent author search.
         user_id = str(uuid.uuid4())
         # FIXME parentauthor is only searchable by user id, not by name
         #       like the other user based columns. Inconsistent behavior...
         query_params = [('parentauthor', user_id)]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Create a new user.
-                cursor.execute(
-                    "INSERT INTO users "
-                    "(id, firstname, surname, fullname, email) "
-                    "VALUES (%s, %s, %s, %s, %s);",
-                    (user_id, 'Jill', 'Miller', 'Jill M.',
-                     'jmiller@example.com',))
-                # Update two modules in include this user as a parent author.
-                cursor.execute(
-                    "UPDATE latest_modules SET (parentauthors) = (%s) "
-                    "WHERE module_ident = %s OR module_ident = %s;",
-                    ([user_id], 2, 3,))
-            db_connection.commit()
+        # Create a new user.
+        cursor.execute(
+            "INSERT INTO users "
+            "(id, firstname, surname, fullname, email) "
+            "VALUES (%s, %s, %s, %s, %s);",
+            (user_id, 'Jill', 'Miller', 'Jill M.',
+             'jmiller@example.com',))
+        # Update two modules in include this user as a parent author.
+        cursor.execute(
+            "UPDATE latest_modules SET (parentauthors) = (%s) "
+            "WHERE module_ident = %s OR module_ident = %s;",
+            ([user_id], 2, 3,))
+        cursor.connection.commit()
 
         results = self.call_target(query_params, weights={'parentauthor':5})
         self.assertEqual(len(results), 2)
@@ -506,7 +491,7 @@ class SearchTestCase(unittest.TestCase):
         # Check for the removal of the filter
         self.assertEqual(self.query.filters, [])
 
-    @db_connect
+    @testing.db_connect
     def _pubYear_setup(self, cursor):
         # Modify some modules to give them different year of publication
         pub_year_mods = {
@@ -568,7 +553,7 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
                                       '209deb1f-1a46-4369-9e0d-18674cf58a3e'])
 
-    @db_connect
+    @testing.db_connect
     def test_pubYear_w_timezone(self, cursor):
         """Verify the use of pubYear with timestamps that occur 12/31 or 1/1."""
         # See also https://github.com/Connexions/cnx-archive/issues/249
@@ -638,7 +623,7 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
 
-    @db_connect
+    @testing.db_connect
     def _language_setup(self, cursor):
         # Modify some modules to give them different languages
         language_mods = {
@@ -712,7 +697,8 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(result_ids), 1)
         self.assertEqual(result_ids, ['209deb1f-1a46-4369-9e0d-18674cf58a3e'])
 
-    def test_sort_filter_on_pubdate(self):
+    @testing.db_connect
+    def test_sort_filter_on_pubdate(self, cursor):
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         _same_date = '2113-01-01 00:00:00 America/New_York'
@@ -729,21 +715,20 @@ class SearchTestCase(unittest.TestCase):
                          '2112-01-01 00:00:00 America/New_York',),
                         ]
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                # Update two modules in include a creation date.
-                for id, date in expectations:
-                    cursor.execute(
-                        "UPDATE latest_modules SET (revised) = (%s) "
-                        "WHERE uuid = %s::uuid;", (date, id))
-            db_connection.commit()
+        # Update two modules in include a creation date.
+        for id, date in expectations:
+            cursor.execute(
+                "UPDATE latest_modules SET (revised) = (%s) "
+                "WHERE uuid = %s::uuid;", (date, id))
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 16)
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
 
-    def test_sort_filter_on_popularity(self):
+    @testing.db_connect
+    def test_sort_filter_on_popularity(self, cursor):
         # Test the sorting of results by popularity (hit statistics).
         query_params = [('text', 'physics'), ('sort', 'popularity')]
         # The top three items we are looking have their normal sort
@@ -763,15 +748,14 @@ class SearchTestCase(unittest.TestCase):
         hits_to_apply = {8: 25, 7: 15, 9: 0, 1: 10, 18: 0}
 
         from datetime import datetime, timedelta
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                 end = datetime.today()
-                 start = end - timedelta(1)
-                 for ident, hits in hits_to_apply.items():
-                     cursor.execute("INSERT INTO document_hits "
-                                    "VALUES (%s, %s, %s, %s);",
-                                    (ident, start, end, hits,))
-                     cursor.execute("SELECT update_hit_ranks();")
+        end = datetime.today()
+        start = end - timedelta(1)
+        for ident, hits in hits_to_apply.items():
+            cursor.execute("INSERT INTO document_hits "
+                           "VALUES (%s, %s, %s, %s);",
+                           (ident, start, end, hits,))
+            cursor.execute("SELECT update_hit_ranks();")
+        cursor.connection.commit()
 
         results = self.call_target(query_params)
         for i, (ident, id) in enumerate(expectations):

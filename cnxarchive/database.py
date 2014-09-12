@@ -56,9 +56,7 @@ SQL = {
 
 
 def initdb(settings):
-    """Initialize the database from the given settings.
-    If settings is None, the settings will be looked up via pyramid.
-    """
+    """Initialize the database from the given settings."""
     with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
         with db_connection.cursor() as cursor:
             for schema_filepath in DB_SCHEMA_FILE_PATHS:
