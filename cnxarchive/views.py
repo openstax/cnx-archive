@@ -15,20 +15,23 @@ from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
 from cnxepub.models import flatten_tree_to_ident_hashes
 
-from . import database
 from . import get_settings
 from . import httpexceptions
-from .utils import (
-    portaltype_to_mimetype, MODULE_MIMETYPE, COLLECTION_MIMETYPE,
-    split_ident_hash, slugify, join_ident_hash, split_legacy_hash,
-    )
-from .database import CONNECTION_SETTINGS_KEY, SQL
+from . import config
+from . import cache
+# FIXME double import
+from . import database
+from .database import SQL
 from .search import (
-    Query, QUERY_TYPES, DEFAULT_QUERY_TYPE,
-    DEFAULT_PER_PAGE
+    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
+    Query,
     )
 from .sitemap import Sitemap
-from . import cache
+from .utils import (
+    MODULE_MIMETYPE, COLLECTION_MIMETYPE,
+    portaltype_to_mimetype,
+    join_ident_hash, slugify, split_ident_hash, split_legacy_hash,
+    )
 
 
 logger = logging.getLogger('cnxarchive')
@@ -233,7 +236,7 @@ def _get_content_json(environ=None, ident_hash=None):
         ident_hash = environ['wsgiorg.routing_args']['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
                 redirect_to(cursor, id, '/contents/{}@{}')
@@ -322,7 +325,7 @@ def redirect_legacy_content(environ, start_response):
         raise httpexceptions.HTTPNotFound()
 
     if filename:
-        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+        with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.cursor() as cursor:
                 args = dict(id=id, version=version, filename=filename)
                 cursor.execute(SQL['get-resourceid-by-filename'], args)
@@ -342,13 +345,13 @@ def redirect_legacy_content(environ, start_response):
         if book_uuid:
             id, version = _get_page_in_book(id, version, book_uuid, book_version)
 
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             redirect_to(cursor, id, '/contents/{}@{}', version)
 
 def _convert_legacy_id(objid,objver=None):
     settings = get_settings()
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if objver:
                 args = dict(objid=objid,objver=objver)
@@ -368,7 +371,7 @@ def get_resource(environ, start_response):
     hash = environ['wsgiorg.routing_args']['hash']
 
     # Do the file lookup
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             args = dict(hash=hash)
             cursor.execute(SQL['get-resource'], args)
@@ -392,7 +395,7 @@ def get_extra(environ, start_response):
     id, version = split_ident_hash(args['ident_hash'])
     results = {}
 
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
                 redirect_to(cursor, id, '/extras/{}@{}')
@@ -414,7 +417,7 @@ def get_export(environ, start_response):
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
 
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             try:
                 filename, mimetype, file_content = get_export_file(cursor,
@@ -568,7 +571,7 @@ def extras(environ, start_response):
     """Return a dict with archive metadata for webview
     """
     settings = get_settings()
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             metadata = {'subjects': list(_get_subject_list(cursor)),
                        }
@@ -578,13 +581,15 @@ def extras(environ, start_response):
     start_response(status, headers)
     return [json.dumps(metadata)]
 
+
 def sitemap(environ, start_response):
     """Return a sitemap xml file for search engines
     """
     settings = get_settings()
     xml = Sitemap()
     hostname = environ['HTTP_HOST']
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    connection_string = settings[config.CONNECTION_STRING]
+    with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             # magic number limit comes from Google policy - will need to split
             # to multiple sitemaps before we have more content
@@ -595,7 +600,7 @@ def sitemap(environ, start_response):
                         revised
                     FROM latest_modules
                     ORDER BY revised DESC LIMIT 50000""")
-            res=cursor.fetchall()
+            res = cursor.fetchall()
             for r in res:
                 xml.add_url('http://%s/contents/%s/%s' % (hostname,r[0], r[1]),
                             lastmod=r[2])

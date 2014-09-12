@@ -41,7 +41,7 @@ def integration_test_settings():
 def db_connection_factory(connection_string=None):
     if connection_string is None:
         settings = integration_test_settings()
-        from ..database import CONNECTION_SETTINGS_KEY as CONNECTION_STRING
+        from ..config import CONNECTION_STRING
         connection_string = settings[CONNECTION_STRING]
 
     def db_connect():

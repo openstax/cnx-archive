@@ -19,7 +19,8 @@ from psycopg2.tz import FixedOffsetTimezone, LocalTimezone
 from cnxquerygrammar.query_parser import grammar, DictFormater
 
 from . import get_settings
-from .database import CONNECTION_SETTINGS_KEY, SQL_DIRECTORY
+from . import config
+from .database import SQL_DIRECTORY
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
     PORTALTYPE_TO_MIMETYPE_MAPPING, utf8
@@ -188,7 +189,7 @@ class QueryRecord(Mapping):
                      'query': ' & '.join(abstract_terms),
                      }
         settings = get_settings()
-        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(sql, arguments)
@@ -206,7 +207,7 @@ class QueryRecord(Mapping):
                      'query': ' & '.join(terms),
                      }
         settings = get_settings()
-        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(_read_sql_file('highlighted-fulltext'),
@@ -647,7 +648,7 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
 
     # Execute the SQL.
     settings = get_settings()
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(statement, arguments)
             search_results = cursor.fetchall()

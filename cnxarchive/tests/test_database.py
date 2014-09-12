@@ -348,12 +348,9 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
     def test_republish_collection_w_keywords(self, cursor):
         # Ensure association of the new collection with existing keywords.
         settings = testing.integration_test_settings()
-        from ..database import CONNECTION_SETTINGS_KEY
         cursor.execute("""\
 ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
-
-        from ..database import republish_collection
 
         cursor.execute("""INSERT INTO document_controls (uuid)
         VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
@@ -377,6 +374,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         VALUES {};""".format(values_expr))
         cursor.connection.commit()
 
+        from ..database import republish_collection
         new_ident = republish_collection(3, collection_ident, cursor=cursor)
 
         cursor.execute("""\

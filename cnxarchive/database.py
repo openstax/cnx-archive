@@ -11,10 +11,9 @@ import os
 import psycopg2
 import re
 
+from . import config
 from .to_html import produce_html_for_module, produce_html_for_abstract
 
-
-CONNECTION_SETTINGS_KEY = 'db-connection-string'
 
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
@@ -57,7 +56,8 @@ SQL = {
 
 def initdb(settings):
     """Initialize the database from the given settings."""
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    connection_string = settings[config.CONNECTION_STRING]
+    with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for schema_filepath in DB_SCHEMA_FILE_PATHS:
                 with open(schema_filepath, 'r') as f:

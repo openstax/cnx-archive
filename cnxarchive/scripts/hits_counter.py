@@ -16,8 +16,8 @@ import argparse
 import gzip
 
 import psycopg2
+from .. import config
 from ..utils import parse_app_settings, split_ident_hash
-from ..database import CONNECTION_SETTINGS_KEY
 
 
 LOG_FORMAT_PLAIN = 'plain'
@@ -89,7 +89,8 @@ def main(argv=None):
     settings = parse_app_settings(args.config_uri,  args.config_name)
 
     # Insert the hits into the database.
-    with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_connection:
+    connection_string = settings[config.CONNECTION_STRING]
+    with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
                 cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
