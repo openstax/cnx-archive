@@ -11,13 +11,14 @@ import time
 import unittest
 
 import psycopg2
-from . import *
+
+from . import testing
 
 
 class InitializeDBTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.schema_fixture
 
-    @db_connect
+    @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
 
@@ -25,12 +26,13 @@ class InitializeDBTestCase(unittest.TestCase):
         self.fixture.tearDown()
 
     def test_initdb_on_already_initialized_db(self):
-        # Case for testing the `initdb` raises a discernible error
-        #   when the the database is already initialized.
+        """Testing the ``initdb`` raises a discernible error when the
+        database is already initialized.
+        """
         # The fixture has initialized the database, so we only need to
         #   run the function.
         from ..database import initdb
-        settings = get_app_settings(TESTING_CONFIG)
+        settings = testing.integration_test_settings()
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
             initdb(settings)
         self.assertEqual(caught_exception.exception.message,
@@ -38,16 +40,16 @@ class InitializeDBTestCase(unittest.TestCase):
 
 
 class MiscellaneousFunctionsTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.schema_fixture
 
-    @db_connect
+    @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
 
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def test_iso8601(self, cursor):
         # Exams the iso8601 SQL function.
         cursor.execute("SELECT date_trunc('second', current_timestamp), iso8601(current_timestamp);")
@@ -61,7 +63,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                                    tzinfo=FixedOffsetTimezone())
         self.assertEqual(current, value)
 
-    @db_connect
+    @testing.db_connect
     def test_html_abstract(self, cursor):
         # insert test data
         cursor.execute('''\
@@ -90,7 +92,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertTrue(html_abstract4,
                         'A link to the <a href="http://example.com">outside world</a>.</div>')
 
-    @db_connect
+    @testing.db_connect
     def test_html_content(self, cursor):
         # insert test data
         cursor.execute('''\
@@ -103,7 +105,10 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         INSERT INTO modules VALUES
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
         cursor.execute('SELECT fileid FROM files')
-        with open(os.path.join(TEST_DATA_DIRECTORY, 'm42033-1.3.cnxml'), 'r') as f:
+
+        cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                      'm42033-1.3.cnxml')
+        with open(cnxml_filepath, 'r') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -113,7 +118,9 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         (4, %s, 'index.cnxml', 'text/xml');''', [fileid])
 
         # check that cnxml content can be transformed
-        with open(os.path.join(TEST_DATA_DIRECTORY, 'm42033-1.3.html'), 'r') as f:
+        html_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                     'm42033-1.3.html')
+        with open(html_filepath, 'r') as f:
             html_content = f.read()
         cursor.execute('''\
         SELECT html_content(encode(file, 'escape')::text)
@@ -126,18 +133,15 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 class ModulePublishTriggerTestCase(unittest.TestCase):
     """Tests for the postgresql triggers when a module is published
     """
-    fixture = postgresql_fixture
+    fixture = testing.data_fixture
 
-    @db_connect
-    def setUp(self, cursor):
+    def setUp(self):
         self.fixture.setUp()
-        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-            cursor.execute(fb.read())
 
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def test_get_current_module_ident(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
@@ -160,7 +164,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(get_current_module_ident('m1', cursor=cursor),
                 module_ident)
 
-    @db_connect
+    @testing.db_connect
     def test_next_version(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
@@ -175,7 +179,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         self.assertEqual(next_version(module_ident, cursor=cursor), 2)
 
-    @db_connect
+    @testing.db_connect
     def test_get_collections(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
@@ -221,7 +225,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(list(get_collections(module_ident, cursor=cursor)),
                 [collection_ident, collection2_ident])
 
-    @db_connect
+    @testing.db_connect
     def test_rebuild_collection_tree(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
@@ -294,7 +298,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(cursor.fetchall(), [(new_collection_ident,),
             (new_module_ident,), (module2_ident,)])
 
-    @db_connect
+    @testing.db_connect
     def test_republish_collection(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
 
@@ -340,16 +344,13 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[22], 10)
         self.assertEqual(data[23], 3)
 
-    @db_connect
+    @testing.db_connect
     def test_republish_collection_w_keywords(self, cursor):
         # Ensure association of the new collection with existing keywords.
-        settings = get_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
-            with db_conn.cursor() as db_cursor:
-                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import republish_collection
+        settings = testing.integration_test_settings()
+        cursor.execute("""\
+ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.connection.commit()
 
         cursor.execute("""INSERT INTO document_controls (uuid)
         VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
@@ -371,8 +372,9 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
                                  for id in keywordids])
         cursor.execute("""INSERT INTO modulekeywords (module_ident, keywordid)
         VALUES {};""".format(values_expr))
-        self.db_connection.commit()
+        cursor.connection.commit()
 
+        from ..database import republish_collection
         new_ident = republish_collection(3, collection_ident, cursor=cursor)
 
         cursor.execute("""\
@@ -383,14 +385,13 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         inserted_keywords = [x[0] for x in cursor.fetchall()]
         self.assertEqual(sorted(inserted_keywords), sorted(keywords))
 
-    @db_connect
+    @testing.db_connect
     def test_republish_collection_w_subjects(self, cursor):
         # Ensure association of the new collection with existing keywords.
-        settings = get_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        with psycopg2.connect(settings[CONNECTION_SETTINGS_KEY]) as db_conn:
-            with db_conn.cursor() as db_cursor:
-                db_cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        settings = testing.integration_test_settings()
+        cursor.execute("""\
+ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.connection.commit()
 
         cursor.execute("""INSERT INTO document_controls (uuid)
         VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
@@ -409,7 +410,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
                                  for id, name in subjects])
         cursor.execute("""INSERT INTO moduletags (module_ident, tagid)
         VALUES {};""".format(values_expr))
-        self.db_connection.commit()
+        cursor.connection.commit()
 
         from ..database import republish_collection
         new_ident = republish_collection(3, collection_ident, cursor=cursor)
@@ -462,7 +463,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
             'version': '1.100',
             })
 
-    @db_connect
+    @testing.db_connect
     def test_insert_new_module(self, cursor):
         cursor.execute('SELECT COUNT(*) FROM modules')
         old_n_modules = cursor.fetchone()[0]
@@ -505,7 +506,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(major, 13)
         self.assertEqual(minor, None)
 
-    @db_connect
+    @testing.db_connect
     def test_module(self, cursor):
         cursor.execute('SELECT nodeid FROM trees WHERE documentid = 18')
         old_nodeid = cursor.fetchone()[0]
@@ -594,7 +595,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
             self.assertEqual(old_node[4], new_tree[i][4]) # child order
             self.assertEqual(old_node[5], new_tree[i][5]) # latest
 
-    @db_connect
+    @testing.db_connect
     def test_module_files(self, cursor):
         # Insert abstract with cnxml
         cursor.execute('''
@@ -676,7 +677,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assert_('Here is my <strong>string</strong> summary.'
                 in html)
 
-    @db_connect
+    @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
         # Insert a new version of an existing module
         cursor.execute('''
@@ -757,18 +758,15 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 class UpdateLatestTriggerTestCase(unittest.TestCase):
     """Test case for updating the latest_modules table
     """
-    fixture = postgresql_fixture
+    fixture = testing.data_fixture
 
-    @db_connect
-    def setUp(self, cursor):
+    def setUp(self):
         self.fixture.setUp()
-        with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-            cursor.execute(fb.read())
 
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def test_insert_new_module(self, cursor):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
@@ -781,7 +779,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
 
-    @db_connect
+    @testing.db_connect
     def test_insert_existing_module(self, cursor):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
@@ -801,7 +799,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         WHERE uuid = %s''', [uuid])
         self.assertEqual(cursor.fetchone()[0], module_ident)
 
-    @db_connect
+    @testing.db_connect
     def test_insert_not_latest_version(self, cursor):
         """This test case is specifically written for backfilling, new inserts
         may not mean new versions
@@ -843,9 +841,9 @@ class LegacyCompatTriggerTestCase(unittest.TestCase):
     but only when making a revision publication, which ties the ``uuid``
     to the legacy ``moduleid``.
     """
-    fixture = postgresql_fixture
+    fixture = testing.schema_fixture
 
-    @db_connect
+    @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
         cursor.execute("""\
@@ -855,7 +853,7 @@ INSERT INTO abstracts (abstract) VALUES (' ') RETURNING abstractid""")
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def test_new_module(self, cursor):
         """Verify publishing of a new module creates values for legacy fields.
         """
@@ -891,7 +889,7 @@ RETURNING
         self.assertEqual(minor_ver, None)
         self.assertEqual(ver, '1.1')
 
-    @db_connect
+    @testing.db_connect
     def test_new_collection(self, cursor):
         """Verify publishing of a new collection creates values
         for legacy fields.
@@ -928,7 +926,7 @@ RETURNING
         self.assertEqual(minor_ver, 1)
         self.assertEqual(ver, '1.1')
 
-    @db_connect
+    @testing.db_connect
     def test_module_revision(self, cursor):
         """Verify publishing of a module revision uses legacy field values.
         """
@@ -998,7 +996,7 @@ RETURNING
         self.assertEqual(rev_minor_ver, None)
         self.assertEqual(rev_ver, '1.2')
 
-    @db_connect
+    @testing.db_connect
     def test_collection_revision(self, cursor):
         """Verify publishing of a collection revision uses legacy field values.
         """
@@ -1068,7 +1066,7 @@ RETURNING
         self.assertEqual(rev_minor_ver, 1)
         self.assertEqual(rev_ver, '1.2')
 
-    @db_connect
+    @testing.db_connect
     def test_anti_republish_module_on_collection_revision(self, cursor):
         """Verify publishing of a collection revision with modules included
         in other collections. Contemporary publications should not republish
@@ -1198,7 +1196,7 @@ GROUP BY portal_type""")
             }
         self.assertEqual(counts, expected_counts)
 
-    @db_connect
+    @testing.db_connect
     def test_new_module_wo_uuid(self, cursor):
         """Verify legacy publishing of a new module creates a UUID
         and licenseid in a 'document_controls' entry.
@@ -1287,16 +1285,13 @@ ALTER TABLE modules ENABLE TRIGGER ALL;
 
 
 class DocumentHitsTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.schema_fixture
 
     @classmethod
     def setUpClass(cls):
-        from ..utils import parse_app_settings
-        cls.settings = parse_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls.settings = testing.integration_test_settings()
 
-    @db_connect
+    @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
         cursor.execute(SQL_FOR_HIT_DOCUMENTS)
@@ -1304,7 +1299,7 @@ class DocumentHitsTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def override_recent_date(self, cursor):
         # Override the SQL function for acquiring the recent date,
         #   because otherwise the test will be a moving target in time.
@@ -1313,7 +1308,7 @@ class DocumentHitsTestCase(unittest.TestCase):
                        "  RETURN '2013-10-20'::timestamp with time zone; "
                        "END; $$ LANGUAGE plpgsql;")
 
-    @db_connect
+    @testing.db_connect
     def make_hit(self, cursor, ident, start_date, end_date=None, count=0):
         from datetime import timedelta
         if end_date is None:
@@ -1347,7 +1342,7 @@ class DocumentHitsTestCase(unittest.TestCase):
                 self.make_hit(ident, date, count=hit_counts[i])
         return hits
 
-    @db_connect
+    @testing.db_connect
     def test_recency_function_w_no_document_hits(self, cursor):
         # Exam the function out puts a date.
 
@@ -1361,7 +1356,7 @@ class DocumentHitsTestCase(unittest.TestCase):
         #   so checking by date should be sufficient.
         self.assertEqual(then.date(), value.date())
 
-    @db_connect
+    @testing.db_connect
     def test_recency_function_w_document_hits(self, cursor):
         # Exam the function out puts a date.
 
@@ -1379,20 +1374,20 @@ class DocumentHitsTestCase(unittest.TestCase):
         #   so checking by date should be sufficient.
         self.assertEqual(then.date(), value.date())
 
-    def test_hit_average_function(self):
+    @testing.db_connect
+    def test_hit_average_function(self, cursor):
         # Verify the hit average is output in both overall and recent
         #   circumstances.
         self.override_recent_date()
         hits = self.create_hits()
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT hit_average(1, NULL);")
-                average = cursor.fetchone()[0]
-                cursor.execute("SELECT hit_average(1, 't');")
-                recent_average = cursor.fetchone()[0]
-                cursor.execute("SELECT hit_average(6, 'f');")
-                other_average = cursor.fetchone()[0]
+        cursor.execute("SELECT hit_average(1, NULL);")
+        average = cursor.fetchone()[0]
+        cursor.execute("SELECT hit_average(1, 't');")
+        recent_average = cursor.fetchone()[0]
+        cursor.execute("SELECT hit_average(6, 'f');")
+        other_average = cursor.fetchone()[0]
+
         self.assertEqual(average, sum(hits[1]) / 5.0)
         from math import ceil
         close_enough = lambda d: ceil(d * 1000) / 1000
@@ -1401,53 +1396,51 @@ class DocumentHitsTestCase(unittest.TestCase):
         self.assertEqual(close_enough(other_average),
                          close_enough(sum(hits[6]) / 5.0))
 
-    def test_hit_rank_function(self):
+    @testing.db_connect
+    def test_hit_rank_function(self, cursor):
         # Verify the hit rank is output in both overall and recent
         #   circumstances.
         self.override_recent_date()
         hits = self.create_hits()
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT hit_rank(5, 'f');")
-                rank = cursor.fetchone()[0]
-                cursor.execute("SELECT hit_rank(5, 't');")
-                recent_rank = cursor.fetchone()[0]
+        cursor.execute("SELECT hit_rank(5, 'f');")
+        rank = cursor.fetchone()[0]
+        cursor.execute("SELECT hit_rank(5, 't');")
+        recent_rank = cursor.fetchone()[0]
+
         self.assertEqual(rank, 5)
         self.assertEqual(recent_rank, 3)
 
-    def test_update_recent_hits_function(self):
+    @testing.db_connect
+    def test_update_recent_hits_function(self, cursor):
         # Verify the function updates the recent hit ranks table
         #   with hit rank information grouped by document uuid.
         self.override_recent_date()
         hits = self.create_hits()
 
         # Call the target SQL function.
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT update_hit_ranks();")
-                cursor.execute("SELECT * FROM recent_hit_ranks "
-                               "ORDER BY rank ASC;")
-                hit_ranks = cursor.fetchall()
+        cursor.execute("SELECT update_hit_ranks();")
+        cursor.execute("SELECT * FROM recent_hit_ranks "
+                       "ORDER BY rank ASC;")
+        hit_ranks = cursor.fetchall()
 
         self.assertEqual(hit_ranks[1],
                          ('c8ee8dc5-bb73-47c8-b10f-3f37123cf607', 9, 3, 2))
         self.assertEqual(hit_ranks[3],  # row that combines two idents.
                          ('88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4))
 
-    def test_update_recent_hits_function(self):
+    @testing.db_connect
+    def test_update_recent_hits_function(self, cursor):
         # Verify the function updates the overall hit ranks table
         #   with hit rank information grouped by document uuid.
         self.override_recent_date()
         hits = self.create_hits()
 
         # Call the target SQL function.
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT update_hit_ranks();")
-                cursor.execute("SELECT * FROM overall_hit_ranks "
-                               "ORDER BY rank ASC;")
-                hit_ranks = cursor.fetchall()
+        cursor.execute("SELECT update_hit_ranks();")
+        cursor.execute("SELECT * FROM overall_hit_ranks "
+                       "ORDER BY rank ASC;")
+        hit_ranks = cursor.fetchall()
 
         self.assertEqual(hit_ranks[2],  # row that combines two idents.
                          ('88cd206d-66d2-48f9-86bb-75d5366582ee', 67, 6.7, 3))

@@ -9,24 +9,21 @@ import os
 import unittest
 
 import psycopg2
-from . import *
+from . import testing
 from .test_database import SQL_FOR_HIT_DOCUMENTS
 
 
-TEST_VARNISH_LOG = os.path.join(TEST_DATA_DIRECTORY, 'varnish.log')
+TEST_VARNISH_LOG = os.path.join(testing.DATA_DIRECTORY, 'varnish.log')
 
 
 class HitsCounterTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.schema_fixture
 
     @classmethod
     def setUpClass(cls):
-        from ..utils import parse_app_settings
-        cls.settings = parse_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
+        cls.settings = testing.integration_test_settings()
 
-    @db_connect
+    @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
         # Input module stubs for module_ident relationship foreign keys.
@@ -35,7 +32,7 @@ class HitsCounterTestCase(unittest.TestCase):
     def tearDown(self):
         self.fixture.tearDown()
 
-    @db_connect
+    @testing.db_connect
     def override_recent_date(self, cursor):
         # Override the SQL function for acquiring the recent date,
         #   because otherwise the test will be a moving target in time.
@@ -45,36 +42,36 @@ class HitsCounterTestCase(unittest.TestCase):
                        "  RETURN '2013-10-17'::timestamp with time zone; "
                        "END; $$ LANGUAGE plpgsql;")
 
-    def test_insertion(self):
+    @testing.db_connect
+    def test_insertion(self, cursor):
         # Call the command line script.
-        args = ['--log-format', 'plain', TESTING_CONFIG, TEST_VARNISH_LOG]
+        args = ['--log-format', 'plain', testing.config_uri,
+                TEST_VARNISH_LOG]
         from ..scripts.hits_counter import main
         return_code = main(args)
         self.assertEqual(return_code, 0)
 
         expectations = [(1, 3), (2, 1), (3, 4), (4, 1)]
         # Check for the insertion of data.
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT documentid, hits "
-                               "  FROM document_hits;")
-                hits = cursor.fetchall()
+        cursor.execute("SELECT documentid, hits "
+                       "  FROM document_hits;")
+        hits = cursor.fetchall()
         hits = sorted(hits)
         self.assertEqual(hits, expectations)
 
-    def test_updates_optimization_tables(self):
+    @testing.db_connect
+    def test_updates_optimization_tables(self, cursor):
         self.override_recent_date()
         # Call the command line script.
-        args = ['--log-format', 'plain', TESTING_CONFIG, TEST_VARNISH_LOG]
+        args = ['--log-format', 'plain', testing.config_uri,
+                TEST_VARNISH_LOG]
         from ..scripts.hits_counter import main
         main(args)
 
         # Check the optimization tables for content.
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("SELECT count(*) from recent_hit_ranks;")
-                recent_count = cursor.fetchone()[0]
-                cursor.execute("SELECT count(*) from overall_hit_ranks;")
-                overall_count = cursor.fetchone()[0]
+        cursor.execute("SELECT count(*) from recent_hit_ranks;")
+        recent_count = cursor.fetchone()[0]
+        cursor.execute("SELECT count(*) from overall_hit_ranks;")
+        overall_count = cursor.fetchone()[0]
         self.assertTrue(recent_count > 0)
         self.assertTrue(overall_count > 0)

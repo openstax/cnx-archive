@@ -11,19 +11,19 @@ import sys
 import argparse
 
 import psycopg2
-from ..database import CONNECTION_SETTINGS_KEY, initdb
+
+from .. import config
+from ..database import initdb
+from ..tests import testing
 from ..utils import parse_app_settings
 
 
-# FIXME These locations are also 'constants' in the tests module.
-#       The tests module needs refactored before we can import from there.
-here = os.path.abspath(os.path.dirname(__file__))
-TEST_DATA_DIRECTORY = os.path.join(here, '..', 'tests','data')
-TESTING_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'data.sql')
-TESTING_CNXUSER_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'cnx-user.data.sql')
+# FIXME to be removed...
+CNXUSER_DATA_SQL_FILE = os.path.join(testing.DATA_DIRECTORY,
+                                     'cnx-user.data.sql')
 EXAMPLE_DATA_FILEPATHS = (
-    TESTING_DATA_SQL_FILE,
-    TESTING_CNXUSER_DATA_SQL_FILE,
+    testing.DATA_SQL_FILE,
+    CNXUSER_DATA_SQL_FILE,
     )
 
 
@@ -38,7 +38,7 @@ def main(argv=None):
     initdb(settings)
 
     if args.with_example_data:
-        connection_string = settings[CONNECTION_SETTINGS_KEY]
+        connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
                 for filepath in EXAMPLE_DATA_FILEPATHS:

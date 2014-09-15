@@ -15,7 +15,7 @@ from wsgiref.util import setup_testing_defaults
 
 import psycopg2
 
-from . import *
+from . import testing
 from .. import httpexceptions
 
 
@@ -271,37 +271,32 @@ MODULE_METADATA = {
         ],
     }
 
-with open(os.path.join(TEST_DATA_DIRECTORY, 'search_results.json'), 'r') as file:
+
+SEARCH_RESULTS_FILEPATH = os.path.join(testing.DATA_DIRECTORY,
+                                       'search_results.json')
+with open(SEARCH_RESULTS_FILEPATH, 'r') as file:
     SEARCH_RESULTS = json.load(file)
 
+
 class ViewsTestCase(unittest.TestCase):
-    fixture = postgresql_fixture
+    fixture = testing.data_fixture
     maxDiff = 10000
 
     @classmethod
     def setUpClass(cls):
-        from ..utils import parse_app_settings
-        cls.settings = parse_app_settings(TESTING_CONFIG)
-        from ..database import CONNECTION_SETTINGS_KEY
-        cls.db_connection_string = cls.settings[CONNECTION_SETTINGS_KEY]
-        cls._db_connection = psycopg2.connect(cls.db_connection_string)
+        cls.settings = testing.integration_test_settings()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls._db_connection.close()
-
-    def setUp(self):
+    @testing.db_connect
+    def setUp(self, cursor):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-        # Load the database with example legacy data.
-        with self._db_connection.cursor() as cursor:
-            with open(TESTING_DATA_SQL_FILE, 'rb') as fb:
-                cursor.execute(fb.read())
-            # Populate the cnx-user shadow.
-            with open(TESTING_CNXUSER_DATA_SQL_FILE, 'r') as fb:
-                cursor.execute(fb.read())
-        self._db_connection.commit()
+
+        # FIXME to be removed soon...
+        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                             'cnx-user.data.sql')
+        with open(cnxuser_data_filepath, 'r') as fb:
+            cursor.execute(fb.read())
 
         # Clear all cached searches
         import memcache
@@ -389,7 +384,7 @@ class ViewsTestCase(unittest.TestCase):
                     u'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
                         key=key, v1=content[key], v2=COLLECTION_DERIVED_METADATA[key]))
 
-    @db_connect
+    @testing.db_connect
     def _create_empty_subcollections(self, cursor):
         cursor.execute("INSERT INTO trees VALUES (91, 53, NULL, 'Empty Subcollections', 1)")
         cursor.execute("INSERT INTO trees VALUES (92, 91, NULL, 'empty 1', 1)")
@@ -697,29 +692,29 @@ class ViewsTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPNotFound,
             redirect_legacy_content, environ, self._start_response)
 
-    def test_content_index_html(self):
+    @testing.db_connect
+    def test_content_index_html(self, cursor):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
-        with psycopg2.connect(self.db_connection_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute('ALTER TABLE module_files DISABLE TRIGGER ALL')
-                cursor.execute('DELETE FROM module_files')
-                # Insert a file for version 4
-                cursor.execute('''INSERT INTO files (file) VALUES
-                    (%s) RETURNING fileid''', [memoryview('Version 4')])
-                fileid = cursor.fetchone()[0]
-                cursor.execute('''INSERT INTO module_files
-                    (module_ident, fileid, filename, mimetype) VALUES
-                    (%s, %s, 'index.cnxml.html', 'text/html')''',
-                    [16, fileid])
-                # Insert a file for version 5
-                cursor.execute('''INSERT INTO files (file) VALUES
-                    (%s) RETURNING fileid''', [memoryview('Version 5')])
-                fileid = cursor.fetchone()[0]
-                cursor.execute('''INSERT INTO module_files
-                    (module_ident, fileid, filename, mimetype) VALUES
-                    (%s, %s, 'index.cnxml.html', 'text/html')''',
-                    [15, fileid])
+        cursor.execute('ALTER TABLE module_files DISABLE TRIGGER ALL')
+        cursor.execute('DELETE FROM module_files')
+        # Insert a file for version 4
+        cursor.execute('''INSERT INTO files (file) VALUES
+            (%s) RETURNING fileid''', [memoryview('Version 4')])
+        fileid = cursor.fetchone()[0]
+        cursor.execute('''INSERT INTO module_files
+            (module_ident, fileid, filename, mimetype) VALUES
+            (%s, %s, 'index.cnxml.html', 'text/html')''',
+            [16, fileid])
+        # Insert a file for version 5
+        cursor.execute('''INSERT INTO files (file) VALUES
+            (%s) RETURNING fileid''', [memoryview('Version 5')])
+        fileid = cursor.fetchone()[0]
+        cursor.execute('''INSERT INTO module_files
+            (module_ident, fileid, filename, mimetype) VALUES
+            (%s, %s, 'index.cnxml.html', 'text/html')''',
+            [15, fileid])
+        cursor.connection.commit()
 
         def get_content(version):
             # Build the request environment
@@ -816,8 +811,11 @@ class ViewsTestCase(unittest.TestCase):
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
         self.assertEqual(headers['content-disposition'],
-                         "attached; filename=college-physics-{}.pdf".format(version))
-        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports', filename), 'r') as file:
+                         "attached; filename=college-physics-{}.pdf" \
+                         .format(version))
+        expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
+                                     filename)
+        with open(expected_file, 'r') as file:
             self.assertEqual(export, file.read())
 
         # Test exports can access the other exports directory
@@ -832,9 +830,14 @@ class ViewsTestCase(unittest.TestCase):
         export = get_export(environ, self._start_response)[0]
         headers = self.captured_response['headers']
         headers = {x[0].lower(): x[1] for x in headers}
-        self.assertEqual(headers['content-disposition'],
-                         "attached; filename=elasticity-stress-and-strain-{}.pdf".format(version))
-        with open(os.path.join(TEST_DATA_DIRECTORY, 'exports2', filename), 'r') as file:
+        self.assertEqual(
+            headers['content-disposition'],
+            "attached; filename=elasticity-stress-and-strain-{}.pdf" \
+            .format(version))
+
+        expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
+                                     filename)
+        with open(expected_file, 'r') as file:
             self.assertEqual(export, file.read())
 
     def test_exports_type_not_supported(self):
@@ -948,8 +951,9 @@ class ViewsTestCase(unittest.TestCase):
 
         # Remove the generated files after the test
         def remove_generated_files():
-            for f in glob.glob('{}/exports2/{}@{}.*'.format(
-                TEST_DATA_DIRECTORY, id, version)):
+            file_glob = glob.glob('{}/exports2/{}@{}.*'.format(testing.DATA_DIRECTORY,
+                                                               id, version))
+            for f in file_glob:
                 os.unlink(f)
         self.addCleanup(remove_generated_files)
 
@@ -1862,5 +1866,6 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view
         from ..views import sitemap
         sitemap = sitemap(environ, self._start_response)[0]
-        with open(os.path.join(TEST_DATA_DIRECTORY, 'sitemap.xml'), 'r') as file:
+        expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
+        with open(expected_file, 'r') as file:
             self.assertMultiLineEqual(sitemap, file.read())

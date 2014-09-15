@@ -5,4 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-from . import testing
+
+
+# Configuration keys
+CONNECTION_STRING = 'db-connection-string'
