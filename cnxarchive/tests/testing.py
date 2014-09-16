@@ -9,7 +9,10 @@ import os
 import functools
 
 import psycopg2
+
 from ..utils import parse_app_settings
+from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
+from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
 
 
 __all__ = (
@@ -21,8 +24,6 @@ __all__ = (
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-DATA_DIRECTORY = os.path.join(here, 'data')
-DATA_SQL_FILE = os.path.join(DATA_DIRECTORY, 'data.sql')
 config_uri = None
 
 
