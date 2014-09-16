@@ -10,6 +10,7 @@ import functools
 
 import psycopg2
 
+from .. import config
 from ..utils import parse_app_settings
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
@@ -42,8 +43,7 @@ def integration_test_settings():
 def db_connection_factory(connection_string=None):
     if connection_string is None:
         settings = integration_test_settings()
-        from ..config import CONNECTION_STRING
-        connection_string = settings[CONNECTION_STRING]
+        connection_string = settings[config.CONNECTION_STRING]
 
     def db_connect():
         return psycopg2.connect(connection_string)
@@ -116,6 +116,7 @@ class DataFixture(SchemaFixture):
     After each test case has completed,
     the database will be cleaned (all tables dropped).
     """
+    is_accounts_set_up = False
 
     @db_connect
     def setUp(self, cursor):
@@ -123,6 +124,50 @@ class DataFixture(SchemaFixture):
         # Load the database with example legacy data.
         with open(DATA_SQL_FILE, 'rb') as fb:
             cursor.execute(fb.read())
+
+    @property  # Returns a callable connection
+    def db_connect_to_accounts(self):
+        """Creates a connection to the OpenStax Accounts database."""
+        settings = integration_test_settings()
+        connection_string = settings[config.ACCOUNTS_CONNECTION_STRING]
+        return db_connection_factory(connection_string)
+
+    def setUpAccountsDb(self):
+        """Initializes the OpenStax Accounts database. This is a NOOP
+        if the database has already been setup. This database is read-only,
+        so we do not tear it down. Instead we tear it down on first setup.
+        """
+        if self.is_accounts_set_up:
+            return  # NOOP
+
+        settings = integration_test_settings()
+        connection_string = settings[config.ACCOUNTS_CONNECTION_STRING]
+        schema_filepath = os.path.join(DATA_DIRECTORY,
+                                       'osc-accounts.schema.sql')
+        data_filepath = os.path.join(DATA_DIRECTORY,
+                                     'osc-accounts.data.sql')
+
+        with self.db_connect_to_accounts() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("DROP SCHEMA public CASCADE")
+                cursor.execute("CREATE SCHEMA public")
+                self.is_accounts_set_up = True
+                # Initial the schema.
+                with open(schema_filepath, 'r') as fb:
+                    cursor.execute(fb.read())
+                # Load the data.
+                with open(data_filepath, 'r') as fb:
+                    cursor.execute(fb.read())
+
+    def tearDownAccountsDb(self):
+        """Remove the accounts database. This needs to be manually called
+        in a tests. For example, ``self.addCleanup(self.tearDownAccoutnsDb)``.
+        """
+        with self.db_connect_to_accounts() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("DROP SCHEMA PUBLIC cascade")
+                cursor.execute("CREATE SCHEMA public")
+        self.is_accounts_set_up = False
 
 
 schema_fixture = SchemaFixture()

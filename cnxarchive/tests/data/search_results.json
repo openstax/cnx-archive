@@ -21,7 +21,7 @@
     "title": "College Physics", 
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
-     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
+     {"index": 1, "id": "OpenStaxCollege"}
     ], 
     "keywords": [
      "college physics", 
@@ -82,7 +82,7 @@
     "title": "Derived Copy of College Physics", 
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
-     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
+     {"index": 1, "id": "OpenStaxCollege"}
     ], 
     "keywords": [], 
     "id": "a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1"
@@ -94,8 +94,8 @@
     "title": "Preface to College Physics", 
     "mediaType": "application/vnd.org.cnx.module",
     "authors": [
-     {"index": 1, "id": "1df3bab1-1dc7-4017-9b3a-960a87e706b1"},
-     {"index": 0, "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"}
+     {"index": 0, "id": "cnxcap"},
+     {"index": 1, "id": "OpenStaxCollege"}
     ], 
     "keywords": [
      "college physics", 
@@ -120,25 +120,23 @@
    "authors": [
     {
      "website": null, 
-     "surname": null, 
-     "suffix": null, 
-     "firstname": "OpenStax College", 
-     "title": null, 
-     "othername": null, 
-     "email": "info@openstaxcollege.org", 
-     "fullname": "OpenStax College", 
-     "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8"
-    }, 
-    {
-     "website": null, 
      "surname": "Physics", 
      "suffix": null, 
      "firstname": "College", 
      "title": null, 
-     "othername": null, 
-     "email": "info@openstaxcollege.org", 
+     "emails": ["info@openstaxcollege.org"], 
      "fullname": "OSC Physics Maintainer", 
-     "id": "1df3bab1-1dc7-4017-9b3a-960a87e706b1"
+     "id": "cnxcap"
+    }, 
+    {
+     "website": null, 
+     "surname": null, 
+     "suffix": null, 
+     "firstname": "OpenStax College", 
+     "title": null, 
+     "emails": ["info@openstaxcollege.org"], 
+     "fullname": "OpenStax College", 
+     "id": "OpenStaxCollege"
     }
    ]
   }, 
@@ -157,13 +155,13 @@
     "values": [
      {
       "count": 3, 
-      "value": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-      "index": 0
+      "value": "OpenStaxCollege",
+      "index": 1
      }, 
      {
       "count": 1, 
-      "value": "1df3bab1-1dc7-4017-9b3a-960a87e706b1",
-      "index": 1
+      "value": "cnxcap",
+      "index": 0
      }
     ]
    }, 

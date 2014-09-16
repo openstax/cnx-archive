@@ -23,12 +23,11 @@ COLLECTION_METADATA = {
     u'roles': None,
     u'subjects': [u'Mathematics and Statistics', u'Science and Technology'],
     u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
-    u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+    u'authors': [{u'id': u'OpenStaxCollege',
                   u'fullname': u'OpenStax College',
-                  u'email': u'info@openstaxcollege.org',
+                  u'emails': [u'info@openstaxcollege.org'],
                   u'website': None, u'surname': None, u'suffix': None,
                   u'firstname': u'OpenStax College', u'title': None,
-                  u'othername': None,
                   }],
     u'created': u'2013-07-31T19:07:20Z',
     u'doctype': u'',
@@ -42,23 +41,23 @@ COLLECTION_METADATA = {
         },
     u'licensors': [{u'website': None, u'surname': u'University',
                     u'suffix': None, u'firstname': u'Rice',
-                    u'title': None, u'othername': None,
-                    u'id': u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                    u'title': None,
+                    u'id': u'OSCRiceUniversity',
                     u'fullname': u'Rice University',
-                    u'email': u'daniel@openstaxcollege.org'},
+                    u'emails': [u'daniel@openstaxcollege.org']},
                    ],
     u'maintainers': [{u'website': None, u'surname': u'Physics',
                       u'suffix': None, u'firstname': u'College',
-                      u'title': None, u'othername': None,
-                      u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                      u'title': None,
+                      u'id': u'cnxcap',
                       u'fullname': u'OSC Physics Maintainer',
-                      u'email': u'info@openstaxcollege.org'},
+                      u'emails': [u'info@openstaxcollege.org']},
                      {u'website': None, u'surname': None,
                       u'suffix': None, u'firstname': u'OpenStax College',
-                      u'title': None, u'othername': None,
-                      u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                      u'title': None,
+                      u'id': u'OpenStaxCollege',
                       u'fullname': u'OpenStax College',
-                      u'email': u'info@openstaxcollege.org'},
+                      u'emails': [u'info@openstaxcollege.org']},
                      ],
     u'title': u'College Physics',
     u'parent': {
@@ -73,10 +72,10 @@ COLLECTION_METADATA = {
     u'submitter': {
         u'website': None, u'surname': None,
         u'suffix': None, u'firstname': u'OpenStax College',
-        u'title': None, u'othername': None,
-        u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+        u'title': None,
+        u'id': u'OpenStaxCollege',
         u'fullname': u'OpenStax College',
-        u'email': u'info@openstaxcollege.org'},
+        u'emails': [u'info@openstaxcollege.org']},
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'7.1',
     u'googleAnalytics': u'UA-XXXXX-Y',
@@ -91,10 +90,10 @@ COLLECTION_METADATA = {
             u'publisher': {
                 u'website': None, u'surname': None,
                 u'suffix': None, u'firstname': u'OpenStax College',
-                u'title': None, u'othername': None,
-                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'title': None,
+                u'id': u'OpenStaxCollege',
                 u'fullname': u'OpenStax College',
-                u'email': u'info@openstaxcollege.org'
+                u'emails': [u'info@openstaxcollege.org'],
                 },
             },
         {
@@ -104,10 +103,10 @@ COLLECTION_METADATA = {
             u'publisher': {
                 u'website': None, u'surname': None,
                 u'suffix': None, u'firstname': u'OpenStax College',
-                u'title': None, u'othername': None,
-                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'title': None,
+                u'id': u'OpenStaxCollege',
                 u'fullname': u'OpenStax College',
-                u'email': u'info@openstaxcollege.org'
+                u'emails': [u'info@openstaxcollege.org'],
                 },
             },
         ],
@@ -182,8 +181,9 @@ COLLECTION_DERIVED_METADATA = {
         u'authors': [
             {u'website': None, u'surname': None, 
              u'suffix': None, u'firstname': u'OpenStax College', 
-             u'title': None, u'othername': None, u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8', 
-             u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org'}],
+             u'title': None, u'id': u'OpenStaxCollege', 
+             u'fullname': u'OpenStax College',
+             u'emails': [u'info@openstaxcollege.org']}],
         u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
         u'title': u'College Physics',
         u'version': u'7.1',
@@ -194,12 +194,11 @@ MODULE_METADATA = {
     u'roles': None,
     u'subjects': [u'Science and Technology'],
     u'abstract': None,
-    u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+    u'authors': [{u'id': u'OpenStaxCollege',
                   u'fullname': u'OpenStax College',
-                  u'email': u'info@openstaxcollege.org',
+                  u'emails': [u'info@openstaxcollege.org'],
                   u'website': None, u'surname': None, u'suffix': None,
                   u'firstname': u'OpenStax College', u'title': None,
-                  u'othername': None,
                   }],
     u'created': u'2013-07-31T19:07:24Z',
     u'doctype': u'',
@@ -213,23 +212,23 @@ MODULE_METADATA = {
         },
     u'licensors': [{u'website': None, u'surname': u'University',
                     u'suffix': None, u'firstname': u'Rice',
-                    u'title': None, u'othername': None,
-                    u'id': u'9366c786-e3c8-4960-83d4-aec1269ac5e5',
+                    u'title': None,
+                    u'id': u'OSCRiceUniversity',
                     u'fullname': u'Rice University',
-                    u'email': u'daniel@openstaxcollege.org'},
+                    u'emails': [u'daniel@openstaxcollege.org']},
                    ],
     u'maintainers': [{u'website': None, u'surname': u'Physics',
                       u'suffix': None, u'firstname': u'College',
-                      u'title': None, u'othername': None,
-                      u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
+                      u'title': None,
+                      u'id': u'cnxcap',
                       u'fullname': u'OSC Physics Maintainer',
-                      u'email': u'info@openstaxcollege.org'},
+                      u'emails': [u'info@openstaxcollege.org']},
                      {u'website': None, u'surname': None,
                       u'suffix': None, u'firstname': u'OpenStax College',
-                      u'title': None, u'othername': None,
-                      u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                      u'title': None,
+                      u'id': u'OpenStaxCollege',
                       u'fullname': u'OpenStax College',
-                      u'email': u'info@openstaxcollege.org'},
+                      u'emails': [u'info@openstaxcollege.org']},
                      ],
     u'title': u'Elasticity: Stress and Strain',
     u'parent': {
@@ -244,10 +243,10 @@ MODULE_METADATA = {
     u'submitter': {
         u'website': None, u'surname': None,
         u'suffix': None, u'firstname': u'OpenStax College',
-        u'title': None, u'othername': None,
-        u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+        u'title': None,
+        u'id': u'OpenStaxCollege',
         u'fullname': u'OpenStax College',
-        u'email': u'info@openstaxcollege.org'},
+        u'emails': [u'info@openstaxcollege.org']},
     u'mediaType': u'application/vnd.org.cnx.module',
     u'version': u'8',
     u'googleAnalytics': None,
@@ -262,10 +261,10 @@ MODULE_METADATA = {
             u'publisher': {
                 u'website': None, u'surname': None,
                 u'suffix': None, u'firstname': u'OpenStax College',
-                u'title': None, u'othername': None,
-                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'title': None,
+                u'id': u'OpenStaxCollege',
                 u'fullname': u'OpenStax College',
-                u'email': u'info@openstaxcollege.org',
+                u'emails': [u'info@openstaxcollege.org'],
                 },
             },
         ],
@@ -297,12 +296,7 @@ class ViewsTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-
-        # FIXME to be removed soon...
-        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
-                                             'cnx-user.data.sql')
-        with open(cnxuser_data_filepath, 'r') as fb:
-            cursor.execute(fb.read())
+        self.fixture.setUpAccountsDb()
 
         # Clear all cached searches
         import memcache
@@ -357,10 +351,7 @@ class ViewsTestCase(unittest.TestCase):
         # Check the metadata for correctness.
         self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
         for key in content:
-            self.assertEqual(content[key], COLLECTION_METADATA[key],
-                    u'content[{key}] = {v1} but COLLECTION_METADATA[{key}] = {v2}'.format(
-                        key=key, v1=content[key], v2=COLLECTION_METADATA[key]))
-
+            self.assertEqual(content[key], COLLECTION_METADATA[key])
         self.maxDiff = 10000
         # Check the tree for accuracy.
         self.assertEqual(content_tree, COLLECTION_JSON_TREE)
@@ -384,11 +375,11 @@ class ViewsTestCase(unittest.TestCase):
         content_tree = content.pop('tree')
 
         # Check the metadata for correctness.
-        self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
+        self.assertEqual(sorted(content.keys()),
+                         sorted(COLLECTION_METADATA.keys()))
         for key in COLLECTION_DERIVED_METADATA['parent']:
-            self.assertEqual(content['parent'][key], COLLECTION_DERIVED_METADATA['parent'][key],
-                    u'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
-                        key=key, v1=content['parent'][key], v2=COLLECTION_DERIVED_METADATA['parent'][key]))
+            self.assertEqual(content['parent'][key],
+                             COLLECTION_DERIVED_METADATA['parent'][key])
 
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
@@ -467,14 +458,14 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content['history'], [{
             u'version': u'6.1',
             u'revised': u'2013-07-31T19:07:20Z',
-            u'changes': 'Updated something',
+            u'changes': u'Updated something',
             u'publisher': {
                 u'website': None, u'surname': None,
                 u'suffix': None, u'firstname': u'OpenStax College',
-                u'title': None, u'othername': None,
-                u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                u'title': None,
+                u'id': u'OpenStaxCollege',
                 u'fullname': u'OpenStax College',
-                u'email': u'info@openstaxcollege.org'
+                u'emails': [u'info@openstaxcollege.org'],
                 },
             }])
 
@@ -905,8 +896,10 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(output, {
             u'downloads': [],
             u'isLatest': False,
-            u'canPublish': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                            u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8']
+            u'canPublish': [
+                u'OpenStaxCollege',
+                u'cnxcap',
+                ],
             })
 
     def test_get_extra_allowable_types(self):
@@ -1060,8 +1053,10 @@ class ViewsTestCase(unittest.TestCase):
         output = json.loads(output)
         output['canPublish'].sort()
         self.assertEqual(output, {
-            u'canPublish': [u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                            u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'],
+            u'canPublish': [
+                u'OpenStaxCollege',
+                u'cnxcap',
+                ],
             u'isLatest': True,
             u'downloads': [{
                 u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
@@ -1117,8 +1112,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_search_filter_by_authorID(self):
         # Build the request
         environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="college physics" '\
-                'authorID:1df3bab1-1dc7-4017-9b3a-960a87e706b1'
+        environ['QUERY_STRING'] = 'q="college physics" authorID:cnxcap'
 
         from ..views import search
         results = search(environ, self._start_response)[0]
@@ -1134,8 +1128,8 @@ class ViewsTestCase(unittest.TestCase):
             u'per_page': 20,
             u'page': 1,
             u'limits': [{u'tag': u'text', u'value': u'college physics'},
-                        {u'tag': u'authorID', u'index': 1,
-                         u'value': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1'}],
+                        {u'tag': u'authorID', u'index': 0,
+                         u'value': u'cnxcap'}],
             })
 
     def test_search_only_subject(self):

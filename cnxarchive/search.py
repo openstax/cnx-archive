@@ -317,7 +317,8 @@ class QueryResults(Sequence):
         # Used to make the dict hashable for a set([]).
         class hashabledict(dict):
             def __hash__(self):
-                return hash(tuple(sorted(self.items())))
+                # Use the unique value 'id' as the hash value.
+                return hash(self['id'])
 
         authors = set([])
         for rec in self._records:
