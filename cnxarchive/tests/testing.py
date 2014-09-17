@@ -34,8 +34,7 @@ def integration_test_settings():
     if config_uri is None:
         config_uri = os.environ.get('TESTING_CONFIG', None)
         if config_uri is None:
-            project_root = os.path.join(here, '..', '..')
-            config_uri = os.path.join(project_root, 'testing.ini')
+            config_uri = os.path.join(here, 'testing.ini')
     settings = parse_app_settings(config_uri)
     return settings
 

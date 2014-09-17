@@ -1,4 +1,4 @@
-include *.rst *.txt
+include *.rst *.txt *.ini
 recursive-include cnxarchive/sql *
 recursive-include cnxarchive/tests/data *
 recursive-include cnxarchive/xsl *
