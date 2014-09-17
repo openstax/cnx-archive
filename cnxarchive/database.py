@@ -521,15 +521,8 @@ def get_collection_tree(collection_ident, cursor):
 
 
 def get_module_can_publish(cursor, id):
-    cursor.execute('''
-SELECT submitter, authors, maintainers, licensors
-FROM latest_modules m
-WHERE m.uuid = %s''', [id])
-    users = set([])
-    for role_users in cursor.fetchone():
-        if role_users:
-            if not isinstance(role_users, list):
-                role_users = [role_users]
-            for user in role_users:
-                users.add(user)
-    return list(users)
+    cursor.execute("""
+SELECT DISTINCT user_id
+FROM document_acl
+WHERE uuid = %s AND permission = 'publish'""", (id,))
+    return [i[0] for i in cursor.fetchall()]
