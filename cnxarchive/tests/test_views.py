@@ -61,10 +61,12 @@ COLLECTION_METADATA = {
                       u'email': u'info@openstaxcollege.org'},
                      ],
     u'title': u'College Physics',
-    u'parentAuthors': [],
-    u'parentId': None,
-    u'parentTitle': None,
-    u'parentVersion': '',
+    u'parent': {
+        'authors': [],
+        'id': None,
+        'title': None,
+        'version': '',
+        },
     u'revised': u'2013-08-31T19:07:20Z',
     u'stateid': None,
     u'submitlog': u'New version 1.7',
@@ -176,14 +178,16 @@ COLLECTION_JSON_TREE = {
         ],
     }
 COLLECTION_DERIVED_METADATA = {
-    u'parentAuthors': [
+    u'parent': {
+        u'authors': [
             {u'website': None, u'surname': None, 
              u'suffix': None, u'firstname': u'OpenStax College', 
              u'title': None, u'othername': None, u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8', 
              u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org'}],
-    u'parentId': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-    u'parentTitle': u'College Physics',
-    u'parentVersion': u'7.1',
+        u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+        u'title': u'College Physics',
+        u'version': u'7.1',
+    },
     u'title': u'Derived Copy of College Physics'
 }
 MODULE_METADATA = {
@@ -228,10 +232,12 @@ MODULE_METADATA = {
                       u'email': u'info@openstaxcollege.org'},
                      ],
     u'title': u'Elasticity: Stress and Strain',
-    u'parentAuthors': [],
-    u'parentId': None,
-    u'parentTitle': None,
-    u'parentVersion': '',
+    u'parent': {
+        u'authors': [],
+        u'id': None,
+        u'title': None,
+        u'version': '',
+        },
     u'revised': u'2013-07-31T19:07:24Z',
     u'stateid': None,
     u'submitlog': u'Added more examples',
@@ -379,10 +385,10 @@ class ViewsTestCase(unittest.TestCase):
 
         # Check the metadata for correctness.
         self.assertEqual(sorted(content.keys()), sorted(COLLECTION_METADATA.keys()))
-        for key in ['parentId','parentTitle','parentAuthors']:
-            self.assertEqual(content[key], COLLECTION_DERIVED_METADATA[key],
+        for key in COLLECTION_DERIVED_METADATA['parent']:
+            self.assertEqual(content['parent'][key], COLLECTION_DERIVED_METADATA['parent'][key],
                     u'content[{key}] = {v1} but COLLECTION_DERIVED_METADATA[{key}] = {v2}'.format(
-                        key=key, v1=content[key], v2=COLLECTION_DERIVED_METADATA[key]))
+                        key=key, v1=content['parent'][key], v2=COLLECTION_DERIVED_METADATA['parent'][key]))
 
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
