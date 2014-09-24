@@ -229,7 +229,7 @@ def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
     return book_uuid, version
 
 
-def _get_content_json(environ=None, ident_hash=None):
+def _get_content_json(environ=None, ident_hash=None, reqtype=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     settings = get_settings()
     if not ident_hash:
@@ -239,7 +239,10 @@ def _get_content_json(environ=None, ident_hash=None):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to(cursor, id, '/contents/{}@{}')
+                if reqtype:
+                    redirect_to(cursor, id, '/contents/{}@{}.%s' % reqtype)
+                else:
+                    redirect_to(cursor, id, '/contents/{}@{}')
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
@@ -272,7 +275,7 @@ def get_content_json(environ, start_response):
     """Retrieve a piece of content as JSON using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ=environ)
+    result = _get_content_json(environ=environ, reqtype='json')
 
     result = json.dumps(result)
     status = "200 OK"
@@ -285,7 +288,7 @@ def get_content_html(environ, start_response):
     """Retrieve a piece of content as HTML using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ=environ)
+    result = _get_content_json(environ=environ, reqtype='html')
 
     media_type = result['mediaType']
     if media_type == MODULE_MIMETYPE:
