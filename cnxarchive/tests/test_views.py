@@ -524,7 +524,7 @@ class ViewsTestCase(unittest.TestCase):
         except httpexceptions.HTTPFound, e:
             self.assertEqual(e.status, '302 Found')
             self.assertEqual(e.headers, [('Location',
-                '/contents/{}@5'.format(uuid))])
+                '/contents/{}@5.json'.format(uuid))])
 
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
