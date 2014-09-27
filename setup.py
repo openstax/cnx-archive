@@ -32,7 +32,7 @@ setup(
     [paste.app_factory]
     main = cnxarchive:main
     [console_scripts]
-    initialize_cnx-archive_db = cnxarchive.scripts.initializedb:main
+    cnx-archive-initdb = cnxarchive.scripts.initializedb:main
     cnx-archive-initialize_db = cnxarchive.scripts.initializedb:main
     cnx-archive-hits_counter = cnxarchive.scripts.hits_counter:main
     """,
