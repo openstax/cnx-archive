@@ -7,7 +7,9 @@
 
 CREATE EXTENSION IF NOT EXISTS plxslt;
 
-CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS xml AS $$
+DROP FUNCTION IF EXISTS xml_to_baretext(xml); -- changinging return type
+
+CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
 <?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -18,7 +20,7 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS xml AS $$
                 xmlns:bib="http://bibtexml.sf.net/"
                 >
 
-  <xsl:output format="text" omit-xml-declaration="yes"/>
+  <xsl:output method="text" omit-xml-declaration="yes"/>
 
   <xsl:template match="/">
     <xsl:apply-templates/>
