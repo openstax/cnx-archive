@@ -122,6 +122,7 @@ CREATE TABLE "modules" (
         -- modules have versions like <major_version>
 	"major_version" integer default 1,
 	"minor_version" integer default NULL,
+	"featured" integer DEFAULT NULL,
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
 	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
 	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
@@ -164,7 +165,8 @@ CREATE TABLE "latest_modules" (
         -- Collections have versions like <major_version>.<minor_version> while
         -- modules have versions like <major_version>
 	"major_version" integer,
-	"minor_version" integer
+	"minor_version" integer,
+	"featured" integer
 );
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
