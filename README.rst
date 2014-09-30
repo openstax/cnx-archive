@@ -162,7 +162,7 @@ scripts. One of these scripts is used to initialize the database with
 the applications schema.
 ::
 
-    initialize_cnx-archive_db development.ini
+    cnx-archive-initdb development.ini
 
 You can optionally pass ``--with-example-data``
 to the database initialization command,
@@ -192,12 +192,12 @@ and set the environment variable ``TESTING_CONFIG`` to the name of that file::
 
     export TESTING_CONFIG=testing.ini
 
-Then, either of the following will work::
+Then, use either of the following to invoke the test suite::
 
     $ python -m unittest discover
     $ python setup.py test
 
-This uses example data found in the test-data directory.
+This uses example data found in the ``cxarchive/tests/data`` directory.
 
 License
 -------
