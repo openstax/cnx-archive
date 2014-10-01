@@ -51,6 +51,7 @@ SQL = {
     'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
     'get-module-versions': _read_sql_file('get-module-versions'),
     'get-subject-list': _read_sql_file('get-subject-list'),
+    'get-featured-links': _read_sql_file('get-featured-links'),
     }
 
 
