@@ -570,13 +570,20 @@ def _get_subject_list(cursor):
         yield subject
 
 
+def _get_featured_links(cursor):
+    """Return featured books for the front page"""
+    cursor.execute(SQL['get-featured-links'])
+    return [i[0] for i in cursor.fetchall()]
+
 def extras(environ, start_response):
     """Return a dict with archive metadata for webview
     """
     settings = get_settings()
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            metadata = {'subjects': list(_get_subject_list(cursor)),
+            metadata = {
+                    'subjects': list(_get_subject_list(cursor)),
+                    'featuredLinks': _get_featured_links(cursor),
                        }
 
     status = '200 OK'
