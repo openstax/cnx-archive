@@ -21,7 +21,7 @@ from .. import httpexceptions
 
 COLLECTION_METADATA = {
     u'roles': None,
-    u'subjects': [u'Mathematics and Statistics', u'Science and Technology'],
+    u'subjects': [u'Mathematics and Statistics', u'Science and Technology', u'OpenStax Featured'],
     u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
     u'authors': [{u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
                   u'fullname': u'OpenStax College',
@@ -1858,8 +1858,17 @@ class ViewsTestCase(unittest.TestCase):
                           },
                           {u'id': 6, u'name': u'Social Sciences',
                            u'count': {u'module': 0, u'collection': 0},
-                          },
-                         ]
+                          }],
+            u'featuredLinks': [{
+                u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                u'title': u'College Physics',
+                u'version': u'7.1',
+                u'legacy_id': u'col11406',
+                u'legacy_version': u'1.7',
+                u'resourcePath': u'/resources/6214e8dcdf2824dbf830b4a0d77a3fa2f53608d2',
+                u'type': u'OpenStax Featured',
+                u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
+                }],
             })
 
 
