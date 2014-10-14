@@ -24,22 +24,22 @@ DB_SCHEMA_FILES = (
     'trees.sql',
     # Module fulltext indexing
     'fulltext-indexing.sql',
-    # cnx-user user shadow table.
-    'cnx-user.schema.sql',
     # Functions for collections
     'shred_collxml.sql',
     'tree_to_json.sql',
     'common-functions.sql',
     'hits-functions.sql',
     )
-
 DB_SCHEMA_FILE_PATHS = tuple([os.path.join(DB_SCHEMA_DIRECTORY, dsf)
-                              for dsf in  DB_SCHEMA_FILES])
+                              for dsf in DB_SCHEMA_FILES])
+
 
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
     with open(path, 'r') as fp:
         return fp.read()
+
+
 SQL = {
     'get-module': _read_sql_file('get-module'),
     'get-content-from-legacy-id': _read_sql_file('get-content-from-legacy-id'),
@@ -69,6 +69,55 @@ def initdb(settings):
             for filepath in sql_constants:
                 with open(filepath, 'r') as f:
                     cursor.execute(f.read())
+    _init_foreign_db(settings)
+
+
+def _format_options(options):
+    """Given a dictionary, format the values as a option list.
+    For example, ``(host 'foo', port '5423')``
+    """
+    prepared = ', '.join(["{} '{}'".format(k, v) for k, v in options.items()])
+    result = ''
+    if prepared:
+        result = "({})".format(prepared)
+    return result
+
+
+def _init_foreign_db(settings):
+    """Initialize the foreign database wrapper (FDW) to connect with
+    the OpenStaxCollege Accounts user database.
+    """
+    # Read in the SQL partial that we'll format with settings info.
+    sql_filepath = os.path.join(DB_SCHEMA_DIRECTORY, 'accounts-fdw.part.sql')
+    with open(sql_filepath, 'r') as fb:
+        sql_partial = fb.read()
+
+    # Gather up the settings info.
+    connection_string = settings[config.CONNECTION_STRING]
+    # Note, see the postgres_fdw documentation for information about the
+    # separation of the connection string from the user and password info.
+    fdw_connection_string = settings[config.ACCOUNTS_CONNECTION_STRING]
+    options = dict([x.split('=') for x in fdw_connection_string.split(' ')])
+    fdw_connection_options = {}
+    fdw_user_options = {}
+    for key, value in options.items():
+        if key in ('client_encoding', 'fallback_application_name',):
+            continue
+        elif key in ('user', 'password',):
+            fdw_user_options.setdefault(key, value)
+        else:
+            fdw_connection_options.setdefault(key, value)
+
+    fdw_args = {
+        'connection_options': _format_options(fdw_connection_options),
+        'user_mapping_options': _format_options(fdw_user_options),
+        }
+
+    # Format and execute the SQL statement.
+    sql_stmt = sql_partial.format(**fdw_args)
+    with psycopg2.connect(connection_string) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(sql_stmt)
 
 
 def get_module_uuid(db_connection, moduleid):

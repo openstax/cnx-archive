@@ -8,26 +8,31 @@ SELECT
   module_ident,
   %({0})s::text||'-::-translator' as key
 FROM
-  latest_modules m
-  NATURAL JOIN moduleoptionalroles mor
-  NATURAL JOIN roles r,
-  users u
+  latest_modules AS m
+  NATURAL JOIN moduleoptionalroles AS mor
+  NATURAL JOIN roles AS r,
+  users AS u
 WHERE
-  -- FIXME Casting user.id to text. Shouldn't need to do this.
-  u.id::text = any (mor.personids)
+  u.username = any (mor.personids)
   AND
   lower(r.rolename) = 'translator'
   AND
-  (u.firstname ~* req(%({0})s::text)
+  (u.first_name ~* req(%({0})s::text)
    OR
-   u.surname ~* req(%({0})s::text)
+   u.last_name ~* req(%({0})s::text)
    OR
-   u.fullname ~* req(%({0})s::text)
+   u.full_name ~* req(%({0})s::text)
    OR
-   u.email ~* (req(%({0})s::text)||'.*@')
-   OR
-   (u.email ~* (req(%({0})s::text))
-    AND
-    %({0})s::text  ~ '@'
+   (select bool_or('t')
+    from contact_infos as ci
+    where ci.user_id = u.id
+          AND ci.type = 'EmailAddress'
+          AND (ci.value ~* (req(%({0})s::text)||'.*@')
+               OR
+               (ci.value ~*  (req(%({0})s::text))
+                AND
+                %({0})s::text  ~ '@'
+                )
+               )
     )
    )

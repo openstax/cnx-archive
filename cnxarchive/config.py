@@ -11,6 +11,7 @@ import os.path
 
 # Configuration keys
 CONNECTION_STRING = 'db-connection-string'
+ACCOUNTS_CONNECTION_STRING = 'accounts.fdw.db-connection-string'
 
 # Data directory and test data location
 here = os.path.abspath(os.path.dirname(__file__))

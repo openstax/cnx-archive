@@ -62,12 +62,7 @@ class SearchModelTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-
-        # FIXME to be removed soon...
-        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
-                                             'cnx-user.data.sql')
-        with open(cnxuser_data_filepath, 'r') as fb:
-            cursor.execute(fb.read())
+        self.fixture.setUpAccountsDb()
 
     def tearDown(self):
         from .. import _set_settings
@@ -216,12 +211,7 @@ class SearchTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-
-        # FIXME to be removed soon...
-        cnxuser_data_filepath = os.path.join(testing.DATA_DIRECTORY,
-                                             'cnx-user.data.sql')
-        with open(cnxuser_data_filepath, 'r') as fb:
-            cursor.execute(fb.read())
+        self.fixture.setUpAccountsDb()
 
     def tearDown(self):
         from .. import _set_settings
@@ -290,24 +280,51 @@ class SearchTestCase(unittest.TestCase):
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
+    def _add_dummy_user(self):
+        """Method to add a user and return that user's info."""
+        info = {
+            'username': 'jmiller',
+            'first_name': 'Jill',
+            'last_name': 'Miller',
+            'full_name': 'Jill M.',
+            'email': 'jmiller@example.com',
+            }
+
+        # Create a new user.
+        with self.fixture.db_connect_to_accounts() as db_connection:
+            with db_connection.cursor() as accounts_cursor:
+                accounts_cursor.execute("""\
+INSERT INTO users
+  (id, created_at, updated_at, is_administrator, person_id, is_temp,
+   username, first_name, last_name, full_name)
+  VALUES
+  (DEFAULT, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'f', NULL, 'f',
+   %(username)s, %(first_name)s, %(last_name)s, %(full_name)s)
+  RETURNING id""", info)
+                ident = accounts_cursor.fetchone()[0]
+                accounts_cursor.execute("""\
+INSERT INTO contact_infos
+  (id, type, value, verified, confirmation_code, user_id,
+   created_at, updated_at, confirmation_sent_at)
+  VALUES
+  (DEFAULT, 'EmailAddress', %s, 't', NULL, %s,
+   CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL)""",
+                    (info['email'], ident,))
+        self.addCleanup(self.fixture.tearDownAccountsDb)
+        return info
+
     @testing.db_connect
     def test_author_search(self, cursor):
         # Test the results of an author search.
-        user_id = str(uuid.uuid4())
-        query_params = [('author', 'Jill')]
+        user_info = self._add_dummy_user()
+        query_params = [('author', user_info['first_name'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
+
         # Update two modules in include this user as an author.
         cursor.execute(
             "UPDATE latest_modules SET (authors) = (%s) "
             "WHERE module_ident = %s OR module_ident = %s;",
-            ([user_id], 2, 3,))
+            ([user_info['username']], 2, 3,))
         cursor.connection.commit()
 
         results = self.call_target(query_params)
@@ -316,26 +333,19 @@ class SearchTestCase(unittest.TestCase):
     @testing.db_connect
     def test_editor_search(self, cursor):
         # Test the results of an editor search.
-        user_id = str(uuid.uuid4())
-        query_params = [('editor', 'jmiller@example.com')]
+        user_info = self._add_dummy_user()
+        query_params = [('editor', user_info['email'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
         # Update two modules in include this user as an editor.
         role_id = 5
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 2, role_id))
+            ([user_info['username']], 2, role_id))
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 3, role_id))
+            ([user_info['username']], 3, role_id))
         cursor.connection.commit()
 
         results = self.call_target(query_params)
@@ -344,26 +354,19 @@ class SearchTestCase(unittest.TestCase):
     @testing.db_connect
     def test_licensor_search(self, cursor):
         # Test the results of a licensor search.
-        user_id = str(uuid.uuid4())
-        query_params = [('licensor', 'jmiller')]
+        user_info = self._add_dummy_user()
+        query_params = [('licensor', user_info['username'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
         # Update two modules in include this user as a licensor.
         role_id = 2
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 2, role_id))
+            ([user_info['username']], 2, role_id))
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 3, role_id))
+            ([user_info['username']], 3, role_id))
         cursor.connection.commit()
 
         results = self.call_target(query_params)
@@ -372,21 +375,14 @@ class SearchTestCase(unittest.TestCase):
     @testing.db_connect
     def test_maintainer_search(self, cursor):
         # Test the results of a maintainer search.
-        user_id = str(uuid.uuid4())
-        query_params = [('maintainer', 'Miller')]
+        user_info = self._add_dummy_user()
+        query_params = [('maintainer', user_info['last_name'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
         # Update two modules in include this user as a maintainer.
         cursor.execute(
             "UPDATE latest_modules SET (maintainers) = (%s) "
             "WHERE module_ident = %s OR module_ident = %s;",
-            ([user_id], 2, 3,))
+            ([user_info['username']], 2, 3,))
         cursor.connection.commit()
 
         results = self.call_target(query_params)
@@ -395,26 +391,19 @@ class SearchTestCase(unittest.TestCase):
     @testing.db_connect
     def test_translator_search(self, cursor):
         # Test the results of a translator search.
-        user_id = str(uuid.uuid4())
-        query_params = [('translator', 'jmiller')]
+        user_info = self._add_dummy_user()
+        query_params = [('translator', user_info['username'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
         # Update two modules in include this user as a translator.
         role_id = 4
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 2, role_id))
+            ([user_info['username']], 2, role_id))
         cursor.execute(
             "INSERT INTO moduleoptionalroles"
             "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_id], 3, role_id))
+            ([user_info['username']], 3, role_id))
         cursor.connection.commit()
 
         results = self.call_target(query_params)
@@ -423,26 +412,20 @@ class SearchTestCase(unittest.TestCase):
     @testing.db_connect
     def test_parentauthor_search(self, cursor):
         # Test the results of a parent author search.
-        user_id = str(uuid.uuid4())
+        user_info = self._add_dummy_user()
         # FIXME parentauthor is only searchable by user id, not by name
         #       like the other user based columns. Inconsistent behavior...
-        query_params = [('parentauthor', user_id)]
+        query_params = [('parentauthor', user_info['username'])]
 
-        # Create a new user.
-        cursor.execute(
-            "INSERT INTO users "
-            "(id, firstname, surname, fullname, email) "
-            "VALUES (%s, %s, %s, %s, %s);",
-            (user_id, 'Jill', 'Miller', 'Jill M.',
-             'jmiller@example.com',))
         # Update two modules in include this user as a parent author.
         cursor.execute(
             "UPDATE latest_modules SET (parentauthors) = (%s) "
             "WHERE module_ident = %s OR module_ident = %s;",
-            ([user_id], 2, 3,))
+            ([user_info['username']], 2, 3,))
         cursor.connection.commit()
 
-        results = self.call_target(query_params, weights={'parentauthor':5})
+        results = self.call_target(query_params,
+                                   weights={'parentauthor': 5})
         self.assertEqual(len(results), 2)
 
     def test_fulltext_search(self):
@@ -604,7 +587,7 @@ class SearchTestCase(unittest.TestCase):
 
     def test_submitterID_filter(self):
         query_params = [('text', 'introduction'),
-                        ('submitterID', '46cf263d-2eef-42f1-8523-1b650006868a'),
+                        ('submitterID', 'typo'),
                         ]
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
@@ -616,7 +599,7 @@ class SearchTestCase(unittest.TestCase):
     def test_authorId_filter(self):
         # Filter results by author "OSC Physics Maintainer"
         query_params = [('text', 'physics'),
-                        ('authorID', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
+                        ('authorID', 'cnxcap')]
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
@@ -690,7 +673,7 @@ class SearchTestCase(unittest.TestCase):
         query_params = [('text', 'physics'),
                         ('subject', 'Mathematics and Statistics'),
                         # "OSC Physics Maintainer"
-                        ('authorID', '1df3bab1-1dc7-4017-9b3a-960a87e706b1')]
+                        ('authorID', 'cnxcap')]
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]

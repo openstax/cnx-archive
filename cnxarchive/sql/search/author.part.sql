@@ -8,22 +8,27 @@ SELECT
   module_ident,
   %({0})s::text||'-::-author' as key
 FROM
-  latest_modules m,
-  users u
+  latest_modules AS m,
+  users AS u 
 WHERE
-  -- FIXME Casting user.id to text. Shouldn't need to do this.
-  u.id::text = any (m.authors)
+  u.username = any (m.authors)
   AND
-  (u.firstname ~* req(%({0})s::text)
+  (u.first_name ~* req(%({0})s::text)
    OR
-   u.surname ~* req(%({0})s::text)
+   u.last_name ~* req(%({0})s::text)
    OR
-   u.fullname ~* req(%({0})s::text)
+   u.full_name ~* req(%({0})s::text)
    OR
-   u.email ~* (req(%({0})s::text)||'.*@')
-   OR
-   (u.email ~* (req(%({0})s::text))
-    AND
-    %({0})s::text  ~ '@'
+   (select bool_or('t')
+    from contact_infos as ci
+    where ci.user_id = u.id
+          AND ci.type = 'EmailAddress'
+          AND (ci.value ~* (req(%({0})s::text)||'.*@')
+               OR
+               (ci.value ~*  (req(%({0})s::text))
+                AND
+                %({0})s::text  ~ '@'
+                )
+               )
     )
    )

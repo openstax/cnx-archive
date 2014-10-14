@@ -40,10 +40,14 @@ SELECT
         WHERE mt.module_ident = lm.module_ident
               AND mt.tagid = tags.tagid) as subjects,
   ARRAY(SELECT row_to_json(user_rows) FROM
-        (SELECT id, email, firstname, othername, surname, fullname,
-                title, suffix, website
+        (SELECT username as id,
+                (SELECT array_agg(value) FROM contact_infos AS ci
+                 WHERE type = 'EmailAddress'
+                       AND ci.user_id = users.id) as emails,
+                first_name as firstname, last_name as surname,
+                full_name as fullname, title, NULL AS suffix, NULL AS website
          FROM users
-         WHERE users.id::text = ANY (lm.authors)
+         WHERE users.username::text = ANY (lm.authors)
          ) as user_rows) as authors,
   -- The following are used internally for further sorting and debugging.
   weight, rank,

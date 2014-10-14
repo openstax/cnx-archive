@@ -17,12 +17,8 @@ from ..database import initdb
 from ..utils import parse_app_settings
 
 
-# FIXME to be removed...
-CNXUSER_DATA_SQL_FILE = os.path.join(config.TEST_DATA_DIRECTORY,
-                                     'cnx-user.data.sql')
 EXAMPLE_DATA_FILEPATHS = (
     config.TEST_DATA_SQL_FILE,
-    CNXUSER_DATA_SQL_FILE,
     )
 
 
