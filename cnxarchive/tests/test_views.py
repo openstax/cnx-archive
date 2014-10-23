@@ -516,6 +516,17 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.headers,
                          [('Location', '/contents/{}@5.json'.format(uuid))])
 
+    def test_content_not_found(self):
+        # Build the request environment
+        environ = self._make_environ()
+        routing_args = {'ident_hash': '98c44aed-056b-450a-81b0-61af87ee75af'}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view
+        from ..views import get_content
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
+                          self._start_response)
+
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'

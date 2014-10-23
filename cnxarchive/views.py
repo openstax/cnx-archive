@@ -45,21 +45,18 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to(cursor, id, path_format_string, version=None):
+def redirect_to_latest(cursor, id, path_format_string='/contents/{}@{}'):
     """Redirect to latest version of a module / collection using the provided
-    path (path_format_string should look like '/contents/{}@{}'
+    path
     """
-    if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
-        try:
-            latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,): # None returned
-            logger.debug("version was not supplied and could not be discovered.")
-            raise httpexceptions.HTTPNotFound()
-    else:
-        latest_version = version
-    raise httpexceptions.HTTPFound(path_format_string \
-            .format(id, latest_version))
+    cursor.execute(SQL['get-module-versions'], {'id': id})
+    try:
+        latest_version = cursor.fetchone()[0]
+    except (TypeError, IndexError,): # None returned
+        logger.debug("version was not supplied and could not be discovered.")
+        raise httpexceptions.HTTPNotFound()
+    raise httpexceptions.HTTPFound(
+            path_format_string.format(id, latest_version))
 
 
 def get_content_metadata(id, version, cursor):
@@ -240,9 +237,10 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
         with db_connection.cursor() as cursor:
             if not version:
                 if reqtype:
-                    redirect_to(cursor, id, '/contents/{}@{}.%s' % reqtype)
+                    path = '/contents/{{}}@{{}}.{}'.format(reqtype)
+                    redirect_to_latest(cursor, id, path)
                 else:
-                    redirect_to(cursor, id, '/contents/{}@{}')
+                    redirect_to_latest(cursor, id)
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
@@ -348,9 +346,7 @@ def redirect_legacy_content(environ, start_response):
         if book_uuid:
             id, version = _get_page_in_book(id, version, book_uuid, book_version)
 
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            redirect_to(cursor, id, '/contents/{}@{}', version)
+    raise httpexceptions.HTTPFound('/contents/{}@{}'.format(id, version))
 
 def _convert_legacy_id(objid,objver=None):
     settings = get_settings()
@@ -401,7 +397,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to(cursor, id, '/extras/{}@{}')
+                redirect_to_latest(cursor, id, '/extras/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
