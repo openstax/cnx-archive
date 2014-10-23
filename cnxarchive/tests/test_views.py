@@ -509,13 +509,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import get_content
 
         # Check that the view redirects to the latest version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             get_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@5.json'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@5.json'.format(uuid))])
 
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -530,13 +529,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@5'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@5'.format(uuid))])
 
     def test_legacy_id_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -551,13 +549,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@5'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@5'.format(uuid))])
 
     def test_legacy_id_old_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -572,13 +569,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@4'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@4'.format(uuid))])
 
     def test_legacy_bad_id_redirect(self):
         objid = 'foobar'
@@ -592,11 +588,10 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        try:
+        with self.assertRaises(httpexceptions.HTTPNotFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPNotFound, e:
-            self.assertEqual(e.status, '404 Not Found')
+
+        self.assertEqual(cm.exception.status, '404 Not Found')
 
     def test_legacy_id_old_ver_collection_context(self):
         uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
@@ -613,13 +608,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@1.1:14'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@1.1:14'.format(uuid))])
 
     def test_legacy_id_old_ver_bad_collection_context(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -635,13 +629,12 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/contents/{}@4'.format(uuid))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@4'.format(uuid))])
 
     def test_legacy_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -661,13 +654,13 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the resources url
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             redirect_legacy_content(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/resources/{}/{}'.format(sha1, filename))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(
+                cm.exception.headers,
+                [('Location', '/resources/{}/{}'.format(sha1, filename))])
 
     def test_legacy_no_such_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -869,13 +862,12 @@ class ViewsTestCase(unittest.TestCase):
         environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
 
         from ..views import get_export
-        try:
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
             get_export(environ, self._start_response)
-            self.assert_(False, 'should not get here')
-        except httpexceptions.HTTPFound, e:
-            self.assertEqual(e.status, '302 Found')
-            self.assertEqual(e.headers, [('Location',
-                '/exports/{}@5.pdf'.format(id))])
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/exports/{}@5.pdf'.format(id))])
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'

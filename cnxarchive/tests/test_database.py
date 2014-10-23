@@ -666,7 +666,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
         html = index_htmls[0][0][:]
-        self.assert_('<html' in html)
+        self.assertIn('<html', html)
 
         # Test that html abstract is generated
         cursor.execute('''SELECT abstract, html FROM abstracts
@@ -674,8 +674,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         abstract, html = cursor.fetchone()
         self.assertEqual(abstract,
                 'Here is my <emphasis>string</emphasis> summary.')
-        self.assert_('Here is my <strong>string</strong> summary.'
-                in html)
+        self.assertIn('Here is my <strong>string</strong> summary.', html)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -752,7 +751,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
         html = index_htmls[0][0][:]
-        self.assert_('<html' in html)
+        self.assertIn('<html', html)
 
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):
