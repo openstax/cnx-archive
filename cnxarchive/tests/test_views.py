@@ -793,6 +793,18 @@ class ViewsTestCase(unittest.TestCase):
             ]
         self.assertEqual(headers, expected_headers)
 
+    def test_resources_404(self):
+        hash = 'invalid-hash'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {'hash': hash}
+
+        # Call the view
+        from ..views import get_resource
+        self.assertRaises(httpexceptions.HTTPNotFound, get_resource, environ,
+                          self._start_response)
+
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
