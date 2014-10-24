@@ -37,13 +37,13 @@ class SitemapTestCase(unittest.TestCase):
         self.assertEqual(repr(ue),"<UrlEntry 'http://example.com'>")
         self.assertEqual(str(ue),'<url>\n<loc>http://example.com</loc>\n</url>\n')
         
-    def test_loc_last_urlEntry(self):
+    def test_loc_last_urlEntry_datetime(self):
         """test w/ location and lastmod (datetime instance)"""
         ue = sitemap.UrlEntry(loc='http://example.com', lastmod = datetime(2013, 10, 20))
         self.assertEqual(repr(ue),"<UrlEntry 'http://example.com'>")
         self.assertEqual(str(ue),'<url>\n<loc>http://example.com</loc>\n<lastmod>2013-10-20</lastmod>\n</url>\n')
         
-    def test_loc_last_urlEntry(self):
+    def test_loc_last_urlEntry_string(self):
         """test w/ location and lastmod (string)"""
         ue = sitemap.UrlEntry(loc='http://example.com', lastmod = '2014-22-40T70:00:00Z')
         self.assertEqual(repr(ue),"<UrlEntry 'http://example.com'>")

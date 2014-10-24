@@ -1429,7 +1429,7 @@ class DocumentHitsTestCase(unittest.TestCase):
                          ('88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4))
 
     @testing.db_connect
-    def test_update_recent_hits_function(self, cursor):
+    def test_update_overall_hits_function(self, cursor):
         # Verify the function updates the overall hit ranks table
         #   with hit rank information grouped by document uuid.
         self.override_recent_date()

@@ -90,7 +90,7 @@ class SplitIdentTestCase(unittest.TestCase):
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
 
-    def test_w_split_version_on_major_version(self):
+    def test_w_split_version_no_version(self):
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
             (None, None,)
