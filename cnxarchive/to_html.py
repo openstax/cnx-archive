@@ -346,14 +346,9 @@ class ReferenceResolver:
                             collection_id, collection_version)
                     if book_uuid:
                         from .views import _get_page_in_book
-                        uuid, version = _get_page_in_book(
-                                uuid, version, book_uuid, book_version)
-                        if collection_version:
-                            ident_hash = '{}@{}'.format(uuid, version)
-                        else:
-                            # remove version number
-                            page_num = version[version.index(':'):]
-                            ident_hash = '{}{}'.format(uuid, page_num)
+                        uuid, ident_hash = _get_page_in_book(
+                                uuid, version, book_uuid, book_version,
+                                latest=collection_version is None)
                 if uuid:
                     url_frag = url_frag and url_frag or ''
                     path = '/contents/{}{}'.format(ident_hash, url_frag)

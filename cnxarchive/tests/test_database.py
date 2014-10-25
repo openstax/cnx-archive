@@ -666,7 +666,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
         html = index_htmls[0][0][:]
-        self.assert_('<html' in html)
+        self.assertIn('<html', html)
 
         # Test that html abstract is generated
         cursor.execute('''SELECT abstract, html FROM abstracts
@@ -674,8 +674,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         abstract, html = cursor.fetchone()
         self.assertEqual(abstract,
                 'Here is my <emphasis>string</emphasis> summary.')
-        self.assert_('Here is my <strong>string</strong> summary.'
-                in html)
+        self.assertIn('Here is my <strong>string</strong> summary.', html)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -752,7 +751,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
         html = index_htmls[0][0][:]
-        self.assert_('<html' in html)
+        self.assertIn('<html', html)
 
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):
@@ -1430,7 +1429,7 @@ class DocumentHitsTestCase(unittest.TestCase):
                          ('88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4))
 
     @testing.db_connect
-    def test_update_recent_hits_function(self, cursor):
+    def test_update_overall_hits_function(self, cursor):
         # Verify the function updates the overall hit ranks table
         #   with hit rank information grouped by document uuid.
         self.override_recent_date()

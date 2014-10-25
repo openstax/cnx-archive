@@ -45,21 +45,18 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to(cursor, id, path_format_string, version=None):
+def redirect_to_latest(cursor, id, path_format_string='/contents/{}@{}'):
     """Redirect to latest version of a module / collection using the provided
-    path (path_format_string should look like '/contents/{}@{}'
+    path
     """
-    if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
-        try:
-            latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,): # None returned
-            logger.debug("version was not supplied and could not be discovered.")
-            raise httpexceptions.HTTPNotFound()
-    else:
-        latest_version = version
-    raise httpexceptions.HTTPFound(path_format_string \
-            .format(id, latest_version))
+    cursor.execute(SQL['get-module-versions'], {'id': id})
+    try:
+        latest_version = cursor.fetchone()[0]
+    except (TypeError, IndexError,): # None returned
+        logger.debug("version was not supplied and could not be discovered.")
+        raise httpexceptions.HTTPNotFound()
+    raise httpexceptions.HTTPFound(
+            path_format_string.format(id, latest_version))
 
 
 def get_content_metadata(id, version, cursor):
@@ -216,17 +213,16 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
-    coltree = _get_content_json(
-            ident_hash=join_ident_hash(book_uuid, book_version))['tree']
+def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=False):
+    book_ident_hash = join_ident_hash(book_uuid, book_version)
+    coltree = _get_content_json(ident_hash=book_ident_hash)['tree']
     pages = list(flatten_tree_to_ident_hashes(coltree))
-    try:
-        # first id is book
-        pagenum = pages.index(join_ident_hash(page_uuid, page_version))
-        version = '{}:{}'.format(book_version, pagenum)
-    except ValueError: # this page not in this book
-        return page_uuid, page_version
-    return book_uuid, version
+    page_ident_hash = join_ident_hash(page_uuid, page_version)
+    if page_ident_hash in pages:
+        return book_uuid, '{}:{}'.format(
+                latest and book_uuid or book_ident_hash, page_uuid)
+    # book not in page
+    return page_uuid, page_ident_hash
 
 
 def _get_content_json(environ=None, ident_hash=None, reqtype=None):
@@ -240,9 +236,10 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
         with db_connection.cursor() as cursor:
             if not version:
                 if reqtype:
-                    redirect_to(cursor, id, '/contents/{}@{}.%s' % reqtype)
+                    path = '/contents/{{}}@{{}}.{}'.format(reqtype)
+                    redirect_to_latest(cursor, id, path)
                 else:
-                    redirect_to(cursor, id, '/contents/{}@{}')
+                    redirect_to_latest(cursor, id)
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
@@ -312,6 +309,7 @@ def get_content(environ, start_response):
     else:
         return get_content_json(environ, start_response)
 
+
 def redirect_legacy_content(environ, start_response):
     """Redirect from legacy /content/id/version url to new /contents/uuid@version.
        Handles collection context (book) as well
@@ -322,7 +320,7 @@ def redirect_legacy_content(environ, start_response):
     objver = routing_args.get('objver')
     filename = routing_args.get('filename')
 
-    id, version = _convert_legacy_id(objid,objver)
+    id, version = _convert_legacy_id(objid, objver)
 
     if not id:
         raise httpexceptions.HTTPNotFound()
@@ -340,24 +338,24 @@ def redirect_legacy_content(environ, start_response):
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
-
+    ident_hash = join_ident_hash(id, version)
     params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
     if params.get('collection'): # page in book
         objid, objver = split_legacy_hash(params['collection'][0])
         book_uuid, book_version = _convert_legacy_id(objid, objver)
         if book_uuid:
-            id, version = _get_page_in_book(id, version, book_uuid, book_version)
+            id, ident_hash = _get_page_in_book(
+                    id, version, book_uuid, book_version)
 
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            redirect_to(cursor, id, '/contents/{}@{}', version)
+    raise httpexceptions.HTTPFound('/contents/{}'.format(ident_hash))
 
-def _convert_legacy_id(objid,objver=None):
+
+def _convert_legacy_id(objid, objver=None):
     settings = get_settings()
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if objver:
-                args = dict(objid=objid,objver=objver)
+                args = dict(objid=objid, objver=objver)
                 cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
             else:
                 cursor.execute(SQL['get-content-from-legacy-id'], dict(objid=objid))
@@ -401,7 +399,7 @@ def get_extra(environ, start_response):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to(cursor, id, '/extras/{}@{}')
+                redirect_to_latest(cursor, id, '/extras/{}@{}')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
