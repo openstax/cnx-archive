@@ -527,6 +527,84 @@ class ViewsTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
                           self._start_response)
 
+    def test_content_page_inside_book_version_mismatch(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '{}@{}'.format(book_uuid, book_version),
+                'page_ident_hash': '{}@0'.format(page_uuid),
+                }
+
+        # Call the view
+        from ..views import get_content
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
+                          self._start_response)
+
+    def test_content_page_inside_book_w_version(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+                'ident_hash': '{}@{}'.format(book_uuid, book_version),
+                'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+                }
+
+        # Call the view
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(environ, self._start_response)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers, [
+            ('Location', '/contents/{}@{}'.format(page_uuid, page_version))])
+
+    def test_content_page_inside_book_wo_version(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+
+        # Build the request
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+            'ident_hash': book_uuid,
+            'page_ident_hash': page_uuid,
+            }
+
+        # Call the view
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(environ, self._start_response)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        path = '/contents/{}@{}:{}.json'.format(
+            book_uuid, book_version, page_uuid)
+        self.assertEqual(cm.exception.headers, [('Location', path)])
+
+        # Go to the redirected path
+        environ = self._make_environ()
+        environ['wsgiorg.routing_args'] = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': page_uuid,
+            }
+
+        # Call the view
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(environ, self._start_response)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers, [
+            ('Location', '/contents/{}@{}'.format(page_uuid, page_version))])
+
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'

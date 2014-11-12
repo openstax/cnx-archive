@@ -227,16 +227,22 @@ def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=F
 
 def _get_content_json(environ=None, ident_hash=None, reqtype=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
+    routing_args = environ and environ.get('wsgiorg.routing_args', {}) or {}
     settings = get_settings()
     if not ident_hash:
-        ident_hash = environ['wsgiorg.routing_args']['ident_hash']
+        ident_hash = routing_args['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
+                page_ident_hash = routing_args.get('page_ident_hash', '')
+                if page_ident_hash:
+                    page_ident_hash = ':{}'.format(page_ident_hash)
+                path = '/contents/{{}}@{{}}{page_ident_hash}'.format(
+                    page_ident_hash=page_ident_hash)
                 if reqtype:
-                    path = '/contents/{{}}@{{}}.{}'.format(reqtype)
+                    path = '{}.{}'.format(path, reqtype)
                     redirect_to_latest(cursor, id, path)
                 else:
                     redirect_to_latest(cursor, id)
@@ -249,6 +255,16 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
                 tree = cursor.fetchone()[0]
                 # Must unparse, otherwise we end up double encoding.
                 result['tree'] = json.loads(tree)
+
+                page_ident_hash = routing_args.get('page_ident_hash')
+                if page_ident_hash:
+                    for id_ in flatten_tree_to_ident_hashes(result['tree']):
+                        uuid, version = split_ident_hash(id_)
+                        if uuid == page_ident_hash or id_ == page_ident_hash:
+                            raise httpexceptions.HTTPFound(
+                                '/contents/{}'.format(
+                                    join_ident_hash(uuid, version)))
+                    raise httpexceptions.HTTPNotFound()
             else:
                 # Grab the html content.
                 args = dict(id=id, version=result['version'],
