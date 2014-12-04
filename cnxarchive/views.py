@@ -28,7 +28,7 @@ from .search import (
     )
 from .sitemap import Sitemap
 from .utils import (
-    MODULE_MIMETYPE, COLLECTION_MIMETYPE,
+    MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype,
     join_ident_hash, slugify, split_ident_hash, split_legacy_hash,
     )
@@ -231,7 +231,10 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
     settings = get_settings()
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    id, version = split_ident_hash(ident_hash)
+    try:
+        id, version = split_ident_hash(ident_hash)
+    except IdentHashSyntaxError:
+        raise httpexceptions.HTTPNotFound()
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
