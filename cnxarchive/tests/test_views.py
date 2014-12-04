@@ -527,6 +527,17 @@ class ViewsTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
                           self._start_response)
 
+    def test_content_not_found_w_invalid_uuid(self):
+        # Build the request environment
+        environ = self._make_environ()
+        routing_args = {'ident_hash': 'notfound@1'}
+        environ['wsgiorg.routing_args'] = routing_args
+
+        # Call the view
+        from ..views import get_content
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
+                          self._start_response)
+
     def test_content_page_inside_book_version_mismatch(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         book_version = '7.1'
