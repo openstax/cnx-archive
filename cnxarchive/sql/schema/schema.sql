@@ -412,7 +412,7 @@ CREATE OR REPLACE FUNCTION html_abstract(abstract text)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.to_html import transform_abstract
+  from cnxarchive.transforms import transform_abstract
   db_connection = plpydbapi.connect()
   html_abstract, warning_messages = transform_abstract(abstract, db_connection)
   if warning_messages:
@@ -425,7 +425,7 @@ CREATE OR REPLACE FUNCTION html_content(cnxml text)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.to_html import transform_module_content
+  from cnxarchive.transforms import transform_module_content
   db_connection = plpydbapi.connect()
   html_content, warning_messages = transform_module_content(cnxml, db_connection)
   if warning_messages:

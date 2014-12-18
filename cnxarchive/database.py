@@ -12,7 +12,7 @@ import psycopg2
 import re
 
 from . import config
-from .to_html import produce_html_for_module, produce_html_for_abstract
+from .transforms import produce_html_for_module, produce_html_for_abstract
 
 
 here = os.path.abspath(os.path.dirname(__file__))
