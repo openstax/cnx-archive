@@ -25,7 +25,7 @@ that is greater than or equal to version **9.3**.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
 
-On a Mac, use the `PostgresApp <http://postgresapp.com/>`_.
+On a Mac, use the `PostgresApp <http://postgresapp.com/>`_ (currently using version 9.4).  See Documentation for installing Command Line Tools.
 
 On Debian (and Ubuntu), issue the following command::
 
