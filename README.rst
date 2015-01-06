@@ -162,6 +162,8 @@ dependencies that have not been released to the public package repositories::
 
 To install the application itself::
 
+**OSX Note** Make sure that XCode command line tools is installed by typing in `` xcode-select --install ``.
+
     python setup.py install
 
 This will install the package and a few application specific
