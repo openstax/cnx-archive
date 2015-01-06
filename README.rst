@@ -102,10 +102,13 @@ which is discussed later in this instructions.
 To set up the database, issue the following commands (these will use
 the default cluster, as defined above)::
 
+**OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
+
+
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
     createdb -U postgres -O cnxarchive cnxarchive
+    psql cnxarchive #to confirm the the table has been created. 
 
-**OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
 
 Install memcached (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
