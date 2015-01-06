@@ -100,9 +100,11 @@ please ensure you also change them in the application's configuration file,
 which is discussed later in this instructions.
 
 To set up the database, issue the following commands (these will use
-the default cluster, as defined above)::
+the default cluster, as defined above)
 
 **OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
+::
+
 
 
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
