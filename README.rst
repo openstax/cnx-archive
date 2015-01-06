@@ -61,6 +61,8 @@ On a Mac, this can be done using the following commands,
 assuming you have both `PostgresApp` and
 `homebrew <http://brew.sh/>`_ installed.
 
+
+Make sure that ``pkg-config`` is properly install by typing ``pkg-config --version``.  If it isn't installed type ``brew install pkg-config`` to install it. 
 ::
 
     brew install libxml2 libxslt
