@@ -18,7 +18,7 @@ then feel free to either file an
 or contact Connexions for further assistance.
 
 Install the PostgreSQL database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will require a ``PostgreSQL`` install
 that is greater than or equal to version **9.3**.
@@ -162,9 +162,11 @@ dependencies that have not been released to the public package repositories::
 
 To install the application itself::
 
-**OSX Note** Make sure that XCode command line tools is installed by typing in `` xcode-select --install ``.
-
     python setup.py install
+
+**OSX Note** Make sure that XCode command line tools is installed by typing in::
+    
+    xcode-select --install
 
 This will install the package and a few application specific
 scripts. One of these scripts is used to initialize the database with
