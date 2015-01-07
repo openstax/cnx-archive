@@ -753,6 +753,75 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         html = index_htmls[0][0][:]
         self.assertIn('<html', html)
 
+    @testing.db_connect
+    def test_tree_to_json(self, cursor):
+        """Verify the results of the ``tree_to_json_for_legacy`` sql function.
+        This is used during a cnx-publishing publication.
+        """
+        expected_tree = {
+            u'id': u'col11406',
+            u'title': u'College Physics',
+            u'version': u'1.7',
+            u'contents': [
+                {u'id': u'm42955', u'title': u'Preface', u'version': u'1.7'},
+                {u'id': u'subcol',
+                 u'title': u'Introduction: The Nature of Science and Physics',
+                 u'version': None,
+                 u'contents': [
+                     {u'id': u'm42119',
+                      u'title': u'Introduction to Science and the Realm of '
+                                u'Physics, Physical Quantities, and Units',
+                      u'version': u'1.3'},
+                     {u'id': u'm42092',
+                      u'title': u'Physics: An Introduction',
+                      u'version': u'1.4'},
+                     {u'id': u'm42091',
+                      u'title': u'Physical Quantities and Units',
+                      u'version': u'1.6'},
+                     {u'id': u'm42120',
+                      u'title': u'Accuracy, Precision, and Significant '
+                                u'Figures',
+                      u'version': u'1.7'},
+                     {u'id': u'm42121',
+                      u'title': u'Approximation',
+                      u'version': u'1.5'}]},
+                {u'id': u'subcol',
+                 u'title': u"Further Applications of Newton's Laws: Friction,"
+                           u" Drag, and Elasticity",
+                 u'version': None,
+                 u'contents': [
+                     {u'id': u'm42138',
+                      u'title': u'Introduction: Further Applications of '
+                                u'Newton\u2019s Laws',
+                      u'version': u'1.2'},
+                     {u'id': u'm42139',
+                      u'title': u'Friction',
+                      u'version': u'1.5'},
+                     {u'id': u'm42080',
+                      u'title': u'Drag Forces',
+                      u'version': u'1.6'},
+                     {u'id': u'm42081',
+                      u'title': u'Elasticity: Stress and Strain',
+                      u'version': u'1.8'}]},
+                {u'id': u'm42699',
+                 u'title': u'Atomic Masses',
+                 u'version': u'1.3'},
+                {u'id': u'm42702',
+                 u'title': u'Selected Radioactive Isotopes',
+                 u'version': u'1.2'},
+                {u'id': u'm42720',
+                 u'title': u'Useful Inf\xf8rmation',
+                 u'version': u'1.5'},
+                {u'id': u'm42709',
+                 u'title': u'Glossary of Key Symbols and Notation',
+                 u'version': u'1.5'}]}
+        cursor.execute("""\
+SELECT tree_to_json_for_legacy(
+    'e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1')::json
+""")
+        tree = cursor.fetchone()[0]
+        self.assertEqual(expected_tree, tree)
+
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):
     """Test case for updating the latest_modules table
