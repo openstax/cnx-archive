@@ -14,7 +14,8 @@ WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
     FROM trees tr, modules m
     WHERE m.uuid::text = $1 AND
           concat_ws('.',  m.major_version, m.minor_version) = $2 AND
-      tr.documentid = m.module_ident
+      tr.documentid = m.module_ident AND
+      tr.parent_id IS NULL
 UNION ALL
     SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder] /* Recursion */
     FROM trees c1 JOIN t ON (c1.parent_id = t.node)
