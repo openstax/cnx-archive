@@ -19,7 +19,7 @@ description = "An archive for Connexions documents."
 
 setup(
     name='cnx-archive',
-    version='0.1',
+    version='1.2.0',
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/cnx-archive",
