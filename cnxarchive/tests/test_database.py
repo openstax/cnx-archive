@@ -605,6 +605,14 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         (20802, 'Here is my <emphasis>string</emphasis> summary.')
         ''')
 
+        # Test that html abstract is generated
+        cursor.execute('''SELECT abstract, html FROM abstracts
+            WHERE abstractid = 20802''')
+        abstract, html = cursor.fetchone()
+        self.assertEqual(abstract,
+                'Here is my <emphasis>string</emphasis> summary.')
+        self.assertIn('Here is my <strong>string</strong> summary.', html)
+
         # Insert a new version of an existing module
         cursor.execute('''
         INSERT INTO modules
@@ -667,14 +675,6 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         # Test that the index.cnxml.html contains html
         html = index_htmls[0][0][:]
         self.assertIn('<html', html)
-
-        # Test that html abstract is generated
-        cursor.execute('''SELECT abstract, html FROM abstracts
-            WHERE abstractid = 20802''')
-        abstract, html = cursor.fetchone()
-        self.assertEqual(abstract,
-                'Here is my <emphasis>string</emphasis> summary.')
-        self.assertIn('Here is my <strong>string</strong> summary.', html)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -821,6 +821,47 @@ SELECT tree_to_json_for_legacy(
 """)
         tree = cursor.fetchone()[0]
         self.assertEqual(expected_tree, tree)
+
+    @testing.db_connect
+    def test_blank_abstract(self, cursor):
+        # Insert blank abstract
+        with self.assertRaises(psycopg2.InternalError) as caught_exception:
+            cursor.execute("INSERT INTO abstracts (abstractid) "
+                           "VALUES (20801)")
+        self.assertIn("Blank entry", caught_exception.exception.message)
+
+    @testing.db_connect
+    def test_abstract_to_html(self, cursor):
+        # Insert abstract with cnxml
+        cursor.execute("""\
+INSERT INTO abstracts (abstractid, abstract)
+VALUES (20802, 'Here is my <emphasis>string</emphasis> summary.')""")
+
+        # Test that html abstract is generated
+        cursor.execute("""\
+SELECT abstract, html FROM abstracts
+WHERE abstractid = 20802""")
+        abstract, html = cursor.fetchone()
+        self.assertEqual(abstract,
+                'Here is my <emphasis>string</emphasis> summary.')
+        self.assertIn('Here is my <strong>string</strong> summary.', html)
+
+    @testing.db_connect
+    def test_abstract_to_cnxml(self, cursor):
+        # Insert abstract with html
+        html = """<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">Here is my <strong>string</strong> summary.</div>"""
+        cursor.execute("""\
+INSERT INTO abstracts (abstractid, html)
+VALUES (20802, %s)""", (html,))
+
+        # Test that html abstract is generated
+        cursor.execute("""\
+SELECT abstract, html FROM abstracts
+WHERE abstractid = 20802""")
+        abstract, html = cursor.fetchone()
+        self.assertEqual(abstract,
+                'Here is my <emphasis>string</emphasis> summary.')
+        self.assertIn('Here is my <strong>string</strong> summary.', html)
 
 
 class UpdateLatestTriggerTestCase(unittest.TestCase):

@@ -12,7 +12,10 @@ import psycopg2
 import re
 
 from . import config
-from .transforms import produce_html_for_module, produce_html_for_abstract
+from .transforms import (
+    produce_html_for_module,
+    transform_abstract_to_cnxml, transform_abstract_to_html,
+    )
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -550,9 +553,50 @@ def add_module_file(plpy, td):
         with db_connection.cursor() as cursor:
             plpy.log('produce html and abstract html for {}'.format(module_ident))
             produce_html_for_module(db_connection, cursor, module_ident)
-            produce_html_for_abstract(db_connection, cursor, module_ident)
         db_connection.commit()
     return
+
+def transform_abstract_trigger(plpy, td):
+    """Postgres database trigger for adding an abstract.
+
+    When an abstract is added, one of content columns ('abstract' or 'html')
+    will contain markup. A transform is done on either one of them to make
+    the other value. If no value is supplied, the trigger raises an error.
+    If both values are supplied, the trigger will skip.
+    """
+    import plpydbapi
+
+    cnxml = td['new']['abstract']
+    html = td['new']['html']
+    if cnxml is not None and html is not None:
+        return  # skip
+    if cnxml is None and html is None:
+        raise Exception("Blank entry")
+
+    abstractid = td['new']['abstractid']
+    msg = "produce {}->{} for abstractid={}"
+    if cnxml is None:
+        # Transform html->cnxml
+        msg = msg.format('html', 'cnxml', abstractid)
+        content = html
+        column = 'abstract'
+        transform_func = transform_abstract_to_cnxml
+    else:
+        # Transform cnxml->html
+        msg = msg.format('cnxml', 'html', abstractid)
+        content = cnxml
+        column = 'html'
+        transform_func = transform_abstract_to_html
+
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            plpy.log(msg)
+            content, messages = transform_func(content, cursor)
+            plpy.debug("Transform messages: {}".format(messages))
+
+    td['new'][column] = content
+    return 'MODIFY'
+
 
 def get_collection_tree(collection_ident, cursor):
     cursor.execute('''

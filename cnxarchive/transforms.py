@@ -423,8 +423,8 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     warning_messages = None
     # Transform the abstract.
     if abstract:
-        html, warning_messages = transform_abstract(abstract, db_connection,
-                                                    document_ident=document_ident)
+        html, warning_messages = transform_abstract_to_html(
+            abstract, db_connection)
     else:
         html = None
 
@@ -436,7 +436,14 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     return warning_messages
 
 
-def transform_abstract(abstract, db_connection, document_ident=None):
+def produce_cnxml_for_abstract(cursor, abstractid, update=True):
+    """Produce cnxml for the abstract by the given ``abstractid``.
+    If called with ``update`` set to ``True`` the record will be updated,
+    else the html and warning messages will only be returned."""
+    raise NotImplementedError
+
+
+def transform_abstract_to_html(abstract, db_connection):
     warning_messages = None
     abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
     # Does it have a wrapping tag?
@@ -449,7 +456,7 @@ def transform_abstract(abstract, db_connection, document_ident=None):
     xhtml_namespace = 'http://www.w3.org/1999/xhtml'
     nsmap[None] = xhtml_namespace
     nsmap['html'] = xhtml_namespace
-    root= etree.Element('html', nsmap=nsmap)
+    root = etree.Element('html', nsmap=nsmap)
     root.append(abstract_html.getroot())
     # FIXME This includes fixes to the xml to include the neccessary bits.
     container = abstract_html.xpath('/body')[0]
@@ -459,9 +466,13 @@ def transform_abstract(abstract, db_connection, document_ident=None):
     abstract_html = etree.tostring(root)
 
     # Then fix up content references in the abstract.
-    fixed_html, bad_refs = fix_reference_urls(db_connection,
-                                              document_ident,
-                                              BytesIO(abstract_html))
+    # XXX document_ident is no longer available as part of the procedure.
+    #     Changes to the reference resolver may be necessary...
+    ## fixed_html, bad_refs = fix_reference_urls(db_connection,
+    ##                                           document_ident,
+    ##                                           BytesIO(abstract_html))
+    fixed_html = abstract_html
+    bad_refs = None
 
     if bad_refs:
         warning_messages = 'Invalid References (Abstract): {}' \
@@ -470,6 +481,12 @@ def transform_abstract(abstract, db_connection, document_ident=None):
     nsmap.pop(None)  # xpath doesn't accept an empty namespace.
     return etree.tostring(etree.fromstring(fixed_html).xpath(
         "/html:html/html:div", namespaces=nsmap)[0]), warning_messages
+
+
+def transform_abstract_to_cnxml(abstract, db_connection):
+    warning_messages = None
+    # TODO ...
+    return abstract, warning_messages
 
 
 def produce_html_for_module(db_connection, cursor, ident,
