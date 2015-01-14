@@ -13,7 +13,7 @@ import re
 
 from . import config
 from .transforms import (
-    produce_html_for_module,
+    produce_cnxml_for_module, produce_html_for_module,
     transform_abstract_to_cnxml, transform_abstract_to_html,
     )
 
@@ -526,35 +526,72 @@ VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
-    When a module file index.cnxml is added to the database, the trigger
-    transforms it into html and stores it in the database as index.cnxml.html.
+    When a legacy ``index.cnxml`` is added, this trigger
+    transforms it into html and stores it as ``index.cnxml.html``.
+    When a cnx-publishing ``index.cnxml.html`` is added, this trigger
+    checks if ``index.html.cnxml`` exists before
+    transforming it into cnxml and stores it as ``index.html.cnxml``.
+
+    Note, we do not use ``index.html`` over ``index.cnxml.html``, because
+    legacy allows users to name files ``index.html``.
+
     """
     import plpydbapi
 
-    filename = td['new']['filename']
-    if filename != 'index.cnxml':
-        return
-
     module_ident = td['new']['module_ident']
+    fileid = td['new']['fileid']
+    filename = td['new']['filename']
+    msg = "produce {}->{} for module_ident = {}"
 
-    # Delete index.cnxml.html
-    stmt = plpy.prepare('''DELETE FROM module_files
-    WHERE filename = 'index.cnxml.html' AND module_ident = $1
-    RETURNING fileid''', ['integer'])
-    result = plpy.execute(stmt, [module_ident])
-    if result:
-        # There can only be one fileid returned from the above sql
-        # "module_files_idx" UNIQUE, btree (module_ident, filename)
-        fileid = result[0]['fileid']
-        stmt = plpy.prepare('DELETE FROM files WHERE fileid = $1', ['integer'])
-        plpy.execute(stmt, [fileid])
+    def check_for(filename, module_ident):
+        """Check for a file at ``filename`` associated with
+        module at ``module_ident``.
+        """
+        stmt = plpy.prepare("""\
+SELECT TRUE AS exists FROM module_files
+WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
+        result = plpy.execute(stmt, [filename, module_ident])
+        try:
+            exists = result[0]['exists']
+        except IndexError:
+            exists = False
+        return bool(exists)
 
-    with plpydbapi.connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            plpy.log('produce html and abstract html for {}'.format(module_ident))
-            produce_html_for_module(db_connection, cursor, module_ident)
-        db_connection.commit()
+    # Declare the content producer function variable,
+    #   because it is possible that it will not be assigned.
+    producer_func = None
+    if filename == 'index.cnxml':
+        new_filename = 'index.cnxml.html'
+        # Transform content to html.
+        other_exists = check_for(new_filename, module_ident)
+        if not other_exists:
+            msg = msg.format('cnxml', 'html', module_ident)
+            producer_func = produce_html_for_module
+    elif filename == 'index.cnxml.html':
+        new_filename = 'index.html.cnxml'
+        # Transform content to cnxml.
+        index_cnxml_exists = check_for('index.cnxml', module_ident)
+        other_exists = check_for(new_filename, module_ident)
+        if not (other_exists or index_cnxml_exists):
+            msg = msg.format('html', 'cnxml', module_ident)
+            producer_func = produce_cnxml_for_module
+    else:
+        # Not one of the special named files.
+        return  # skip
+
+    if producer_func is not None:
+        with plpydbapi.connect() as db_connection:
+            with db_connection.cursor() as cursor:
+                plpy.info(msg)
+                producer_func(cursor.connection, cursor,
+                              module_ident,
+                              source_filename=filename,
+                              destination_filename=new_filename)
+            # For whatever reason, the plpydbapi context manager
+            #   does not call commit on close.
+            db_connection.commit()
     return
+
 
 def transform_abstract_trigger(plpy, td):
     """Postgres database trigger for adding an abstract.

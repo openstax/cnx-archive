@@ -405,7 +405,7 @@ AS $$
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER module_file_added
-  AFTER INSERT ON module_files FOR EACH ROW WHEN ( new.filename = 'index.cnxml' )
+  AFTER INSERT ON module_files FOR EACH ROW
   EXECUTE PROCEDURE add_module_file();
 
 CREATE OR REPLACE FUNCTION add_abstract ()

@@ -491,12 +491,56 @@ def transform_abstract_to_cnxml(abstract, db_connection):
 
 def produce_html_for_module(db_connection, cursor, ident,
                             source_filename='index.cnxml',
+                            destination_filename='index.cnxml.html',
                             overwrite_html=False):
-    """Produce and 'index.cnxml.html' file for the module at ``ident``.
+    """Produce an ``destination_filename`` (default 'index.cnxml.html') file
+    for the module at ``ident`` using the ``source_filename``
+    (default 'index.cnxml').
+
     Raises exceptions when the transform cannot be completed.
+
     Returns a message containing warnings and other information that
-    does not effect the HTML content, but may affect the user experience
+    does not effect the content, but may affect the user experience
     of it.
+
+    """
+    # BBB 14-Jan-2015 renamed - overwrite_html has been renamed overwrite
+    return produce_transformed_file(cursor, ident, source_filename,
+                                    destination_filename,
+                                    overwrite=overwrite_html)
+
+
+def produce_cnxml_for_module(db_connection, cursor, ident,
+                             source_filename='index.cnxml.html',
+                             destination_filename='index.html.cnxml',
+                             overwrite=False):
+    """Produce an ``destination_filename`` (default 'index.html.cnxml') file
+    for the module at ``ident`` using the ``source_filename``
+    (default 'index.cnxml.html').
+
+    Raises exceptions when the transform cannot be completed.
+
+    Returns a message containing warnings and other information that
+    does not effect the content, but may affect the user experience
+    of it.
+
+    """
+    return produce_transformed_file(cursor, ident, source_filename,
+                                    destination_filename, overwrite=overwrite)
+
+
+def produce_transformed_file(cursor, ident,
+                             source_filename, destination_filename,
+                             overwrite=False):
+    """Produce an ``destination_filename`` file for the module at ``ident``
+    using the ``source_filename``.
+
+    Raises exceptions when the transform cannot be completed.
+
+    Returns a message containing warnings and other information that
+    does not effect the content, but may affect the user experience
+    of it.
+
     """
     cursor.execute("SELECT convert_from(file, 'utf-8') "
                    "FROM module_files "
@@ -505,39 +549,40 @@ def produce_html_for_module(db_connection, cursor, ident,
                    "      AND filename = %s;",
                    (ident, source_filename,))
     try:
-        cnxml = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
+        content = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
     except TypeError:  # None returned
         raise MissingDocumentOrSource(ident, source_filename)    
 
-    # Remove index.cnxml.html if overwrite_html is True and if it exists
+    # Remove destination if overwrite_html is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
                    'WHERE module_ident = %s '
                    '      AND filename = %s',
-                   (ident, 'index.cnxml.html'))
-    index_html_id = cursor.fetchone()
-    if index_html_id:
-        index_html_id = index_html_id[0]
-        if index_html_id:
-            if overwrite_html:
+                   (ident, destination_filename))
+    content_file_id = cursor.fetchone()
+    if content_file_id:
+        content_file_id = content_file_id[0]
+        if content_file_id:
+            if overwrite:
                 cursor.execute('DELETE FROM module_files WHERE fileid = %s',
-                               (index_html_id,))
+                               (content_file_id,))
                 cursor.execute('DELETE FROM files WHERE fileid = %s',
-                               (index_html_id,))
+                               (content_file_id,))
             else:
                 raise IndexHtmlExistsError(ident)
 
-    index_html, warning_messages = transform_module_content(
-            cnxml, db_connection, document_ident=ident)
+    new_content, warning_messages = transform_module_content(
+            content, cursor.connection, document_ident=ident)
 
-    # Insert the index.cnxml.html into the database.
-    payload = (memoryview(index_html),)
+    # Insert the cnxml into the database.
+    payload = (memoryview(new_content),)
     cursor.execute("INSERT INTO files (file) VALUES (%s) "
                    "RETURNING fileid;", payload)
-    html_file_id = cursor.fetchone()[0]
+    destination_file_id = cursor.fetchone()[0]
     cursor.execute("INSERT INTO module_files "
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
-                   (ident, html_file_id, 'index.cnxml.html', 'text/html',))
+                   (ident, destination_file_id,
+                    destination_filename, 'text/html',))
     return warning_messages
 
 
