@@ -20,7 +20,7 @@ FROM (SELECT
 
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
 
-  m.authors as authors, m.licensors as licensors, m.maintainers as maintainers,
+  m.authors as authors, m.licensors as licensors, m.maintainers as publishers,
   COALESCE(m.parentauthors,ARRAY(select ''::text where false)) as "parentAuthors",
   m.language as language,
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from
