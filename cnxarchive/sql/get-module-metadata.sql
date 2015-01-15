@@ -52,7 +52,7 @@ FROM (SELECT
                 NULL AS suffix, NULL AS website
          FROM users AS u
          WHERE u.username = ANY (m.maintainers)
-         ) AS user_rows) AS maintainers,
+         ) AS user_rows) AS publishers,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
                 full_name AS fullname,
