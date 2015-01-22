@@ -498,11 +498,15 @@ def search(environ, start_response):
     if not(query.filters or query.terms):
         start_response('200 OK', [('Content-type', 'application/json')])
         return [empty_response]
+
     db_results = cache.search(
             query, query_type,
             nocache=params.get('nocache', [''])[0].lower() == 'true')
+            
 
     authors = db_results.auxiliary['authors']
+    
+
     # create a mapping for author id to index in auxiliary authors list
     author_mapping = {}
     for i, author in enumerate(authors):
@@ -557,6 +561,27 @@ def search(environ, start_response):
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
     start_response(status, headers)
+    
+    #In the case where a search is performed with an authorId as a filter,
+    # it is possible for the database to return no results even if the author exists in the database.
+    #  Therefore, the database is queried a second time for contact information associated with only the authorIds.
+    #  The author information is then used to update the results returned by the first database query. 
+    if len(db_results)<=0 :
+        authors_list =[]
+        keyword_list = query.filters
+        for key, value in keyword_list:
+            if key=='authorID':
+                authors_list.append(value)
+        if authors_list!=[]:
+            settings = get_settings()
+            with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+                with db_connection.cursor() as cursor:
+                    arguments =(authors_list,)
+                    statement=SQL['get-users-by-ids']
+                    cursor.execute(statement,arguments)
+                    authors_db_results=cursor.fetchall()
+            results['results']['auxiliary']['authors'] = authors_db_results
+    
     return [json.dumps(results)]
 
 
