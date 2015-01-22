@@ -11,7 +11,7 @@ as $$
 from xml import sax
 
 # While the collxml files we process potentially contain many of these
-# namespaces, I take advantage of the fact that almost none of the 
+# namespaces, I take advantage of the fact that almost none of the
 # localnames (tags names) acutally overlap. The one case that does (title)
 # actually works in our favor, since we want to treat it the same anyway.
 
@@ -59,7 +59,7 @@ class ModuleHandler(sax.ContentHandler):
         self.title = u''
         self.nodeid = 0
         self.derivedfrom = [None]
-        
+
     def startElementNS(self, (uri, localname), qname, attrs):
         self.map[localname] = u''
         self.tag = localname
@@ -93,7 +93,7 @@ class ModuleHandler(sax.ContentHandler):
             self.version = self.map[localname]
         elif localname == 'title' and not self.derivedfrom[-1]:
             self.title = self.map[localname]
-            if self.parents[-1]: # current node is a subcollection or module 
+            if self.parents[-1]: # current node is a subcollection or module
                _do_update(self.title.encode('utf-8'), self.nodeid)
 
         elif localname == 'derived-from':
@@ -127,14 +127,22 @@ $$
 language plpythonu;
 
 create or replace function shred_collxml (fid int)  returns void as
-$$ 
+$$
 select shred_collxml(convert_from(file,'UTF8')) from files where fileid = fid
 $$
 language sql;
 
+
+create or replace function shred_collxml (fid int, docid int) returns void as
+$$
+select shred_collxml(convert_from(file,'UTF8')) from files where fileid = fid
+    and not exists (
+       select 1 from trees where documentid = docid and parent_id is null)
+$$ language sql;
+
 create or replace function shred_collxml_trigger () returns trigger as $$
 BEGIN
-PERFORM shred_collxml(NEW.fileid);
+PERFORM shred_collxml(NEW.fileid, NEW.module_ident);
 RETURN NEW;
 END;
 $$
