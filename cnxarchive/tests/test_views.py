@@ -1236,6 +1236,57 @@ class ViewsTestCase(unittest.TestCase):
                         {u'tag': u'authorID', u'index': 0,
                          u'value': u'cnxcap'}],
             })
+            
+    def test_author_special_case_search(self):
+        # Test the search case where an additional database query is needed to return auxiliary author info when the first query returned no results.  
+        
+        # Build the request
+        environ = self._make_environ()
+        environ['QUERY_STRING'] = 'q=subject:"LADY GAGA AND THE SOCIOLOGY OF FAME" authorID:cnxcap authorID:OpenStaxCollege'
+
+        from ..views import search
+        results = search(environ, self._start_response)[0]
+        status = self.captured_response['status']
+        headers = self.captured_response['headers']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        results = json.loads(results)
+        self.assertEqual(results['results']['total'], 0)
+
+        expected =  [
+            [
+                {
+                    u'website': None,
+                    u'surname': u'Physics',
+                    u'suffix': None,
+                    u'firstname': u'College',
+                    u'title': None,
+                    u'othername': None,
+                    u'emails': [u'info@openstaxcollege.org'],
+                    u'fullname': u'OSC Physics Maintainer',
+                    u'id': u'cnxcap'
+                }
+            ],
+            [
+                {
+                    u'website': None,
+                    u'surname': None,
+                    u'suffix': None,
+                    u'firstname': u'OpenStax College',
+                    u'title': None,
+                    u'othername': None,
+                    u'emails': [u'info@openstaxcollege.org'],
+                    u'fullname': u'OpenStax College',
+                    u'id': u'OpenStaxCollege'
+                }
+            ]
+        ]
+            
+        self.assertEqual( results['results']['auxiliary']['authors'],expected)
+
+
+
 
     def test_search_only_subject(self):
         # From the Content page, we have a list of subjects (tags),

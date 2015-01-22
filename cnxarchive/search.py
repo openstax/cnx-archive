@@ -655,3 +655,6 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
             search_results = cursor.fetchall()
     # Wrap the SQL results.
     return QueryResults(search_results, query, query_type)
+
+
+

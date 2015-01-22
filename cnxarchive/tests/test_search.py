@@ -198,7 +198,6 @@ class SearchModelTestCase(unittest.TestCase):
         expected = [{u'website': None, u'surname': u'Physics', u'suffix': None, u'firstname': u'College', u'title': None, u'othername': None, u'fullname': u'OSC Physics Maintainer', u'email': u'info@openstaxcollege.org', u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1'}, {u'website': None, u'surname': None, u'suffix': None, u'firstname': u'OpenStax College', u'title': None, u'othername': None, u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org', u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'}]
         self.assertEqual(authors, expected)
 
-
 class SearchTestCase(unittest.TestCase):
     fixture = testing.data_fixture
 
