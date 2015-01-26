@@ -1,5 +1,6 @@
 # Development #
 ###############
+.project
 *.pyc
 *.pyo
 *.egg-info
@@ -23,3 +24,4 @@ dist/
 # Coverage #
 ############
 .coverage
+
