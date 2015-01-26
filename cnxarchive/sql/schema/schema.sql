@@ -438,7 +438,7 @@ AS $$
   import plpydbapi
   from cnxarchive.transforms import transform_module_content
   db_connection = plpydbapi.connect()
-  html_content, warning_messages = transform_module_content(cnxml, db_connection)
+  html_content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection)
   if warning_messages:
     plpy.warning(warning_messages)
   db_connection.close()
