@@ -52,7 +52,8 @@ SQL = {
     'get-module-versions': _read_sql_file('get-module-versions'),
     'get-subject-list': _read_sql_file('get-subject-list'),
     'get-featured-links': _read_sql_file('get-featured-links'),
-    }
+    'get-users-by-ids':_read_sql_file('get-users-by-ids'),
+    } 
 
 
 def initdb(settings):
