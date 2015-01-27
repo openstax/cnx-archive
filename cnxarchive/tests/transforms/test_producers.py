@@ -365,7 +365,7 @@ class AbstractToCnxmlTestCase(unittest.TestCase):
                        "  WHERE abstractid = %s;",
                        (abstractid,))
         abstract = cursor.fetchone()[0]
-        expected = '<list list-style="bulleted"><item>one</item><item>two</item><item>three</item></list>'
+        expected = 'A number list: <list list-type="bulleted"><item>one</item><item>two</item><item>three</item></list>'
         self.assertIn(expected, abstract)
 
     @testing.db_connect

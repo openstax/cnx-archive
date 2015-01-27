@@ -132,43 +132,37 @@ def transform_abstract_to_html(abstract, db_connection):
     abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
     # Does it have a wrapping tag?
     abstract_html = cnxml_to_html(abstract)
+
+    # Rename the containing element, because the abstract is a snippet,
+    #   not a document.
     abstract_html = etree.parse(BytesIO(abstract_html), DEFAULT_XMLPARSER)
-
-    # FIXME The transform should include the default html namespace.
-    #       Replace the root element to include the default namespace.
-    nsmap = abstract_html.getroot().nsmap.copy()
-    xhtml_namespace = 'http://www.w3.org/1999/xhtml'
-    nsmap[None] = xhtml_namespace
-    nsmap['html'] = xhtml_namespace
-    root = etree.Element('html', nsmap=nsmap)
-    root.append(abstract_html.getroot())
-    # FIXME This includes fixes to the xml to include the neccessary bits.
-    container = abstract_html.xpath('/body')[0]
+    container = abstract_html.xpath('/*')[0]  # a 'body' tag.
     container.tag = 'div'
-
     # Re-assign and stringify to what it should be without the fixes.
-    abstract_html = etree.tostring(root)
+    abstract_html = etree.tostring(abstract_html)
 
     # Then fix up content references in the abstract.
     fixed_html, bad_refs = resolve_cnxml_urls(BytesIO(abstract_html),
                                               db_connection)
-
     if bad_refs:
         warning_messages = 'Invalid References (Abstract): {}' \
                 .format('; '.join(bad_refs))
-    # Now unwrap it and stringify again.
-    nsmap.pop(None)  # xpath doesn't accept an empty namespace.
-    return etree.tostring(etree.fromstring(fixed_html).xpath(
-        "/html:html/html:div", namespaces=nsmap)[0]), warning_messages
+
+    return fixed_html, warning_messages
 
 
 def transform_abstract_to_cnxml(abstract, db_connection):
     """Transforms an html abstract to cnxml."""
     warning_messages = None
     cnxml = None
-    # Transform the abstract.
+
     if abstract:
-        cnxml = html_to_cnxml(abstract)
+        # Mark the wrapping 'div' as an identifiable data-type.
+        html = etree.fromstring(abstract)
+        container = html.xpath('/*')[0]
+        container.attrib['data-type'] = 'abstract-wrapper'
+        # Transform the abstract.
+        cnxml = html_to_cnxml(html)
 
     # Then fix up content references in the abstract.
     if cnxml:
@@ -176,6 +170,14 @@ def transform_abstract_to_cnxml(abstract, db_connection):
         if bad_refs:
             warning_messages = 'Invalid References (Abstract): {}' \
                 .format('; '.join(bad_refs))
+
+    # Strip the <wrapper> wrapper tag off the content.
+    # The wrapper is used so that bare text can be in the abstract
+    #   and still be valid xml, which is required for the reference resolver.
+    start = cnxml.find('>') + 1
+    end = len(cnxml) - len('</wrapper>')
+    cnxml = cnxml[start:end]
+
     return cnxml, warning_messages
 
 
