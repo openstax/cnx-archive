@@ -612,7 +612,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
         cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
-                       "%s, 'index.cnxml', 'text/xml')", (fileid,))
+                       "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
         cursor.connection.commit()
 
         from ...transforms.producers import IndexFileExistsError
@@ -622,14 +622,14 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
 
         # Check the error message
         self.assertEqual(e.exception.message,
-                         'index.cnxml already exists for document 2')
+                         'index.html.cnxml already exists for document 2')
 
         # Assert index.cnxml.html is not deleted
         cursor.execute("SELECT fileid FROM files "
                        "  WHERE fileid = "
                        "    (SELECT fileid FROM module_files "
                        "       WHERE module_ident = 2 "
-                       "         AND filename = 'index.cnxml');")
+                       "         AND filename = 'index.html.cnxml');")
         index_cnxml_id = cursor.fetchone()[0]
 
         self.assertEqual(fileid, index_cnxml_id)

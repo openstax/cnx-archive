@@ -248,7 +248,7 @@ def produce_transformed_file(cursor, ident, transform_type,
     except TypeError:  # None returned
         raise MissingDocumentOrSource(ident, source_filename)    
 
-    # Remove destination if overwrite_html is True and if it exists
+    # Remove destination if overwrite is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
                    'WHERE module_ident = %s '
                    '      AND filename = %s',
