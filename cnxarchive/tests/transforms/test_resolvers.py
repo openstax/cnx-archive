@@ -12,7 +12,7 @@ import unittest
 from .. import testing
 
 
-class HTMLReferenceResolutionTestCase(unittest.TestCase):
+class HtmlReferenceResolutionTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = None
 
@@ -269,3 +269,107 @@ class HTMLReferenceResolutionTestCase(unittest.TestCase):
         self.assertEqual(parse_reference(
             'http://legacy.cnx.org/content/m48897/latest?collection=col11441/'
             'latest'), (None, ()))
+
+
+class CnxmlReferenceResolutionTestCase(unittest.TestCase):
+    fixture = testing.data_fixture
+    maxDiff = None
+
+    def setUp(self):
+        self.fixture.setUp()
+        self.fixture.setUpAccountsDb()
+        from ... import _set_settings
+        settings = testing.integration_test_settings()
+        _set_settings(settings)
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    @property
+    def target(self):
+        from ...transforms.resolvers import resolve_cnxml_urls
+        return resolve_html_urls
+
+    def test_parse_reference(self):
+        from ...transforms.resolvers import (
+            DOCUMENT_REFERENCE, BINDER_REFERENCE,
+            RESOURCE_REFERENCE,
+            parse_html_reference as parse_reference,
+            )
+
+        title = "Something about nothing"
+        id = '49f43184-728f-445f-b669-abda618ab8f4'
+        ver = '155'
+        id2 = 'ab107da9-84bb-4e3c-95e1-30cff398827a'
+        ver2 = '5.1'  # used for binder
+        sha1 = '0300e7c72015f9bfe30c3cb2d5e8da12a6fbb6f8'
+
+        # Matching legacy
+        self.assertEqual(
+            parse_reference('http://legacy.cnx.org/content/m48897/latest'),
+            (None, ()))
+        self.assertEqual(
+            parse_reference('http://legacy.cnx.org/content/m48897/latest?collection=col11441/latest'),
+            (None, (),))
+
+        # Matching documents
+        self.assertEqual(
+            parse_reference('/contents/{}'.format(id)),
+            (DOCUMENT_REFERENCE, (id, None, '',)))
+        self.assertEqual(
+            parse_reference('/contents/{}@{}'.format(id, ver)),
+            (DOCUMENT_REFERENCE, (id, ver, '',)))
+        # With a fragment...
+        self.assertEqual(
+            parse_reference('/contents/{}/{}'.format(id, title)),
+            (DOCUMENT_REFERENCE, (id, None, '/{}'.format(title),)))
+        self.assertEqual(
+            parse_reference('/contents/{}@{}/{}'.format(id, ver, title)),
+            (DOCUMENT_REFERENCE, (id, ver, '/{}'.format(title),)))
+        self.assertEqual(
+            parse_reference('/contents/{}#current'.format(id)),
+            (DOCUMENT_REFERENCE, (id, None, '#current',)))
+        self.assertEqual(
+            parse_reference('/contents/{}/{}#current'.format(id, title)),
+            (DOCUMENT_REFERENCE, (id, None, '/{}#current'.format(title),)))
+
+        # Binder with document
+        self.assertEqual(
+            parse_reference('/contents/{}@{}:{}@{}' \
+                            .format(id, ver2, id2, ver)),
+            (BINDER_REFERENCE, (id, ver2, '{}@{}'.format(id2, ver), '',)))
+        self.assertEqual(
+            parse_reference('/contents/{}@{}:{}'.format(id, ver2, id2)),
+            (BINDER_REFERENCE, (id, ver2, id2, '',)))
+        # With a fragement...
+        self.assertEqual(
+            parse_reference('/contents/{}@{}:{}/{}' \
+                            .format(id, ver2, id2, title)),
+            (BINDER_REFERENCE, (id, ver2, id2, '/{}'.format(title),)))
+        self.assertEqual(
+            parse_reference('/contents/{}@{}:{}@{}/{}' \
+                            .format(id, ver2, id2, ver, title)),
+            (BINDER_REFERENCE,
+             (id, ver2, '{}@{}'.format(id2, ver), '/{}'.format(title),)))
+
+        # Matching resource
+        self.assertEqual(  # ideal url syntax
+            parse_reference('../resources/{}'.format(sha1)),
+            (RESOURCE_REFERENCE, (sha1, '',)))
+        self.assertEqual(  # not ideal, but could happen
+            parse_reference('/resources/{}'.format(sha1)),
+            (RESOURCE_REFERENCE, (sha1, '',)))
+        # With fragments...
+        self.assertEqual(
+            parse_reference('../resources/{}/{}.pdf'.format(sha1, title)),
+            (RESOURCE_REFERENCE, (sha1, '/{}.pdf'.format(title),)))
+
+        # Matching cnx.org
+        self.assertEqual(
+            parse_reference('http://cnx.org/contents/{}'.format(id)),
+            (DOCUMENT_REFERENCE, (id, None, '')))
+
+        # Incomplete UUID
+        self.assertEqual(
+            parse_reference('/contents/{}'.format(id[:-8])),
+            (None, ()))

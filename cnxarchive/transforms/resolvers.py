@@ -13,24 +13,42 @@ from lxml import etree
 
 
 __all__ = (
+    'MODULE_REFERENCE', 'RESOURCE_REFERENCE',
+    'DOCUMENT_REFERENCE', 'BINDER_REFERENCE',
     'resolve_cnxml_urls', 'resolve_html_urls',
     )
 
 
 LEGACY_PATH_REFERENCE_REGEX = re.compile(
-    r'^(?:(https?://cnx.org)|(?P<legacy>https?://legacy.cnx.org))?(/?(content/)? *'
+    r'^(?:(https?://cnx.org)|(?P<legacy>https?://legacy.cnx.org))?'
+    r'(/?(content/)? *'
     r'(?P<module>(m|col)\d{4,5})([/@](?P<version>([.\d]+|latest)))?)?/?'
     r'(?P<resource>[^#?][ -_.@\w\d]+)?'
     r'(?:\?collection=(?P<collection>(col\d{4,5}))(?:[/@](?P<collection_version>([.\d]+|latest)))?)?'
     r'(?P<fragment>#?.*)?$',
     re.IGNORECASE)
-PATH_REFERENCE_REGEX = re.compile(
-    r'^(?:(https?://cnx.org)|(?P<legacy>https?://legacy.cnx.org))?(/?(content/)? *)?',
-    # r'(?P<id>[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})(?:[/@](?P<version>[.\d]+))?'
-    # r'(?:[:](?P<page>(?P<id>[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12})?(?:[/@](?P<version>[.\d]+))?'
-    # r'(?P<resource>[^#?][0-9a-f]{5,40})?'
-    # r'(?P<fragment>#?.*)?$',
-    re.IGNORECASE)
+PATH_REFERENCE_REGEX = re.compile(r"""
+^(?:
+  (https?://cnx.org)
+  |
+  (?P<legacy>https?://legacy.cnx.org)
+  )?
+(?:
+  /contents/
+  (?P<document>[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})
+  (?:  @  (?P<version>[.\d]+)  )?
+  (?:
+    :
+    (?P<bound_document>[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}
+      (  @  \d+  )?
+      )?
+    )?
+  )?
+(?: ([.]{2})?/resources/
+  (?P<resource>[0-9a-f]{40})?
+  )?
+(?P<fragment>.*)?
+""", re.IGNORECASE|re.VERBOSE)
 MODULE_REFERENCE = 'module-reference'  # Used in legacy refs
 RESOURCE_REFERENCE = 'resource-reference'
 DOCUMENT_REFERENCE = 'document-reference'
@@ -140,7 +158,39 @@ def parse_html_reference(ref):
     ident-hash.
     A resource-reference value resource filename.
     """
-    raise NotImplementedError
+    match = PATH_REFERENCE_REGEX.match(ref)
+    try:
+        # Dictionary keyed by named groups, None values for no match
+        matches = match.groupdict()
+    except:  # None type
+        raise ValueError("Unable to parse reference with value '{}'" \
+                         .format(ref))
+
+    try:
+        version = matches['version']
+    except KeyError:
+        version = None
+
+    # We've got a match, but what kind of thing is it.
+    if matches['legacy']:
+        # Don't transform legacy urls if hostname is legacy.cnx.org
+        type = None
+        value = ()
+    elif matches['resource']:
+        type = RESOURCE_REFERENCE
+        value = (matches['resource'], matches['fragment'],)
+    elif matches['bound_document']:
+        type = BINDER_REFERENCE
+        value = (matches['document'], version, matches['bound_document'],
+                 matches['fragment'],)
+    elif matches['document']:
+        # Note, this could also be a binder.
+        type = DOCUMENT_REFERENCE
+        value = (matches['document'], version, matches['fragment'],)
+    else:
+        type = None
+        value = ()
+    return type, value
 
 
 class BaseReferenceResolver:
