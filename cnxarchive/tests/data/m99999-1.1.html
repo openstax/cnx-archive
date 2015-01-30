@@ -1,0 +1,173 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<body>
+  <span
+    data-alt='alternate'
+    data-type='media'
+    id='video-n-audio'
+  >
+
+    <!-- video/source -->
+    <video
+      autoplay='autoplay'
+      controller='true'
+      controls='controls'
+      data-author='John Doe'
+      data-media-type='video/mp4'
+      data-volume='11'
+      loop='true'
+    >
+      <source
+        src='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+        type='video/mp4'
+      ></source>
+    </video>
+
+    <!-- audio/source -->
+    <audio
+      controls='controls'
+      data-media-type='video/mp4'
+      data-print='true'
+    >
+      <source
+        src='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+        type='video/mp4'
+      ></source>
+    </audio>
+
+  </span>
+
+
+
+  <p>Flash examples</p>
+  <span
+    data-alt='alternate'
+    data-longdesc='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+    data-type='media'
+    id='object-embed'
+  >
+    <!-- object/@data & & object/@data-longdesc & object/embed/@src -->
+    <object
+      data='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+      data-longdesc='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+      height='100'
+      id='id-flash'
+      type='application/x-shockwave-flash'
+      width='100'
+    >
+      <param
+        name='flash-name'
+        value='flash-value'
+      ></param>
+      <embed
+        flashvars='var1'
+        height='100'
+        src='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+        type='application/x-shockwave-flash'
+        width='100'
+        wmode='opaque'
+      ></embed>
+    </object>
+  </span>
+
+
+
+  <p>Java Examples</p>
+  <span
+    data-alt='alternate'
+    data-type='media'
+    id='java-applet'
+  >
+    <!-- object/param[@name='source']/@value -->
+    <object
+      data-longdesc='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+      data-print='false'
+      height='100'
+      id='id-java-applet-1'
+      type='application/x-java-applet'
+      width='200'
+    >
+      <param
+        name='param-name'
+        value='param-value'
+      ></param>
+      <param
+        name='code'
+        value='org.cnx.Applet.class'
+      ></param>
+      <param
+        name='codebase'
+        value='src/path'
+      ></param>
+      <param
+        name='archive'
+        value='src.jar,more.jar'
+      ></param>
+      <param
+        name='name'
+        value='Applet'
+      ></param>
+      <param
+        name='src'
+        value='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+      ></param>
+      <span>Applet failed to run. No Java plug-in was found.</span>
+    </object>
+  </span>
+
+
+
+  <p>Hacky way of using Images to make a link to a jar file</p>
+  <span
+    data-alt='alternate'
+    data-type='media'
+    id='java-image-hack'
+  >
+    <a
+      data-type='image'
+      href='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+    >
+      <img
+        alt='alternate'
+        src='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+        width='450'
+      ></img>
+    </a>
+  </span>
+
+
+
+  <p>But for PDF do not do anything special</p>
+  <span
+    data-alt='alternate'
+    data-type='media'
+    id='image-w-thumbnail'
+  >
+    <span
+      data-media-type='image/png'
+      data-print='true'
+      data-src='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/mass-sprint-lab_en.jar'
+      data-thumbnail='../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'
+      data-type='image'
+      width='450'
+    ></span>
+  </span>
+
+
+
+  <h2>Link and media testing area </h2>
+  <p>
+    There are many ways to grill
+    <a href="/contents/91cb5f28-2b8a-4324-9373-dac1d617bc24/Good_Steak">a good steak</a>.
+    My favorite can be found
+    <a href="http://en.wikibooks.org/">on Wikibooks</a>.
+    <a href="../resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9">Figure 1.0.1</a>
+  </p>
+
+  <h2>Bad References</h2>
+  <p>
+    <a href="/contents/42ae45b/hello-world">invalid url</a>
+    <a href="/contents/c44477a6-1278-433a-ba1e-5a21c8bab191@12">does not exist</a>
+    <a href="../resources/0f3da0de61849a47f77543c383d1ac621b25e6e0">indkoeb.jpg</a>
+  </p>
+</body>
+</html>

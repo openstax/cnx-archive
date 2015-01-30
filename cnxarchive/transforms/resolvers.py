@@ -87,7 +87,22 @@ SELECT module_ident FROM modules
 WHERE moduleid = %s and version = %s
 """
 
-
+SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT = """\
+SELECT moduleid, version FROM latest_modules
+WHERE uuid = %s
+"""
+SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT = """\
+SELECT moduleid, version FROM modules
+WHERE uuid = %s and concat_ws('.', major_version, minor_version) = %s
+"""
+SQL_FILENAME_BY_SHA1_STATMENT = """\
+SELECT mf.filename FROM module_files AS mf NATURAL JOIN files AS f
+WHERE f.sha1 = %s
+"""
+SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT = """\
+SELECT mf.filename FROM module_files AS mf NATURAL JOIN files AS f
+WHERE f.sha1 = %s AND module_ident = %s
+"""
 
 
 class BaseReferenceException(Exception):
@@ -232,6 +247,21 @@ class BaseReferenceResolver:
         """Apply an XPath statement to the document."""
         return self.content.xpath(xpath, namespaces=self.namespaces)
 
+    def _should_ignore_reference(self, ref):
+        """Given an href string, determine if it should be ignored.
+        For example, external links and mailto references should be ignored.
+        """
+        ref = ref.strip()
+        should_ignore = not ref \
+                        or ref.startswith('#') \
+                        or ref.startswith('http') \
+                        or ref.startswith('mailto') \
+                        or ref.startswith('file') \
+                        or ref.startswith('/help') \
+                        or ref.startswith('ftp') \
+                        or ref.startswith('javascript:')
+        return should_ignore
+
 
 class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
 
@@ -288,21 +318,6 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                 if isinstance(info, basestring):
                     info = json.loads(info)
                 return info
-
-    def _should_ignore_reference(self, ref):
-        """Given an href string, determine if it should be ignored.
-        For example, external links and mailto references should be ignored.
-        """
-        ref = ref.strip()
-        should_ignore = not ref \
-                        or ref.startswith('#') \
-                        or ref.startswith('http') \
-                        or ref.startswith('mailto') \
-                        or ref.startswith('file') \
-                        or ref.startswith('/help') \
-                        or ref.startswith('ftp') \
-                        or ref.startswith('javascript:')
-        return should_ignore
 
     def fix_media_references(self):
         """Fix references to interal resources."""
@@ -404,6 +419,157 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
 
     default_namespace_name = 'c'
     default_namespace = 'http://cnx.rice.edu/cnxml'
+
+    def get_resource_filename(self, hash):
+        with self.db_connection.cursor() as cursor:
+            if self.document_ident is None:
+                cursor.execute(SQL_FILENAME_BY_SHA1_STATMENT, (hash,))
+            else:
+                cursor.execute(SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT,
+                               (hash, self.document_ident,))
+            try:
+                filename = cursor.fetchone()[0]
+            except TypeError:
+                raise ReferenceNotFound(
+                    "Missing resource with hash: {}".format(hash),
+                    self.document_ident, None)
+        return filename
+
+    def get_mid_n_version(self, id, version):
+        with self.db_connection.cursor() as cursor:
+            if version:
+                cursor.execute(SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT,
+                               (id, version))
+            else:
+                cursor.execute(SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT,
+                               (id,))
+            try:
+                module_id, version = cursor.fetchone()
+            except (TypeError, ValueError):  # None or unpack problem
+                module_id, version = (None, None,)
+        return module_id, version
+
+    def fix_link_references(self):
+        """Fix references to internal documents and resources."""
+        # Catch the invalid, unparsable, etc. references.
+        bad_references = []
+
+        # Note, all c:link will have an @url. We purposely dumb down the xslt
+        #   in order to make the scan here easy. Plus the xslt could never
+        #   fully match and disassemble the url into the various attributes on
+        #   a link tag.
+        for link in self.apply_xpath('//c:link'):
+            ref = link.get('url')
+
+            if not ref or self._should_ignore_reference(ref):
+                continue
+
+            try:
+                ref_type, payload = parse_html_reference(ref)
+            except ValueError:
+                exc = InvalidReference(self.document_ident, ref)
+                bad_references.append(exc)
+                continue
+
+            # Delete the tentative attribute
+            link.attrib.pop('url')
+
+            # TODO handle #{id} refs in the url_frag, which could also contain
+            #      path elements, so further parsing is necessary.
+
+            if ref_type == DOCUMENT_REFERENCE:
+                id, version, url_frag = payload
+                mid, version = self.get_mid_n_version(id, version)
+                if mid is None:
+                    bad_references.append(
+                        ReferenceNotFound("Unable to find a reference to "
+                                          "'{}' at version '{}'." \
+                                              .format(id, version),
+                                          self.document_ident, ref))
+                else:
+                    # Assign the document specific attributes.
+                    link.attrib['document'] = mid
+                    if version is not None:
+                        link.attrib['version'] = version
+            elif ref_type == BINDER_REFERENCE:
+                id, version, bound_document, url_frag = payload
+                mid, version = self.get_mid_n_version(id, version)
+                if mid is None:
+                    bound_ident_hash = split_ident_hash(bound_document)
+                    cid, cversion = self.get_mid_n_version(*bound_ident_hash)
+                    if cid is None:
+                        # Binder ref doesn't exist, but Document does.
+                        # Assign the document specific attributes.
+                        link.attrib['document'] = mid
+                        if version is not None:
+                            link.attrib['version'] = version
+                    else:
+                        # Process the ref as an external url.
+                        url = "http://legacy.cnx.org/content/{}/{}/?collection={}" \
+                              .format(mid, version, cid)
+                        if cversion is not None:
+                            url = "{}/{}".format(url, cversion)
+                        link.attrib['url'] = url
+                else:
+                    bad_references.append(
+                        ReferenceNotFound("Unable to find a reference to "
+                                          "'{}' at version '{}'." \
+                                              .format(id, version),
+                                          self.document_ident, ref))
+            elif ref_type == RESOURCE_REFERENCE:
+                # TODO If the filename is in the url_frag, use it
+                #      as the filename instead of looking it up.
+                try:
+                    sha1_hash, url_frag = payload
+                    filename = self.get_resource_filename(sha1_hash)
+                except ReferenceNotFound as exc:
+                    bad_references.append(exc)
+                else:
+                    link.attrib['resource'] = filename
+            else:
+                exc = InvalidReference(self.document_ident, ref)
+                bad_references.append(exc)
+                # Preserve the content value...
+                link.attrib['url'] = ref
+
+        return bad_references
+
+    def fix_media_references(self):
+        """Fix references to interal resources."""
+        # Catch the invalid, unparsable, etc. references.
+        bad_references = []
+
+        media_xpath = {
+            '//c:media': ('longdesc',),
+            '//c:image': ('src', 'thumbnail',),
+            '//c:audio': ('src',),
+            '//c:video': ('src',),
+            '//c:java-applet': ('src',),
+            '//c:flash': ('src',),
+            '//c:download': ('src',),
+            '//c:labview': ('src',),
+            }
+
+        for xpath, attrs in media_xpath.iteritems():
+            for elem in self.apply_xpath(xpath):
+                for attr in attrs:
+                    ref = elem.get(attr)
+                    if not ref or self._should_ignore_reference(ref):
+                        continue
+                    try:
+                        ref_type, payload = parse_html_reference(ref)
+                        sha1_hash, url_frag = payload
+                    except ValueError:
+                        exc = InvalidReference(self.document_ident, ref)
+                        bad_references.append(exc)
+                        continue
+                    try:
+                        filename = self.get_resource_filename(sha1_hash)
+                    except ReferenceNotFound as exc:
+                        bad_references.append(exc)
+                    else:
+                        elem.set(attr, filename)
+        return bad_references
 
 
 resolve_html_urls = HtmlToCnxmlReferenceResolver.resolve_urls

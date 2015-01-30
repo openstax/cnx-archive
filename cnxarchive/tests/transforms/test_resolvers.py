@@ -9,6 +9,8 @@ import os
 import io
 import unittest
 
+from lxml import etree
+
 from .. import testing
 
 
@@ -287,7 +289,7 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
 
     @property
     def target(self):
-        from ...transforms.resolvers import resolve_cnxml_urls
+        from ...transforms.resolvers import resolve_html_urls
         return resolve_html_urls
 
     def test_parse_reference(self):
@@ -373,3 +375,128 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
         self.assertEqual(
             parse_reference('/contents/{}'.format(id[:-8])),
             (None, ()))
+
+    @testing.db_connect
+    def test_reference_rewrites(self, cursor):
+        # Case to test that a document's internal references have
+        #   been rewritten to legacy's read-only API routes.
+        ident = 3
+        from ...transforms.converters import html_to_full_cnxml
+        content_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                        'm99999-1.1.html')
+        with open(content_filepath, 'r') as fb:
+            content = html_to_full_cnxml(fb.read())
+            content = io.BytesIO(content)
+            content, bad_refs = self.target(content, cursor.connection, ident)
+
+        cnxml_etree = etree.parse(io.BytesIO(content))
+        nsmap = cnxml_etree.getroot().nsmap.copy()
+        nsmap['c'] = nsmap.pop(None)
+
+        # Read the content for the reference changes.
+        # Check the links
+        expected_ref = '<link document="m41237" version="1.1">'
+        self.assertIn(expected_ref, content)
+        expected_resource_ref = '<link resource="Figure_01_00_01.jpg">'
+        self.assertIn(expected_resource_ref, content)
+
+        # Check the media/image tags...
+        expected_img_thumbnail_ref = 'thumbnail="Figure_01_00_01.jpg"'
+        self.assertIn(
+            expected_img_thumbnail_ref,
+            etree.tostring(cnxml_etree.xpath('//*[@id="image-w-thumbnail"]',
+                                             namespaces=nsmap)[0]))
+        expected_img_src_ref = 'src="Figure_01_00_01.jpg"'
+        self.assertIn(
+            expected_img_src_ref,
+            etree.tostring(cnxml_etree.xpath('//*[@id="image-w-thumbnail"]',
+                                             namespaces=nsmap)[0]))
+
+        # Check the media/video & media/audio tags...
+        expected_ref = 'src="Figure_01_00_01.jpg"'
+        self.assertIn(
+            expected_ref,
+            etree.tostring(cnxml_etree.xpath(
+                '//*[@id="video-n-audio"]/c:video',
+                namespaces=nsmap)[0]))
+        self.assertIn(
+            expected_ref,
+            etree.tostring(cnxml_etree.xpath(
+                '//*[@id="video-n-audio"]/c:audio',
+                namespaces=nsmap)[0]))
+
+        # Check the flash tag.
+        expected_ref = 'src="Figure_01_00_01.jpg"'
+        self.assertIn(
+            expected_ref,
+            etree.tostring(cnxml_etree.xpath(
+                '//*[@id="object-embed"]/c:flash',
+                namespaces=nsmap)[0]))
+
+        # Check the java-applet tag.
+        expected_ref = 'src="Figure_01_00_01.jpg"'
+        self.assertIn(
+            expected_ref,
+            etree.tostring(cnxml_etree.xpath(
+                '//*[@id="java-applet"]/c:java-applet',
+                namespaces=nsmap)[0]))
+
+        # Check bad reference was not transformed.
+        expected_ref = '<link>indkoeb.jpg</link>'
+        self.assertIn(expected_ref, content)
+
+    @testing.db_connect
+    def test_reference_not_parsable(self, cursor):
+        ident = 3
+        from ...transforms.converters import html_to_full_cnxml
+        content_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                        'm99999-1.1.html')
+        with open(content_filepath, 'r') as fb:
+            content = html_to_full_cnxml(fb.read())
+        content = io.BytesIO(content)
+        content, bad_refs = self.target(content, cursor.connection, ident)
+
+        self.assertEqual(sorted(bad_refs), [
+            "Invalid reference value: document=3, reference=/contents/42ae45b/hello-world",
+            "Missing resource with hash: 0f3da0de61849a47f77543c383d1ac621b25e6e0: document=3, reference=None",
+            "Unable to find a reference to 'c44477a6-1278-433a-ba1e-5a21c8bab191' at version 'None'.: document=3, reference=/contents/c44477a6-1278-433a-ba1e-5a21c8bab191@12",
+            ])
+        # invalid ref still in the content?
+        self.assertIn('<link url="/contents/42ae45b/hello-world">', content)
+
+    @testing.db_connect
+    def test_get_resource_filename(self, cursor):
+        # XXX
+        from ...transforms.resolvers import (
+            HtmlToCnxmlReferenceResolver as ReferenceResolver,
+            ReferenceNotFound,
+            )
+
+        resolver = ReferenceResolver(io.BytesIO('<html></html>'),
+                                     cursor.connection, 3)
+
+        # Test file not found
+        self.assertRaises(ReferenceNotFound, resolver.get_resource_filename,
+                          'PhET_Icon.png')
+
+        # Test getting a file in module 3
+        self.assertEqual(
+            resolver.get_resource_filename('d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9'),
+            'Figure_01_00_01.jpg')
+
+        # Test file not found outside of module 3
+        self.assertRaises(ReferenceNotFound,
+                          resolver.get_resource_filename,
+                          '075500ad9f71890a85fe3f7a4137ac08e2b7907c')
+
+        # Test getting a file in another module
+        resolver.document_ident = 4
+        self.assertEqual(
+            resolver.get_resource_filename('075500ad9f71890a85fe3f7a4137ac08e2b7907c'),
+            'PhET_Icon.png')
+
+        # Test getting a file without an ident.
+        resolver.document_ident = None
+        self.assertEqual(
+            resolver.get_resource_filename('075500ad9f71890a85fe3f7a4137ac08e2b7907c'),
+            'PhET_Icon.png')
