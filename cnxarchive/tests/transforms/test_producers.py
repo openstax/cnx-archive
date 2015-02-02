@@ -599,10 +599,10 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_module_transform_index_cnxml_exists(self, cursor):
-        # Test when overwrite is False, the index.cnxml
+        # Test when overwrite is False, the index.html.cnxml
         # causes an error when a new one is generated
 
-        # Create an index.cnxml for module_ident 2
+        # Create an index.html.cnxml for module_ident 2
         # Delete module_ident 2 index.cnxml
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))

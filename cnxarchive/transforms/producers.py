@@ -27,8 +27,8 @@ __all__ = (
 
 
 TRANSFORM_TYPES = {
-    'cnxml2html': (cnxml_to_full_html, resolve_cnxml_urls,),
-    'html2cnxml': (html_to_full_cnxml, resolve_html_urls,),
+    'cnxml2html': (cnxml_to_full_html, resolve_cnxml_urls, 'text/html',),
+    'html2cnxml': (html_to_full_cnxml, resolve_html_urls, 'text/xml',),
     }
 
 
@@ -236,7 +236,7 @@ def produce_transformed_file(cursor, ident, transform_type,
     of it.
 
     """
-    transformer, reference_resolver = TRANSFORM_TYPES[transform_type]
+    transformer, reference_resolver, mimetype = TRANSFORM_TYPES[transform_type]
     cursor.execute("SELECT convert_from(file, 'utf-8') "
                    "FROM module_files "
                    "     NATURAL LEFT JOIN files "
@@ -285,12 +285,12 @@ def produce_transformed_file(cursor, ident, transform_type,
                    "  (module_ident, fileid, filename, mimetype) "
                    "  VALUES (%s, %s, %s, %s);",
                    (ident, destination_file_id,
-                    destination_filename, 'text/html',))
+                    destination_filename, mimetype,))
     return warning_messages
 
 
 def transform_module_content(content, transform_type, db_connection):
-    transformer, reference_resolver = TRANSFORM_TYPES[transform_type]
+    transformer, reference_resolver, _ = TRANSFORM_TYPES[transform_type]
 
     new_content = transformer(content)
 
