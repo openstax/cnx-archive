@@ -64,7 +64,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertEqual(current, value)
 
     @testing.db_connect
-    def test_html_abstract(self, cursor):
+    def test_html_abstract_deprecated(self, cursor):
         # insert test data
         cursor.execute('''\
         INSERT INTO abstracts VALUES
@@ -93,7 +93,48 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                         'A link to the <a href="http://example.com">outside world</a>.</div>')
 
     @testing.db_connect
-    def test_html_content(self, cursor):
+    def test_html_abstract(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, 'A link to an <link document="m42092">interal document</link>.', '');
+        ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        # set the html abstract using the html_abstract function
+        cursor.execute('UPDATE abstracts SET html = html_abstract(4) RETURNING html;')
+
+        # check that the abstracts have been transformed
+        html_abstract = cursor.fetchone()[0]
+        html_abstract = html_abstract[html_abstract.index('>') + 1:] # strip the div tag
+        self.assertEqual(html_abstract,
+                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4">interal document</a>.</div>')
+
+    @testing.db_connect
+    def test_cnxml_abstract(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, '', '<div xmlns="http://www.w3.org/1999/xhtml">A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce">interal document</a>.</div>');
+        ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        # set the html abstract using the html_abstract function
+        cursor.execute('UPDATE abstracts SET abstract = cnxml_abstract(4) RETURNING abstract;')
+
+        # check that the abstracts have been transformed
+        cnxml_abstract = cursor.fetchone()[0]
+        self.assertEqual(cnxml_abstract,
+                         'A link to an <link document="m42092" version="1.4">interal document</link>.')
+
+    @testing.db_connect
+    def test_html_content_deprecated(self, cursor):
         # insert test data
         cursor.execute('''\
         INSERT INTO abstracts VALUES
@@ -128,6 +169,72 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertMultiLineEqual(
                 '<?xml version="1.0" encoding="UTF-8"?>\n{}\n'
                 .format(cursor.fetchone()[0]), html_content)
+
+    @testing.db_connect
+    def test_html_content(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
+        ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        cursor.execute('SELECT fileid FROM files')
+
+        cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                      'm42033-1.3.cnxml')
+        with open(cnxml_filepath, 'r') as f:
+            cursor.execute('''\
+            INSERT INTO files (file) VALUES
+            (%s) RETURNING fileid''', [memoryview(f.read())])
+            fileid = cursor.fetchone()[0]
+        cursor.execute('''\
+        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
+        (4, %s, 'index.cnxml', 'text/xml');''', [fileid])
+
+        # check that cnxml content can be transformed
+        html_filepath = os.path.join(testing.DATA_DIRECTORY,
+                                     'm42033-1.3.html')
+        with open(html_filepath, 'r') as f:
+            html_content = f.read()
+        cursor.execute("SELECT html_content(4) FROM files")
+        self.assertIn("<body", cursor.fetchone()[0])
+
+    @testing.db_connect
+    def test_cnxml_content(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, '<para>A link to the <link url="http://example.com">outside world</link>.</para>', '');
+        ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4', 'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31 14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a', '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}', '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        cursor.execute('SELECT fileid FROM files')
+
+        filepath = os.path.join(testing.DATA_DIRECTORY,
+                                      'm42033-1.3.html')
+        with open(filepath, 'r') as f:
+            cursor.execute('''\
+            INSERT INTO files (file) VALUES
+            (%s) RETURNING fileid''', [memoryview(f.read())])
+            fileid = cursor.fetchone()[0]
+        cursor.execute('''\
+        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
+        (4, %s, 'index.cnxml.html', 'text/xml');''', [fileid])
+
+        # check that cnxml content can be transformed
+        filepath = os.path.join(testing.DATA_DIRECTORY,
+                                'm42033-1.3.cnxml')
+        with open(filepath, 'r') as f:
+            cnxml_content = f.read()
+        cursor.execute("SELECT cnxml_content(4) FROM files")
+        self.assertIn("<document", cursor.fetchone()[0])
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):

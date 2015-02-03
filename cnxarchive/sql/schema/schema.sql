@@ -408,9 +408,14 @@ CREATE TRIGGER module_file_added
   AFTER INSERT ON module_files FOR EACH ROW
   EXECUTE PROCEDURE add_module_file();
 
+-- Deprecated (3-Feb-2015) Use html_abstract(module_ident int)
+--            This was deprecated to align the call params with
+--            synonymous function cnxml_abstract, which requires
+--            access to the module_ident to perform reference resolution.
 CREATE OR REPLACE FUNCTION html_abstract(abstract text)
   RETURNS text
 AS $$
+  plpy.warning('This function is deprecated, please use html_abstract(<module_ident>')
   import plpydbapi
   from cnxarchive.transforms import transform_abstract_to_html
   db_connection = plpydbapi.connect()
@@ -421,9 +426,29 @@ AS $$
   return html_abstract
 $$ LANGUAGE plpythonu;
 
+CREATE OR REPLACE FUNCTION html_abstract(module_ident int)
+  RETURNS text
+AS $$
+  import plpydbapi
+  from cnxarchive.transforms import transform_abstract_to_html
+  with plpydbapi.connect() as db_connection:
+    with db_connection.cursor() as cursor:
+      cursor.execute("SELECT abstract FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
+      abstract = cursor.fetchone()[0]
+    html_abstract, warning_messages = transform_abstract_to_html(abstract, module_ident, db_connection)
+  if warning_messages:
+    plpy.warning(warning_messages)
+  return html_abstract
+$$ LANGUAGE plpythonu;
+
+-- Deprecated (3-Feb-2015) Use html_content(module_ident int)
+--            This was deprecated to align the call params with
+--            synonymous function cnxml_content, which requires
+--            access to the module_ident to perform reference resolution.
 CREATE OR REPLACE FUNCTION html_content(cnxml text)
   RETURNS text
 AS $$
+  plpy.warning('This function is deprecated, please use html_content(<module_ident>')
   import plpydbapi
   from cnxarchive.transforms import transform_module_content
   db_connection = plpydbapi.connect()
@@ -432,6 +457,53 @@ AS $$
     plpy.warning(warning_messages)
   db_connection.close()
   return html_content
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION html_content(module_ident int)
+  RETURNS text
+AS $$
+  import plpydbapi
+  from cnxarchive.transforms import transform_module_content
+  with plpydbapi.connect() as db_connection:
+     with db_connection.cursor() as cursor:
+          cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND (filename = 'index.cnxml' OR filename = 'index.html.cnxml')", (module_ident,))
+          cnxml = cursor.fetchone()[0]
+     content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection)
+  if warning_messages:
+      plpy.warning(warning_messages)
+  return content
+$$ LANGUAGE plpythonu;
+
+
+CREATE OR REPLACE FUNCTION cnxml_abstract(module_ident int)
+  RETURNS text
+AS $$
+  import plpydbapi
+  from cnxarchive.transforms import transform_abstract_to_cnxml
+  with plpydbapi.connect() as db_connection:
+     with db_connection.cursor() as cursor:
+          cursor.execute("SELECT html FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
+          abstract = cursor.fetchone()[0]
+     cnxml_abstract, warning_messages = transform_abstract_to_cnxml(abstract, module_ident, db_connection)
+  if warning_messages:
+      plpy.warning(warning_messages)
+  return cnxml_abstract
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION cnxml_content(module_ident int)
+  RETURNS text
+AS $$
+  import plpydbapi
+  from cnxarchive.transforms import transform_module_content
+  with plpydbapi.connect() as db_connection:
+     with db_connection.cursor() as cursor:
+          cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND filename = 'index.cnxml.html'", (module_ident,))
+          html = cursor.fetchone()[0]
+
+     content, warning_messages = transform_module_content(html, 'html2cnxml', db_connection)
+  if warning_messages:
+      plpy.warning(warning_messages)
+  return content
 $$ LANGUAGE plpythonu;
 
 CREATE TABLE modulecounts (

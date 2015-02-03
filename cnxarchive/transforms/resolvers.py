@@ -89,11 +89,11 @@ WHERE moduleid = %s and version = %s
 
 SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT = """\
 SELECT moduleid, version FROM latest_modules
-WHERE uuid = %s
+WHERE uuid = %s::uuid
 """
 SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT = """\
 SELECT moduleid, version FROM modules
-WHERE uuid = %s and concat_ws('.', major_version, minor_version) = %s
+WHERE uuid = %s::uuid and concat_ws('.', major_version, minor_version) = %s
 """
 SQL_FILENAME_BY_SHA1_STATMENT = """\
 SELECT mf.filename FROM module_files AS mf NATURAL JOIN files AS f
