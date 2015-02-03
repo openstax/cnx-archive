@@ -587,30 +587,30 @@ WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
                               module_ident,
                               source_filename=filename,
                               destination_filename=new_filename)
+                _transform_abstract(cursor, module_ident)
             # For whatever reason, the plpydbapi context manager
             #   does not call commit on close.
             db_connection.commit()
     return
 
 
-def transform_abstract_trigger(plpy, td):
-    """Postgres database trigger for adding an abstract.
-
-    When an abstract is added, one of content columns ('abstract' or 'html')
-    will contain markup. A transform is done on either one of them to make
+def _transform_abstract(cursor, module_ident):
+    """Transforms an abstract using one of content columns
+    ('abstract' or 'html') to determine which direction the transform
+    will go (cnxml->html or html->cnxml).
+    A transform is done on either one of them to make
     the other value. If no value is supplied, the trigger raises an error.
     If both values are supplied, the trigger will skip.
     """
-    import plpydbapi
-
-    cnxml = td['new']['abstract']
-    html = td['new']['html']
+    cursor.execute("""\
+SELECT a.abstractid, a.abstract, a.html
+FROM modules AS m NATURAL JOIN abstracts AS a
+WHERE m.module_ident = %s""", (module_ident,))
+    abstractid, cnxml, html = cursor.fetchone()
     if cnxml is not None and html is not None:
         return  # skip
-    if cnxml is None and html is None:
-        raise Exception("Blank entry")
+    # TODO Prevent blank abstracts (abstract = null & html = null).
 
-    abstractid = td['new']['abstractid']
     msg = "produce {}->{} for abstractid={}"
     if cnxml is None:
         # Transform html->cnxml
@@ -625,14 +625,13 @@ def transform_abstract_trigger(plpy, td):
         column = 'html'
         transform_func = transform_abstract_to_html
 
-    with plpydbapi.connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            plpy.log(msg)
-            content, messages = transform_func(content, cursor)
-            plpy.debug("Transform messages: {}".format(messages))
-
-    td['new'][column] = content
-    return 'MODIFY'
+    content, messages = transform_func(content, module_ident,
+                                       cursor.connection)
+    cursor.execute(
+        "UPDATE abstracts SET {} = %s WHERE abstractid = %s" \
+        .format(column),
+        (content, abstractid,))
+    return msg
 
 
 def get_collection_tree(collection_ident, cursor):

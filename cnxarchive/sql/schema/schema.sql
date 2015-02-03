@@ -408,24 +408,13 @@ CREATE TRIGGER module_file_added
   AFTER INSERT ON module_files FOR EACH ROW
   EXECUTE PROCEDURE add_module_file();
 
-CREATE OR REPLACE FUNCTION add_abstract ()
-  RETURNS trigger
-AS $$
-  from cnxarchive.database import transform_abstract_trigger
-  return transform_abstract_trigger(plpy, TD)
-$$ LANGUAGE plpythonu;
-
-CREATE TRIGGER add_abstract
-  BEFORE INSERT ON abstracts FOR EACH ROW
-  EXECUTE PROCEDURE add_abstract();
-
 CREATE OR REPLACE FUNCTION html_abstract(abstract text)
   RETURNS text
 AS $$
   import plpydbapi
   from cnxarchive.transforms import transform_abstract_to_html
   db_connection = plpydbapi.connect()
-  html_abstract, warning_messages = transform_abstract_to_html(abstract, db_connection)
+  html_abstract, warning_messages = transform_abstract_to_html(abstract, None, db_connection)
   if warning_messages:
     plpy.warning(warning_messages)
   db_connection.close()

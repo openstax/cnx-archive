@@ -132,6 +132,47 @@ class AbstractToHtmlTestCase(unittest.TestCase):
         with self.assertRaises(MissingAbstract) as caught_exception:
             self.call_target(document_ident)
 
+    @testing.db_connect
+    def test_abstract_w_resource_reference(self, cursor):
+        # Case to ensure the reference resolution for resources.
+        # This test requires a document_ident in order match with
+        #   a module_files record.
+        abstract = 'Image: <media><image mime-type="image/jpeg" src="Figure_01_00_01.jpg" /></media>'
+        cursor.execute("INSERT INTO abstracts (abstract) VALUES (%s) "
+                       "RETURNING abstractid", (abstract,))
+        abstractid = cursor.fetchone()[0]
+
+        # Create a minimal module entry to have a module_ident to work with.
+        cursor.execute("""\
+INSERT INTO modules
+  (moduleid, portal_type, version, name, created, revised, authors,
+   maintainers, licensors,  abstractid, stateid, licenseid, doctype,
+   submitter, submitlog, language, parent)
+VALUES
+  ('m42119', 'Module', '1.1', 'New Version', '2013-09-13 15:10:43.000000+02' ,
+   '2013-09-13 15:10:43.000000+02', NULL, NULL, NULL, %s, NULL, 11,
+        '', NULL, '', 'en', NULL) RETURNING module_ident""", (abstractid,))
+        document_ident = cursor.fetchone()[0]
+
+        # Insert the resource file
+        cursor.execute("""\
+INSERT INTO module_files (module_ident, fileid, filename, mimetype)
+  SELECT %s, fileid, filename, mimetype FROM module_files
+  WHERE module_ident = 3 AND fileid = 6""", (document_ident,))
+
+        # In the typical execution path, the target function
+        #   would be using the same cursor, so there would be no
+        #   reason to commit. But in this case, a new connection is made.
+        cursor.connection.commit()
+        self.call_target(document_ident)
+
+        cursor.execute("select html from abstracts where abstractid = %s",
+                       (abstractid,))
+        html_abstract = cursor.fetchone()[0]
+        self.assertIn(
+            """Image: <span data-type="media"><img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg" data-media-type="image/jpeg" alt=""/></span>""",
+            html_abstract)
+
 
 class ModuleToHtmlTestCase(unittest.TestCase):
     fixture = testing.data_fixture

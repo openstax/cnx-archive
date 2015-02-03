@@ -85,7 +85,7 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     # Transform the abstract.
     if abstract:
         html, warning_messages = transform_abstract_to_html(
-            abstract, db_connection)
+            abstract, document_ident, db_connection)
     else:
         html = None
 
@@ -115,7 +115,7 @@ def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
     # Transform the abstract.
     if abstract:
         cnxml, warning_messages = transform_abstract_to_cnxml(
-            abstract, db_connection)
+            abstract, document_ident, db_connection)
     else:
         cnxml = None
 
@@ -127,7 +127,7 @@ def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
     return warning_messages
 
 
-def transform_abstract_to_html(abstract, db_connection):
+def transform_abstract_to_html(abstract, document_ident, db_connection):
     warning_messages = None
     abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
     # Does it have a wrapping tag?
@@ -143,7 +143,8 @@ def transform_abstract_to_html(abstract, db_connection):
 
     # Then fix up content references in the abstract.
     fixed_html, bad_refs = resolve_cnxml_urls(BytesIO(abstract_html),
-                                              db_connection)
+                                              db_connection,
+                                              document_ident)
     if bad_refs:
         warning_messages = 'Invalid References (Abstract): {}' \
                 .format('; '.join(bad_refs))
@@ -151,7 +152,7 @@ def transform_abstract_to_html(abstract, db_connection):
     return fixed_html, warning_messages
 
 
-def transform_abstract_to_cnxml(abstract, db_connection):
+def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
     """Transforms an html abstract to cnxml."""
     warning_messages = None
     cnxml = None
@@ -166,7 +167,8 @@ def transform_abstract_to_cnxml(abstract, db_connection):
 
     # Then fix up content references in the abstract.
     if cnxml:
-        cnxml, bad_refs = resolve_html_urls(BytesIO(cnxml), db_connection)
+        cnxml, bad_refs = resolve_html_urls(BytesIO(cnxml),
+                                            db_connection, document_ident)
         if bad_refs:
             warning_messages = 'Invalid References (Abstract): {}' \
                 .format('; '.join(bad_refs))
