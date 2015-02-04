@@ -555,10 +555,6 @@ def search(environ, start_response):
     # Add the supplemental result information.
     results['results']['auxiliary'] = db_results.auxiliary
 
-    status = '200 OK'
-    headers = [('Content-type', 'application/json')]
-    start_response(status, headers)
-
     # In the case where a search is performed with an authorId
     # has a filter, it is possible for the database to return
     # no results even if the author exists in the database.
@@ -567,21 +563,34 @@ def search(environ, start_response):
     #  The author information is then used to update the
     # results returned by the first database query.
     if len(db_results) <= 0:
-        authors_list = []
-        keyword_list = query.filters
-        for key, value in keyword_list:
-            if key == 'authorID':
-                authors_list.append(value)
-        if authors_list:
-            settings = get_settings()
-            connection = settings[config.CONNECTION_STRING]
-            with psycopg2.connect(connection) as db_connection:
-                with db_connection.cursor() as cursor:
-                    arguments = (authors_list, )
-                    statement = SQL['get-users-by-ids']
-                    cursor.execute(statement, arguments)
-                    authors_db_results = cursor.fetchall()
-            results['results']['auxiliary']['authors'] = authors_db_results
+        authors_results = []
+        limits = results['query']['limits']
+        index = 0
+        settings = get_settings()
+        connection = settings[config.CONNECTION_STRING]
+        statement = SQL['get-users-by-ids']
+        with psycopg2.connect(connection) as db_connection:
+            with db_connection.cursor() as cursor:
+                for idx, limit in enumerate(limits):
+                    if limit['tag'] == 'authorID':
+                        author = limit['value']
+                        arguments = (author,)
+                        cursor.execute(statement, arguments)
+                        author_db_result = cursor.fetchall()
+                        if author_db_result:
+                            author_db_result = author_db_result[0][0]
+                        else:
+                            author_db_result = {'id': author, 'fullname': None}
+                        authors_results.append(author_db_result)
+                        limit['index'] = index
+                        index = index + 1
+                        limits[idx] = limit
+        results['query']['limits'] = limits
+        results['results']['auxiliary']['authors'] = authors_results
+
+    status = '200 OK'
+    headers = [('Content-type', 'application/json')]
+    start_response(status, headers)
 
     return [json.dumps(results)]
 

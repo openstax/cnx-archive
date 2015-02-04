@@ -14,4 +14,4 @@ FROM   (SELECT username                           AS id,
                NULL                               AS website, 
                NULL                               AS othername 
         FROM   users AS u 
-        WHERE  u.username = ANY ( %s )) AS user_row
+        WHERE  u.username = %s ) AS user_row
