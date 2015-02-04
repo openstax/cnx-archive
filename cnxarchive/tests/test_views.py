@@ -1247,51 +1247,59 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         import string
         environ = self._make_environ()
-        sub = 'subject:"LADY GAGA AND THE SOCIOLOGY OF FAME"'
+        sub = 'subject:"Arguing with Judge Judy: Popular ‘Logic’ on TV Judge Shows"'
         auth0 = 'authorID:cnxcap'
         auth1 = 'authorID:OpenStaxCollege'
-        environ['QUERY_STRING'] = 'q=' + string.join([sub, auth0, auth1], ' ')
+        auth2 = 'authorID:DrBunsenHoneydew'
+        fields = [sub, auth0, auth1, auth2]
+        environ['QUERY_STRING'] = 'q=' + string.join(fields, ' ')
 
         from ..views import search
         results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
 
-        self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
         results = json.loads(results)
+        
         self.assertEqual(results['results']['total'], 0)
 
         expected = [
-            [
-                {
-                    u'website': None,
-                    u'surname': u'Physics',
-                    u'suffix': None,
-                    u'firstname': u'College',
-                    u'title': None,
-                    u'othername': None,
-                    u'emails': [u'info@openstaxcollege.org'],
-                    u'fullname': u'OSC Physics Maintainer',
-                    u'id': u'cnxcap'
-                }
-            ],
-            [
-                {
-                    u'website': None,
-                    u'surname': None,
-                    u'suffix': None,
-                    u'firstname': u'OpenStax College',
-                    u'title': None,
-                    u'othername': None,
-                    u'emails': [u'info@openstaxcollege.org'],
-                    u'fullname': u'OpenStax College',
-                    u'id': u'OpenStaxCollege'
-                }
+            {u'website': None,
+             u'surname': u'Physics',
+             u'suffix': None,
+             u'firstname': u'College',
+             u'title': None,
+             u'othername': None,
+             u'emails': [u'info@openstaxcollege.org'],
+             u'fullname': u'OSC Physics Maintainer',
+             u'id': u'cnxcap',
+             },
+            {u'website': None,
+             u'surname': None,
+             u'suffix': None,
+             u'firstname': u'OpenStax College',
+             u'title': None,
+             u'othername': None,
+             u'emails': [u'info@openstaxcollege.org'],
+             u'fullname': u'OpenStax College',
+             u'id': u'OpenStaxCollege',
+             },
+            {u'fullname': None,
+             u'id': u'DrBunsenHoneydew',
+             },
             ]
-        ]
 
-        self.assertEqual(results['results']['auxiliary']['authors'], expected)
+        auxiliary_authors = results['results']['auxiliary']['authors']
+
+        self.assertEqual(auxiliary_authors, expected)
+
+        # check to see if auxilary authors list is referenced
+        # by the correct indexs in results['query']['limits']
+        # list
+        for limit in results['query']['limits']:
+            if limit['tag'] == 'authorID':
+                self.assertIn('index', limit.keys())
+                idx = limit['index']
+                aux_info = expected[idx]
+                self.assertEqual(limit['value'], aux_info['id'])
 
     def test_search_only_subject(self):
         # From the Content page, we have a list of subjects (tags),
