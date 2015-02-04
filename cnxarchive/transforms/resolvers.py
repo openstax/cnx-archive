@@ -47,7 +47,7 @@ PATH_REFERENCE_REGEX = re.compile(r"""
 (?: ([.]{2})?/resources/
   (?P<resource>[0-9a-f]{40})?
   )?
-(?P<fragment>.*)?
+(?P<fragment>.*)
 """, re.IGNORECASE|re.VERBOSE)
 MODULE_REFERENCE = 'module-reference'  # Used in legacy refs
 RESOURCE_REFERENCE = 'resource-reference'
