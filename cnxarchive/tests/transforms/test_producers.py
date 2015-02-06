@@ -312,8 +312,9 @@ class ModuleToHtmlTestCase(unittest.TestCase):
             self.call_target(2, overwrite_html=False)
 
         # Check the error message
-        self.assertEqual(e.exception.message,
-                         'index.cnxml.html already exists for document 2')
+        self.assertEqual(
+            e.exception.message,
+            "One of ('index.cnxml.html',) already exists for document 2")
 
         # Assert index.cnxml.html is not deleted
         cursor.execute("SELECT fileid FROM files "
@@ -625,8 +626,9 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
             self.call_target(2, overwrite=False)
 
         # Check the error message
-        self.assertEqual(e.exception.message,
-                         'index.html.cnxml already exists for document 2')
+        self.assertEqual(
+            e.exception.message,
+            "One of ('index.html.cnxml', 'index.cnxml') already exists for document 2")
 
         # Assert index.cnxml.html is not deleted
         cursor.execute("SELECT fileid FROM files "
@@ -662,8 +664,9 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
             self.call_target(2, overwrite=False)
 
         # Check the error message
-        self.assertEqual(e.exception.message,
-                         'index.html.cnxml already exists for document 2')
+        self.assertEqual(
+            e.exception.message,
+            "One of ('index.html.cnxml', 'index.cnxml') already exists for document 2")
 
         # Assert index.cnxml.html is not deleted
         cursor.execute("SELECT fileid FROM files "

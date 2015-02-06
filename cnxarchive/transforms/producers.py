@@ -62,7 +62,7 @@ class IndexFileExistsError(Exception):
     """
 
     def __init__(self, document_ident, filename):
-        message = '{} already exists for document {}' \
+        message = 'One of {} already exists for document {}' \
             .format(filename, document_ident)
         super(IndexFileExistsError, self).__init__(message)
 
@@ -185,7 +185,7 @@ def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
 
 def produce_html_for_module(db_connection, cursor, ident,
                             source_filename='index.cnxml',
-                            destination_filename='index.cnxml.html',
+                            destination_filenames=('index.cnxml.html',),
                             overwrite_html=False):
     """Produce an ``destination_filename`` (default 'index.cnxml.html') file
     for the module at ``ident`` using the ``source_filename``
@@ -201,13 +201,13 @@ def produce_html_for_module(db_connection, cursor, ident,
     # BBB 14-Jan-2015 renamed - overwrite_html has been renamed overwrite
     return produce_transformed_file(cursor, ident, 'cnxml2html',
                                     source_filename,
-                                    destination_filename,
+                                    destination_filenames,
                                     overwrite=overwrite_html)
 
 
 def produce_cnxml_for_module(db_connection, cursor, ident,
                              source_filename='index.cnxml.html',
-                             destination_filename='index.html.cnxml',
+                             destination_filenames=('index.html.cnxml', 'index.cnxml',),
                              overwrite=False):
     """Produce an ``destination_filename`` (default 'index.html.cnxml') file
     for the module at ``ident`` using the ``source_filename``
@@ -221,12 +221,12 @@ def produce_cnxml_for_module(db_connection, cursor, ident,
 
     """
     return produce_transformed_file(cursor, ident, 'html2cnxml',
-                                    source_filename, destination_filename,
+                                    source_filename, destination_filenames,
                                     overwrite=overwrite)
 
 
 def produce_transformed_file(cursor, ident, transform_type,
-                             source_filename, destination_filename,
+                             source_filename, destination_filenames,
                              overwrite=False):
     """Produce an ``destination_filename`` file for the module at ``ident``
     using the ``source_filename``.
@@ -253,19 +253,18 @@ def produce_transformed_file(cursor, ident, transform_type,
     # Remove destination if overwrite is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
                    'WHERE module_ident = %s '
-                   '      AND filename = %s',
-                   (ident, destination_filename))
-    content_file_id = cursor.fetchone()
-    if content_file_id:
-        content_file_id = content_file_id[0]
-        if content_file_id:
-            if overwrite:
-                cursor.execute('DELETE FROM module_files WHERE fileid = %s',
-                               (content_file_id,))
-                cursor.execute('DELETE FROM files WHERE fileid = %s',
-                               (content_file_id,))
-            else:
-                raise IndexFileExistsError(ident, destination_filename)
+                   '      AND filename = ANY(%s)',
+                   (ident, list(destination_filenames),))
+    file_id_rows = cursor.fetchall()
+    for row in file_id_rows:
+        file_id = row[0]
+        if overwrite:
+            cursor.execute('DELETE FROM module_files WHERE fileid = %s',
+                           (file_id,))
+            cursor.execute('DELETE FROM files WHERE fileid = %s',
+                           (file_id,))
+        else:
+            raise IndexFileExistsError(ident, destination_filenames)
 
     new_content = transformer(content)
 
@@ -283,11 +282,12 @@ def produce_transformed_file(cursor, ident, transform_type,
     cursor.execute("INSERT INTO files (file) VALUES (%s) "
                    "RETURNING fileid;", payload)
     destination_file_id = cursor.fetchone()[0]
-    cursor.execute("INSERT INTO module_files "
-                   "  (module_ident, fileid, filename, mimetype) "
-                   "  VALUES (%s, %s, %s, %s);",
-                   (ident, destination_file_id,
-                    destination_filename, mimetype,))
+    for filename in destination_filenames:
+        cursor.execute("INSERT INTO module_files "
+                       "  (module_ident, fileid, filename, mimetype) "
+                       "  VALUES (%s, %s, %s, %s);",
+                       (ident, destination_file_id,
+                        filename, mimetype,))
     return warning_messages
 
 

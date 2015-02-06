@@ -543,54 +543,56 @@ def add_module_file(plpy, td):
     filename = td['new']['filename']
     msg = "produce {}->{} for module_ident = {}"
 
-    def check_for(filename, module_ident):
+    def check_for(filenames, module_ident):
         """Check for a file at ``filename`` associated with
         module at ``module_ident``.
         """
         stmt = plpy.prepare("""\
 SELECT TRUE AS exists FROM module_files
 WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
-        result = plpy.execute(stmt, [filename, module_ident])
-        try:
-            exists = result[0]['exists']
-        except IndexError:
-            exists = False
-        return bool(exists)
+        any_exist = False
+        for filename in filenames:
+            result = plpy.execute(stmt, [filename, module_ident])
+            try:
+                exists = result[0]['exists']
+            except IndexError:
+                exists = False
+            any_exist = any_exist or exists
+        return any_exist
 
     # Declare the content producer function variable,
     #   because it is possible that it will not be assigned.
     producer_func = None
     if filename == 'index.cnxml':
-        new_filename = 'index.cnxml.html'
+        new_filenames = ('index.cnxml.html',)
         # Transform content to html.
-        other_exists = check_for(new_filename, module_ident)
+        other_exists = check_for(new_filenames, module_ident)
         if not other_exists:
             msg = msg.format('cnxml', 'html', module_ident)
             producer_func = produce_html_for_module
     elif filename == 'index.cnxml.html':
-        new_filename = 'index.html.cnxml'
+        new_filenames = ('index.html.cnxml', 'index.cnxml',)
         # Transform content to cnxml.
-        index_cnxml_exists = check_for('index.cnxml', module_ident)
-        other_exists = check_for(new_filename, module_ident)
-        if not (other_exists or index_cnxml_exists):
+        other_exists = check_for(new_filenames, module_ident)
+        if not other_exists:
             msg = msg.format('html', 'cnxml', module_ident)
             producer_func = produce_cnxml_for_module
     else:
         # Not one of the special named files.
         return  # skip
 
-    if producer_func is not None:
-        with plpydbapi.connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                plpy.info(msg)
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            plpy.info(msg)
+            if producer_func is not None:
                 producer_func(cursor.connection, cursor,
                               module_ident,
                               source_filename=filename,
-                              destination_filename=new_filename)
-                _transform_abstract(cursor, module_ident)
-            # For whatever reason, the plpydbapi context manager
-            #   does not call commit on close.
-            db_connection.commit()
+                              destination_filenames=new_filenames)
+            _transform_abstract(cursor, module_ident)
+        # For whatever reason, the plpydbapi context manager
+        #   does not call commit on close.
+        db_connection.commit()
     return
 
 
