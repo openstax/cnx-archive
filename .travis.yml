@@ -36,10 +36,8 @@ install:
   - sudo /usr/bin/python setup.py install
 before_script:
   # Set up postgres roles
-  - sudo -u postgres psql -d postgres -c "CREATE USER accounts WITH SUPERUSER PASSWORD 'accounts';"
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
   # Set up the database
-  - sudo -u postgres createdb -O accounts oscaccounts-testing
   - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
 script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.
