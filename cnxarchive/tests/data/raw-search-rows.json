@@ -5,15 +5,12 @@
       "abstract": "This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.",
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -88,26 +85,20 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         },
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "College",
           "fullname": "OSC Physics Maintainer",
-          "id": "1df3bab1-1dc7-4017-9b3a-960a87e706b1",
-          "othername": null,
-          "suffix": null,
+          "id": "cnxcap",
           "surname": "Physics",
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -136,15 +127,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -198,15 +186,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -241,15 +226,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -288,15 +270,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -327,15 +306,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -362,15 +338,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -421,15 +394,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -464,15 +434,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -503,15 +470,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -550,15 +514,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -583,15 +544,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -616,15 +574,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
@@ -649,15 +604,12 @@
       "abstract": null,
       "authors": [
         {
-          "email": "info@openstaxcollege.org",
           "firstname": "OpenStax College",
           "fullname": "OpenStax College",
-          "id": "e5a07af6-09b9-4b74-aa7a-b7510bee90b8",
-          "othername": null,
-          "suffix": null,
+          "id": "OpenStaxCollege",
           "surname": null,
-          "title": null,
-          "website": null
+          "suffix": null,
+          "title": null
         }
       ],
       "fields": "",
