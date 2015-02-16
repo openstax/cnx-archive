@@ -33,7 +33,6 @@ setup(
     main = cnxarchive:main
     [console_scripts]
     cnx-archive-initdb = cnxarchive.scripts.initializedb:main
-    cnx-archive-initialize_db = cnxarchive.scripts.initializedb:main
     cnx-archive-hits_counter = cnxarchive.scripts.hits_counter:main
     """,
     test_suite='cnxarchive.tests'

@@ -20,7 +20,6 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fixture.setUp()
-        self.fixture.setUpAccountsDb()
         from ... import _set_settings
         settings = testing.integration_test_settings()
         _set_settings(settings)
@@ -279,7 +278,6 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
 
     def setUp(self):
         self.fixture.setUp()
-        self.fixture.setUpAccountsDb()
         from ... import _set_settings
         settings = testing.integration_test_settings()
         _set_settings(settings)

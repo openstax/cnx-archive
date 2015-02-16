@@ -606,4 +606,15 @@ CREATE TABLE overall_hit_ranks (
   rank INTEGER DEFAULT NULL
 );
 
+CREATE TABLE users (
+  username TEXT NOT NULL PRIMARY KEY,
+  created TIMESTAMP WITH TIME ZONE NOT NULL default CURRENT_TIMESTAMP,
+  updated TIMESTAMP WITH TIME ZONE NOT NULL default CURRENT_TIMESTAMP,
+  first_name TEXT,
+  last_name TEXT,
+  full_name TEXT,
+  suffix TEXT,
+  title TEXT
+  );
+
 COMMIT;

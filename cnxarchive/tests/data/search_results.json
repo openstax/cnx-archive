@@ -119,22 +119,18 @@
    ], 
    "authors": [
     {
-     "website": null, 
      "surname": "Physics", 
-     "suffix": null, 
      "firstname": "College", 
+     "suffix": null,
      "title": null, 
-     "emails": ["info@openstaxcollege.org"], 
      "fullname": "OSC Physics Maintainer", 
      "id": "cnxcap"
     }, 
     {
-     "website": null, 
      "surname": null, 
-     "suffix": null, 
      "firstname": "OpenStax College", 
+     "suffix": null,
      "title": null, 
-     "emails": ["info@openstaxcollege.org"], 
      "fullname": "OpenStax College", 
      "id": "OpenStaxCollege"
     }

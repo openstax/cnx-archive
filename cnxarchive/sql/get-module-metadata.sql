@@ -21,45 +21,29 @@ FROM (SELECT
   (SELECT row_to_json(license) AS license FROM (
         SELECT l.code, l.version, l.name, l.url
     ) license),
-  (SELECT row_to_json(submitter_row) AS submitter FROM (
-        SELECT username AS id, first_name AS firstname, last_name AS surname,
-                full_name AS fullname,
-                title,
-                (SELECT array_agg(value) FROM contact_infos AS ci
-                 WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                NULL AS suffix, NULL AS website
-        FROM users AS u
-        WHERE u.username = m.submitter
-    ) AS submitter_row),
+  (SELECT row_to_json(submitter_row) AS submitter FROM
+        (SELECT username AS id, first_name AS firstname, last_name AS surname,
+                full_name as fullname, title, suffix
+         FROM users AS u
+         WHERE u.username = m.submitter
+         ) AS submitter_row) as submitter,
   m.submitlog, m.portal_type AS "mediaType",
   a.html AS abstract,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
-                full_name AS fullname,
-                title,
-                (SELECT array_agg(value) FROM contact_infos AS ci
-                 WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                NULL AS suffix, NULL AS website
+                full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.authors)
          ) AS user_rows) AS authors,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
-                full_name AS fullname,
-                title,
-                (SELECT array_agg(value) FROM contact_infos AS ci
-                 WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                NULL AS suffix, NULL AS website
+                full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.maintainers)
          ) AS user_rows) AS publishers,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
-                full_name AS fullname,
-                title,
-                (SELECT array_agg(value) FROM contact_infos AS ci
-                 WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                NULL AS suffix, NULL AS website
+                full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.licensors)
          ) user_rows) AS licensors,
@@ -71,11 +55,7 @@ FROM (SELECT
             ARRAY(SELECT row_to_json(user_rows)
                   FROM (SELECT username AS id, first_name AS firstname,
                                last_name AS surname,
-                               full_name AS fullname, title,
-                               (SELECT array_agg(value)
-                                FROM contact_infos AS ci
-                                WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                               NULL AS suffix, NULL AS website
+                               full_name as fullname, title, suffix
                         FROM users AS u
                         WHERE u.username = ANY (m.parentauthors)
                   ) user_rows) AS authors
@@ -95,10 +75,7 @@ FROM (SELECT
              FROM (
                SELECT
                  username AS id, first_name AS firstname, last_name AS surname,
-                 full_name AS fullname, title,
-                 (SELECT array_agg(value) FROM contact_infos AS ci
-                  WHERE ci.user_id = u.id AND type = 'EmailAddress') AS emails,
-                 NULL AS suffix, NULL AS website
+                 full_name as fullname, title, suffix
                FROM users AS u
                WHERE u.username = m1.submitter
                ) publisher)

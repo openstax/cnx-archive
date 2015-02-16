@@ -62,7 +62,6 @@ class SearchModelTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-        self.fixture.setUpAccountsDb()
 
     def tearDown(self):
         from .. import _set_settings
@@ -115,25 +114,18 @@ class SearchModelTestCase(unittest.TestCase):
             (MODULE_MIMETYPE, 14,),
             ])
         # Check the author counts
-        osc_physics = {u'email': u'info@openstaxcollege.org',
-                       u'firstname': u'College',
+        osc_physics = {u'firstname': u'College',
                        u'fullname': u'OSC Physics Maintainer',
-                       u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1',
-                       u'othername': None,
-                       u'suffix': None,
+                       u'id': u'cnxcap',
                        u'surname': u'Physics',
                        u'title': None,
-                       u'website': None}
-        open_stax_college = {u'website': None,
-                             u'surname': None,
-                             u'suffix': None,
+                       }
+        open_stax_college = {u'surname': None,
                              u'firstname': u'OpenStax College',
                              u'title': None,
-                             u'othername': None,
-                             u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
+                             u'id': u'OpenStaxCollege',
                              u'fullname': u'OpenStax College',
-                             u'email': u'info@openstaxcollege.org'}
-
+                             }
         expected = [(open_stax_college['id'], 15,), (osc_physics['id'], 1,)]
         self.assertEqual(results.counts['authorID'], expected)
 
@@ -169,15 +161,14 @@ class SearchModelTestCase(unittest.TestCase):
         query = [('text', 'physics')]
         results = self.make_queryresults(RAW_QUERY_RECORDS, query)
 
-        open_stax_college = {u'website': None,
-                             u'surname': None,
-                             u'suffix': None,
-                             u'firstname': u'OpenStax College',
-                             u'title': None,
-                             u'othername': None,
-                             u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8',
-                             u'fullname': u'OpenStax College',
-                             u'email': u'info@openstaxcollege.org'}
+        open_stax_college = {
+            u'surname': None,
+            u'suffix': None,
+            u'firstname': u'OpenStax College',
+            u'title': None,
+            u'id': u'OpenStaxCollege',
+            u'fullname': u'OpenStax College',
+            }
 
         # Check there is only one author returned
         authors = results.counts['authorID']
@@ -195,7 +186,22 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(len(authors), 2)
         # Check the contents after sorting the results.
         authors = sorted(authors, key=lambda x: x['id'])
-        expected = [{u'website': None, u'surname': u'Physics', u'suffix': None, u'firstname': u'College', u'title': None, u'othername': None, u'fullname': u'OSC Physics Maintainer', u'email': u'info@openstaxcollege.org', u'id': u'1df3bab1-1dc7-4017-9b3a-960a87e706b1'}, {u'website': None, u'surname': None, u'suffix': None, u'firstname': u'OpenStax College', u'title': None, u'othername': None, u'fullname': u'OpenStax College', u'email': u'info@openstaxcollege.org', u'id': u'e5a07af6-09b9-4b74-aa7a-b7510bee90b8'}]
+        expected = [
+            {u'surname': None,
+             u'firstname': u'OpenStax College',
+             u'suffix': None,
+             u'title': None,
+             u'fullname': u'OpenStax College',
+             u'id': u'OpenStaxCollege',
+             },
+            {u'surname': u'Physics',
+             u'firstname': u'College',
+             u'suffix': None,
+             u'title': None,
+             u'fullname': u'OSC Physics Maintainer',
+             u'id': u'cnxcap',
+             },
+            ]
         self.assertEqual(authors, expected)
 
 
@@ -211,7 +217,6 @@ class SearchTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
-        self.fixture.setUpAccountsDb()
 
     def tearDown(self):
         from .. import _set_settings
@@ -287,30 +292,18 @@ class SearchTestCase(unittest.TestCase):
             'first_name': 'Jill',
             'last_name': 'Miller',
             'full_name': 'Jill M.',
-            'email': 'jmiller@example.com',
+            'title': None,
             }
 
         # Create a new user.
-        with self.fixture.db_connect_to_accounts() as db_connection:
+        with self.fixture.start_db_connection() as db_connection:
             with db_connection.cursor() as accounts_cursor:
                 accounts_cursor.execute("""\
 INSERT INTO users
-  (id, created_at, updated_at, is_administrator, person_id, is_temp,
-   username, first_name, last_name, full_name)
+  (username, first_name, last_name, full_name)
   VALUES
-  (DEFAULT, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'f', NULL, 'f',
-   %(username)s, %(first_name)s, %(last_name)s, %(full_name)s)
-  RETURNING id""", info)
-                ident = accounts_cursor.fetchone()[0]
-                accounts_cursor.execute("""\
-INSERT INTO contact_infos
-  (id, type, value, verified, confirmation_code, user_id,
-   created_at, updated_at, confirmation_sent_at)
-  VALUES
-  (DEFAULT, 'EmailAddress', %s, 't', NULL, %s,
-   CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL)""",
-                    (info['email'], ident,))
-        self.addCleanup(self.fixture.tearDownAccountsDb)
+  (%(username)s, %(first_name)s, %(last_name)s, %(full_name)s)
+  RETURNING username""", info)
         return info
 
     @testing.db_connect
@@ -334,7 +327,7 @@ INSERT INTO contact_infos
     def test_editor_search(self, cursor):
         # Test the results of an editor search.
         user_info = self._add_dummy_user()
-        query_params = [('editor', user_info['email'])]
+        query_params = [('editor', user_info['last_name'])]
 
         # Update two modules in include this user as an editor.
         role_id = 5

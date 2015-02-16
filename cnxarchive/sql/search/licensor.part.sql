@@ -13,7 +13,7 @@ FROM
   NATURAL JOIN roles AS r,
   users AS u
 WHERE
-  u.username = any (mor.personids)
+  u.username = ANY (mor.personids)
   AND
   lower(r.rolename) = 'licensor'
   AND
@@ -23,16 +23,5 @@ WHERE
    OR
    u.full_name ~* req(%({0})s::text)
    OR
-   (select bool_or('t')
-    from contact_infos as ci
-    where ci.user_id = u.id
-          AND ci.type = 'EmailAddress'
-          AND (ci.value ~* (req(%({0})s::text)||'.*@')
-               OR
-               (ci.value ~*  (req(%({0})s::text))
-                AND
-                %({0})s::text  ~ '@'
-                )
-               )
-    )
+   u.username ~* req(%({0})s::text)
    )

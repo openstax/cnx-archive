@@ -41,11 +41,8 @@ SELECT
               AND mt.tagid = tags.tagid) as subjects,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username as id,
-                (SELECT array_agg(value) FROM contact_infos AS ci
-                 WHERE type = 'EmailAddress'
-                       AND ci.user_id = users.id) as emails,
                 first_name as firstname, last_name as surname,
-                full_name as fullname, title, NULL AS suffix, NULL AS website
+                full_name as fullname, title, suffix
          FROM users
          WHERE users.username::text = ANY (lm.authors)
          ) as user_rows) as authors,
