@@ -449,6 +449,41 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
                 module_id, version = (None, None,)
         return module_id, version
 
+    def fix_module_id(self):
+        """Assigns the module-id to the document element.
+        This is something the transforms are unable to do because they lack
+        this piece of information.
+        """
+        had_a_problem = False
+        try:
+            elm = self.apply_xpath('/c:document')[0]
+        except IndexError:  # Empty list
+            # The document doesn't have a document tag.
+            # It is likely an abstract.
+            return []
+        if self.document_ident is not None:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute("SELECT moduleid FROM modules "
+                               "WHERE module_ident = %s",
+                               (self.document_ident,))
+                try:
+                    module_id = cursor.fetchone()[0]
+                except TypeError:  # NoneType
+                    had_a_problem = True
+        else:
+            had_a_problem = True
+
+        problems = []
+        if had_a_problem:
+            module_id = 'm00000'
+            exc = ReferenceNotFound(
+                "Cannot identify the current document's legacy `moduleid`.",
+                self.document_ident, None)
+            problems.append(exc)
+        elm.set('module-id', module_id)
+
+        return problems
+
     def fix_link_references(self):
         """Fix references to internal documents and resources."""
         # Catch the invalid, unparsable, etc. references.

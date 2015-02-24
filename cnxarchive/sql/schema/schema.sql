@@ -468,7 +468,7 @@ AS $$
      with db_connection.cursor() as cursor:
           cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND (filename = 'index.cnxml' OR filename = 'index.html.cnxml')", (module_ident,))
           cnxml = cursor.fetchone()[0]
-     content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection)
+     content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection, module_ident)
   if warning_messages:
       plpy.warning(warning_messages)
   return content
@@ -500,7 +500,7 @@ AS $$
           cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND filename = 'index.cnxml.html'", (module_ident,))
           html = cursor.fetchone()[0]
 
-     content, warning_messages = transform_module_content(html, 'html2cnxml', db_connection)
+     content, warning_messages = transform_module_content(html, 'html2cnxml', db_connection, module_ident)
   if warning_messages:
       plpy.warning(warning_messages)
   return content

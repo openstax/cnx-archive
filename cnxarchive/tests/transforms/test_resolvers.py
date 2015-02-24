@@ -290,6 +290,11 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
         from ...transforms.resolvers import resolve_html_urls
         return resolve_html_urls
 
+    @property
+    def target_cls(self):
+        from ...transforms.resolvers import HtmlToCnxmlReferenceResolver
+        return HtmlToCnxmlReferenceResolver
+
     def test_parse_reference(self):
         from ...transforms.resolvers import (
             DOCUMENT_REFERENCE, BINDER_REFERENCE,
@@ -391,6 +396,10 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
         nsmap = cnxml_etree.getroot().nsmap.copy()
         nsmap['c'] = nsmap.pop(None)
 
+        # Ensure the module-id has been set.
+        expected_module_id = 'module-id="m42119"'
+        self.assertIn(expected_module_id, content)
+
         # Read the content for the reference changes.
         # Check the links
         expected_ref = '<link document="m41237" version="1.1">'
@@ -442,6 +451,28 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
         # Check bad reference was not transformed.
         expected_ref = '<link>indkoeb.jpg</link>'
         self.assertIn(expected_ref, content)
+
+    @testing.db_connect
+    def test_fix_module_id_fails(self, cursor):
+        from ...transforms.resolvers import ReferenceNotFound
+
+        content = """\
+<document xmlns="http://cnx.rice.edu/cnxml">
+<content><para>hi.</para></content>
+</document>"""
+        # Note, no ident was given.
+        resolver = self.target_cls(io.BytesIO(content),
+                                   cursor.connection, None)
+        problems = resolver.fix_module_id()
+        self.assertEqual(len(problems), 1)
+        self.assertEqual(type(problems[0]), ReferenceNotFound)
+
+        # Note, an invalid ident was given.
+        resolver = self.target_cls(io.BytesIO(content),
+                                   cursor.connection, 789321)
+        problems = resolver.fix_module_id()
+        self.assertEqual(len(problems), 1)
+        self.assertEqual(type(problems[0]), ReferenceNotFound)
 
     @testing.db_connect
     def test_reference_not_parsable(self, cursor):
