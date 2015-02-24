@@ -81,6 +81,7 @@ COLLECTION_METADATA = {
         },
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'7.1',
+    u'printStyle': None,
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
     u'legacy_id':u'col11406',
@@ -194,6 +195,7 @@ COLLECTION_DERIVED_METADATA = {
     u'title': u'Derived Copy of College Physics'
 }
 MODULE_METADATA = {
+    u'printStyle': None,
     u'roles': None,
     u'subjects': [u'Science and Technology'],
     u'abstract': None,
@@ -380,11 +382,13 @@ class ViewsTestCase(unittest.TestCase):
         content_tree = content.pop('tree')
 
         # Check the metadata for correctness.
+
         self.assertEqual(sorted(content.keys()),
                          sorted(COLLECTION_METADATA.keys()))
         for key in COLLECTION_DERIVED_METADATA['parent']:
             self.assertEqual(content['parent'][key],
                              COLLECTION_DERIVED_METADATA['parent'][key])
+
 
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
