@@ -651,11 +651,25 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.execute('SELECT * FROM modules m ORDER BY module_ident DESC')
         results = cursor.fetchone()
         new_collection_id = results[0]
-        self.assertEqual(results[1], 'Collection') # portal_type
-        self.assertEqual(results[5], 'Derived Copy of College Physics') # name
-        self.assertEqual(results[-2], 1) # major_version
-        self.assertEqual(results[-1], 2) # minor_version
-
+        ################################################################
+        # FIXME: Change cursor type so that a dictionary is returned   #
+        # after a database query rather than a list.  This would make  #
+        # refencing and modifying table columns clearer for unit tests #
+        ################################################################
+        self.assertEqual(results[1], 'Collection')  # portal_type
+        self.assertEqual(results[5], 'Derived Copy of College Physics')  # name
+        self.assertEqual(results[-3], 1)  # major_version
+        self.assertEqual(results[-2], 2)  # minor_version
+        self.assertEqual(results[-1], None)  # print_style
+        
+        cursor.execute("UPDATE modules SET print_style = '*NEW PRINT STYLE*' WHERE abstractid = 1")
+        
+        cursor.execute("SELECT print_style FROM modules WHERE abstractid = 1")
+        
+        print_style = cursor.fetchone()[0]
+        
+        self.assertEqual(print_style, '*NEW PRINT STYLE*')
+        
         cursor.execute('SELECT nodeid FROM trees '
                 'WHERE parent_id IS NULL ORDER BY nodeid DESC')
         new_nodeid = cursor.fetchone()[0]
@@ -1037,7 +1051,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, NULL) RETURNING module_ident, uuid''')
+        NULL, NULL, NULL, 1, NULL, NULL) RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''SELECT module_ident FROM latest_modules
@@ -1050,14 +1064,14 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, NULL) RETURNING module_ident, uuid''')
+        NULL, NULL, NULL, 1, NULL, NULL) RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 17:57:54.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, NULL) RETURNING module_ident, uuid''', [uuid])
+        NULL, NULL, NULL, 2,NULL,NULL) RETURNING module_ident, uuid''', [uuid])
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''SELECT module_ident FROM latest_modules
@@ -1073,7 +1087,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, NULL)
+        NULL, NULL, NULL, 1, NULL, NULL)
         RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
 
@@ -1081,7 +1095,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1 again',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 18:05:31.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 3, NULL)
+        NULL, NULL, NULL, 3, NULL, NULL)
         RETURNING module_ident, uuid''', [uuid])
         module_ident, uuid = cursor.fetchone()
 
@@ -1089,7 +1103,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 17:08:57.000000+02',
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, NULL)
+        NULL, NULL, NULL, 2, NULL, NULL)
         RETURNING module_ident, uuid''', [uuid])
 
         cursor.execute('''SELECT module_ident FROM latest_modules
