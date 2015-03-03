@@ -82,7 +82,8 @@ FROM (SELECT
             FROM modules m1 WHERE m1.uuid = %(id)s AND m1.revised <= m.revised
             ORDER BY m1.revised DESC
     ) history_info) AS history,
-  ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords
+  ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords,
+  m.print_style AS "printStyle"
 FROM modules m
   LEFT JOIN abstracts a on m.abstractid = a.abstractid
   LEFT JOIN modules p on m.parent = p.module_ident,

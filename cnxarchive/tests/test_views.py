@@ -81,10 +81,11 @@ COLLECTION_METADATA = {
         },
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'7.1',
+    u'printStyle': None,
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
-    u'legacy_id':u'col11406',
-    u'legacy_version':u'1.7',
+    u'legacy_id': u'col11406',
+    u'legacy_version': u'1.7',
     u'history': [
         {
             u'version': u'7.1',
@@ -194,6 +195,7 @@ COLLECTION_DERIVED_METADATA = {
     u'title': u'Derived Copy of College Physics'
 }
 MODULE_METADATA = {
+    u'printStyle': None,
     u'roles': None,
     u'subjects': [u'Science and Technology'],
     u'abstract': None,

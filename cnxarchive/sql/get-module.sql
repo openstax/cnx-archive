@@ -29,6 +29,7 @@ FROM (SELECT
   list(tag) as _subject,
   convert_from(file,'utf8'),
   m.google_analytics as "googleAnalytics",
+  m.print_style as "printStyle",
   m.buylink as "buyLink",
   m.moduleid as "legacy_id",
   m.version as  "legacy_version"

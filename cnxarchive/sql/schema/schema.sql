@@ -122,6 +122,7 @@ CREATE TABLE "modules" (
         -- modules have versions like <major_version>
 	"major_version" integer default 1,
 	"minor_version" integer default NULL,
+	"print_style" text,
 	FOREIGN KEY (abstractid) REFERENCES "abstracts" DEFERRABLE,
 	FOREIGN KEY (stateid) REFERENCES "modulestates" DEFERRABLE,
 	FOREIGN KEY (parent) REFERENCES "modules" DEFERRABLE,
@@ -164,7 +165,8 @@ CREATE TABLE "latest_modules" (
         -- Collections have versions like <major_version>.<minor_version> while
         -- modules have versions like <major_version>
 	"major_version" integer,
-	"minor_version" integer
+	"minor_version" integer,
+	"print_style" text
 );
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
@@ -185,13 +187,13 @@ BEGIN
   		created, revised, abstractid, stateid, doctype, licenseid,
   		submitter,submitlog, parent, language,
 		authors, maintainers, licensors, parentauthors, google_analytics,
-                major_version, minor_version)
+                major_version, minor_version, print_style)
   	VALUES (
          NEW.uuid, NEW.module_ident, NEW.portal_type, NEW.moduleid, NEW.version, NEW.name,
   	 NEW.created, NEW.revised, NEW.abstractid, NEW.stateid, NEW.doctype, NEW.licenseid,
   	 NEW.submitter, NEW.submitlog, NEW.parent, NEW.language,
 	 NEW.authors, NEW.maintainers, NEW.licensors, NEW.parentauthors, NEW.google_analytics,
-         NEW.major_version, NEW.minor_version );
+         NEW.major_version, NEW.minor_version, NEW.print_style);
   END IF;
 
   IF TG_OP = ''UPDATE'' THEN
@@ -217,7 +219,8 @@ BEGIN
 	parentauthors=NEW.parentauthors,
 	google_analytics=NEW.google_analytics,
         major_version=NEW.major_version,
-        minor_version=NEW.minor_version
+        minor_version=NEW.minor_version,
+        print_style=NEW.print_style
         WHERE module_ident=NEW.module_ident;
   END IF;
 
@@ -305,14 +308,14 @@ CREATE VIEW all_modules as
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors, google_analytics,
-			buylink, major_version, minor_version
+			buylink, major_version, minor_version, print_style
 	FROM modules
 	UNION ALL
 	SELECT module_ident, uuid, portal_type, moduleid, 'latest', name,
 			created, revised, abstractid, stateid, doctype, licenseid,
 			submitter, submitlog, parent, language,
 			authors, maintainers, licensors, parentauthors, google_analytics,
-			buylink, major_version, minor_version
+			buylink, major_version, minor_version, print_style
 	FROM latest_modules;
 
 CREATE VIEW current_modules AS
