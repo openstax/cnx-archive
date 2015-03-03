@@ -291,14 +291,15 @@ def produce_transformed_file(cursor, ident, transform_type,
     return warning_messages
 
 
-def transform_module_content(content, transform_type, db_connection):
+def transform_module_content(content, transform_type, db_connection,
+                             ident=None):
     transformer, reference_resolver, _ = TRANSFORM_TYPES[transform_type]
 
     new_content = transformer(content)
 
     # Fix up content references to cnx-archive specific urls.
     new_content, bad_refs = reference_resolver(BytesIO(new_content),
-                                               db_connection)
+                                               db_connection, ident)
 
     warning_messages = None
     if bad_refs:
