@@ -11,7 +11,6 @@ import logging
 import psycopg2
 import urlparse
 
-from datetime import datetime
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
 from cnxepub.models import flatten_tree_to_ident_hashes
@@ -31,7 +30,7 @@ from .sitemap import Sitemap
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype,
-    join_ident_hash, slugify, split_ident_hash, split_legacy_hash,
+    join_ident_hash, slugify, split_ident_hash, split_legacy_hash, fromtimestamp
     )
 
 
@@ -135,7 +134,7 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 }
         except ExportError as e:
             # Some other problem, skip it
-                pass
+            pass
 
 
 def get_export_file(cursor, id, version, type, exports_dirs):
@@ -172,7 +171,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         try:
             with open(filepath, 'r') as file:
                 stats = os.fstat(file.fileno())
-                modtime = datetime.fromtimestamp(stats.st_mtime)
+                modtime = fromtimestamp(stats.st_mtime)
                 return (slugify_title_filename, mimetype, stats.st_size, modtime, 'good', file.read())
         except IOError:
             # Let's see if the legacy file's there and make the new link if so
@@ -180,7 +179,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
             try:
                 with open(legacy_filepath, 'r') as file:
                     stats = os.fstat(file.fileno())
-                    modtime = datetime.fromtimestamp(stats.st_mtime)
+                    modtime = fromtimestamp(stats.st_mtime)
                     os.link(legacy_filepath,filepath)
                     return (slugify_title_filename, mimetype, stats.st_size, modtime,'good', file.read())
             except IOError as e:

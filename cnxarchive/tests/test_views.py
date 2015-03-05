@@ -13,6 +13,11 @@ import json
 import unittest
 from wsgiref.util import setup_testing_defaults
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 import psycopg2
 
 from . import testing
@@ -291,6 +296,7 @@ with open(SEARCH_RESULTS_FILEPATH, 'r') as file:
     SEARCH_RESULTS = json.load(file)
 
 
+@mock.patch('cnxarchive.views.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -1053,7 +1059,7 @@ class ViewsTestCase(unittest.TestCase):
                 ('Content-type', 'application/json'))
         self.assertEqual(json.loads(output)['downloads'], [
             {
-                u'created': u'2014-02-04T09:18:25.478440',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'PDF',
                 u'size': 28,
                 u'state': u'good',
@@ -1063,7 +1069,7 @@ class ViewsTestCase(unittest.TestCase):
                     id, version, version),
                 },
             {
-                u'created': u'2014-02-04T09:18:25.478440',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'EPUB',
                 u'size': 13,
                 u'state': u'good',
@@ -1073,7 +1079,7 @@ class ViewsTestCase(unittest.TestCase):
                     id, version, version),
                 },
             {
-                u'created': u'2014-02-04T09:18:25.478440',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'Offline ZIP',
                 u'size': 11,
                 u'state': u'good',
@@ -1115,7 +1121,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
                     .format(id, version),
                 u'format': u'PDF',
-                u'created': u'2014-02-04T09:18:25.478440',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
                 u'size': 15,
                 u'details': u'PDF file, for viewing content offline and printing.',
@@ -1125,7 +1131,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
                     .format(id, version),
                 u'format': u'EPUB',
-                u'created': u'2014-02-04T09:18:25.478440',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
                 u'size': 16,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
@@ -1218,7 +1224,7 @@ class ViewsTestCase(unittest.TestCase):
                 ],
             u'isLatest': True,
             u'downloads': [{
-                u'created': u'2014-07-21T14:18:08.496914',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
                     .format(id, version),
                 u'format': u'PDF',
