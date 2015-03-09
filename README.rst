@@ -4,7 +4,7 @@ Connexions Archive Repository
 This is an archive for Connexions documents. It holds published
 documents and collections of documents. It is accessible to the public via
 a read-only API. It has an optional write API for publishing content
-from an unpublished repository (e.g. ``rhaptos2.repo``).
+from an unpublished repository.
 
 Getting started
 ---------------
