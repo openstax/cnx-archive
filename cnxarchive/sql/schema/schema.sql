@@ -620,4 +620,26 @@ CREATE TABLE users (
   title TEXT
   );
 
+-- =============== --
+--   Legacy only   --
+-- =============== --
+
+CREATE TABLE "persons" (
+  "personid" text PRIMARY KEY,
+  "honorific" text,
+  "firstname" text,
+  "othername" text,
+  "surname" text,
+  "lineage" text,
+  "fullname" text,
+  "email" text,
+  "homepage" text,
+  "comment" text
+);
+
+CREATE INDEX person_firstname_upper_idx on persons (upper(firstname));
+CREATE INDEX person_surname_upper_idx on persons (upper(surname));
+CREATE INDEX person_personid_upper_idx on persons (upper(personid));
+CREATE INDEX person_email_upper_idx on persons (upper(email));
+
 COMMIT;
