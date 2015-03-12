@@ -30,7 +30,7 @@ from .sitemap import Sitemap
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype,
-    join_ident_hash, slugify, split_ident_hash, split_legacy_hash,
+    join_ident_hash, slugify, split_ident_hash, split_legacy_hash, fromtimestamp
     )
 
 
@@ -120,17 +120,20 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
 
     for type_name, type_info in TYPE_INFO:
         try:
-            filename, mimetype, file_content = get_export_file(cursor,
+            filename, mimetype, file_size, file_created, state, file_content = get_export_file(cursor,
                     id, version, type_name, exports_dirs)
             yield {
                 'format': type_info['user_friendly_name'],
                 'filename': filename,
+                'size': file_size,
+                'created': file_created and file_created.isoformat() or None,
+                'state': state,
                 'details': type_info['description'],
                 'path': u'/exports/{}@{}.{}/{}'.format(id, version, type_name,
                                                       filename),
                 }
         except ExportError as e:
-            # file not found, so don't include it
+            # Some other problem, skip it
             pass
 
 
@@ -167,14 +170,18 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         legacy_filepath = os.path.join(exports_dir, legacy_filename)
         try:
             with open(filepath, 'r') as file:
-                return (slugify_title_filename, mimetype, file.read())
+                stats = os.fstat(file.fileno())
+                modtime = fromtimestamp(stats.st_mtime)
+                return (slugify_title_filename, mimetype, stats.st_size, modtime, 'good', file.read())
         except IOError:
             # Let's see if the legacy file's there and make the new link if so
             #FIXME remove this code when we retire legacy
             try:
                 with open(legacy_filepath, 'r') as file:
+                    stats = os.fstat(file.fileno())
+                    modtime = fromtimestamp(stats.st_mtime)
                     os.link(legacy_filepath,filepath)
-                    return (slugify_title_filename, mimetype, file.read())
+                    return (slugify_title_filename, mimetype, stats.st_size, modtime,'good', file.read())
             except IOError as e:
                 # to be handled by the else part below if unable to find file 
                 # in any of the export dirs
@@ -184,7 +191,8 @@ def get_export_file(cursor, id, version, type, exports_dirs):
                                 'filepath: {}\n'
                                 .format(str(e), legacy_filepath))
     else:
-        raise ExportError('{} not found'.format(filename))
+        #No file, return "missing" state
+        return (slugify_title_filename, mimetype, 0, None, 'missing', None)
 
 
 HTML_WRAPPER = """\
@@ -440,7 +448,7 @@ def get_export(environ, start_response):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             try:
-                filename, mimetype, file_content = get_export_file(cursor,
+                filename, mimetype, size, modtime, state, file_content = get_export_file(cursor,
                         id, version, type, exports_dirs)
             except ExportError as e:
                 logger.debug(str(e))

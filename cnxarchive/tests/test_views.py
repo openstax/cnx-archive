@@ -13,6 +13,11 @@ import json
 import unittest
 from wsgiref.util import setup_testing_defaults
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 import psycopg2
 
 from . import testing
@@ -291,6 +296,7 @@ with open(SEARCH_RESULTS_FILEPATH, 'r') as file:
     SEARCH_RESULTS = json.load(file)
 
 
+@mock.patch('cnxarchive.views.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -1006,7 +1012,30 @@ class ViewsTestCase(unittest.TestCase):
         output = json.loads(output)
         output['canPublish'].sort()
         self.assertEqual(output, {
-            u'downloads': [],
+            u'downloads': [{
+                u'created': None,
+                u'details': u'PDF file, for viewing content offline and printing.',
+                u'filename': u'college-physics-6.1.pdf',
+                u'format': u'PDF',
+                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf',
+                u'size': 0,
+                u'state': u'missing'},
+               {
+                u'created': None,
+                u'details': u'Electronic book format file, for viewing on mobile devices.',
+                u'filename': u'college-physics-6.1.epub',
+                u'format': u'EPUB',
+                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub',
+                u'size': 0,
+                u'state': u'missing'},
+               {
+                u'created': None,
+                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                u'filename': u'college-physics-6.1.zip',
+                u'format': u'Offline ZIP',
+                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip',
+                u'size': 0,
+                u'state': u'missing'}],
             u'isLatest': False,
             u'canPublish': [
                 u'OpenStaxCollege',
@@ -1030,21 +1059,30 @@ class ViewsTestCase(unittest.TestCase):
                 ('Content-type', 'application/json'))
         self.assertEqual(json.loads(output)['downloads'], [
             {
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'PDF',
+                u'size': 28,
+                u'state': u'good',
                 u'filename': u'college-physics-{}.pdf'.format(version),
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'path': u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
                     id, version, version),
                 },
             {
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'EPUB',
+                u'size': 13,
+                u'state': u'good',
                 u'filename': u'college-physics-{}.epub'.format(version),
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'path': u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
                     id, version, version),
                 },
             {
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'Offline ZIP',
+                u'size': 11,
+                u'state': u'good',
                 u'filename': u'college-physics-{}.zip'.format(version),
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
@@ -1083,6 +1121,9 @@ class ViewsTestCase(unittest.TestCase):
                 u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
                     .format(id, version),
                 u'format': u'PDF',
+                u'created': u'2015-03-04T10:03:29-08:00',
+                u'state': u'good',
+                u'size': 15,
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'preface-to-college-physics-7.pdf',
                 },
@@ -1090,10 +1131,22 @@ class ViewsTestCase(unittest.TestCase):
                 u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
                     .format(id, version),
                 u'format': u'EPUB',
+                u'created': u'2015-03-04T10:03:29-08:00',
+                u'state': u'good',
+                u'size': 16,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'filename': u'preface-to-college-physics-7.epub',
                 },
+            {
+                u'created': None,
+                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                u'filename': u'preface-to-college-physics-7.zip',
+                u'format': u'Offline ZIP',
+                u'path': u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip',
+                u'size': 0,
+                u'state': u'missing'}
             ])
+
 
     def test_extra_latest(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1171,12 +1224,30 @@ class ViewsTestCase(unittest.TestCase):
                 ],
             u'isLatest': True,
             u'downloads': [{
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
                     .format(id, version),
                 u'format': u'PDF',
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'useful-inførmation-5.pdf',
-                }],
+                u'size': 0,
+                u'state': u'good'},
+                {
+                u'created': None,
+                u'details': u'Electronic book format file, for viewing on mobile devices.',
+                u'filename': u'useful-inf\xf8rmation-5.epub',
+                u'format': u'EPUB',
+                u'path': u'/exports/c0a76659-c311-405f-9a99-15c71af39325@5.epub/useful-inf\xf8rmation-5.epub',
+                u'size': 0,
+                u'state': u'missing'},
+                {
+                u'created': None,
+                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                u'filename': u'useful-inf\xf8rmation-5.zip',
+                u'format': u'Offline ZIP',
+                u'path': u'/exports/c0a76659-c311-405f-9a99-15c71af39325@5.zip/useful-inf\xf8rmation-5.zip',
+                u'size': 0,
+                u'state': u'missing'}],
             })
 
     def test_extra_not_found(self):

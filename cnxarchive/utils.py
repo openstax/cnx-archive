@@ -10,6 +10,8 @@ import sys
 import re
 import unicodedata
 import uuid
+import datetime
+import tzlocal
 
 from paste.deploy import appconfig
 
@@ -21,6 +23,8 @@ VERSION_CHAR = '.'
 class IdentHashSyntaxError(Exception):
     """Raised when the ident-hash syntax is incorrect."""
 
+def fromtimestamp(ts):
+    return datetime.datetime.fromtimestamp(ts, tz=tzlocal.get_localzone())
 
 def split_legacy_hash(legacy_hash):
     split_value = legacy_hash.split('/')

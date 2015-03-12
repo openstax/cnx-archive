@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import sys
 from setuptools import setup, find_packages
 
+IS_PY3 = sys.version_info > (3,)
 
 install_requires = (
     'cnx-query-grammar',
@@ -12,10 +14,15 @@ install_requires = (
     'plpydbapi',
     'psycopg2>=2.5',
     'rhaptos.cnxmlutils',
+    'tzlocal',
     'waitress',  # wsgi server
     )
+tests_require = [
+    ]
 description = "An archive for Connexions documents."
 
+if not IS_PY3:
+    tests_require.append('mock')
 
 setup(
     name='cnx-archive',
@@ -27,6 +34,7 @@ setup(
     description=description,
     packages=find_packages(),
     install_requires=install_requires,
+    tests_require=tests_require,
     include_package_data=True,
     entry_points="""\
     [paste.app_factory]
