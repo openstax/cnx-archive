@@ -617,7 +617,9 @@ CREATE TABLE users (
   last_name TEXT,
   full_name TEXT,
   suffix TEXT,
-  title TEXT
+  title TEXT,
+  -- Used by publishing to moderate the first time publishers.
+  is_moderated BOOLEAN
   );
 
 -- =============== --
