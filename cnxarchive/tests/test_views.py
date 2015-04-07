@@ -67,6 +67,10 @@ COLLECTION_METADATA = {
                      },
                     ],
     u'title': u'College Physics',
+    u'parentAuthors': [],
+    u'parentId': None,
+    u'parentTitle': None,
+    u'parentVersion': '',
     u'parent': {
         'authors': [],
         'id': None,
@@ -243,6 +247,10 @@ MODULE_METADATA = {
                      },
                     ],
     u'title': u'Elasticity: Stress and Strain',
+    u'parentAuthors': [],
+    u'parentId': None,
+    u'parentTitle': None,
+    u'parentVersion': '',
     u'parent': {
         u'authors': [],
         u'id': None,

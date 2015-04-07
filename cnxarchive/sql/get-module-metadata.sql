@@ -47,6 +47,16 @@ FROM (SELECT
          FROM users AS u
          WHERE u.username = ANY (m.licensors)
          ) user_rows) AS licensors,
+  p.uuid AS "parentId",
+  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
+  p.name as "parentTitle",
+  ARRAY(SELECT row_to_json(user_rows) FROM
+        (SELECT username AS id, first_name AS firstname,
+                               last_name AS surname,
+                               full_name as fullname, title, suffix
+         FROM users
+         WHERE users.username::text = ANY (m.parentauthors)
+         ) user_rows) as "parentAuthors",
   (SELECT row_to_json(parent_row)
    FROM (
      SELECT p.uuid AS id,
