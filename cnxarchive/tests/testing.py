@@ -14,7 +14,7 @@ import psycopg2
 
 
 from .. import config
-from ..utils import parse_app_settings
+from ..utils import app_settings, app_parser
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
 
@@ -41,7 +41,9 @@ def integration_test_settings():
         config_uri = os.environ.get('TESTING_CONFIG', None)
         if config_uri is None:
             config_uri = os.path.join(here, 'testing.ini')
-    settings = parse_app_settings(config_uri)
+    parser = app_parser()
+    args = parser.parse_args([config_uri])
+    settings = app_settings(args)
     return settings
 
 
