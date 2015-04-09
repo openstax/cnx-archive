@@ -12,7 +12,7 @@ import unicodedata
 import uuid
 import datetime
 import tzlocal
-
+import argparse
 from paste.deploy import appconfig
 
 
@@ -85,12 +85,30 @@ def join_ident_hash(id, version):
     return HASH_CHAR.join(join_args)
 
 
-def parse_app_settings(config_uri, name='main'):
+def app_parser(prog='cnx-archive-initdb', description=None):
+    parser = argparse.ArgumentParser(prog=prog, description=description)
+    parser.add_argument('config_uri', help="Configuration INI file.")
+    parser.add_argument('--with-example-data', action='store_true',
+                        help="Initializes the database with example data.")
+    parser.add_argument('--superuser', action='store', help="NOT IMPLEMENTED")
+    parser.add_argument(
+        '--super-password', action='store', help="NOT IMPLEMENTED")
+    parser.add_argument('--config-name',
+                        action='store',
+                        default='main',
+                        help="Supply a name for the configuration")
+    return parser
+
+
+def app_settings(args):
     """Parse the settings from the config file for the application.
     The application section defaults to name 'main'.
     """
-    config_path = os.path.abspath(config_uri)
-    return appconfig("config:{}".format(config_path), name=name)
+    config_path = os.path.abspath(args.config_uri)
+    settings = appconfig(
+        "config:{}".format(config_path), name=args.config_name)
+    settings.update(vars(args))
+    return settings
 
 
 # The import_function and template_to_regex functions are derived from

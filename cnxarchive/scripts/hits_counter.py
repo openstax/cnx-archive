@@ -17,7 +17,7 @@ import gzip
 
 import psycopg2
 from .. import config
-from ..utils import parse_app_settings, split_ident_hash
+from ..utils import app_settings, split_ident_hash
 
 
 LOG_FORMAT_PLAIN = 'plain'
@@ -86,7 +86,7 @@ def main(argv=None):
         hits, start_timestamp, end_timestamp = parse_log(log, url_pattern)
 
     # Parse the configuration file for the postgres connection string.
-    settings = parse_app_settings(args.config_uri,  args.config_name)
+    settings = app_settings(args)
 
     # Insert the hits into the database.
     connection_string = settings[config.CONNECTION_STRING]

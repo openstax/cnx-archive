@@ -10,6 +10,87 @@ import uuid
 import unittest
 
 
+class ParserTestCase(unittest.TestCase):
+
+    def call_target(self, *args, **kwargs):
+        from ..utils import app_parser
+        return app_parser(*args, **kwargs)
+
+    def test_positional_arguments(self):
+        parser = self.call_target()
+        args = parser.parse_args(['testing.ini'])
+        self.assertEqual(args.config_uri, 'testing.ini')
+        self.assertFalse(args.with_example_data)
+        self.assertIsNone(args.superuser)
+        self.assertIsNone(args.super_password)
+        self.assertEqual(args.config_name, 'main')
+
+    def test_optional_arguments(self):
+        parser = self.call_target()
+        args = parser.parse_args(['testing.ini',
+                                  '--with-example-data',
+                                  '--superuser', 'superman',
+                                  '--super-password', 'clarkkent',
+                                  '--config-name', 'NEW_NAME'])
+        self.assertEqual(args.config_uri, 'testing.ini')
+        self.assertTrue(args.with_example_data)
+        self.assertEqual(args.superuser, 'superman')
+        self.assertEqual(args.super_password, 'clarkkent')
+        self.assertEqual(args.config_name, 'NEW_NAME')
+
+    def test_help(self):
+        import subprocess
+        parser = self.call_target(
+            description='Commandline script '
+                        'used to initialize the SQL database.')
+        expected_help_message = parser.format_help()
+        actual_help_message = subprocess.check_output(
+            ["cnx-archive-initdb", "--help"])
+        expected_help_message = expected_help_message.split()
+        actual_help_message = actual_help_message.split()
+        self.assertEqual(expected_help_message, actual_help_message)
+
+
+class SettingsTestCase(unittest.TestCase):
+
+    def call_target(self, *args, **kwargs):
+        from ..utils import app_settings
+        from ..utils import app_parser
+        parser = app_parser()
+        arguments = parser.parse_args(*args, **kwargs)
+        return app_settings(arguments)
+
+    def test_default_config(self):
+        from testing import integration_test_settings
+        import os
+        expected = integration_test_settings()
+        here = os.path.abspath(os.path.dirname(__file__))
+        config_uri = os.path.join(here, 'testing.ini')
+        result = self.call_target([config_uri])
+        self.assertEqual(expected, result)
+
+    def test_example_arg(self):
+        import os
+        settings = self.call_target(['cnxarchive/tests/testing.ini'])
+        self.assertFalse(settings['with_example_data'])
+        settings = self.call_target(
+            ['cnxarchive/tests/testing.ini', '--with-example-data'])
+        self.assertTrue(settings['with_example_data'])
+
+    def test_superuser_arg(self):
+        settings = self.call_target(
+            ['cnxarchive/tests/testing.ini', '--superuser', 'superman'])
+        self.assertEqual(settings['superuser'], 'superman')
+
+    def test_password_arg(self):
+        settings = self.call_target(
+            ['cnxarchive/tests/testing.ini', '--super-password', 'clarkkent'])
+        self.assertEqual(settings['super_password'], 'clarkkent')
+
+    def test_default_config_name(self):
+        settings = self.call_target(['cnxarchive/tests/testing.ini'])
+        self.assertEqual(settings['config_name'], 'main')
+
 class SplitIdentTestCase(unittest.TestCase):
 
     def call_target(self, *args, **kwargs):
