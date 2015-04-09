@@ -36,6 +36,10 @@ DB_SCHEMA_FILES = (
 DB_SCHEMA_FILE_PATHS = tuple([os.path.join(DB_SCHEMA_DIRECTORY, dsf)
                               for dsf in DB_SCHEMA_FILES])
 
+EXAMPLE_DATA_FILEPATHS = (
+    config.TEST_DATA_SQL_FILE,
+)
+
 
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
@@ -60,19 +64,37 @@ SQL = {
 
 
 def initdb(settings):
-    """Initialize the database from the given settings."""
-    connection_string = settings[config.CONNECTION_STRING]
+    """Initialize the database from the given settings.
+       If a superuser is given in the settings then the
+       function will use the superuser to initialize the
+       database.
+    """
+    if settings[config.SUPER_CONN_STRING]:
+        connection_string = settings[config.SUPER_CONN_STRING]
+    else:
+        connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for schema_filepath in DB_SCHEMA_FILE_PATHS:
                 with open(schema_filepath, 'r') as f:
                     cursor.execute(f.read())
+            # allow standard user to access the  'plpythonu' langauge.
+            # Note: The following line needs to be of the form
+            # cursor.execute("ALTER LANGUAGE ... {user}".format(**settings))
+            # because the {user} query placeholder needs to be interpreted
+            # as a postgres identifier rather than a string object.
+            cursor.execute(
+                "ALTER LANGUAGE plpythonu OWNER TO {user}".format(**settings))
             sql_constants = [os.path.join(DB_SCHEMA_DIRECTORY, filename)
                              for filename in os.listdir(DB_SCHEMA_DIRECTORY)
                              if filename.startswith('constant-')]
             for filepath in sql_constants:
                 with open(filepath, 'r') as f:
                     cursor.execute(f.read())
+            if settings['with_example_data']:
+                for filepath in EXAMPLE_DATA_FILEPATHS:
+                    with open(filepath, 'r') as fb:
+                        cursor.execute(fb.read())
 
 
 def get_module_uuid(db_connection, moduleid):

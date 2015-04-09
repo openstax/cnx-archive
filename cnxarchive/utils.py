@@ -13,6 +13,7 @@ import uuid
 import datetime
 import tzlocal
 import argparse
+from . import config
 from paste.deploy import appconfig
 
 
@@ -86,13 +87,41 @@ def join_ident_hash(id, version):
 
 
 def app_parser(prog='cnx-archive-initdb', description=None):
+    """ Command line options for the cnx-archive-initdb script
+    """
+    ##################################################################
+    # Note: changing this function will cause the unit test          #
+    # cnxarchive.tests.test_utils.ParserTestCase.test_help to fail.  #
+    # To get this test to pass cnx-archive will need to be           #
+    # reinstalled so the 'help' command can be updated to reflect    #
+    # the new changes.                                               #
+    ##################################################################
     parser = argparse.ArgumentParser(prog=prog, description=description)
     parser.add_argument('config_uri', help="Configuration INI file.")
     parser.add_argument('--with-example-data', action='store_true',
+                        default=False,
                         help="Initializes the database with example data.")
-    parser.add_argument('--superuser', action='store', help="NOT IMPLEMENTED")
     parser.add_argument(
-        '--super-password', action='store', help="NOT IMPLEMENTED")
+        '--user',
+        action='store',
+        help='Override the default user config.'
+        ' A password must be given as well '
+        'or else this option will be ignored')
+    parser.add_argument(
+        '--password',
+        action='store',
+        help="Suppy a password with new user")
+    parser.add_argument(
+        '--superuser',
+        action='store',
+        help='Specify a superuser.  '
+        'A password must be giver '
+        'as well or else this '
+        'option will be ignored.')
+    parser.add_argument(
+        '--superpassword',
+        action='store',
+        help="Suppy a password for the superuser")
     parser.add_argument('--config-name',
                         action='store',
                         default='main',
@@ -104,10 +133,63 @@ def app_settings(args):
     """Parse the settings from the config file for the application.
     The application section defaults to name 'main'.
     """
-    config_path = os.path.abspath(args.config_uri)
+    from ast import literal_eval
+    argument_dict = vars(args)
+
+    config_path = os.path.abspath(argument_dict['config_uri'])
+
+    # Create a settings dictionary from the congfig file.
     settings = appconfig(
-        "config:{}".format(config_path), name=args.config_name)
-    settings.update(vars(args))
+        "config:{}".format(config_path), name=argument_dict['config_name'])
+    connection_string = settings[config.CONNECTION_STRING]
+
+    # create dictionary of values from the CONNECTION_STRING.
+    connection_dictionary = literal_eval(
+        "{\'" + connection_string.replace('=', '\':\'').replace(' ', '\', \'')
+        + "\'}")
+    # add the new values to the settings dictionary
+    settings.update(connection_dictionary)
+
+    # override the default user in settings.
+    if argument_dict['user'] and argument_dict['password']:
+        settings['user'] = argument_dict['user']
+        settings['password'] = argument_dict['password']
+        settings[
+            config.CONNECTION_STRING] = 'dbname={dbname} ' \
+                                        'user={user} ' \
+                                        'password={password} ' \
+                                        'host={host} ' \
+                                        'port={port}'.format(**settings)
+    else:
+        # Make sure the user and password are None
+        # since settings were not changed
+        argument_dict['user'] = None
+        argument_dict['password'] = None
+
+    # Add a superuser connection string to settings
+    if argument_dict['superuser'] and argument_dict['superpassword']:
+        settings['superuser'] = argument_dict['superuser']
+        settings['superpassword'] = argument_dict['superpassword']
+        settings[
+            config.SUPER_CONN_STRING] = 'dbname={dbname} ' \
+                                        'user={superuser} ' \
+                                        'password={superpassword} ' \
+                                        'host={host} ' \
+                                        'port={port}'.format(**settings)
+    else:
+        # make sure that superuser info is None
+        # since super-connection-string was not
+        # generated.
+        settings[config.SUPER_CONN_STRING] = None
+        argument_dict['superuser'] = None
+        argument_dict['superpassword'] = None
+
+    # Remove keys from argument_dict if their values are None
+    argument_dict = {k: v for k, v in argument_dict.items() if v is not None}
+
+    # Add any remaining arguments to the settings dictionary.
+    settings.update(argument_dict)
+
     return settings
 
 

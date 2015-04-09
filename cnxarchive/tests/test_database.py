@@ -13,6 +13,108 @@ import unittest
 import psycopg2
 
 from . import testing
+from .testing import SingleInitDBTest
+import functools
+
+
+class DBPermissionsTestCase(SingleInitDBTest):
+
+    """ Test database owners, permissions,
+        and language creation.
+    """
+    def basic_database_connection(function):
+        """ A decorator to handing db connections.
+            The user is a NONSUPER and therefore
+            has restricted privileges
+        """
+        @functools.wraps(function)
+        def wrapper(self, *args, **kwargs):
+            with self._connection as connection:
+                with connection.cursor() as cursor:
+                    return function(self, cursor, *args, **kwargs)
+        return wrapper
+
+    def super_database_connection(function):
+        """ A decorator to handing db connections.
+            The user is a SUPER and therefore
+            has unrestricted privileges
+        """
+        @functools.wraps(function)
+        def wrapper(self, *args, **kwargs):
+            with self._super_conn as connection:
+                with connection.cursor() as cursor:
+                    return function(self, cursor, *args, **kwargs)
+        return wrapper
+
+    @basic_database_connection
+    def test_basic_database_connection(self, cursor):
+        """ A blank function to test the
+            database connection decorator
+        """
+        pass
+
+    @super_database_connection
+    def test_super_database_connection(self, cursor):
+        """ A blank function to test the
+            database connection decorator
+        """
+        pass
+
+    def test_initdb_on_already_initialized_db(self):
+        """Testing the ``initdb`` raises a discernible error when the
+        database is already initialized.
+        """
+        from ..database import initdb
+        with self.assertRaises(psycopg2.InternalError) as caught_exception:
+            initdb(self._settings)
+        self.assertEqual(caught_exception.exception.message,
+                         'Database is already initialized.\n')
+
+    @super_database_connection
+    def test_language_exists(self, cursor):
+        """ Test that an error is thrown if the
+            lang is recreated.
+        """
+        with self.assertRaises(psycopg2.ProgrammingError) as caught_exception:
+            cursor.execute('CREATE LANGUAGE plpythonu')
+        self.assertEqual(
+            caught_exception.exception.message,
+            'language "plpythonu" already exists\n')
+
+    @basic_database_connection
+    def test_lang_creation_error_nonsuper_user(self, cursor):
+        with self.assertRaises(psycopg2.ProgrammingError) as caught_exception:
+            cursor.execute('CREATE LANGUAGE plpythonu')
+        self.assertEqual(
+            caught_exception.exception.message,
+            'must be superuser to create procedural language "plpythonu"\n')
+
+    @basic_database_connection
+    def test_users(self, cursor):
+        """ Test users roles, privileges, and ownership.
+        """
+        cursor.execute('SELECT current_user')
+        current_user = cursor.fetchone()[0]
+        self.assertEqual(current_user, self._settings['user'])
+
+        cursor.execute(
+            'SELECT rolsuper FROM pg_roles WHERE rolname = %(superuser)s',
+            self._settings)
+        super_permission = cursor.fetchone()[0]
+        self.assertTrue(super_permission)
+
+        cursor.execute(
+            'SELECT rolsuper FROM pg_roles WHERE rolname = %(user)s',
+            self._settings)
+        user_permission = cursor.fetchone()[0]
+        self.assertFalse(user_permission)
+
+        cursor.execute(
+            "SELECT pg_catalog.pg_get_userbyid(l.lanowner) AS owner "
+            "FROM pg_catalog.pg_language l "
+            "WHERE l.lanname = 'plpythonu'")
+        lang_owners = cursor.fetchall()
+        self.assertIn((self._settings['user'],), lang_owners)
 
 
 class InitializeDBTestCase(unittest.TestCase):
