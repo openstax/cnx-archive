@@ -1511,6 +1511,64 @@ RETURNING
         self.assertEqual(uuid_, controls_uuid)
         self.assertEqual(license_id, controls_license_id)
 
+    @testing.db_connect
+    def test_new_module_user_upsert(self, cursor):
+        """Verify legacy publishing of a new module upserts users
+        from the persons table into the users table.
+        """
+        # Insert the legacy persons records.
+        #   These people would have registered on legacy after the initial
+        #   migration of legacy users.
+        cursor.execute("""\
+INSERT INTO persons
+  (personid, honorific, firstname, surname, fullname)
+VALUES
+  ('cnxcap', NULL, 'College', 'Physics', 'OSC Physics Maintainer'),
+  ('legacy', NULL, 'Legacy', 'User', 'Legacy User'),
+  ('ruins', NULL, 'Legacy', 'Ruins', 'Legacy Ruins')
+""")
+        # Insert one existing user into the users shadow table.
+        cursor.execute("""\
+INSERT INTO users (username, first_name, last_name, full_name, is_moderated)
+VALUES ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer', 't')""")
+        # Insert a new legacy module.
+        cursor.execute("""\
+INSERT INTO modules
+  (moduleid, version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, '1.1',
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{legacy}', '{cnxcap}', '{ruins}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid, licenseid""", (self._abstract_id,))
+        uuid_, license_id = cursor.fetchone()
+
+        # Hopefully pull the UUID out of the 'document_controls' table.
+        cursor.execute("""
+SELECT username, first_name, last_name, full_name
+FROM users
+WHERE username = any('{legacy, ruins}'::text[])
+ORDER BY username
+""")
+        user_records = cursor.fetchall()
+
+        # Check for the upsert.
+        self.assertEqual(user_records[0],
+                         ('legacy', 'Legacy', 'User', 'Legacy User',))
+        self.assertEqual(user_records[1],
+                         ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+
 
 SQL_FOR_HIT_DOCUMENTS = """
 ALTER TABLE modules DISABLE TRIGGER ALL;

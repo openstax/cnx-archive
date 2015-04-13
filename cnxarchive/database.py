@@ -474,6 +474,40 @@ VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
         plpy.execute(plan, (uuid_, uid, permission,))
 
 
+def upsert_users_from_legacy_publication_trigger(plpy, td):
+    """A compatibility trigger to upsert users from the legacy persons table.
+    """
+    modified_state = "OK"
+    uuid_ = td['new']['uuid']
+    authors = td['new']['authors'] and td['new']['authors'] or []
+    maintainers = td['new']['maintainers'] and td['new']['maintainers'] or []
+    licensors = td['new']['licensors'] and td['new']['licensors'] or []
+    is_legacy_publication = td['new']['version'] is not None
+
+    if not is_legacy_publication:
+        return modified_state
+
+    # Upsert all roles into the users table.
+    users = []
+    users.extend(authors)
+    users.extend(maintainers)
+    users.extend(licensors)
+    users = list(set(users))
+
+    plan = plpy.prepare("""\
+SELECT username FROM users WHERE username = any($1)""",
+                        ['text[]'])
+    existing_users = set([r['username'] for r in plpy.execute(plan, (users,))])
+
+    new_users = set(users).difference(existing_users)
+    for username in new_users:
+        plan = plpy.prepare("""\
+INSERT INTO users (username, first_name, last_name, full_name, title)
+SELECT personid, firstname, surname, fullname, honorific
+FROM persons where personid = $1""", ['text'])
+        plpy.execute(plan, (username,))
+
+
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
