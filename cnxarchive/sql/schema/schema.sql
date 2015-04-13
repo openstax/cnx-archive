@@ -314,6 +314,17 @@ CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
 
+CREATE OR REPLACE FUNCTION optional_roles_user_insert ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import insert_users_for_optional_roles_trigger
+  return insert_users_for_optional_roles_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER optional_roles_user_insert
+  AFTER INSERT ON moduleoptionalroles FOR EACH ROW
+  EXECUTE PROCEDURE optional_roles_user_insert();
+
 CREATE VIEW all_modules as
 	SELECT module_ident, uuid, portal_type, moduleid, version, name,
 			created, revised, abstractid, stateid, doctype, licenseid,
