@@ -262,7 +262,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                        '(SELECT file FROM files WHERE fileid = 1) '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+        cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.cnxml.html', 'text/html')", (fileid,))
         cursor.connection.commit()
 
@@ -302,7 +302,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
                        'SELECT file FROM files WHERE fileid = 1 '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+        cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.cnxml.html', 'text/html')", (fileid,))
         cursor.connection.commit()
 
@@ -576,7 +576,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
                        '(SELECT file FROM files WHERE fileid = 1) '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+        cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
         cursor.connection.commit()
 
@@ -616,7 +616,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
                        'SELECT file FROM files WHERE fileid = 1 '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+        cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
         cursor.connection.commit()
 
@@ -654,7 +654,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
                        'SELECT file FROM files WHERE fileid = 1 '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, DEFAULT,'
+        cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
         cursor.connection.commit()
 

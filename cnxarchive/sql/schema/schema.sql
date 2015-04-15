@@ -392,7 +392,6 @@ CREATE TRIGGER update_files_sha1
 
 CREATE TABLE module_files (
     module_ident integer references modules,
-    "uuid" uuid UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
     fileid integer references files,
     filename text,
     mimetype text
@@ -643,5 +642,12 @@ CREATE INDEX person_firstname_upper_idx on persons (upper(firstname));
 CREATE INDEX person_surname_upper_idx on persons (upper(surname));
 CREATE INDEX person_personid_upper_idx on persons (upper(personid));
 CREATE INDEX person_email_upper_idx on persons (upper(email));
+
+CREATE EXTENSION tsearch2;
+
+CREATE TABLE moduleratings (
+    module_ident integer REFERENCES modules (module_ident),
+    totalrating integer,
+    votes integer);
 
 COMMIT;
