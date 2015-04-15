@@ -279,6 +279,13 @@ AS $$
   return upsert_document_acl_trigger(plpy, TD)
 $$ LANGUAGE plpythonu;
 
+CREATE OR REPLACE FUNCTION upsert_user_shadow ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import upsert_users_from_legacy_publication_trigger
+  return upsert_users_from_legacy_publication_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
 CREATE TRIGGER act_10_module_uuid_default
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE assign_uuid_default();
@@ -286,6 +293,10 @@ CREATE TRIGGER act_10_module_uuid_default
 CREATE TRIGGER act_20_module_acl_upsert
   BEFORE INSERT ON modules FOR EACH ROW
   EXECUTE PROCEDURE upsert_document_acl();
+
+CREATE TRIGGER act_80_legacy_module_user_upsert
+  BEFORE INSERT ON modules FOR EACH ROW
+  EXECUTE PROCEDURE upsert_user_shadow();
 
 CREATE TRIGGER module_moduleid_default
   BEFORE INSERT ON modules FOR EACH ROW
@@ -302,6 +313,17 @@ CREATE TRIGGER module_version_default
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
+
+CREATE OR REPLACE FUNCTION optional_roles_user_insert ()
+  RETURNS TRIGGER
+AS $$
+  from cnxarchive.database import insert_users_for_optional_roles_trigger
+  return insert_users_for_optional_roles_trigger(plpy, TD)
+$$ LANGUAGE plpythonu;
+
+CREATE TRIGGER optional_roles_user_insert
+  AFTER INSERT ON moduleoptionalroles FOR EACH ROW
+  EXECUTE PROCEDURE optional_roles_user_insert();
 
 CREATE VIEW all_modules as
 	SELECT module_ident, uuid, portal_type, moduleid, version, name,

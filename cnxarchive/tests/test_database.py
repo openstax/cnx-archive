@@ -1511,6 +1511,139 @@ RETURNING
         self.assertEqual(uuid_, controls_uuid)
         self.assertEqual(license_id, controls_license_id)
 
+    @testing.db_connect
+    def test_new_module_user_upsert(self, cursor):
+        """Verify legacy publishing of a new module upserts users
+        from the persons table into the users table.
+        """
+        # Insert the legacy persons records.
+        #   These people would have registered on legacy after the initial
+        #   migration of legacy users.
+        cursor.execute("""\
+INSERT INTO persons
+  (personid, honorific, firstname, surname, fullname)
+VALUES
+  ('cnxcap', NULL, 'College', 'Physics', 'OSC Physics Maintainer'),
+  ('legacy', NULL, 'Legacy', 'User', 'Legacy User'),
+  ('ruins', NULL, 'Legacy', 'Ruins', 'Legacy Ruins')
+""")
+        # Insert one existing user into the users shadow table.
+        cursor.execute("""\
+INSERT INTO users (username, first_name, last_name, full_name, is_moderated)
+VALUES ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer', 't')""")
+        # Insert a new legacy module.
+        cursor.execute("""\
+INSERT INTO modules
+  (moduleid, version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, '1.1',
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{legacy}', '{cnxcap}', '{ruins}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  uuid, licenseid""", (self._abstract_id,))
+        uuid_, license_id = cursor.fetchone()
+
+        # Hopefully pull the UUID out of the 'document_controls' table.
+        cursor.execute("""
+SELECT username, first_name, last_name, full_name
+FROM users
+WHERE username = any('{legacy, ruins}'::text[])
+ORDER BY username
+""")
+        user_records = cursor.fetchall()
+
+        # Check for the upsert.
+        self.assertEqual(user_records[0],
+                         ('legacy', 'Legacy', 'User', 'Legacy User',))
+        self.assertEqual(user_records[1],
+                         ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+
+    @testing.db_connect
+    def test_new_moduleoptionalroles_user_insert(self, cursor):
+        """Verify publishing of a new moduleoptionalroles record
+        inserts users from the persons table into the users table.
+        This should only insert new records and leave the existing
+        records as they are, because we have no way of telling whether
+        the publication was by legacy or cnx-publishing.
+        """
+        # Insert the legacy persons records.
+        #   These people would have registered on legacy after the initial
+        #   migration of legacy users.
+        # The '***' on the cnxcap user is to test that the users record
+        #   is not updated from the persons record.
+        cursor.execute("""\
+INSERT INTO persons
+  (personid, honorific, firstname, surname, fullname)
+VALUES
+  ('cnxcap', NULL, '*** College ***', '*** Physics ***',
+   '*** OSC Physics Maintainer ***'),
+  ('legacy', NULL, 'Legacy', 'User', 'Legacy User'),
+  ('ruins', NULL, 'Legacy', 'Ruins', 'Legacy Ruins')
+""")
+        # Insert one existing user into the users shadow table.
+        cursor.execute("""\
+INSERT INTO users (username, first_name, last_name, full_name, is_moderated)
+VALUES ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer', 't')""")
+        # Insert a new legacy module.
+        cursor.execute("""\
+INSERT INTO modules
+  (moduleid, version,
+   module_ident, portal_type, name, created, revised, language,
+   submitter, submitlog,
+   abstractid, licenseid, parent, parentauthors,
+   authors, maintainers, licensors,
+   google_analytics, buylink,
+   stateid, doctype)
+VALUES
+  (DEFAULT, '1.1',
+   DEFAULT, 'Module', 'Plug into the collective conscious',
+   '2012-02-28T11:37:30', '2012-02-28T11:37:30', 'en-us',
+   'publisher', 'published',
+   %s, 11, DEFAULT, DEFAULT,
+   '{legacy}', '{legacy}', '{legacy}',
+   DEFAULT, DEFAULT,
+   DEFAULT, ' ')
+RETURNING
+  module_ident, uuid, licenseid""", (self._abstract_id,))
+        module_ident, uuid_, license_id = cursor.fetchone()
+        # Insert the moduleoptionalroles records.
+        cursor.execute("""\
+INSERT INTO moduleoptionalroles (module_ident, roleid, personids)
+VALUES (%s, 4, '{cnxcap, ruins}')""", (module_ident,))
+
+        # Hopefully pull the UUID out of the 'document_controls' table.
+        cursor.execute("""\
+SELECT username, first_name, last_name, full_name
+FROM users
+ORDER BY username
+""")
+        user_records = cursor.fetchall()
+
+        # Check for the record set...
+        # The cnxcap user should not have been updated.
+        self.assertEqual([x[0] for x in user_records],
+                         ['cnxcap', 'legacy', 'ruins'])
+        self.assertEqual(
+            user_records[0],
+            ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer',))
+        self.assertEqual(user_records[1],
+                         ('legacy', 'Legacy', 'User', 'Legacy User',))
+        # The ruins user will be a newly inserted record, copied from
+        #   the persons record.
+        self.assertEqual(user_records[2],
+                         ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+
 
 SQL_FOR_HIT_DOCUMENTS = """
 ALTER TABLE modules DISABLE TRIGGER ALL;
