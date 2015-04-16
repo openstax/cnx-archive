@@ -621,6 +621,24 @@ CREATE TABLE users (
   is_moderated BOOLEAN
   );
 
+CREATE TABLE service_states (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  default_priority INTEGER NOT NULL,
+  default_message TEXT NOT NULL
+);
+
+CREATE TABLE service_state_messages (
+  id SERIAL PRIMARY KEY,
+  service_state_id INTEGER,
+  "start" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "end" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP + INTERVAL '2 hours',
+  -- If present, these should take priority over the service_states values.
+  priority INTEGER DEFAULT NULL,
+  message TEXT DEFAULT NULL,
+  FOREIGN KEY (service_state_id) REFERENCES service_states (id)
+);
+
 -- =============== --
 --   Legacy only   --
 -- =============== --

@@ -635,6 +635,13 @@ def _get_featured_links(cursor):
     cursor.execute(SQL['get-featured-links'])
     return [i[0] for i in cursor.fetchall()]
 
+
+def _get_service_state_messages(cursor):
+    """Returns a list of service messages."""
+    cursor.execute(SQL['get-service-state-messages'])
+    return [i[0] for i in cursor.fetchall()]
+
+
 def extras(environ, start_response):
     """Return a dict with archive metadata for webview
     """
@@ -642,9 +649,10 @@ def extras(environ, start_response):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             metadata = {
-                    'subjects': list(_get_subject_list(cursor)),
-                    'featuredLinks': _get_featured_links(cursor),
-                       }
+                'subjects': list(_get_subject_list(cursor)),
+                'featuredLinks': _get_featured_links(cursor),
+                'messages': _get_service_state_messages(cursor),
+                }
 
     status = '200 OK'
     headers = [('Content-type', 'application/json')]
