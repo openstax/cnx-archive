@@ -17,6 +17,7 @@ from .. import config
 from ..utils import app_settings, app_parser
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
+import unittest
 
 
 __all__ = (
@@ -99,7 +100,7 @@ class SchemaFixture(object):
     @db_connect
     def _drop_all(self, cursor):
         """Drop all tables in the database."""
-        cursor.execute("DROP SCHEMA public CASCADE")
+        cursor.execute("DROP SCHEMA IF EXISTS public CASCADE")
         cursor.execute("CREATE SCHEMA public")
         self.is_set_up = False
 
@@ -140,3 +141,92 @@ data_fixture = DataFixture()
 # right timezone (America/Whitehorse is -07 in summer and -08 in winter)
 os.environ['PGTZ'] = 'America/Whitehorse'
 os.environ['TZ'] = 'America/Whitehorse'
+
+
+class SingleInitDBTest(unittest.TestCase):
+
+    """ A custom test class that allows for the default settings
+        of the testing configuration to be changed for unit
+        tests.
+    """
+    ##########################################################
+    # FIXME: setUpClass and tearDownClass make redudant      #
+    # DROP ... IF EXISTS calls to run the test without       #
+    # errors.  Tests should be set up to avoid this          #
+    ##########################################################
+    @classmethod
+    def setUpClass(cls):
+        from ..database import initdb
+        argv = [
+            'cnxarchive/tests/testing.ini',
+            '--user',
+            'rich',
+            '--password',
+            'rich',
+            '--superuser',
+            'cnxarchive',
+            '--superpassword',
+            'cnxarchive']
+
+        config_uri = os.path.join(here, argv[0])
+        parser = app_parser()
+        args = parser.parse_args(argv)
+        cls._settings = app_settings(args)
+
+        cls._super_conn = psycopg2.connect(
+            cls._settings[config.SUPER_CONN_STRING])
+        with cls._super_conn as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("DROP EXTENSION IF EXISTS plpythonu CASCADE")
+                cursor.execute("DROP LANGUAGE IF EXISTS plpythonu CASCADE")
+                cursor.execute("DROP SCHEMA IF EXISTS public CASCADE")
+                cursor.execute("DROP USER IF EXISTS rich")
+                cursor.execute("CREATE SCHEMA IF NOT EXISTS public ")
+                cursor.execute(
+                    "CREATE USER rich WITH NOSUPERUSER PASSWORD 'rich'")
+        cls._super_conn.commit()
+        cls._super_conn.autocommit = False
+
+        initdb(cls._settings)
+        cls._connection = psycopg2.connect(
+            cls._settings[config.CONNECTION_STRING])
+        cls._connection.commit()
+
+        cls._connection.autocommit = False
+
+    @classmethod
+    def tearDownClass(cls):
+        with cls._super_conn as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("DROP EXTENSION IF EXISTS plpythonu CASCADE")
+                cursor.execute("DROP LANGUAGE IF EXISTS plpythonu CASCADE")
+                cursor.execute("DROP SCHEMA public CASCADE")
+                cursor.execute("DROP USER IF EXISTS rich")
+                cursor.execute("CREATE SCHEMA public")
+        cls._connection.close()
+        cls._super_conn.close()
+
+    def setUp(self):
+        """ Commit changes to the connection before
+            test is called so the db connection can
+            be rolled back to the start of the test
+            on completion.
+        """
+        with self._connection as connection:
+            connection.commit()
+        with self._super_conn as connection:
+            connection.commit()
+
+    def tearDown(self):
+        """ Rollback the db to a state before a
+            test was called.
+        """
+        with self._connection as connection:
+            connection.rollback()
+        with self._super_conn as connection:
+            connection.rollback()
+
+    def test_class_setup(self):
+        """ Blank function to test class setUp and tearDown functions
+        """
+        pass

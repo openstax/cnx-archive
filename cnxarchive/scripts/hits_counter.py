@@ -73,7 +73,26 @@ def main(argv=None):
     parser.add_argument('log_file',
                         help="path to the logfile.")
     args = parser.parse_args(argv)
-
+    #############################################
+    # FIXME: args needs the attributes          #
+    # user, password, superuser, superpassword  #
+    # in order for the app_settings function to #
+    # generate a settings dictionary.  Perhaps  #
+    # the hit counter script could have its own #
+    # settings generating function similar to   #
+    # the one used by initalizedb.  Or the      #
+    # ArgumentParser could perhaps be merged    #
+    # with the app_parser in utils              #
+    # See cnxarchive.utils.app_parser,          #
+    #  cnxarchive.utils.app_settings,           #
+    # cnxarchive.scipts.initializedb.main       #
+    # for an example of how this main function  #
+    # could be refactored.                      #
+    #############################################
+    args.user = None
+    args.password = None
+    args.superuser = None
+    args.superpassword = None
     opener = LOG_FORMAT_OPENERS_MAPPING[args.log_format]
 
     # Build the URL pattern.

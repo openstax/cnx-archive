@@ -8,6 +8,7 @@
 import os
 import uuid
 import unittest
+from .. import config
 
 
 class ParserTestCase(unittest.TestCase):
@@ -22,21 +23,27 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(args.config_uri, 'testing.ini')
         self.assertFalse(args.with_example_data)
         self.assertIsNone(args.superuser)
-        self.assertIsNone(args.super_password)
+        self.assertIsNone(args.superpassword)
         self.assertEqual(args.config_name, 'main')
+        self.assertIsNone(args.user)
+        self.assertIsNone(args.password)
 
     def test_optional_arguments(self):
         parser = self.call_target()
         args = parser.parse_args(['testing.ini',
                                   '--with-example-data',
-                                  '--superuser', 'superman',
-                                  '--super-password', 'clarkkent',
+                                  '--superuser', 'superuser',
+                                  '--superpassword', 'superpassword',
+                                  '--user', 'user',
+                                  '--password', 'password',
                                   '--config-name', 'NEW_NAME'])
         self.assertEqual(args.config_uri, 'testing.ini')
         self.assertTrue(args.with_example_data)
-        self.assertEqual(args.superuser, 'superman')
-        self.assertEqual(args.super_password, 'clarkkent')
+        self.assertEqual(args.superuser, 'superuser')
+        self.assertEqual(args.superpassword, 'superpassword')
         self.assertEqual(args.config_name, 'NEW_NAME')
+        self.assertEqual(args.user, 'user')
+        self.assertEqual(args.password, 'password')
 
     def test_help(self):
         import subprocess
@@ -66,30 +73,40 @@ class SettingsTestCase(unittest.TestCase):
         expected = integration_test_settings()
         here = os.path.abspath(os.path.dirname(__file__))
         config_uri = os.path.join(here, 'testing.ini')
-        result = self.call_target([config_uri])
-        self.assertEqual(expected, result)
-
-    def test_example_arg(self):
-        import os
-        settings = self.call_target(['cnxarchive/tests/testing.ini'])
+        settings = self.call_target([config_uri])
         self.assertFalse(settings['with_example_data'])
-        settings = self.call_target(
-            ['cnxarchive/tests/testing.ini', '--with-example-data'])
+        self.assertEqual(settings['user'], 'cnxarchive')
+        self.assertEqual(settings['password'], 'cnxarchive')
+        self.assertIsNone(settings[config.SUPER_CONN_STRING])
+        self.assertEqual(
+            settings[config.CONNECTION_STRING],
+            'dbname=cnxarchive-testing '
+            'user=cnxarchive '
+            'password=cnxarchive '
+            'host=localhost '
+            'port=5432')
+
+    def test_custom_settings(self):
+        settings = self.call_target(['cnxarchive/tests/testing.ini',
+                                     '--with-example-data',
+                                     '--superuser', 'superuser',
+                                     '--superpassword', 'superpassword',
+                                     '--user', 'user',
+                                     '--password', 'password'])
         self.assertTrue(settings['with_example_data'])
-
-    def test_superuser_arg(self):
-        settings = self.call_target(
-            ['cnxarchive/tests/testing.ini', '--superuser', 'superman'])
-        self.assertEqual(settings['superuser'], 'superman')
-
-    def test_password_arg(self):
-        settings = self.call_target(
-            ['cnxarchive/tests/testing.ini', '--super-password', 'clarkkent'])
-        self.assertEqual(settings['super_password'], 'clarkkent')
-
-    def test_default_config_name(self):
-        settings = self.call_target(['cnxarchive/tests/testing.ini'])
+        self.assertEqual(settings['superuser'], 'superuser')
+        self.assertEqual(settings['superpassword'], 'superpassword')
         self.assertEqual(settings['config_name'], 'main')
+        self.assertEqual(settings['user'], 'user')
+        self.assertEqual(settings['password'], 'password')
+        self.assertEqual(
+            settings[config.SUPER_CONN_STRING],
+            'dbname=cnxarchive-testing '
+            'user=superuser '
+            'password=superpassword '
+            'host=localhost '
+            'port=5432')
+
 
 class SplitIdentTestCase(unittest.TestCase):
 
