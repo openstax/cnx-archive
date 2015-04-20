@@ -5,9 +5,10 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import HTMLParser
-import glob
 import os
+import datetime
+import glob
+import HTMLParser
 import time
 import json
 import unittest
@@ -2075,14 +2076,31 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['total'], 7)
         self.assertEqual(self.db_search_call_count, 2)
 
-    def test_extras(self):
+    @testing.db_connect
+    def test_extras(self, cursor):
         # Build the request
         environ = self._make_environ()
+
+        # Setup a few service state messages.
+        cursor.execute("""\
+INSERT INTO service_state_messages
+  (service_state_id, "start", "end", priority, message)
+VALUES
+  (1, CURRENT_TIMESTAMP + INTERVAL '3 hours',
+   CURRENT_TIMESTAMP + INTERVAL '24 hours',
+   NULL, NULL),
+  (2, DEFAULT, DEFAULT, 8,
+   'We have free books at free prices! Don''t miss out!'),
+  (2, CURRENT_TIMESTAMP - INTERVAL '24 hours',
+   CURRENT_TIMESTAMP - INTERVAL '2 hours',
+   1, 'should not show up in the results.')""")
+        cursor.connection.commit()
 
         # Call the view
         from ..views import extras
         metadata = extras(environ, self._start_response)[0]
         metadata = json.loads(metadata)
+        messages = metadata.pop('messages')
         self.assertEqual(metadata, {
             u'subjects': [{u'id': 1, u'name': u'Arts',
                            u'count': {u'module': 0, u'collection': 0},
@@ -2113,7 +2131,20 @@ class ViewsTestCase(unittest.TestCase):
                 u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
                 }],
             })
-
+        expected_messages = [
+            {u'message': u'This site is scheduled to be down for maintaince, please excuse the interuption. Thank you.',
+             u'name': u'Maintenance',
+             u'priority': 1},
+            {u'message': u"We have free books at free prices! Don't miss out!",
+             u'name': u'Notice',
+             u'priority': 8}
+            ]
+        def _remove_timestamps(messages):
+            for message in messages:
+                message.pop('start')
+                message.pop('end')
+            return messages
+        self.assertEqual(expected_messages, _remove_timestamps(messages))
 
     def test_sitemap(self):
         # Build the request

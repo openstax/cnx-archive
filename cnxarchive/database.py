@@ -56,6 +56,7 @@ SQL = {
     'get-subject-list': _read_sql_file('get-subject-list'),
     'get-featured-links': _read_sql_file('get-featured-links'),
     'get-users-by-ids': _read_sql_file('get-users-by-ids'),
+    'get-service-state-messages': _read_sql_file('get-service-state-messages'),
     }
 
 
