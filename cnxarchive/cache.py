@@ -65,7 +65,8 @@ def search(query, query_type, nocache=False):
             cache_length = int(settings['search-long-cache-expiration'])
 
         # store in memcache
-        mc.set(mc_search_key, search_results, time=cache_length)
+        mc.set(mc_search_key, search_results, time=cache_length,
+               min_compress_len=1024*1024)  # compress when > 1MB
 
     # return search results
     return search_results
