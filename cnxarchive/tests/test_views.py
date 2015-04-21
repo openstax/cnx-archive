@@ -39,7 +39,7 @@ COLLECTION_METADATA = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
     u'language': u'en',
     u'license': {
-        u'code': u'by',
+        u'abbr': u'by',
         u'version': u'3.0',
         u'name': u'Attribution',
         u'url': u'http://creativecommons.org/licenses/by/3.0/',
@@ -219,7 +219,7 @@ MODULE_METADATA = {
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
     u'language': u'en',
     u'license': {
-        u'code': u'by',
+        u'abbr': u'by',
         u'version': u'3.0',
         u'name': u'Attribution',
         u'url': u'http://creativecommons.org/licenses/by/3.0/',
