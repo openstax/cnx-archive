@@ -13,10 +13,10 @@ SELECT
   name,
   COALESCE(priority, default_priority) AS priority,
   COALESCE(message, default_message) AS message,
-  iso8601("start") AS "start",
-  iso8601("end") AS "end"
+  iso8601("starts") AS "starts",
+  iso8601("ends") AS "ends"
 FROM service_state_messages NATURAL LEFT JOIN service_states
 WHERE
-  "end" > now()
+  "ends" > now()
 ORDER BY 2 ASC, 4 DESC
 ) combined_rows ;

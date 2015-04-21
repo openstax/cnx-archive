@@ -2084,7 +2084,7 @@ class ViewsTestCase(unittest.TestCase):
         # Setup a few service state messages.
         cursor.execute("""\
 INSERT INTO service_state_messages
-  (service_state_id, "start", "end", priority, message)
+  (service_state_id, starts, ends, priority, message)
 VALUES
   (1, CURRENT_TIMESTAMP + INTERVAL '3 hours',
    CURRENT_TIMESTAMP + INTERVAL '24 hours',
@@ -2141,8 +2141,8 @@ VALUES
             ]
         def _remove_timestamps(messages):
             for message in messages:
-                message.pop('start')
-                message.pop('end')
+                message.pop('starts')
+                message.pop('ends')
             return messages
         self.assertEqual(expected_messages, _remove_timestamps(messages))
 
