@@ -19,7 +19,7 @@ FROM (SELECT
   iso8601(m.created) AS created, iso8601(m.revised) AS revised,
   m.stateid, m.doctype,
   (SELECT row_to_json(license) AS license FROM (
-        SELECT l.code, l.version, l.name, l.url
+        SELECT l.code AS abbr, l.version, l.name, l.url
     ) license),
   (SELECT row_to_json(submitter_row) AS submitter FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,

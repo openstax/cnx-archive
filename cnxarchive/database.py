@@ -57,6 +57,7 @@ SQL = {
     'get-featured-links': _read_sql_file('get-featured-links'),
     'get-users-by-ids': _read_sql_file('get-users-by-ids'),
     'get-service-state-messages': _read_sql_file('get-service-state-messages'),
+    'get-license-info-as-json': _read_sql_file('get-license-info-as-json'),
     }
 
 

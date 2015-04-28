@@ -642,6 +642,12 @@ def _get_service_state_messages(cursor):
     return [i[0] for i in cursor.fetchall()]
 
 
+def _get_licenses(cursor):
+    """Return a list of license info."""
+    cursor.execute(SQL['get-license-info-as-json'])
+    return [json_row[0] for json_row in cursor.fetchall()]
+
+
 def extras(environ, start_response):
     """Return a dict with archive metadata for webview
     """
@@ -652,6 +658,7 @@ def extras(environ, start_response):
                 'subjects': list(_get_subject_list(cursor)),
                 'featuredLinks': _get_featured_links(cursor),
                 'messages': _get_service_state_messages(cursor),
+                'licenses': _get_licenses(cursor),
                 }
 
     status = '200 OK'
