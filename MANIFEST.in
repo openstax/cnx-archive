@@ -1,6 +1,8 @@
-include *.rst *.txt *.ini
+include *.rst *.txt *.ini *.yaml
 include **/*.ini
 include **/**/*.ini
+include **/*.yaml
+include **/**/*.yaml
 recursive-include cnxarchive/data *
 recursive-include cnxarchive/sql *
 recursive-include cnxarchive/tests/data *
