@@ -13,6 +13,7 @@ install_requires = (
     'PasteScript',
     'plpydbapi',
     'psycopg2>=2.5',
+    'PyYAML',
     'rhaptos.cnxmlutils',
     'tzlocal',
     'waitress',  # wsgi server
