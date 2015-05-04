@@ -231,16 +231,17 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=False):
-    book_ident_hash = join_ident_hash(book_uuid, book_version)
-    coltree = _get_content_json(ident_hash=book_ident_hash)['tree']
+def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
+    coltree = _get_content_json(
+            ident_hash=join_ident_hash(book_uuid, book_version))['tree']
     pages = list(flatten_tree_to_ident_hashes(coltree))
-    page_ident_hash = join_ident_hash(page_uuid, page_version)
-    if page_ident_hash in pages:
-        return book_uuid, '{}:{}'.format(
-                latest and book_uuid or book_ident_hash, page_uuid)
-    # book not in page
-    return page_uuid, page_ident_hash
+    try:
+        # first id is book
+        pagenum = pages.index(join_ident_hash(page_uuid, page_version))
+        version = '{}:{}'.format(book_version, pagenum)
+    except ValueError: # this page not in this book
+        return page_uuid, page_version
+    return book_uuid, version
 
 
 def _get_content_json(environ=None, ident_hash=None, reqtype=None):
@@ -388,17 +389,15 @@ def redirect_legacy_content(environ, start_response):
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
-    ident_hash = join_ident_hash(id, version)
+
     params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
     if params.get('collection'): # page in book
         objid, objver = split_legacy_hash(params['collection'][0])
         book_uuid, book_version = _convert_legacy_id(objid, objver)
         if book_uuid:
-            id, ident_hash = _get_page_in_book(
-                    id, version, book_uuid, book_version)
+            id, version = _get_page_in_book(id, version, book_uuid, book_version)
 
-    raise httpexceptions.HTTPFound('/contents/{}'.format(ident_hash))
-
+    raise httpexceptions.HTTPFound('/contents/{}@{}'.format(id, version))
 
 def _convert_legacy_id(objid, objver=None):
     settings = get_settings()

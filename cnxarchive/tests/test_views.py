@@ -717,8 +717,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.status, '404 Not Found')
 
     def test_legacy_id_old_ver_collection_context(self):
-        book_uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
-        page_uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
         objid = 'm42709'
         colid = 'col15533'
 
@@ -736,8 +735,8 @@ class ViewsTestCase(unittest.TestCase):
             redirect_legacy_content(environ, self._start_response)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers, [
-            ('Location', '/contents/{}@1.1:{}'.format(book_uuid, page_uuid))])
+        self.assertEqual(cm.exception.headers,
+                         [('Location', '/contents/{}@1.1:14'.format(uuid))])
 
     def test_legacy_id_old_ver_bad_collection_context(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
