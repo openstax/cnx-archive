@@ -1,6 +1,6 @@
 :data.sql:
     Generated via::
-        initialize_cnx-archive_db test.ini --with-example-data
+        cnx-archive-initdb cnxarchive/tests/testing.ini --with-example-data
         (make needed changes)
         pg_dump -a -T licenses -T tags -T roles --disable-triggers --inserts cnxarchive_testing > data.sql
 
