@@ -390,9 +390,10 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                     if book_uuid:
                         # FIXME This import from the views module is a bad idea.
                         from ..views import _get_page_in_book
-                        uuid, ident_hash = _get_page_in_book(
+                        uuid, versionish = _get_page_in_book(
                                 uuid, version, book_uuid, book_version,
                                 latest=collection_version is None)
+                        ident_hash = '{}@{}'.format(uuid,versionish)
                 if uuid:
                     url_frag = url_frag and url_frag or ''
                     path = '/contents/{}{}'.format(ident_hash, url_frag)
