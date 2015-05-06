@@ -408,9 +408,12 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                     book_uuid, book_version = self.get_uuid_n_version(
                             collection_id, collection_version)
                     if book_uuid:
-                        uuid, ident_hash = self.get_page_ident_hash(
-                            uuid, version, book_uuid, book_version,
-                            latest=collection_version is None)
+                        # FIXME This import from the views module is a bad idea.
+                        from ..views import _get_page_in_book
+                        uuid, versionish = _get_page_in_book(
+                                uuid, version, book_uuid, book_version,
+                                latest=collection_version is None)
+                        ident_hash = '{}@{}'.format(uuid,versionish)
                 if uuid:
                     url_frag = url_frag and url_frag or ''
                     path = '/contents/{}{}'.format(ident_hash, url_frag)
