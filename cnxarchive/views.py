@@ -221,7 +221,7 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_page_in_book(page_uuid, page_version, book_uuid, book_version):
+def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=False):
     coltree = _get_content_json(
             ident_hash=join_ident_hash(book_uuid, book_version))['tree']
     pages = list(flatten_tree_to_ident_hashes(coltree))
