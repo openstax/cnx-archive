@@ -9,7 +9,7 @@
 
 SELECT row_to_json(combined_rows) AS licenses
 FROM (
-  SELECT name, url, code AS abbr, version,
+  SELECT name, url, code, version,
          is_valid_for_publication AS "isValidForPublication"
   FROM licenses
   WHERE licenseid > 0
