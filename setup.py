@@ -13,6 +13,7 @@ install_requires = (
     'PasteScript',
     'plpydbapi',
     'psycopg2>=2.5',
+    'PyYAML',
     'rhaptos.cnxmlutils',
     'tzlocal',
     'waitress',  # wsgi server
@@ -36,6 +37,10 @@ setup(
     install_requires=install_requires,
     tests_require=tests_require,
     include_package_data=True,
+    package_data={
+        'cnxarchive': ['sql/*.sql', 'sql/*/*.sql', 'data/*.*', '*.yaml'],
+        'cnxarchive.tests': ['data/*.*'],
+        },
     entry_points="""\
     [paste.app_factory]
     main = cnxarchive:main
