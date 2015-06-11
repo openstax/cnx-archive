@@ -361,6 +361,9 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         # Catch the invalid, unparsable, etc. references.
         bad_references = []
 
+        # XXX (10-Jun-2015) production only fix to resolve a trigger problem.
+        return bad_references
+
         for anchor in self.apply_xpath('//html:a'):
             ref = anchor.get('href')
             if not ref or self._should_ignore_reference(ref):
