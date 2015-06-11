@@ -102,6 +102,20 @@ def get_module_ident_from_ident_hash(ident_hash, cursor):
     return module_ident
 
 
+def get_tree(ident_hash, cursor):
+    """Given an ``ident_hash``, return a JSON representation
+    of the binder tree.
+    """
+    uuid, version = split_ident_hash(ident_hash)
+    cursor.execute(SQL['get-tree-by-uuid-n-version'],
+                   dict(id=uuid, version=version))
+    try:
+        tree = cursor.fetchone()[0]
+    except TypeError:  # NoneType
+        raise ContentNotFound()
+    return tree
+
+
 def get_module_uuid(db_connection, moduleid):
     with db_connection.cursor() as cursor:
         cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
