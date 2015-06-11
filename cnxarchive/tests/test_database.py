@@ -64,6 +64,34 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertEqual(current, value)
 
     @testing.db_connect
+    def test_module_ident_from_ident_hash(self, cursor):
+        uuid = 'c395b566-5fe3-4428-bcb2-19016e3aa3ce'
+        module_ident = 10
+        # Create a piece of content.
+        cursor.execute("INSERT INTO document_controls (uuid) VALUES (%s)",
+                       (uuid,))
+        cursor.execute("""\
+        INSERT INTO modules
+          (module_ident, portal_type, uuid, name, licenseid, doctype)
+        VALUES
+          (%s, 'Module', %s, 'Physics: An Introduction', 11, '')""",
+                       (module_ident, uuid,))
+
+        from ..database import get_module_ident_from_ident_hash
+        self.assertEqual(get_module_ident_from_ident_hash(uuid[:-1]+'c', cursor), None)
+        self.assertEqual(get_module_ident_from_ident_hash(uuid, cursor), module_ident)
+        self.assertEqual(get_module_ident_from_ident_hash(uuid+"@1", cursor), module_ident)
+
+        # Add a minor_version to the content.
+        for table_name in ('modules', 'latest_modules',):
+            cursor.execute("""\
+            UPDATE {} SET (minor_version) = (3)
+            WHERE module_ident = %s""".format(table_name),
+                           (module_ident,))
+        self.assertEqual(get_module_ident_from_ident_hash(uuid+"@1", cursor), module_ident)
+        self.assertEqual(get_module_ident_from_ident_hash(uuid+"@1.3", cursor), module_ident)
+
+    @testing.db_connect
     def test_html_abstract_deprecated(self, cursor):
         # insert test data
         cursor.execute('''\
