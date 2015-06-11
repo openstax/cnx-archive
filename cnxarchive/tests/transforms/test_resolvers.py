@@ -129,10 +129,10 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
             <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
-        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:d395b566-5fe3-4428-bcb2-19016e3aa3ce#figure">
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#figure">
             Module link with collection
         </a>
-        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:209deb1f-1a46-4369-9e0d-18674cf58a3e">
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:209deb1f-1a46-4369-9e0d-18674cf58a3e@7">
             Module link with collection and version
         </a>
         <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>

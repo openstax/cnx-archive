@@ -335,7 +335,7 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         page_ident_hash = join_ident_hash(page_uuid, page_version)
         if page_ident_hash in pages:
             return book_uuid, '{}:{}'.format(
-                latest and book_uuid or book_ident_hash, page_uuid)
+                latest and book_uuid or book_ident_hash, page_ident_hash)
         # The page isn't in the given book, so only return the page.
         return page_uuid, page_ident_hash
 
