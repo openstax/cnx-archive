@@ -264,9 +264,7 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
                 query = SQL['get-tree-by-uuid-n-version']
                 args = dict(id=result['id'], version=result['version'])
                 cursor.execute(query, args)
-                tree = cursor.fetchone()[0]
-                # Must unparse, otherwise we end up double encoding.
-                result['tree'] = json.loads(tree)
+                result['tree'] = cursor.fetchone()[0]
 
                 page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:
