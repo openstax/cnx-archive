@@ -272,7 +272,6 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor)
-
                 page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
