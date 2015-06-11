@@ -129,7 +129,7 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
             <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
-        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1:3#figure">
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:3#figure">
             Module link with collection
         </a>
         <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:1">
