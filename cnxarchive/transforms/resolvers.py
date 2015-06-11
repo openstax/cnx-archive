@@ -334,8 +334,13 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
             pages = list(flatten_tree_to_ident_hashes(tree))
         page_ident_hash = join_ident_hash(page_uuid, page_version)
         if page_ident_hash in pages:
+            # XXX (11-Jun-2015) production only change
+            #     to fix page-in-book references.
+            #     This keeps the current uri preference <ident-hash>:<page-num>
+            #     over the now prefered <book-ident-hash>:<page-ident-hash>.
+            page_num = pages.index(page_ident_hash)
             return book_uuid, '{}:{}'.format(
-                latest and book_uuid or book_ident_hash, page_uuid)
+                latest and book_uuid or book_ident_hash, page_num)
         # The page isn't in the given book, so only return the page.
         return page_uuid, page_ident_hash
 
