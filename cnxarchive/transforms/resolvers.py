@@ -319,6 +319,26 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                     info = json.loads(info)
                 return info
 
+    def get_page_ident_hash(self, page_uuid, page_version, book_uuid, book_version,
+                            latest=None):
+        """Returns the uuid of the page and full ident_hash of the page
+        which may or may not include the book uuid depending on whether
+        the page is within the book.
+        """
+        from cnxepub import flatten_tree_to_ident_hashes  # XXX
+        from ..utils import join_ident_hash  # XXX
+        from ..database import get_tree  # XXX
+        book_ident_hash = join_ident_hash(book_uuid, book_version)
+        with self.db_connection.cursor() as cursor:
+            tree = get_tree(book_ident_hash, cursor)
+            pages = list(flatten_tree_to_ident_hashes(tree))
+        page_ident_hash = join_ident_hash(page_uuid, page_version)
+        if page_ident_hash in pages:
+            return book_uuid, '{}:{}'.format(
+                latest and book_uuid or book_ident_hash, page_uuid)
+        # The page isn't in the given book, so only return the page.
+        return page_uuid, page_ident_hash
+
     def fix_media_references(self):
         """Fix references to interal resources."""
         # Catch the invalid, unparsable, etc. references.
@@ -388,11 +408,9 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                     book_uuid, book_version = self.get_uuid_n_version(
                             collection_id, collection_version)
                     if book_uuid:
-                        # FIXME This import from the views module is a bad idea.
-                        from ..views import _get_page_in_book
-                        uuid, ident_hash = _get_page_in_book(
-                                uuid, version, book_uuid, book_version,
-                                latest=collection_version is None)
+                        uuid, ident_hash = self.get_page_ident_hash(
+                            uuid, version, book_uuid, book_version,
+                            latest=collection_version is None)
                 if uuid:
                     url_frag = url_frag and url_frag or ''
                     path = '/contents/{}{}'.format(ident_hash, url_frag)
