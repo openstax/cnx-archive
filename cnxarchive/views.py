@@ -21,7 +21,7 @@ from . import config
 from . import cache
 # FIXME double import
 from . import database
-from .database import SQL
+from .database import SQL, get_tree
 from .search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
@@ -260,10 +260,7 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
-                query = SQL['get-tree-by-uuid-n-version']
-                args = dict(id=result['id'], version=result['version'])
-                cursor.execute(query, args)
-                result['tree'] = cursor.fetchone()[0]
+                result['tree'] = get_tree(ident_hash, cursor)
 
                 page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:

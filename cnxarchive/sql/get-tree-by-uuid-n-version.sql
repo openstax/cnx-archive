@@ -5,5 +5,5 @@
 -- See LICENCE.txt for details.
 -- ###
 
--- arguments: id:string; version:string
-SELECT tree_to_json(%(id)s, %(version)s)::json;
+-- arguments[positional]: id:string; version:string;
+SELECT tree_to_json(%s, %s)::json;
