@@ -84,7 +84,7 @@ def get_tree(ident_hash, cursor):
     """
     uuid, version = split_ident_hash(ident_hash)
     cursor.execute(SQL['get-tree-by-uuid-n-version'],
-                   dict(id=uuid, version=version))
+                   (uuid, version,))
     try:
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
