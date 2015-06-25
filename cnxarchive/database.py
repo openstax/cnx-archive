@@ -84,12 +84,16 @@ def get_tree(ident_hash, cursor):
     """
     uuid, version = split_ident_hash(ident_hash)
     cursor.execute(SQL['get-tree-by-uuid-n-version'],
-                   dict(id=uuid, version=version))
+                   (uuid, version,))
     try:
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
         raise ContentNotFound()
-    return tree
+    if type(tree) in (type(''),type(u'')):
+        import json
+        return json.loads(tree)
+    else:
+        return tree
 
 
 def get_module_uuid(db_connection, moduleid):
