@@ -89,7 +89,11 @@ def get_tree(ident_hash, cursor):
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
         raise ContentNotFound()
-    return tree
+    if type(tree) in (type(''),type(u'')):
+        import json
+        return json.loads(tree)
+    else:
+        return tree
 
 
 def get_module_uuid(db_connection, moduleid):
