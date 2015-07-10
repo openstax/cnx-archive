@@ -724,7 +724,6 @@ def robots(environ, start_response):
     """
     Returns a robots.txt file
     """
-
     hostname = environ['HTTP_HOST']
     robots_dot_txt = Robots(sitemap='http://%s/sitemap.xml' % (hostname))
 
