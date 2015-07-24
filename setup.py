@@ -22,7 +22,7 @@ tests_require = [
 description = "An archive for Connexions documents."
 
 if not IS_PY3:
-    tests_require.append('mock')
+    tests_require.append('mock==1.0.1')
 
 setup(
     name='cnx-archive',
