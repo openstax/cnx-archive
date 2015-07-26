@@ -5,12 +5,10 @@
 -- See LICENCE.txt for details.
 -- ###
 
-CREATE EXTENSION IF NOT EXISTS plxslt;
-
-DROP FUNCTION IF EXISTS xml_to_baretext(xml); -- changinging return type
-
-CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
-<?xml version="1.0"?>
+CREATE OR REPLACE FUNCTION xml_to_baretext(xml text) RETURNS text AS $$
+from io import StringIO
+from lxml import etree
+xsl = """<?xml version="1.0"?>
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:cnx="http://cnx.rice.edu/cnxml"
@@ -28,8 +26,13 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
 
   <xsl:template match="md:*"/>
 
-</xsl:stylesheet>
-$$ LANGUAGE xslt;
+</xsl:stylesheet>"""
+xslt_root = etree.XML(xsl)
+transform = etree.XSLT(xslt_root)
+parser = etree.XMLParser(recover=True, encoding='utf-8')
+doc = etree.XML(xml)
+return unicode(transform(doc))
+$$ LANGUAGE plpythonu;
 
 
 CREATE OR REPLACE FUNCTION index_fulltext_trigger()
@@ -40,7 +43,7 @@ CREATE OR REPLACE FUNCTION index_fulltext_trigger()
     _idx_vectors tsvector;
   BEGIN
     has_existing_record := (SELECT module_ident FROM modulefti WHERE module_ident = NEW.module_ident);
-    _baretext := (SELECT xml_to_baretext(convert_from(f.file, 'UTF8')::xml)::text FROM files AS f WHERE f.fileid = NEW.fileid);
+    _baretext := (SELECT xml_to_baretext(convert_from(f.file, 'UTF8'))::text FROM files AS f WHERE f.fileid = NEW.fileid);
     _idx_vectors := to_tsvector(_baretext);
 
     IF has_existing_record IS NULL THEN
