@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from pytz import timezone
 from re import compile
 from pyramid import httpexceptions
-from pyramid.threadlocal import get_current_registry
+from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from . import config
@@ -56,7 +56,7 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to_latest(cursor, id, path_format_string='/contents/{}@{}'):
+def redirect_to_latest(cursor, id, route_name='content', route_args=None):
     """Redirect to latest version of a module / collection using the provided
     path
     """
@@ -66,8 +66,13 @@ def redirect_to_latest(cursor, id, path_format_string='/contents/{}@{}'):
     except (TypeError, IndexError,): # None returned
         logger.debug("version was not supplied and could not be discovered.")
         raise httpexceptions.HTTPNotFound()
-    raise httpexceptions.HTTPFound(
-            path_format_string.format(id, latest_version))
+
+    if route_args is None:
+        route_args = {}
+    request = get_current_request()
+    route_args['ident_hash'] = join_ident_hash(id, latest_version)
+    raise httpexceptions.HTTPFound(request.route_path(
+        route_name, **route_args))
 
 
 def get_content_metadata(id, version, cursor):
@@ -129,6 +134,7 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types
     """
     get_type_info()
+    request = get_current_request()
 
     for type_name, type_info in TYPE_INFO:
         try:
@@ -141,8 +147,9 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 'created': file_created and file_created.isoformat() or None,
                 'state': state,
                 'details': type_info['description'],
-                'path': u'/exports/{}@{}.{}/{}'.format(id, version, type_name,
-                                                      filename),
+                'path': request.route_path(
+                    'export', ident_hash=join_ident_hash(id, version),
+                    type=type_name, ignore=u'/{}'.format(filename))
                 }
         except ExportError as e:
             # Some other problem, skip it
@@ -163,8 +170,11 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         except (TypeError, IndexError,): # None returned
             raise ExportError("version was not supplied and could not be "
                     "discovered.")
-        raise httpexceptions.HTTPFound('/exports/{}@{}.{}'.format(
-            id, latest_version, type))
+        request = get_current_request()
+        raise httpexceptions.HTTPFound(
+            request.route_path('export',
+                               ident_hash=join_ident_hash(id, latest_version),
+                               type=type))
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -215,13 +225,14 @@ HTML_WRAPPER = """\
 
 
 def html_listify(tree, root_ul_element):
+    request = get_current_request()
     for node in tree:
         li_elm = etree.SubElement(root_ul_element, 'li')
         a_elm = etree.SubElement(li_elm, 'a')
         a_elm.text = node['title']
         if node['id'] != 'subcol':
-            # FIXME Hard coded route...
-            a_elm.set('href', '/contents/{}.html'.format(node['id']))
+            a_elm.set('href', request.route_path(
+                'content-html', ident_hash=node['id']))
         if 'contents' in node:
             elm = etree.SubElement(li_elm, 'ul')
             html_listify(node['contents'], elm)
@@ -260,15 +271,17 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
         with db_connection.cursor() as cursor:
             if not version:
                 page_ident_hash = routing_args.get('page_ident_hash', '')
+
+                route_name = 'content'
+                route_args = {}
                 if page_ident_hash:
-                    page_ident_hash = ':{}'.format(page_ident_hash)
-                path = '/contents/{{}}@{{}}{page_ident_hash}'.format(
-                    page_ident_hash=page_ident_hash)
+                    route_args['separator'] = ':'
+                    route_args['page_ident_hash'] = page_ident_hash
                 if reqtype:
-                    path = '{}.{}'.format(path, reqtype)
-                    redirect_to_latest(cursor, id, path)
-                else:
-                    redirect_to_latest(cursor, id)
+                    route_name = 'content-{}'.format(reqtype)
+                redirect_to_latest(cursor, id, route_name=route_name,
+                                   route_args=route_args)
+
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
@@ -279,9 +292,9 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         uuid, version = split_ident_hash(id_)
                         if uuid == page_ident_hash or id_ == page_ident_hash:
-                            raise httpexceptions.HTTPFound(
-                                '/contents/{}'.format(
-                                    join_ident_hash(uuid, version)))
+                            raise httpexceptions.HTTPFound(request.route_path(
+                                'content',
+                                ident_hash=join_ident_hash(uuid, version)))
                     raise httpexceptions.HTTPNotFound()
             else:
                 # Grab the html content.
@@ -394,8 +407,9 @@ def redirect_legacy_content(request):
                 try:
                     res = cursor.fetchone()
                     resourceid = res[0]
-                    raise httpexceptions.HTTPFound('/resources/{}/{}' \
-                            .format(resourceid,filename))
+                    raise httpexceptions.HTTPFound(request.route_path(
+                        'resource', hash=resourceid,
+                        ignore=u'/{}'.format(filename)))
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
@@ -408,7 +422,8 @@ def redirect_legacy_content(request):
             id, ident_hash = _get_page_in_book(
                     id, version, book_uuid, book_version)
 
-    raise httpexceptions.HTTPFound('/contents/{}'.format(ident_hash))
+    raise httpexceptions.HTTPFound(
+        request.route_path('content', ident_hash=ident_hash))
 
 
 def _convert_legacy_id(objid, objver=None):
@@ -463,7 +478,7 @@ def get_extra(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, '/extras/{}@{}')
+                redirect_to_latest(cursor, id, 'content-extras')
             results['downloads'] = list(get_export_allowable_types(cursor,
                 exports_dirs, id, version))
             results['isLatest'] = is_latest(cursor, id, version)
@@ -715,7 +730,6 @@ def sitemap(request):
     """
     settings = get_current_registry().settings
     xml = Sitemap()
-    hostname = request.headers['HOST']
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
@@ -730,11 +744,12 @@ def sitemap(request):
                     FROM latest_modules
                     ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
-            for r in res:
-                url = 'http://%s/contents/%s/%s' % (hostname, r[0], r[1])
+            for ident_hash, page_name, revised in res:
+                url = request.route_url('content',
+                                         ident_hash=ident_hash,
+                                         ignore='/{}'.format(page_name))
                 if notblocked(url):
-                    xml.add_url('http://%s/contents/%s/%s' % (
-                        hostname, r[0], r[1]), lastmod=r[2])
+                    xml.add_url(url, lastmod=revised)
 
     resp = request.response
     resp.status = '200 OK'
@@ -748,9 +763,7 @@ def robots(request):
     """
     Returns a robots.txt file
     """
-
-    hostname = request.headers['HOST']
-    robots_dot_txt = Robots(sitemap='http://%s/sitemap.xml' % (hostname))
+    robots_dot_txt = Robots(sitemap=request.route_url('sitemap'))
 
     bot_delays = {
         '*': '',

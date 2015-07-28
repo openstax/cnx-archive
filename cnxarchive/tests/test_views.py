@@ -12,6 +12,10 @@ import HTMLParser
 import time
 import json
 import unittest
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
 
 try:
     from unittest import mock
@@ -321,8 +325,13 @@ class ViewsTestCase(unittest.TestCase):
         self.fixture.setUp()
         self.request = pyramid_testing.DummyRequest()
         self.request.headers['HOST'] = 'cnx.org'
+        self.request.application_url = 'http://cnx.org'
         config = pyramid_testing.setUp(settings=self.settings,
                                        request=self.request)
+
+        # Set up routes
+        from .. import declare_api_routes
+        declare_api_routes(config)
 
         # Clear all cached searches
         import memcache
@@ -502,7 +511,9 @@ class ViewsTestCase(unittest.TestCase):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
         # Build the request environment.
-        self.request.matchdict = {'ident_hash': "{}".format(uuid)}
+        self.request.matchdict = {
+            'ident_hash': uuid,
+            }
 
         # Call the view.
         from ..views import get_content
@@ -513,7 +524,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@5.json'.format(uuid))
+                         quote('/contents/{}@5.json'.format(uuid)))
 
     def test_content_not_found(self):
         # Build the request environment
@@ -568,8 +579,9 @@ class ViewsTestCase(unittest.TestCase):
             get_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@{}'.format(page_uuid, page_version))
+        self.assertEqual(
+            cm.exception.headers['Location'],
+            quote('/contents/{}@{}'.format(page_uuid, page_version)))
 
     def test_content_page_inside_book_wo_version(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -588,24 +600,9 @@ class ViewsTestCase(unittest.TestCase):
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
             get_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
         path = '/contents/{}@{}:{}.json'.format(
             book_uuid, book_version, page_uuid)
-        self.assertEqual(cm.exception.headers['Location'], path)
-
-        # Go to the redirected path
-        self.request.matchdict = {
-            'ident_hash': '{}@{}'.format(book_uuid, book_version),
-            'page_ident_hash': page_uuid,
-            }
-
-        # Call the view
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@{}'.format(page_uuid, page_version))
+        self.assertEqual(cm.exception.headers['Location'], quote(path))
 
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -622,8 +619,8 @@ class ViewsTestCase(unittest.TestCase):
             redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertIn(cm.exception.headers['Location'],
-                      '/contents/{}@5'.format(uuid))
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@5'.format(uuid)))
 
     def test_legacy_id_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -641,7 +638,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@5'.format(uuid))
+                         quote('/contents/{}@5'.format(uuid)))
 
     def test_legacy_id_old_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -659,7 +656,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@4'.format(uuid))
+                         quote('/contents/{}@4'.format(uuid)))
 
     def test_legacy_bad_id_redirect(self):
         objid = 'foobar'
@@ -694,8 +691,9 @@ class ViewsTestCase(unittest.TestCase):
             redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@1.1:{}'.format(book_uuid, page_uuid))
+        self.assertEqual(
+            cm.exception.headers['Location'],
+            quote('/contents/{}@1.1:{}'.format(book_uuid, page_uuid)))
 
     def test_legacy_id_old_ver_bad_collection_context(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -714,7 +712,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/contents/{}@4'.format(uuid))
+                         quote('/contents/{}@4'.format(uuid)))
 
     def test_legacy_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -737,7 +735,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/resources/{}/{}'.format(sha1, filename))
+                         quote('/resources/{}/{}'.format(sha1, filename)))
 
     def test_legacy_no_such_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -798,18 +796,20 @@ class ViewsTestCase(unittest.TestCase):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
-        # Build the request environment.
-        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9%403.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce%404.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7%406.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66%407.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3%405.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d%402.html">Introduction: Further Applications of Newton’s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59%405.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41%406.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca%408.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881%403.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc%402.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325%405.html">Useful Inførmation</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3%405.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
 
-        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9@3.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7@6.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66@7.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2.html">Introduction: Further Applications of Newton’s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59@5.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41@6.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca@8.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881@3.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325@5.html">Useful Inførmation</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@5.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
+        # Build the environment
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(uuid, version),
+            }
 
-        # Call the view.
+        # Call the view
         from ..views import get_content_html
+        resp = get_content_html(self.request)
 
         # Check that the view returns the expected html
-        resp_body = get_content_html(self.request).body
         p = HTMLParser.HTMLParser()
-        self.assertEqual(p.unescape(resp_body), expected)
+        self.assertMultiLineEqual(p.unescape(resp.body), expected)
 
     def test_content_module_as_html(self):
         uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
@@ -932,7 +932,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         '/exports/{}@5.pdf'.format(id))
+                         quote('/exports/{}@5.pdf'.format(id)))
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -954,7 +954,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'college-physics-6.1.pdf',
                 u'format': u'PDF',
-                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf',
+                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf'),
                 u'size': 0,
                 u'state': u'missing'},
                {
@@ -962,7 +962,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'filename': u'college-physics-6.1.epub',
                 u'format': u'EPUB',
-                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub',
+                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub'),
                 u'size': 0,
                 u'state': u'missing'},
                {
@@ -970,7 +970,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'filename': u'college-physics-6.1.zip',
                 u'format': u'Offline ZIP',
-                u'path': u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip',
+                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip'),
                 u'size': 0,
                 u'state': u'missing'}],
             u'isLatest': False,
@@ -1001,8 +1001,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.pdf'.format(version),
                 u'details': u'PDF file, for viewing content offline and printing.',
-                u'path': u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
-                    id, version, version),
+                u'path': quote(u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
+                    id, version, version)),
                 },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
@@ -1011,8 +1011,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.epub'.format(version),
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'path': u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
-                    id, version, version),
+                u'path': quote(u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
+                    id, version, version)),
                 },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
@@ -1021,8 +1021,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.zip'.format(version),
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
-                    id, version, version),
+                u'path': quote(u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
+                    id, version, version)),
                 },
             ])
 
@@ -1053,8 +1053,8 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
-                    .format(id, version),
+                u'path': quote(u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
+                    .format(id, version)),
                 u'format': u'PDF',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -1063,8 +1063,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'filename': u'preface-to-college-physics-7.pdf',
                 },
             {
-                u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
-                    .format(id, version),
+                u'path': quote(u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
+                    .format(id, version)),
                 u'format': u'EPUB',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -1077,7 +1077,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'filename': u'preface-to-college-physics-7.zip',
                 u'format': u'Offline ZIP',
-                u'path': u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip',
+                u'path': quote(u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip'),
                 u'size': 0,
                 u'state': u'missing'}
             ])
@@ -1129,7 +1129,8 @@ class ViewsTestCase(unittest.TestCase):
             get_extra(self.request)
         exception = raiser.exception
         expected_location = "/extras/{}".format(expected_ident_hash)
-        self.assertEqual(exception.headers['Location'], expected_location)
+        self.assertEqual(exception.headers['Location'],
+                         quote(expected_location))
 
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
@@ -1154,8 +1155,8 @@ class ViewsTestCase(unittest.TestCase):
             u'isLatest': True,
             u'downloads': [{
                 u'created': u'2015-03-04T10:03:29-08:00',
-                u'path': u'/exports/{}@{}.pdf/useful-inførmation-5.pdf'
-                    .format(id, version),
+                u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
+                               .format(id, version)),
                 u'format': u'PDF',
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'useful-inførmation-5.pdf',
@@ -1166,7 +1167,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'filename': u'useful-inf\xf8rmation-5.epub',
                 u'format': u'EPUB',
-                u'path': u'/exports/c0a76659-c311-405f-9a99-15c71af39325@5.epub/useful-inf\xf8rmation-5.epub',
+                u'path': quote('/exports/{}@{}.epub/useful-inførmation-5.epub'
+                               .format(id, version)),
                 u'size': 0,
                 u'state': u'missing'},
                 {
@@ -1174,7 +1176,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'filename': u'useful-inf\xf8rmation-5.zip',
                 u'format': u'Offline ZIP',
-                u'path': u'/exports/c0a76659-c311-405f-9a99-15c71af39325@5.zip/useful-inf\xf8rmation-5.zip',
+                u'path': quote('/exports/{}@{}.zip/useful-inførmation-5.zip'
+                               .format(id, version)),
                 u'size': 0,
                 u'state': u'missing'}],
             })
