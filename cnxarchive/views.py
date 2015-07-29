@@ -738,17 +738,15 @@ def robots(environ, start_response):
         robots_dot_txt.add_bot(bot, bot_delays[bot], PAGES_TO_BLOCK)
 
     status = '200 OK'
-    gmt = timezone('GMT')
-    cur_time = datetime(1, 2, 3)
-    cur_time = cur_time.now(gmt) + timedelta(hours=-14)
-    exp_time = cur_time.now(gmt) + timedelta(hours=+1)
-    last_modified = html_date(cur_time)
-    expires = html_date(exp_time)
 
-    headers = [('Content-type', 'text'),
-               ('Last-Modified', last_modified),
+    gmt = timezone('GMT')
+    # it expires in 5 days
+    exp_time = datetime.now(gmt) + timedelta(5)
+
+    headers = [('Content-type', 'text/plain'),
+               ('Last-Modified', html_date(datetime.now(gmt))),
                ('Cache-Control', 'max-age=36000, must-revalidate'),
-               ('Expires', expires)]
+               ('Expires', html_date(exp_time))]
     start_response(status, headers)
 
     return [robots_dot_txt.to_string()]
