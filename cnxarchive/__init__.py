@@ -15,12 +15,9 @@ import yaml
 
 from . import httpexceptions
 from .utils import import_function, template_to_regex
+from .logs import DEFAULT_LOGGING_CONFIG_FILEPATH, logger
 
 
-here = os.path.abspath(os.path.dirname(__file__))
-DEFAULT_LOGGING_CONFIG_FILEPATH = os.path.join(here, 'default-logging.yaml')
-
-logger = logging.getLogger('cnxarchive')
 _settings = None
 
 DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
