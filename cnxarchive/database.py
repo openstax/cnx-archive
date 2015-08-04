@@ -78,6 +78,30 @@ def initdb(settings):
                     cursor.execute(f.read())
 
 
+def get_module_ident_from_ident_hash(ident_hash, cursor):
+    """Returns the moduleid for a given ``ident_hash``."""
+    uuid, (mj_ver, mn_ver) = split_ident_hash(ident_hash, split_version=True)
+    args = [uuid]
+    stmt = "SELECT module_ident FROM {} WHERE uuid = %s"
+    table_name = 'modules'
+    if mj_ver is None:
+        table_name = 'latest_modules'
+    else:
+        args.append(mj_ver)
+        stmt += " AND major_version = %s"
+    if mn_ver is not None:
+        args.append(mn_ver)
+        stmt += " AND minor_version = %s"
+    stmt = stmt.format(table_name)
+
+    cursor.execute(stmt, args)
+    try:
+        module_ident = cursor.fetchone()[0]
+    except TypeError:  # NoneType
+        module_ident = None
+    return module_ident
+
+
 def get_tree(ident_hash, cursor):
     """Given an ``ident_hash``, return a JSON representation
     of the binder tree.
