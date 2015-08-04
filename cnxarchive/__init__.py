@@ -9,14 +9,16 @@
 import os
 import re
 import logging
-from logging.config import fileConfig as load_logging_configuration
+from logging.config import dictConfig as load_logging_configuration
+
+import yaml
 
 from . import httpexceptions
 from .utils import import_function, template_to_regex
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-DEFAULT_LOGGING_CONFIG_FILEPATH = os.path.join(here, 'default-logging.ini')
+DEFAULT_LOGGING_CONFIG_FILEPATH = os.path.join(here, 'default-logging.yaml')
 
 logger = logging.getLogger('cnxarchive')
 _settings = None
@@ -117,9 +119,11 @@ def main(global_config, **settings):
     """Main WSGI application factory."""
     _set_settings(settings)
     # Initialize logging
-    logging_config_filepath = settings.get('logging-configuration-filepath',
+    logging_config_filepath = settings.get('logging-configuration',
                                            DEFAULT_LOGGING_CONFIG_FILEPATH)
-    load_logging_configuration(logging_config_filepath)
+    with open(logging_config_filepath, 'r') as f:
+        logging_config = yaml.load(f)
+    load_logging_configuration(logging_config)
 
     app = Application()
     app.add_route('/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html', 'cnxarchive.views:get_content_html')
