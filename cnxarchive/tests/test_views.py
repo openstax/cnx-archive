@@ -40,9 +40,9 @@ COLLECTION_METADATA = {
     u'language': u'en',
     u'license': {
         u'abbr': u'by',
-        u'version': u'3.0',
+        u'version': u'4.0',
         u'name': u'Attribution',
-        u'url': u'http://creativecommons.org/licenses/by/3.0/',
+        u'url': u'http://creativecommons.org/licenses/by/4.0/',
         },
     u'licensors': [{u'surname': u'University',
                     u'firstname': u'Rice',
@@ -220,9 +220,9 @@ MODULE_METADATA = {
     u'language': u'en',
     u'license': {
         u'abbr': u'by',
-        u'version': u'3.0',
+        u'version': u'4.0',
         u'name': u'Attribution',
-        u'url': u'http://creativecommons.org/licenses/by/3.0/',
+        u'url': u'http://creativecommons.org/licenses/by/4.0/',
         },
     u'licensors': [{u'surname': u'University',
                     u'firstname': u'Rice',
