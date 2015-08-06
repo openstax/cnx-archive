@@ -13,7 +13,6 @@ Disallow: /*/offline$
 Disallow: /*?format=*$
 Disallow: /*/multimedia$
 Disallow: /*/lens_add?*$
-Disallow: /lens_add?*$
 Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
@@ -31,7 +30,6 @@ Disallow: /*/offline$
 Disallow: /*?format=*$
 Disallow: /*/multimedia$
 Disallow: /*/lens_add?*$
-Disallow: /lens_add?*$
 Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
@@ -50,7 +48,6 @@ Disallow: /*/offline$
 Disallow: /*?format=*$
 Disallow: /*/multimedia$
 Disallow: /*/lens_add?*$
-Disallow: /lens_add?*$
 Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
@@ -69,7 +66,6 @@ Disallow: /*/offline$
 Disallow: /*?format=*$
 Disallow: /*/multimedia$
 Disallow: /*/lens_add?*$
-Disallow: /lens_add?*$
 Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
@@ -88,7 +84,6 @@ Disallow: /*/offline$
 Disallow: /*?format=*$
 Disallow: /*/multimedia$
 Disallow: /*/lens_add?*$
-Disallow: /lens_add?*$
 Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
