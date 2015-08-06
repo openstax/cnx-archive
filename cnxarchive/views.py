@@ -41,10 +41,10 @@ from .utils import (
 logger = logging.getLogger('cnxarchive')
 
 PAGES_TO_BLOCK = [
-    'legacy.cnx.org', '/lenses', '/*/pdf$', '/*/epub$', '/*/complete$',
+    'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
+    '/*/pdf$', '/*/epub$', '/*/complete$',
     '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
-    '/lens_add?*$', '/lens_add', '/*/lens_view/*$',
-    '/content/*view_mode=statistics$']
+    '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
 
 
 class ExportError(Exception):
