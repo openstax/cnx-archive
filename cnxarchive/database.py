@@ -78,23 +78,6 @@ def initdb(settings):
                     cursor.execute(f.read())
 
 
-def get_tree(ident_hash, cursor):
-    """Given an ``ident_hash``, return a JSON representation
-    of the binder tree.
-    """
-    uuid, version = split_ident_hash(ident_hash)
-    cursor.execute(SQL['get-tree-by-uuid-n-version'],
-                   (uuid, version,))
-    try:
-        tree = cursor.fetchone()[0]
-    except TypeError:  # NoneType
-        raise ContentNotFound()
-    if type(tree) in (type(''),type(u'')):
-        import json
-        return json.loads(tree)
-    else:
-        return tree
-
 def get_module_ident_from_ident_hash(ident_hash, cursor):
     """Returns the moduleid for a given ``ident_hash``."""
     uuid, (mj_ver, mn_ver) = split_ident_hash(ident_hash, split_version=True)
@@ -117,6 +100,23 @@ def get_module_ident_from_ident_hash(ident_hash, cursor):
     except TypeError:  # NoneType
         module_ident = None
     return module_ident
+
+def get_tree(ident_hash, cursor):
+    """Given an ``ident_hash``, return a JSON representation
+    of the binder tree.
+    """
+    uuid, version = split_ident_hash(ident_hash)
+    cursor.execute(SQL['get-tree-by-uuid-n-version'],
+                   (uuid, version,))
+    try:
+        tree = cursor.fetchone()[0]
+    except TypeError:  # NoneType
+        raise ContentNotFound()
+    if type(tree) in (type(''),type(u'')):
+        import json
+        return json.loads(tree)
+    else:
+        return tree
 
 def get_module_uuid(db_connection, moduleid):
     with db_connection.cursor() as cursor:
