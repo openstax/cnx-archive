@@ -699,6 +699,7 @@ def sitemap(environ, start_response):
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
+            # FIXME
             # magic number limit comes from Google policy - will need to split
             # to multiple sitemaps before we have more content
             cursor.execute("""\
@@ -725,7 +726,9 @@ def robots(environ, start_response):
     """
     Returns a robots.txt file
     """
-    robots_dot_txt = Robots()
+
+    hostname = environ['HTTP_HOST']
+    robots_dot_txt = Robots(sitemap='http://%s/sitemap.xml' % (hostname))
 
     bot_delays = {
         '*': '',
@@ -735,8 +738,8 @@ def robots(environ, start_response):
         'Slurp': '10'
         }
 
-    for bot in bot_delays:
-        robots_dot_txt.add_bot(bot, bot_delays[bot], PAGES_TO_BLOCK)
+    for bot, delay in bot_delays.iteritems():
+        robots_dot_txt.add_bot(bot, delay, PAGES_TO_BLOCK)
 
     status = '200 OK'
 
