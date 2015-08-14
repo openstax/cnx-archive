@@ -1,7 +1,7 @@
 class Robots(object):
-    def __init__(self, sitemap='http://cnx.org/sitemap.xml', bots=[]):
+    def __init__(self, sitemap='http://cnx.org/sitemap.xml', bots=None):
         self.sitemap = sitemap
-        self.bots = bots
+        self.bots = bots or []
 
     def add_bot(self, bot_name, delay, pages_to_block):
         self.bots.append(Bot(bot_name, delay, pages_to_block))
