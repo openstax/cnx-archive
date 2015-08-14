@@ -1,0 +1,26 @@
+###
+# logging configuration
+###
+version: 1
+
+formatters:
+  generic:
+    format: '%(asctime)s %(levelname)-5.5s %(hostname)s [%(name)s][%(threadName)s] %(message)s'
+filters:
+  context:
+    ()        : cnxarchive.logs.ContextFilter
+handlers:
+  console:
+    class     : logging.StreamHandler
+    level     : NOTSET
+    formatter : generic
+    filters   : [context]
+    stream    : 'ext://sys.stdout'
+loggers:
+  cnxarchive:
+    level     : INFO
+    handlers  : [console]
+    propagate : 0
+root:
+  level       : INFO
+  handlers    : []

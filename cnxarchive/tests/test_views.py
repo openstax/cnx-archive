@@ -39,10 +39,10 @@ COLLECTION_METADATA = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
     u'language': u'en',
     u'license': {
-        u'abbr': u'by',
-        u'version': u'3.0',
-        u'name': u'Attribution',
-        u'url': u'http://creativecommons.org/licenses/by/3.0/',
+        u'code': u'by',
+        u'version': u'4.0',
+        u'name': u'Creative Commons Attribution License',
+        u'url': u'http://creativecommons.org/licenses/by/4.0/',
         },
     u'licensors': [{u'surname': u'University',
                     u'firstname': u'Rice',
@@ -219,10 +219,10 @@ MODULE_METADATA = {
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
     u'language': u'en',
     u'license': {
-        u'abbr': u'by',
-        u'version': u'3.0',
-        u'name': u'Attribution',
-        u'url': u'http://creativecommons.org/licenses/by/3.0/',
+        u'code': u'by',
+        u'version': u'4.0',
+        u'name': u'Creative Commons Attribution License',
+        u'url': u'http://creativecommons.org/licenses/by/4.0/',
         },
     u'licensors': [{u'surname': u'University',
                     u'firstname': u'Rice',
@@ -346,6 +346,7 @@ class ViewsTestCase(unittest.TestCase):
     def _make_environ(self):
         environ = {}
         setup_testing_defaults(environ)
+        environ['HTTP_HOST']='cnx.org'
         return environ
 
     def _start_response(self, status, headers=[]):
@@ -1461,7 +1462,7 @@ class ViewsTestCase(unittest.TestCase):
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
                 'problems. ')
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
         # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'
@@ -1493,7 +1494,7 @@ class ViewsTestCase(unittest.TestCase):
                 'traditional')
 
 
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
     def test_search_no_params(self):
         environ = self._make_environ()
@@ -2129,69 +2130,69 @@ VALUES
                 u'type': u'OpenStax Featured',
                 u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
                 }],
-            u'licenses': [{u'abbr': u'by',
+            u'licenses': [{u'code': u'by',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution',
+                           u'name': u'Creative Commons Attribution License',
                            u'url': u'http://creativecommons.org/licenses/by/1.0',
                            u'version': u'1.0'},
-                          {u'abbr': u'by-nd',
+                          {u'code': u'by-nd',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NoDerivs',
+                           u'name': u'Creative Commons Attribution-NoDerivs License',
                            u'url': u'http://creativecommons.org/licenses/by-nd/1.0',
                            u'version': u'1.0'},
-                          {u'abbr': u'by-nd-nc',
+                          {u'code': u'by-nd-nc',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NoDerivs-NonCommercial',
+                           u'name': u'Creative Commons Attribution-NoDerivs-NonCommercial License',
                            u'url': u'http://creativecommons.org/licenses/by-nd-nc/1.0',
                            u'version': u'1.0'},
-                          {u'abbr': u'by-nc',
+                          {u'code': u'by-nc',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NonCommercial',
+                           u'name': u'Creative Commons Attribution-NonCommercial License',
                            u'url': u'http://creativecommons.org/licenses/by-nc/1.0',
                            u'version': u'1.0'},
-                          {u'abbr': u'by-sa',
+                          {u'code': u'by-sa',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-ShareAlike',
+                           u'name': u'Creative Commons Attribution-ShareAlike License',
                            u'url': u'http://creativecommons.org/licenses/by-sa/1.0',
                            u'version': u'1.0'},
-                          {u'abbr': u'by',
+                          {u'code': u'by',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution',
+                           u'name': u'Creative Commons Attribution License',
                            u'url': u'http://creativecommons.org/licenses/by/2.0/',
                            u'version': u'2.0'},
-                          {u'abbr': u'by-nd',
+                          {u'code': u'by-nd',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NoDerivs',
+                           u'name': u'Creative Commons Attribution-NoDerivs License',
                            u'url': u'http://creativecommons.org/licenses/by-nd/2.0',
                            u'version': u'2.0'},
-                          {u'abbr': u'by-nd-nc',
+                          {u'code': u'by-nd-nc',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NoDerivs-NonCommercial',
+                           u'name': u'Creative Commons Attribution-NoDerivs-NonCommercial License',
                            u'url': u'http://creativecommons.org/licenses/by-nd-nc/2.0',
                            u'version': u'2.0'},
-                          {u'abbr': u'by-nc',
+                          {u'code': u'by-nc',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-NonCommercial',
+                           u'name': u'Creative Commons Attribution-NonCommercial License',
                            u'url': u'http://creativecommons.org/licenses/by-nc/2.0',
                            u'version': u'2.0'},
-                          {u'abbr': u'by-sa',
+                          {u'code': u'by-sa',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution-ShareAlike',
+                           u'name': u'Creative Commons Attribution-ShareAlike License',
                            u'url': u'http://creativecommons.org/licenses/by-sa/2.0',
                            u'version': u'2.0'},
-                          {u'abbr': u'by',
+                          {u'code': u'by',
                            u'isValidForPublication': False,
-                           u'name': u'Attribution',
+                           u'name': u'Creative Commons Attribution License',
                            u'url': u'http://creativecommons.org/licenses/by/3.0/',
                            u'version': u'3.0'},
-                          {u'abbr': u'by',
+                          {u'code': u'by',
                            u'isValidForPublication': True,
-                           u'name': u'Attribution',
+                           u'name': u'Creative Commons Attribution License',
                            u'url': u'http://creativecommons.org/licenses/by/4.0/',
                            u'version': u'4.0'},
-                          {u'abbr': u'by-nc-sa',
+                          {u'code': u'by-nc-sa',
                            u'isValidForPublication': True,
-                           u'name': u'Attribution-NonCommercial-ShareAlike',
+                           u'name': u'Creative Commons Attribution-NonCommercial-ShareAlike License',
                            u'url': u'http://creativecommons.org/licenses/by-nc-sa/4.0/',
                            u'version': u'4.0'}],
             })
