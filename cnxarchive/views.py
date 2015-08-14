@@ -14,6 +14,9 @@ import urlparse
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
 from cnxepub.models import flatten_tree_to_ident_hashes
+from datetime import datetime, timedelta
+from pytz import timezone
+from re import compile
 
 from . import get_settings
 from . import httpexceptions
@@ -27,6 +30,7 @@ from .search import (
     Query,
     )
 from .sitemap import Sitemap
+from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype,
@@ -35,6 +39,12 @@ from .utils import (
 
 
 logger = logging.getLogger('cnxarchive')
+
+PAGES_TO_BLOCK = [
+    'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
+    '/*/pdf$', '/*/epub$', '/*/complete$',
+    '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
+    '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
 
 
 class ExportError(Exception):
@@ -284,6 +294,24 @@ def _get_content_json(environ=None, ident_hash=None, reqtype=None):
                 result['content'] = content[:]
 
     return result
+
+
+def html_date(datetime):
+    """
+    Returns the HTTP-date format of python's datetime time as per:
+    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+    """
+    return datetime.strftime("%a, %d %b %Y %X %Z")
+
+
+def notblocked(page):
+    for blocked in PAGES_TO_BLOCK:
+        if blocked[0] != '*':
+            blocked = '*' + blocked
+        rx = compile(blocked.replace('*', '[^$]*'))
+        if rx.match(page):
+            return False
+    return True
 
 
 # ######### #
@@ -671,6 +699,7 @@ def sitemap(environ, start_response):
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
+            # FIXME
             # magic number limit comes from Google policy - will need to split
             # to multiple sitemaps before we have more content
             cursor.execute("""\
@@ -682,10 +711,46 @@ def sitemap(environ, start_response):
                     ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
             for r in res:
-                xml.add_url('http://%s/contents/%s/%s' % (hostname,r[0], r[1]),
-                            lastmod=r[2])
+                url = 'http://%s/contents/%s/%s' % (hostname, r[0], r[1])
+                if notblocked(url):
+                    xml.add_url('http://%s/contents/%s/%s' % (
+                        hostname, r[0], r[1]), lastmod=r[2])
 
     status = '200 OK'
     headers = [('Content-type', 'text/xml')]
     start_response(status, headers)
     return [xml()]
+
+
+def robots(environ, start_response):
+    """
+    Returns a robots.txt file
+    """
+
+    hostname = environ['HTTP_HOST']
+    robots_dot_txt = Robots(sitemap='http://%s/sitemap.xml' % (hostname))
+
+    bot_delays = {
+        '*': '',
+        'ScoutJet': '10',
+        'Baiduspider': '10',
+        'BecomeBot': '20',
+        'Slurp': '10'
+        }
+
+    for bot, delay in bot_delays.iteritems():
+        robots_dot_txt.add_bot(bot, delay, PAGES_TO_BLOCK)
+
+    status = '200 OK'
+
+    gmt = timezone('GMT')
+    # it expires in 5 days
+    exp_time = datetime.now(gmt) + timedelta(5)
+
+    headers = [('Content-type', 'text/plain'),
+               ('Last-Modified', html_date(datetime.now(gmt))),
+               ('Cache-Control', 'max-age=36000, must-revalidate'),
+               ('Expires', html_date(exp_time))]
+    start_response(status, headers)
+
+    return [robots_dot_txt.to_string()]
