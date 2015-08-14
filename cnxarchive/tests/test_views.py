@@ -1462,7 +1462,7 @@ class ViewsTestCase(unittest.TestCase):
                 'questions, links to labs and simulations, and ample practice '
                 'opportunities to solve traditional <b>physics</b> application '
                 'problems. ')
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
         # Test for no highlighting on specific field queries.
         environ['QUERY_STRING'] = 'q=title:"college physics"'
@@ -1494,7 +1494,7 @@ class ViewsTestCase(unittest.TestCase):
                 'traditional')
 
 
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
     def test_search_no_params(self):
         environ = self._make_environ()
