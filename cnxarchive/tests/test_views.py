@@ -346,6 +346,7 @@ class ViewsTestCase(unittest.TestCase):
     def _make_environ(self):
         environ = {}
         setup_testing_defaults(environ)
+        environ['HTTP_HOST']='cnx.org'
         return environ
 
     def _start_response(self, status, headers=[]):
