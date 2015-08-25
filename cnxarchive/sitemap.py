@@ -16,9 +16,11 @@
 
             return xml.get_response()
 """
+from __future__ import unicode_literals
 from datetime import datetime
 
-from utils import escape
+from . import IS_PY2
+from .utils import escape
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
@@ -47,25 +49,31 @@ class Sitemap(object):
 
     def generate(self):
         """Return a generate that yields pieces of XML."""
-        yield u'<?xml version="1.0" encoding="utf-8"?>\n'
-        yield u'<urlset xmlns="%s">\n' % SITEMAP_NS
+        yield '<?xml version="1.0" encoding="utf-8"?>\n'
+        yield '<urlset xmlns="%s">\n' % SITEMAP_NS
         for url in self.urls:
             for line in url.generate():
-                yield u'  ' + line
-        yield u'</urlset>\n'
+                yield '  ' + line
+        yield '</urlset>\n'
 
     def to_string(self):
         """Convert the sitemap into a string."""
-        return u''.join(self.generate())
+        return ''.join(self.generate())
 
     def __call__(self):
         return self.__str__()
 
     def __unicode__(self):
+        # FIXME remove when we no longer need to support python 2
         return self.to_string()
 
-    def __str__(self):
+    def __bytes__(self):
         return self.to_string().encode('utf-8')
+
+    def __str__(self):
+        if IS_PY2:
+            return self.to_string().encode('utf-8')
+        return self.to_string()
 
 
 class UrlEntry(object):
@@ -93,7 +101,7 @@ class UrlEntry(object):
             raise ValueError('changefreq must be one of %s' %
                              (', '.join(self.freq_values)))
         self.priority = kwargs.get('priority')
-        if self.priority and self.priority < 0.0 or self.priority > 1.0:
+        if self.priority and (self.priority < 0.0 or self.priority > 1.0):
             raise ValueError('priority must be between 0.0 and 1.0')
 
         if self.loc is None:
@@ -107,26 +115,33 @@ class UrlEntry(object):
 
     def generate(self):
         """Yields pieces of XML."""
-        yield u'<url>\n'
-        yield u'<loc>%s</loc>\n' % escape(self.loc)
+        yield '<url>\n'
+        yield '<loc>%s</loc>\n' % escape(self.loc)
         if self.lastmod:
             if hasattr(self.lastmod, 'strftime'):
-                yield u'<lastmod>%s</lastmod>\n' % \
+                yield '<lastmod>%s</lastmod>\n' % \
                     self.lastmod.strftime('%Y-%m-%d')
-            elif isinstance(self.lastmod, str):
-                yield u'<lastmod>%s</lastmod>\n' % self.lastmod
+            elif (IS_PY2 and isinstance(self.lastmod, basestring) or
+                  not IS_PY2 and isinstance(self.lastmod, (bytes, str))):
+                yield '<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
-            yield u'<changefreq>%s</changefreq>\n' % self.changefreq
+            yield '<changefreq>%s</changefreq>\n' % self.changefreq
         if self.priority and 0.0 <= self.priority <= 1.0:
-            yield u'<priority>%s</priority>\n' % self.priority
-        yield u'</url>\n'
+            yield '<priority>%s</priority>\n' % self.priority
+        yield '</url>\n'
 
     def to_string(self):
         """Convert the url item into a unicode object."""
-        return u''.join(self.generate())
+        return ''.join(self.generate())
 
     def __unicode__(self):
+        # FIXME remove when we no longer need to support python 2
         return self.to_string()
 
-    def __str__(self):
+    def __bytes__(self):
         return self.to_string().encode('utf-8')
+
+    def __str__(self):
+        if IS_PY2:
+            return self.to_string().encode('utf-8')
+        return self.to_string()

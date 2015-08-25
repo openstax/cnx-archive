@@ -5,7 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-
+from __future__ import unicode_literals
 from xml import sax
 import sys
 import psycopg2
@@ -64,15 +64,15 @@ class ModuleHandler(sax.ContentHandler):
         self.parents = [None]
         self.childorder = 0
         self.map = {}
-        self.tag = u''
-        self.contentid = u''
-        self.version = u''
-        self.title = u''
+        self.tag = ''
+        self.contentid = ''
+        self.version = ''
+        self.title = ''
         self.nodeid = 0
         self.derivedfrom = [None]
 
     def startElementNS(self, (uri, localname), qname, attrs):
-        self.map[localname] = u''
+        self.map[localname] = ''
         self.tag = localname
 
         if localname == 'module':

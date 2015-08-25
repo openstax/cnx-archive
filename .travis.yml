@@ -1,6 +1,7 @@
 language: python
 python:
   - "2.7"
+  - "3.4"
 addons:
   postgresql: "9.3"
 services:
@@ -19,10 +20,10 @@ before_install:
 
   # Install rhaptos.cnxmlutils (dependency of cnx-cnxml-transforms)
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
-  - cd ./rhaptos.cnxmlutils && python setup.py install && cd ..
+  - cd ./rhaptos.cnxmlutils && python setup.py install && sudo /usr/bin/python setup.py install && cd ..
   # Install cnx-cnxml-transforms
   - git clone https://github.com/Connexions/cnx-cnxml-transforms.git
-  - cd ./cnx-cnxml-transforms && python setup.py install && cd ..
+  - cd ./cnx-cnxml-transforms && python setup.py install && sudo /usr/bin/python setup.py install && cd ..
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
   - cd ./cnx-query-grammar && python setup.py install && cd ..
@@ -34,12 +35,13 @@ before_install:
   - pip install coverage
   - pip install coveralls
 
-  # FIXME patch triggers to include paths to cnx-cnxml-transforms and rhaptos.cnxmlutils
-  - CNXML_TRANSFORMS_PATH=$(python -c 'import os; import cnxmltransforms; print(os.path.abspath("{}/..".format(cnxmltransforms.__path__[0])))')
-  - RHAPTOS_CNXMLUTILS_PATH=$(python -c 'import os; import rhaptos.cnxmlutils; print(os.path.abspath("{}/../..".format(rhaptos.cnxmlutils.__path__[0])))')
-  - LXML_PATH=$(python -c 'import os; import lxml; print(os.path.abspath("{}/..".format(lxml.__path__[0])))')
-  - cd cnx-cnxml-transforms && python setup.py install && cd ..
-  - sed -i "s%from cnxmltransforms%import sys; sys.path.append('$CNXML_TRANSFORMS_PATH'); sys.path.append('$RHAPTOS_CNXMLUTILS_PATH'); sys.path.append('$LXML_PATH'); &%" cnxarchive/sql/schema/*.sql
+# Doesn't work with python 3
+#  # FIXME patch triggers to include paths to cnx-cnxml-transforms and rhaptos.cnxmlutils
+#  - CNXML_TRANSFORMS_PATH=$(python -c 'import os; import cnxmltransforms; print(os.path.abspath("{}/..".format(cnxmltransforms.__path__[0])))')
+#  - RHAPTOS_CNXMLUTILS_PATH=$(python -c 'import os; import rhaptos.cnxmlutils; print(os.path.abspath("{}/../..".format(rhaptos.cnxmlutils.__path__[0])))')
+#  - LXML_PATH=$(python -c 'import os; import lxml; print(os.path.abspath("{}/..".format(lxml.__path__[0])))')
+#  - cd cnx-cnxml-transforms && python setup.py install && cd ..
+#  - sed -i "s%from cnxmltransforms%import sys; sys.path.append('$CNXML_TRANSFORMS_PATH'); sys.path.append('$RHAPTOS_CNXMLUTILS_PATH'); sys.path.append('$LXML_PATH'); &%" cnxarchive/sql/schema/*.sql
 install:
   - python setup.py install
 before_script:

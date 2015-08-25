@@ -1,6 +1,5 @@
 Sitemap: http://cnx.org/sitemap.xml
-User-agent: ScoutJet
-Crawl-delay: 10
+User-agent: *
 Disallow: legacy.cnx.org
 Disallow: /lenses
 Disallow: /browse_content
@@ -17,7 +16,8 @@ Disallow: /lens_add
 Disallow: /*/lens_view/*$
 Disallow: /content/*view_mode=statistics$
 
-User-agent: *
+User-agent: ScoutJet
+Crawl-delay: 10
 Disallow: legacy.cnx.org
 Disallow: /lenses
 Disallow: /browse_content

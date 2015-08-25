@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 from datetime import datetime
 import time
 import unittest
@@ -37,19 +38,19 @@ class SitemapTestCase(unittest.TestCase):
     def test_simple_urlEntry(self):
         """test w/ location"""
         ue = sitemap.UrlEntry(loc='http://example.com')
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n</url>\n')
 
     def test_loc_last_urlEntry_datetime(self):
         """test w/ location and lastmod (datetime instance)"""
         ue = sitemap.UrlEntry(loc='http://example.com', lastmod=datetime(2013, 10, 20))
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n<lastmod>2013-10-20</lastmod>\n</url>\n')
 
     def test_loc_last_urlEntry_string(self):
         """test w/ location and lastmod (string)"""
         ue = sitemap.UrlEntry(loc='http://example.com', lastmod='2014-22-40T70:00:00Z')
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n<lastmod>2014-22-40T70:00:00Z</lastmod>\n</url>\n')
 
     def test_invalid_updatefreq_urlEntry(self):
@@ -60,7 +61,7 @@ class SitemapTestCase(unittest.TestCase):
     def test_updatefreq_urlEntry(self):
         """test valid changefreq"""
         ue = sitemap.UrlEntry(loc='http://example.com', changefreq='weekly')
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n<changefreq>weekly</changefreq>\n</url>\n')
 
     def test_invalid_priority_urlEntry(self):
@@ -73,13 +74,13 @@ class SitemapTestCase(unittest.TestCase):
     def test_priority_urlEntry(self):
         """test valid changefreq"""
         ue = sitemap.UrlEntry(loc='http://example.com', priority=0.8)
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n<priority>0.8</priority>\n</url>\n')
 
     def test_all_urlEntry(self):
         """test w/ loc, changefreq, priority and lastmod"""
         ue = sitemap.UrlEntry(loc='http://example.com', changefreq='weekly', priority=0.8, lastmod=datetime(2013, 10, 20))
-        self.assertEqual(repr(ue), "<UrlEntry 'http://example.com'>")
+        self.assertEqual(repr(ue), "<UrlEntry {}>".format(repr('http://example.com')))
         self.assertEqual(str(ue), '<url>\n<loc>http://example.com</loc>\n<lastmod>2013-10-20</lastmod>\n<changefreq>weekly</changefreq>\n<priority>0.8</priority>\n</url>\n')
 
     def test_sitemap_invalid_add_url(self):

@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import datetime
 import os
 import time
@@ -12,6 +13,7 @@ import unittest
 
 import psycopg2
 
+from .. import IS_PY2
 from . import testing
 
 
@@ -51,7 +53,7 @@ class InitializeDBTestCase(unittest.TestCase):
         #   run the function.
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
             self.target(self.settings)
-        self.assertEqual(caught_exception.exception.message,
+        self.assertEqual(str(caught_exception.exception),
                          'Database is already initialized.\n')
 
 
@@ -212,7 +214,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
         cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
                                       'm42033-1.3.cnxml')
-        with open(cnxml_filepath, 'r') as f:
+        with open(cnxml_filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -250,7 +252,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
         cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
                                       'm42033-1.3.cnxml')
-        with open(cnxml_filepath, 'r') as f:
+        with open(cnxml_filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -287,7 +289,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         cursor.execute('SELECT fileid FROM files')
 
         filepath = os.path.join(testing.DATA_DIRECTORY, 'm42033-1.3.html')
-        with open(filepath, 'r') as f:
+        with open(filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -536,8 +538,12 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Test that we generated exactly one index.cnxml.html for new_module_ident
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
-        html = index_htmls[0][0][:]
-        self.assertIn('<html', html)
+        html = index_htmls[0][0]
+        if IS_PY2:
+            html = html[:]
+        else:
+            html = html.tobytes()
+        self.assertIn(b'<html', html)
 
     @testing.db_connect
     def test_module_files_from_html(self, cursor):
@@ -621,8 +627,12 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(sorted([fn for f, fn in index_cnxmls]),
                          ['index.cnxml', 'index.html.cnxml'])
         # Test that the index.html.cnxml contains cnxml
-        cnxml = index_cnxmls[0][0][:]
-        self.assertIn('<document', cnxml)
+        cnxml = index_cnxmls[0][0]
+        if IS_PY2:
+            cnxml = cnxml[:]
+        else:
+            cnxml = cnxml.tobytes()
+        self.assertIn(b'<document', cnxml)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -699,8 +709,12 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         # Test that we DID NOT generate an index.cnxml.html for new_module_ident
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains the custom content.
-        html = index_htmls[0][0][:]
-        self.assertEqual(custom_content, html)
+        html = index_htmls[0][0]
+        if IS_PY2:
+            html = html[:]
+        else:
+            html = html.tobytes()
+        self.assertEqual(custom_content.encode('utf-8'), html)
 
     @testing.db_connect
     def test_tree_to_json(self, cursor):
@@ -708,62 +722,62 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         This is used during a cnx-publishing publication.
         """
         expected_tree = {
-            u'id': u'col11406',
-            u'title': u'College Physics',
-            u'version': u'1.7',
-            u'contents': [
-                {u'id': u'm42955', u'title': u'Preface', u'version': u'1.7'},
-                {u'id': u'subcol',
-                 u'title': u'Introduction: The Nature of Science and Physics',
-                 u'version': None,
-                 u'contents': [
-                     {u'id': u'm42119',
-                      u'title': u'Introduction to Science and the Realm of '
-                                u'Physics, Physical Quantities, and Units',
-                      u'version': u'1.3'},
-                     {u'id': u'm42092',
-                      u'title': u'Physics: An Introduction',
-                      u'version': u'1.4'},
-                     {u'id': u'm42091',
-                      u'title': u'Physical Quantities and Units',
-                      u'version': u'1.6'},
-                     {u'id': u'm42120',
-                      u'title': u'Accuracy, Precision, and Significant '
-                                u'Figures',
-                      u'version': u'1.7'},
-                     {u'id': u'm42121',
-                      u'title': u'Approximation',
-                      u'version': u'1.5'}]},
-                {u'id': u'subcol',
-                 u'title': u"Further Applications of Newton's Laws: Friction,"
-                           u" Drag, and Elasticity",
-                 u'version': None,
-                 u'contents': [
-                     {u'id': u'm42138',
-                      u'title': u'Introduction: Further Applications of '
-                                u'Newton\u2019s Laws',
-                      u'version': u'1.2'},
-                     {u'id': u'm42139',
-                      u'title': u'Friction',
-                      u'version': u'1.5'},
-                     {u'id': u'm42080',
-                      u'title': u'Drag Forces',
-                      u'version': u'1.6'},
-                     {u'id': u'm42081',
-                      u'title': u'Elasticity: Stress and Strain',
-                      u'version': u'1.8'}]},
-                {u'id': u'm42699',
-                 u'title': u'Atomic Masses',
-                 u'version': u'1.3'},
-                {u'id': u'm42702',
-                 u'title': u'Selected Radioactive Isotopes',
-                 u'version': u'1.2'},
-                {u'id': u'm42720',
-                 u'title': u'Useful Inf\xf8rmation',
-                 u'version': u'1.5'},
-                {u'id': u'm42709',
-                 u'title': u'Glossary of Key Symbols and Notation',
-                 u'version': u'1.5'}]}
+            'id': 'col11406',
+            'title': 'College Physics',
+            'version': '1.7',
+            'contents': [
+                {'id': 'm42955', 'title': 'Preface', 'version': '1.7'},
+                {'id': 'subcol',
+                 'title': 'Introduction: The Nature of Science and Physics',
+                 'version': None,
+                 'contents': [
+                     {'id': 'm42119',
+                      'title': 'Introduction to Science and the Realm of '
+                               'Physics, Physical Quantities, and Units',
+                      'version': '1.3'},
+                     {'id': 'm42092',
+                      'title': 'Physics: An Introduction',
+                      'version': '1.4'},
+                     {'id': 'm42091',
+                      'title': 'Physical Quantities and Units',
+                      'version': '1.6'},
+                     {'id': 'm42120',
+                      'title': 'Accuracy, Precision, and Significant '
+                               'Figures',
+                      'version': '1.7'},
+                     {'id': 'm42121',
+                      'title': 'Approximation',
+                      'version': '1.5'}]},
+                {'id': 'subcol',
+                 'title': "Further Applications of Newton's Laws: Friction,"
+                          " Drag, and Elasticity",
+                 'version': None,
+                 'contents': [
+                     {'id': 'm42138',
+                      'title': 'Introduction: Further Applications of '
+                               'Newton\u2019s Laws',
+                      'version': '1.2'},
+                     {'id': 'm42139',
+                      'title': 'Friction',
+                      'version': '1.5'},
+                     {'id': 'm42080',
+                      'title': 'Drag Forces',
+                      'version': '1.6'},
+                     {'id': 'm42081',
+                      'title': 'Elasticity: Stress and Strain',
+                      'version': '1.8'}]},
+                {'id': 'm42699',
+                 'title': 'Atomic Masses',
+                 'version': '1.3'},
+                {'id': 'm42702',
+                 'title': 'Selected Radioactive Isotopes',
+                 'version': '1.2'},
+                {'id': 'm42720',
+                 'title': 'Useful Inf\xf8rmation',
+                 'version': '1.5'},
+                {'id': 'm42709',
+                 'title': 'Glossary of Key Symbols and Notation',
+                 'version': '1.5'}]}
         cursor.execute("""\
 SELECT tree_to_json_for_legacy(
     'e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1')::json

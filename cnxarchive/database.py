@@ -6,13 +6,14 @@
 # See LICENCE.txt for details.
 # ###
 """Database models and utilities"""
+from __future__ import unicode_literals
 import datetime
 import os
 import json
 import psycopg2
 import re
 
-from . import config
+from . import config, IS_PY2
 from .utils import split_ident_hash
 
 
@@ -50,7 +51,7 @@ SQL = {
 
 
 def _read_schema_manifest(manifest_filepath):
-    with open(os.path.abspath(manifest_filepath), 'rb') as fp:
+    with open(os.path.abspath(manifest_filepath), 'r') as fp:
         raw_manifest = json.loads(fp.read())
     manifest = []
     relative_dir = os.path.abspath(os.path.dirname(manifest_filepath))
@@ -79,7 +80,7 @@ def _compile_manifest(manifest, content_modifier=None):
         if isinstance(item, list):
             items.extend(_compile_manifest(item, content_modifier))
         else:
-            with open(item, 'rb') as fp:
+            with open(item, 'r') as fp:
                 content = fp.read()
             if content_modifier:
                 content = content_modifier(item, content)
@@ -94,7 +95,7 @@ def get_schema():
 
     # Modify the file so that it contains comments that say it's origin.
     def file_wrapper(f, c):
-        return u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
+        return "-- FILE: {0}\n{1}\n-- \n".format(f, c)
 
     return _compile_manifest(schema_manifest, file_wrapper)
 
@@ -143,7 +144,11 @@ def get_tree(ident_hash, cursor):
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
         raise ContentNotFound()
-    if type(tree) in (type(''), type(u'')):
+    if IS_PY2:
+        string_types = basestring
+    else:
+        string_types = (str, bytes)
+    if isinstance(tree, string_types):
         import json
         return json.loads(tree)
     else:

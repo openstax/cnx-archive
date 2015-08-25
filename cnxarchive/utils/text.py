@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import re
 import unicodedata
 
@@ -17,8 +18,8 @@ def slugify(string):
     numbers, hyphens replace spaces)
     """
     filtered_string = []
-    if isinstance(string, str):
-        string = unicode(string, 'utf-8')
+    if isinstance(string, bytes):
+        string = string.decode('utf-8')
     for i in unicodedata.normalize('NFKC', string):
         cat = unicodedata.category(i)[0]
         # filter out all the non letter and non number characters from the
