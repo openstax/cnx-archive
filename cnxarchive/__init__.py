@@ -6,6 +6,9 @@
 # See LICENCE.txt for details.
 # ###
 """Document and collection archive web application."""
+from __future__ import unicode_literals
+import sys
+
 from pyramid.config import Configurator
 
 
@@ -22,6 +25,7 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
     'cache-control',
     'content-type',
     ]
+IS_PY2 = sys.version_info.major == 2
 
 
 def declare_api_routes(config):
@@ -72,6 +76,9 @@ def main(global_config, **settings):
         if not settings.get(setting, None):
             raise ValueError('Missing {} config setting.'.format(setting))
 
-    config.scan(ignore='.tests')
+    if IS_PY2:
+        config.scan(ignore=b'.tests')
+    else:
+        config.scan(ignore='.tests')
     config.include('cnxarchive.events.main')
     return config.make_wsgi_app()

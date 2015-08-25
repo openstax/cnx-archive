@@ -5,17 +5,21 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import os
 import datetime
 import glob
-import HTMLParser
+try:
+    import html  # python 3
+except ImportError:
+    import HTMLParser  # python 2
 import time
 import json
 import unittest
 try:
-    from urllib.parse import quote
+    from urllib.parse import quote, unquote
 except ImportError:
-    from urllib import quote
+    from urllib import quote, unquote
 
 try:
     from unittest import mock
@@ -29,282 +33,283 @@ from pyramid.request import Request
 from pyramid.threadlocal import get_current_registry
 
 from . import testing
+from .. import IS_PY2
 
 
 COLLECTION_METADATA = {
-    u'roles': None,
-    u'subjects': [u'Mathematics and Statistics', u'Science and Technology', u'OpenStax Featured'],
-    u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" '
-                 u'xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">'
-                 u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, '
-                 u'fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample '
-                 u'practice opportunities to solve traditional physics application problems.</div>',
-    u'authors': [{u'id': u'OpenStaxCollege',
-                  u'fullname': u'OpenStax College',
-                  u'surname': None, u'suffix': None,
-                  u'firstname': u'OpenStax College', u'title': None,
-                  }],
-    u'created': u'2013-07-31T19:07:20Z',
-    u'doctype': u'',
-    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-    u'language': u'en',
-    u'license': {
-        u'code': u'by',
-        u'version': u'4.0',
-        u'name': u'Creative Commons Attribution License',
-        u'url': u'http://creativecommons.org/licenses/by/4.0/',
+    'roles': None,
+    'subjects': ['Mathematics and Statistics', 'Science and Technology', 'OpenStax Featured'],
+    'abstract': '<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" '
+                'xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">'
+                'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, '
+                'fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample '
+                'practice opportunities to solve traditional physics application problems.</div>',
+    'authors': [{'id': 'OpenStaxCollege',
+                 'fullname': 'OpenStax College',
+                 'surname': None, 'suffix': None,
+                 'firstname': 'OpenStax College', 'title': None,
+                 }],
+    'created': '2013-07-31T19:07:20Z',
+    'doctype': '',
+    'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    'language': 'en',
+    'license': {
+        'code': 'by',
+        'version': '4.0',
+        'name': 'Creative Commons Attribution License',
+        'url': 'http://creativecommons.org/licenses/by/4.0/',
         },
-    u'licensors': [{u'surname': u'University',
-                    u'firstname': u'Rice',
-                    u'suffix': None,
-                    u'title': None,
-                    u'id': u'OSCRiceUniversity',
-                    u'fullname': u'Rice University',
+    'licensors': [{'surname': 'University',
+                   'firstname': 'Rice',
+                   'suffix': None,
+                   'title': None,
+                   'id': 'OSCRiceUniversity',
+                   'fullname': 'Rice University',
+                   },
+                  ],
+    'publishers': [{'surname': None,
+                    'firstname': 'OpenStax College',
+                    'suffix': None,
+                    'title': None,
+                    'id': 'OpenStaxCollege',
+                    'fullname': 'OpenStax College',
                     },
+                   {'surname': 'Physics',
+                    'firstname': 'College',
+                    'suffix': None,
+                    'title': None,
+                    'id': 'cnxcap',
+                    'fullname': 'OSC Physics Maintainer',
+                    }
                    ],
-    u'publishers': [{u'surname': None,
-                     u'firstname': u'OpenStax College',
-                     u'suffix': None,
-                     u'title': None,
-                     u'id': u'OpenStaxCollege',
-                     u'fullname': u'OpenStax College',
-                     },
-                    {u'surname': u'Physics',
-                     u'firstname': u'College',
-                     u'suffix': None,
-                     u'title': None,
-                     u'id': u'cnxcap',
-                     u'fullname': u'OSC Physics Maintainer',
-                     }
-                    ],
-    u'title': u'College Physics',
-    u'parentAuthors': [],
-    u'parentId': None,
-    u'parentTitle': None,
-    u'parentVersion': '',
-    u'parent': {
+    'title': 'College Physics',
+    'parentAuthors': [],
+    'parentId': None,
+    'parentTitle': None,
+    'parentVersion': '',
+    'parent': {
         'authors': [],
         'id': None,
         'title': None,
         'version': '',
         },
-    u'revised': u'2013-08-31T19:07:20Z',
-    u'stateid': None,
-    u'submitlog': u'New version 1.7',
-    u'submitter': {
-        u'surname': None,
-        u'firstname': u'OpenStax College',
-        u'suffix': None,
-        u'title': None,
-        u'id': u'OpenStaxCollege',
-        u'fullname': u'OpenStax College',
+    'revised': '2013-08-31T19:07:20Z',
+    'stateid': None,
+    'submitlog': 'New version 1.7',
+    'submitter': {
+        'surname': None,
+        'firstname': 'OpenStax College',
+        'suffix': None,
+        'title': None,
+        'id': 'OpenStaxCollege',
+        'fullname': 'OpenStax College',
         },
-    u'mediaType': u'application/vnd.org.cnx.collection',
-    u'version': u'7.1',
-    u'printStyle': None,
-    u'googleAnalytics': u'UA-XXXXX-Y',
-    u'buyLink': None,
-    u'legacy_id': u'col11406',
-    u'legacy_version': u'1.7',
-    u'history': [
+    'mediaType': 'application/vnd.org.cnx.collection',
+    'version': '7.1',
+    'printStyle': None,
+    'googleAnalytics': 'UA-XXXXX-Y',
+    'buyLink': None,
+    'legacy_id': 'col11406',
+    'legacy_version': '1.7',
+    'history': [
         {
-            u'version': u'7.1',
-            u'revised': u'2013-08-31T19:07:20Z',
-            u'changes': 'New version 1.7',
-            u'publisher': {
-                u'surname': None,
-                u'firstname': u'OpenStax College',
-                u'suffix': None,
-                u'title': None,
-                u'id': u'OpenStaxCollege',
-                u'fullname': u'OpenStax College',
+            'version': '7.1',
+            'revised': '2013-08-31T19:07:20Z',
+            'changes': 'New version 1.7',
+            'publisher': {
+                'surname': None,
+                'firstname': 'OpenStax College',
+                'suffix': None,
+                'title': None,
+                'id': 'OpenStaxCollege',
+                'fullname': 'OpenStax College',
                 },
             },
         {
-            u'version': u'6.1',
-            u'revised': u'2013-07-31T19:07:20Z',
-            u'changes': 'Updated something',
-            u'publisher': {
-                u'surname': None,
-                u'firstname': u'OpenStax College',
-                u'suffix': None,
-                u'title': None,
-                u'id': u'OpenStaxCollege',
-                u'fullname': u'OpenStax College',
+            'version': '6.1',
+            'revised': '2013-07-31T19:07:20Z',
+            'changes': 'Updated something',
+            'publisher': {
+                'surname': None,
+                'firstname': 'OpenStax College',
+                'suffix': None,
+                'title': None,
+                'id': 'OpenStaxCollege',
+                'fullname': 'OpenStax College',
                 },
             },
         ],
-    u'keywords': [
-        u'college physics', u'physics', u'friction', u'ac circuits',
-        u'atomic physics', u'bioelectricity',
-        u'biological and medical applications', u'circuits',
-        u'collisions', u'dc instruments', u'drag', u'elasticity',
-        u'electric charge and electric field', u'electric current',
-        u'electric potential', u'electrical technologies',
-        u'electromagnetic induction', u'electromagnetic waves', u'energy',
-        u'fluid dynamics', u'fluid statics', u'forces', u'frontiers of physics',
-        u'gas laws', u'geometric optics', u'heat and transfer methods',
-        u'kinematics', u'kinetic theory', u'linear momentum', u'magnetism',
-        u'medical applications of nuclear physics',
-        u'Newton\u2019s Laws of Motion', u'Ohm\u2019s Law',
-        u'oscillatory motion and waves', u'particle physics',
-        u'physics of hearing', u'quantum physics',
-        u'radioactivity and nuclear physics', u'resistance',
-        u'rotational motion and angular momentum', u'special relativity',
-        u'statics and torque', u'temperature', u'thermodynamics',
-        u'uniform circular motion and gravitation',
-        u'vision and optical instruments', u'wave optics', u'work',
+    'keywords': [
+        'college physics', 'physics', 'friction', 'ac circuits',
+        'atomic physics', 'bioelectricity',
+        'biological and medical applications', 'circuits',
+        'collisions', 'dc instruments', 'drag', 'elasticity',
+        'electric charge and electric field', 'electric current',
+        'electric potential', 'electrical technologies',
+        'electromagnetic induction', 'electromagnetic waves', 'energy',
+        'fluid dynamics', 'fluid statics', 'forces', 'frontiers of physics',
+        'gas laws', 'geometric optics', 'heat and transfer methods',
+        'kinematics', 'kinetic theory', 'linear momentum', 'magnetism',
+        'medical applications of nuclear physics',
+        'Newton\u2019s Laws of Motion', 'Ohm\u2019s Law',
+        'oscillatory motion and waves', 'particle physics',
+        'physics of hearing', 'quantum physics',
+        'radioactivity and nuclear physics', 'resistance',
+        'rotational motion and angular momentum', 'special relativity',
+        'statics and torque', 'temperature', 'thermodynamics',
+        'uniform circular motion and gravitation',
+        'vision and optical instruments', 'wave optics', 'work',
         ],
     }
 COLLECTION_JSON_TREE = {
-    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
-    u'title': u'College Physics',
-    u'contents': [
-        {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
-         u'title': u'Preface'},
-        {u'id': u'subcol',
-         u'title': u'Introduction: The Nature of Science and Physics',
-         u'contents': [
-                {u'id': u'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
-                 u'title': u'Introduction to Science and the Realm of Physics, Physical Quantities, and Units'},
-                {u'id': u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
-                 u'title': u'Physics: An Introduction'},
-                {u'id': u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@6',
-                 u'title': u'Physical Quantities and Units'},
-                {u'id': u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@7',
-                 u'title': u'Accuracy, Precision, and Significant Figures'},
-                {u'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
-                 u'title': u'Approximation'},
+    'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+    'title': 'College Physics',
+    'contents': [
+        {'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+         'title': 'Preface'},
+        {'id': 'subcol',
+         'title': 'Introduction: The Nature of Science and Physics',
+         'contents': [
+                {'id': 'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
+                 'title': 'Introduction to Science and the Realm of Physics, Physical Quantities, and Units'},
+                {'id': 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
+                 'title': 'Physics: An Introduction'},
+                {'id': 'c8bdbabc-62b1-4a5f-b291-982ab25756d7@6',
+                 'title': 'Physical Quantities and Units'},
+                {'id': '5152cea8-829a-4aaf-bcc5-c58a416ecb66@7',
+                 'title': 'Accuracy, Precision, and Significant Figures'},
+                {'id': '5838b105-41cd-4c3d-a957-3ac004a48af3@5',
+                 'title': 'Approximation'},
                 ],
          },
-        {u'id': u'subcol',
-         u'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
-         u'contents': [
-                {u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
-                 u'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
-                {u'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
-                 u'title': u'Friction'},
-                {u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
-                 u'title': u'Drag Forces'},
-                {u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
-                 u'title': u'Elasticity: Stress and Strain'},
+        {'id': 'subcol',
+         'title': "Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
+         'contents': [
+                {'id': '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
+                 'title': 'Introduction: Further Applications of Newton\u2019s Laws'},
+                {'id': 'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
+                 'title': 'Friction'},
+                {'id': '26346a42-84b9-48ad-9f6a-62303c16ad41@6',
+                 'title': 'Drag Forces'},
+                {'id': '56f1c5c1-4014-450d-a477-2121e276beca@8',
+                 'title': 'Elasticity: Stress and Strain'},
                 ],
          },
-        {u'id': u'f6024d8a-1868-44c7-ab65-45419ef54881@3',
-         u'title': u'Atomic Masses'},
-        {u'id': u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
-         u'title': u'Selected Radioactive Isotopes'},
-        {u'id': u'c0a76659-c311-405f-9a99-15c71af39325@5',
-         u'title': u'Useful Inførmation'},
-        {u'id': u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
-         u'title': u'Glossary of Key Symbols and Notation'},
+        {'id': 'f6024d8a-1868-44c7-ab65-45419ef54881@3',
+         'title': 'Atomic Masses'},
+        {'id': '7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
+         'title': 'Selected Radioactive Isotopes'},
+        {'id': 'c0a76659-c311-405f-9a99-15c71af39325@5',
+         'title': 'Useful Inførmation'},
+        {'id': 'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
+         'title': 'Glossary of Key Symbols and Notation'},
         ],
     }
 COLLECTION_DERIVED_METADATA = {
-    u'parent': {
-        u'authors': [
-            {u'surname': None, u'suffix': None,
-             u'firstname': u'OpenStax College',
-             u'title': None, u'id': u'OpenStaxCollege',
-             u'fullname': u'OpenStax College',
+    'parent': {
+        'authors': [
+            {'surname': None, 'suffix': None,
+             'firstname': 'OpenStax College',
+             'title': None, 'id': 'OpenStaxCollege',
+             'fullname': 'OpenStax College',
              }],
-        u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-        u'title': u'College Physics',
-        u'version': u'7.1',
+        'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+        'title': 'College Physics',
+        'version': '7.1',
     },
-    u'title': u'Derived Copy of College Physics'
+    'title': 'Derived Copy of College Physics'
 }
 MODULE_METADATA = {
-    u'printStyle': None,
-    u'roles': None,
-    u'subjects': [u'Science and Technology'],
-    u'abstract': None,
-    u'authors': [{u'id': u'OpenStaxCollege',
-                  u'fullname': u'OpenStax College',
-                  u'surname': None, u'suffix': None,
-                  u'firstname': u'OpenStax College', u'title': None,
-                  }],
-    u'created': u'2013-07-31T19:07:24Z',
-    u'doctype': u'',
-    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
-    u'language': u'en',
-    u'license': {
-        u'code': u'by',
-        u'version': u'4.0',
-        u'name': u'Creative Commons Attribution License',
-        u'url': u'http://creativecommons.org/licenses/by/4.0/',
+    'printStyle': None,
+    'roles': None,
+    'subjects': ['Science and Technology'],
+    'abstract': None,
+    'authors': [{'id': 'OpenStaxCollege',
+                 'fullname': 'OpenStax College',
+                 'surname': None, 'suffix': None,
+                 'firstname': 'OpenStax College', 'title': None,
+                 }],
+    'created': '2013-07-31T19:07:24Z',
+    'doctype': '',
+    'id': '56f1c5c1-4014-450d-a477-2121e276beca',
+    'language': 'en',
+    'license': {
+        'code': 'by',
+        'version': '4.0',
+        'name': 'Creative Commons Attribution License',
+        'url': 'http://creativecommons.org/licenses/by/4.0/',
         },
-    u'licensors': [{u'surname': u'University',
-                    u'firstname': u'Rice',
-                    u'suffix': None,
-                    u'title': None,
-                    u'id': u'OSCRiceUniversity',
-                    u'fullname': u'Rice University',
+    'licensors': [{'surname': 'University',
+                   'firstname': 'Rice',
+                   'suffix': None,
+                   'title': None,
+                   'id': 'OSCRiceUniversity',
+                   'fullname': 'Rice University',
+                   },
+                  ],
+    'publishers': [{'surname': None,
+                    'firstname': 'OpenStax College',
+                    'suffix': None,
+                    'title': None,
+                    'id': 'OpenStaxCollege',
+                    'fullname': 'OpenStax College',
                     },
+                   {'surname': 'Physics',
+                    'firstname': 'College',
+                    'suffix': None,
+                    'title': None,
+                    'id': 'cnxcap',
+                    'fullname': 'OSC Physics Maintainer',
+                    }
                    ],
-    u'publishers': [{u'surname': None,
-                     u'firstname': u'OpenStax College',
-                     u'suffix': None,
-                     u'title': None,
-                     u'id': u'OpenStaxCollege',
-                     u'fullname': u'OpenStax College',
-                     },
-                    {u'surname': u'Physics',
-                     u'firstname': u'College',
-                     u'suffix': None,
-                     u'title': None,
-                     u'id': u'cnxcap',
-                     u'fullname': u'OSC Physics Maintainer',
-                     }
-                    ],
-    u'title': u'Elasticity: Stress and Strain',
-    u'parentAuthors': [],
-    u'parentId': None,
-    u'parentTitle': None,
-    u'parentVersion': '',
-    u'parent': {
-        u'authors': [],
-        u'id': None,
-        u'title': None,
-        u'version': '',
+    'title': 'Elasticity: Stress and Strain',
+    'parentAuthors': [],
+    'parentId': None,
+    'parentTitle': None,
+    'parentVersion': '',
+    'parent': {
+        'authors': [],
+        'id': None,
+        'title': None,
+        'version': '',
         },
-    u'revised': u'2013-07-31T19:07:24Z',
-    u'stateid': None,
-    u'submitlog': u'Added more examples',
-    u'submitter': {
-        u'surname': None,
-        u'firstname': u'OpenStax College',
-        u'suffix': None,
-        u'title': None,
-        u'id': u'OpenStaxCollege',
-        u'fullname': u'OpenStax College',
+    'revised': '2013-07-31T19:07:24Z',
+    'stateid': None,
+    'submitlog': 'Added more examples',
+    'submitter': {
+        'surname': None,
+        'firstname': 'OpenStax College',
+        'suffix': None,
+        'title': None,
+        'id': 'OpenStaxCollege',
+        'fullname': 'OpenStax College',
         },
-    u'mediaType': u'application/vnd.org.cnx.module',
-    u'version': u'8',
-    u'googleAnalytics': None,
-    u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
-    u'legacy_id': u'm42081',
-    u'legacy_version': u'1.8',
-    u'history': [
+    'mediaType': 'application/vnd.org.cnx.module',
+    'version': '8',
+    'googleAnalytics': None,
+    'buyLink': 'http://openstaxcollege.worksmartsuite.com/',
+    'legacy_id': 'm42081',
+    'legacy_version': '1.8',
+    'history': [
         {
-            u'version': u'8',
-            u'revised': u'2013-07-31T19:07:24Z',
-            u'changes': u'Added more examples',
-            u'publisher': {
-                u'surname': None,
-                u'firstname': u'OpenStax College',
-                u'suffix': None,
-                u'title': None,
-                u'id': u'OpenStaxCollege',
-                u'fullname': u'OpenStax College',
+            'version': '8',
+            'revised': '2013-07-31T19:07:24Z',
+            'changes': 'Added more examples',
+            'publisher': {
+                'surname': None,
+                'firstname': 'OpenStax College',
+                'suffix': None,
+                'title': None,
+                'id': 'OpenStaxCollege',
+                'fullname': 'OpenStax College',
                 },
             },
         ],
-    u'keywords': [
-        u'bulk modulus', u'compression', u'deformation', u'force',
-        u'Hooke\u2019s law', u'length', u'shear modulus', u'strain', u'stress',
-        u'tension', u'Young\u2019s modulus', u'shear deformation',
-        u'tensile strength',
+    'keywords': [
+        'bulk modulus', 'compression', 'deformation', 'force',
+        'Hooke\u2019s law', 'length', 'shear modulus', 'strain', 'stress',
+        'tension', 'Young\u2019s modulus', 'shear deformation',
+        'tensile strength',
         ],
     }
 
@@ -428,34 +433,34 @@ class ViewsTestCase(unittest.TestCase):
         content_tree = content.pop('tree')
 
         self.assertEqual(content_tree, {
-            u'id': u'{}@{}'.format(uuid, version),
-            u'title': u'College Physics',
-            u'contents': [
+            'id': '{}@{}'.format(uuid, version),
+            'title': 'College Physics',
+            'contents': [
                 {
-                    u'id': u'subcol',
-                    u'title': u'Empty Subcollections',
-                    u'contents': [
+                    'id': 'subcol',
+                    'title': 'Empty Subcollections',
+                    'contents': [
                         {
-                            u'id': u'subcol',
-                            u'title': u'empty 1',
-                            u'contents': [],
+                            'id': 'subcol',
+                            'title': 'empty 1',
+                            'contents': [],
                             },
                         {
-                            u'id': u'subcol',
-                            u'title': u'empty 2',
-                            u'contents': [],
+                            'id': 'subcol',
+                            'title': 'empty 2',
+                            'contents': [],
                             },
 
                         ],
                     },
                 {
-                    u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
-                    u'title': u'Preface',
+                    'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                    'title': 'Preface',
                     },
                 {
-                    u'id': u'subcol',
-                    u'title': u'Empty Subcollection',
-                    u'contents': [],
+                    'id': 'subcol',
+                    'title': 'Empty Subcollection',
+                    'contents': [],
                     },
                 ],
             })
@@ -474,16 +479,16 @@ class ViewsTestCase(unittest.TestCase):
 
         # History should only include displayed version and older versions
         self.assertEqual(content['history'], [{
-            u'version': u'6.1',
-            u'revised': u'2013-07-31T19:07:20Z',
-            u'changes': u'Updated something',
-            u'publisher': {
-                u'surname': None,
-                u'firstname': u'OpenStax College',
-                u'suffix': None,
-                u'title': None,
-                u'id': u'OpenStaxCollege',
-                u'fullname': u'OpenStax College',
+            'version': '6.1',
+            'revised': '2013-07-31T19:07:20Z',
+            'changes': 'Updated something',
+            'publisher': {
+                'surname': None,
+                'firstname': 'OpenStax College',
+                'suffix': None,
+                'title': None,
+                'id': 'OpenStaxCollege',
+                'fullname': 'OpenStax College',
                 },
             }])
 
@@ -506,7 +511,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
         for key in content:
             self.assertEqual(content[key], MODULE_METADATA[key],
-                             u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
+                             'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
                              key=key, v1=content[key], v2=MODULE_METADATA[key]))
 
         # Check the content is the html file.
@@ -768,7 +773,7 @@ class ViewsTestCase(unittest.TestCase):
         cursor.execute('DELETE FROM module_files')
         # Insert a file for version 4
         cursor.execute('''INSERT INTO files (file) VALUES
-            (%s) RETURNING fileid''', [memoryview('Version 4')])
+            (%s) RETURNING fileid''', [memoryview(b'Version 4')])
         fileid = cursor.fetchone()[0]
         cursor.execute('''INSERT INTO module_files
                        (module_ident, fileid, filename, mimetype) VALUES
@@ -776,7 +781,7 @@ class ViewsTestCase(unittest.TestCase):
                        [16, fileid])
         # Insert a file for version 5
         cursor.execute('''INSERT INTO files (file) VALUES
-            (%s) RETURNING fileid''', [memoryview('Version 5')])
+            (%s) RETURNING fileid''', [memoryview(b'Version 5')])
         fileid = cursor.fetchone()[0]
         cursor.execute('''INSERT INTO module_files
                        (module_ident, fileid, filename, mimetype) VALUES
@@ -801,7 +806,7 @@ class ViewsTestCase(unittest.TestCase):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
-        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">
+        expected = """<html xmlns="http://www.w3.org/1999/xhtml">
   <body>\
 <ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a>\
 <ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li>\
@@ -831,8 +836,12 @@ class ViewsTestCase(unittest.TestCase):
         resp = get_content_html(self.request)
 
         # Check that the view returns the expected html
-        p = HTMLParser.HTMLParser()
-        self.assertMultiLineEqual(p.unescape(resp.body), expected)
+        if IS_PY2:
+            p = HTMLParser.HTMLParser()
+            resp_body = p.unescape(resp.body)
+        else:
+            resp_body = html.unescape(resp.body.decode('utf-8'))
+        self.assertEqual(resp_body, expected)
 
     def test_content_module_as_html(self):
         uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
@@ -846,7 +855,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Check that the view returns some html
         resp_body = get_content_html(self.request).body
-        self.assertTrue(resp_body.startswith('<html'))
+        self.assertTrue(resp_body.startswith(b'<html'))
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
@@ -898,7 +907,7 @@ class ViewsTestCase(unittest.TestCase):
                          .format(version))
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
-        with open(expected_file, 'r') as file:
+        with open(expected_file, 'rb') as file:
             self.assertEqual(export, file.read())
 
         # Test exports can access the other exports directory
@@ -919,7 +928,7 @@ class ViewsTestCase(unittest.TestCase):
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
                                      filename)
         with open(expected_file, 'r') as file:
-            self.assertEqual(export, file.read())
+            self.assertEqual(export.decode('utf-8'), file.read())
 
     def test_exports_type_not_supported(self):
         # Build the request
@@ -972,34 +981,34 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
-            u'downloads': [{
-                u'created': None,
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'filename': u'college-physics-6.1.pdf',
-                u'format': u'PDF',
-                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf'),
-                u'size': 0,
-                u'state': u'missing'},
+            'downloads': [{
+                'created': None,
+                'details': 'PDF file, for viewing content offline and printing.',
+                'filename': 'college-physics-6.1.pdf',
+                'format': 'PDF',
+                'path': quote('/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf'),
+                'size': 0,
+                'state': 'missing'},
                {
-                u'created': None,
-                u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'filename': u'college-physics-6.1.epub',
-                u'format': u'EPUB',
-                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub'),
-                u'size': 0,
-                u'state': u'missing'},
+                'created': None,
+                'details': 'Electronic book format file, for viewing on mobile devices.',
+                'filename': 'college-physics-6.1.epub',
+                'format': 'EPUB',
+                'path': quote('/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub'),
+                'size': 0,
+                'state': 'missing'},
                {
-                u'created': None,
-                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'filename': u'college-physics-6.1.zip',
-                u'format': u'Offline ZIP',
-                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip'),
-                u'size': 0,
-                u'state': u'missing'}],
-            u'isLatest': False,
-            u'canPublish': [
-                u'OpenStaxCollege',
-                u'cnxcap',
+                'created': None,
+                'details': 'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                'filename': 'college-physics-6.1.zip',
+                'format': 'Offline ZIP',
+                'path': quote('/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip'),
+                'size': 0,
+                'state': 'missing'}],
+            'isLatest': False,
+            'canPublish': [
+                'OpenStaxCollege',
+                'cnxcap',
                 ],
             })
 
@@ -1018,33 +1027,33 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'format': u'PDF',
-                u'size': 28,
-                u'state': u'good',
-                u'filename': u'college-physics-{}.pdf'.format(version),
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'path': quote(u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
+                'created': '2015-03-04T10:03:29-08:00',
+                'format': 'PDF',
+                'size': 28,
+                'state': 'good',
+                'filename': 'college-physics-{}.pdf'.format(version),
+                'details': 'PDF file, for viewing content offline and printing.',
+                'path': quote('/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
                     id, version, version)),
                 },
             {
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'format': u'EPUB',
-                u'size': 13,
-                u'state': u'good',
-                u'filename': u'college-physics-{}.epub'.format(version),
-                u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'path': quote(u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
+                'created': '2015-03-04T10:03:29-08:00',
+                'format': 'EPUB',
+                'size': 13,
+                'state': 'good',
+                'filename': 'college-physics-{}.epub'.format(version),
+                'details': 'Electronic book format file, for viewing on mobile devices.',
+                'path': quote('/exports/{}@{}.epub/college-physics-{}.epub'.format(
                     id, version, version)),
                 },
             {
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'format': u'Offline ZIP',
-                u'size': 11,
-                u'state': u'good',
-                u'filename': u'college-physics-{}.zip'.format(version),
-                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'path': quote(u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
+                'created': '2015-03-04T10:03:29-08:00',
+                'format': 'Offline ZIP',
+                'size': 11,
+                'state': 'good',
+                'filename': 'college-physics-{}.zip'.format(version),
+                'details': 'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                'path': quote('/exports/{}@{}.zip/college-physics-{}.zip'.format(
                     id, version, version)),
                 },
             ])
@@ -1076,33 +1085,33 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'path': quote(u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
-                               .format(id, version)),
-                u'format': u'PDF',
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'state': u'good',
-                u'size': 15,
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'filename': u'preface-to-college-physics-7.pdf',
+                'path': quote('/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
+                              .format(id, version)),
+                'format': 'PDF',
+                'created': '2015-03-04T10:03:29-08:00',
+                'state': 'good',
+                'size': 15,
+                'details': 'PDF file, for viewing content offline and printing.',
+                'filename': 'preface-to-college-physics-7.pdf',
                 },
             {
-                u'path': quote(u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
-                               .format(id, version)),
-                u'format': u'EPUB',
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'state': u'good',
-                u'size': 16,
-                u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'filename': u'preface-to-college-physics-7.epub',
+                'path': quote('/exports/{}@{}.epub/preface-to-college-physics-7.epub'
+                              .format(id, version)),
+                'format': 'EPUB',
+                'created': '2015-03-04T10:03:29-08:00',
+                'state': 'good',
+                'size': 16,
+                'details': 'Electronic book format file, for viewing on mobile devices.',
+                'filename': 'preface-to-college-physics-7.epub',
                 },
             {
-                u'created': None,
-                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'filename': u'preface-to-college-physics-7.zip',
-                u'format': u'Offline ZIP',
-                u'path': quote(u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip'),
-                u'size': 0,
-                u'state': u'missing'}
+                'created': None,
+                'details': 'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                'filename': 'preface-to-college-physics-7.zip',
+                'format': 'Offline ZIP',
+                'path': quote('/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip'),
+                'size': 0,
+                'state': 'missing'}
             ])
 
     def test_extra_latest(self):
@@ -1170,38 +1179,38 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
-            u'canPublish': [
-                u'OpenStaxCollege',
-                u'cnxcap',
+            'canPublish': [
+                'OpenStaxCollege',
+                'cnxcap',
                 ],
-            u'isLatest': True,
-            u'downloads': [{
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
-                               .format(id, version)),
-                u'format': u'PDF',
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'filename': u'useful-inførmation-5.pdf',
-                u'size': 0,
-                u'state': u'good'},
+            'isLatest': True,
+            'downloads': [{
+                'created': '2015-03-04T10:03:29-08:00',
+                'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
+                              .format(id, version).encode('utf-8')),
+                'format': 'PDF',
+                'details': 'PDF file, for viewing content offline and printing.',
+                'filename': 'useful-inførmation-5.pdf',
+                'size': 0,
+                'state': 'good'},
                 {
-                u'created': None,
-                u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'filename': u'useful-inf\xf8rmation-5.epub',
-                u'format': u'EPUB',
-                u'path': quote('/exports/{}@{}.epub/useful-inførmation-5.epub'
-                               .format(id, version)),
-                u'size': 0,
-                u'state': u'missing'},
+                'created': None,
+                'details': 'Electronic book format file, for viewing on mobile devices.',
+                'filename': 'useful-inf\xf8rmation-5.epub',
+                'format': 'EPUB',
+                'path': quote('/exports/{}@{}.epub/useful-inførmation-5.epub'
+                              .format(id, version).encode('utf-8')),
+                'size': 0,
+                'state': 'missing'},
                 {
-                u'created': None,
-                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'filename': u'useful-inf\xf8rmation-5.zip',
-                u'format': u'Offline ZIP',
-                u'path': quote('/exports/{}@{}.zip/useful-inførmation-5.zip'
-                               .format(id, version)),
-                u'size': 0,
-                u'state': u'missing'}],
+                'created': None,
+                'details': 'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                'filename': 'useful-inf\xf8rmation-5.zip',
+                'format': 'Offline ZIP',
+                'path': quote('/exports/{}@{}.zip/useful-inførmation-5.zip'
+                              .format(id, version).encode('utf-8')),
+                'size': 0,
+                'state': 'missing'}],
             })
 
     def test_extra_not_found(self):
@@ -1255,12 +1264,12 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['query'], {
-            u'sort': [],
-            u'per_page': 20,
-            u'page': 1,
-            u'limits': [{u'tag': u'text', u'value': u'college physics'},
-                        {u'tag': u'authorID', u'index': 0,
-                         u'value': u'cnxcap'}],
+            'sort': [],
+            'per_page': 20,
+            'page': 1,
+            'limits': [{'tag': 'text', 'value': 'college physics'},
+                       {'tag': 'authorID', 'index': 0,
+                        'value': 'cnxcap'}],
             })
 
     def test_author_special_case_search(self):
@@ -1271,13 +1280,12 @@ class ViewsTestCase(unittest.TestCase):
         '''
 
         # Build the request
-        import string
         sub = 'subject:"Arguing with Judge Judy: Popular ‘Logic’ on TV Judge Shows"'
         auth0 = 'authorID:cnxcap'
         auth1 = 'authorID:OpenStaxCollege'
         auth2 = 'authorID:DrBunsenHoneydew'
         fields = [sub, auth0, auth1, auth2]
-        self.request.params = {'q': string.join(fields, ' ')}
+        self.request.params = {'q': ' '.join(fields)}
 
         from ..views import search
         results = search(self.request).json_body
@@ -1285,22 +1293,22 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['total'], 0)
 
         expected = [
-            {u'surname': u'Physics',
-             u'firstname': u'College',
-             u'suffix': None,
-             u'title': None,
-             u'fullname': u'OSC Physics Maintainer',
-             u'id': u'cnxcap',
+            {'surname': 'Physics',
+             'firstname': 'College',
+             'suffix': None,
+             'title': None,
+             'fullname': 'OSC Physics Maintainer',
+             'id': 'cnxcap',
              },
-            {u'surname': None,
-             u'firstname': u'OpenStax College',
-             u'suffix': None,
-             u'title': None,
-             u'fullname': u'OpenStax College',
-             u'id': u'OpenStaxCollege',
+            {'surname': None,
+             'firstname': 'OpenStax College',
+             'suffix': None,
+             'title': None,
+             'fullname': 'OpenStax College',
+             'id': 'OpenStaxCollege',
              },
-            {u'fullname': None,
-             u'id': u'DrBunsenHoneydew',
+            {'fullname': None,
+             'id': 'DrBunsenHoneydew',
              },
             ]
 
@@ -1334,10 +1342,10 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query'], {
-            u'per_page': 20,
-            u'page': 1,
-            u'limits': [{u'tag': u'subject', u'value': u'Science and Technology'}],
-            u'sort': []})
+            'per_page': 20,
+            'page': 1,
+            'limits': [{'tag': 'subject', 'value': 'Science and Technology'}],
+            'sort': []})
         self.assertEqual(results['results']['total'], 7)
 
     def test_search_with_subject(self):
@@ -1353,13 +1361,13 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query'], {
-            u'per_page': 20,
-            u'page': 1,
-            u'limits': [
-                {u'tag': u'title', u'value': u'college physics'},
-                {u'tag': u'subject', u'value': 'Science and Technology'},
+            'per_page': 20,
+            'page': 1,
+            'limits': [
+                {'tag': 'title', 'value': 'college physics'},
+                {'tag': 'subject', 'value': 'Science and Technology'},
                 ],
-            u'sort': []})
+            'sort': []})
         self.assertEqual(results['results']['total'], 1)
 
     def test_search_highlight_abstract(self):
@@ -1438,15 +1446,15 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results, {
-            u'query': {
-                u'limits': [],
-                u'per_page': 20,
-                u'page': 1,
+            'query': {
+                'limits': [],
+                'per_page': 20,
+                'page': 1,
                 },
-            u'results': {
-                u'items': [],
-                u'total': 0,
-                u'limits': [],
+            'results': {
+                'items': [],
+                'total': 0,
+                'limits': [],
                 },
             })
 
@@ -1461,16 +1469,16 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results, json.dumps({
-            u'query': {
-                u'limits': [],
-                u'per_page': 20,
-                u'page': 1,
+        self.assertEqual(results.decode('utf-8'), json.dumps({
+            'query': {
+                'limits': [],
+                'per_page': 20,
+                'page': 1,
                 },
-            u'results': {
-                u'items': [],
-                u'total': 0,
-                u'limits': [],
+            'results': {
+                'items': [],
+                'total': 0,
+                'limits': [],
                 },
             }))
 
@@ -1486,32 +1494,32 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         expected = {
-            u'query': {
-                u'limits': [{u'tag': u'text', u'value': u'你好'}],
-                u'sort': [],
-                u'per_page': 20,
-                u'page': 1,
+            'query': {
+                'limits': [{'tag': 'text', 'value': '你好'}],
+                'sort': [],
+                'per_page': 20,
+                'page': 1,
                 },
-            u'results': {
-                u'items': [],
-                u'total': 0,
-                u'limits': [
-                    {u'tag': u'type',
-                     u'values': [
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.collection'},
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.module'},
+            'results': {
+                'items': [],
+                'total': 0,
+                'limits': [
+                    {'tag': 'type',
+                     'values': [
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.collection'},
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.module'},
                          ],
                      },
                     ],
-                u'auxiliary': {
-                    u'authors': [],
-                    u'types': [
-                        {u'name': u'Book',
-                         u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Page',
-                         u'id': u'application/vnd.org.cnx.module'},
+                'auxiliary': {
+                    'authors': [],
+                    'types': [
+                        {'name': 'Book',
+                         'id': 'application/vnd.org.cnx.collection'},
+                        {'name': 'Page',
+                         'id': 'application/vnd.org.cnx.module'},
                         ],
                     },
                 },
@@ -1530,32 +1538,32 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         expected = {
-            u'query': {
-                u'limits': [{u'tag': u'text', u'value': ur":\.+'?"}],
-                u'sort': [],
-                u'per_page': 20,
-                u'page': 1,
+            'query': {
+                'limits': [{'tag': 'text', 'value': ":\.+'?"}],
+                'sort': [],
+                'per_page': 20,
+                'page': 1,
                 },
-            u'results': {
-                u'items': [],
-                u'total': 0,
-                u'limits': [
-                    {u'tag': u'type',
-                     u'values': [
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.collection'},
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.module'},
+            'results': {
+                'items': [],
+                'total': 0,
+                'limits': [
+                    {'tag': 'type',
+                     'values': [
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.collection'},
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.module'},
                          ],
                      },
                     ],
-                u'auxiliary': {
-                    u'authors': [],
-                    u'types': [
-                        {u'name': u'Book',
-                         u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Page',
-                         u'id': u'application/vnd.org.cnx.module'},
+                'auxiliary': {
+                    'authors': [],
+                    'types': [
+                        {'name': 'Book',
+                         'id': 'application/vnd.org.cnx.collection'},
+                        {'name': 'Page',
+                         'id': 'application/vnd.org.cnx.module'},
                         ],
                     },
                 },
@@ -1574,36 +1582,36 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         expected = {
-            u'query': {
-                u'limits': [
-                    {u'tag': u'text', u'value': u'a phrase'},
-                    {u'tag': u'text', u'value': u'something else'},
-                    {u'tag': u'author', u'value': 'first last'},
+            'query': {
+                'limits': [
+                    {'tag': 'text', 'value': 'a phrase'},
+                    {'tag': 'text', 'value': 'something else'},
+                    {'tag': 'author', 'value': 'first last'},
                     ],
-                u'sort': [u'pubDate'],
-                u'per_page': 20,
-                u'page': 1,
+                'sort': ['pubDate'],
+                'per_page': 20,
+                'page': 1,
                 },
-            u'results': {
-                u'items': [],
-                u'total': 0,
-                u'limits': [
-                    {u'tag': u'type',
-                     u'values': [
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.collection'},
-                         {u'count': 0,
-                          u'value': u'application/vnd.org.cnx.module'},
+            'results': {
+                'items': [],
+                'total': 0,
+                'limits': [
+                    {'tag': 'type',
+                     'values': [
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.collection'},
+                         {'count': 0,
+                          'value': 'application/vnd.org.cnx.module'},
                          ],
                      },
                     ],
-                u'auxiliary': {
-                    u'authors': [],
-                    u'types': [
-                        {u'name': u'Book',
-                         u'id': u'application/vnd.org.cnx.collection'},
-                        {u'name': u'Page',
-                         u'id': u'application/vnd.org.cnx.module'},
+                'auxiliary': {
+                    'authors': [],
+                    'types': [
+                        {'name': 'Book',
+                         'id': 'application/vnd.org.cnx.collection'},
+                        {'name': 'Page',
+                         'id': 'application/vnd.org.cnx.module'},
                         ],
                     },
                 },
@@ -1625,7 +1633,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query']['limits'][-1],
-                         {u'tag': u'type', u'value': u'page'})
+                         {'tag': 'type', 'value': 'page'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'application/vnd.org.cnx.module')
@@ -1644,7 +1652,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query']['limits'][-1],
-                         {u'tag': u'type', u'value': u'module'})
+                         {'tag': 'type', 'value': 'module'})
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'application/vnd.org.cnx.module')
@@ -1664,7 +1672,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query']['limits'][-1],
-                         {u'tag': u'type', u'value': u'book'})
+                         {'tag': 'type', 'value': 'book'})
         self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'application/vnd.org.cnx.collection')
@@ -1683,7 +1691,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query']['limits'][-1],
-                         {u'tag': u'type', u'value': u'collection'})
+                         {'tag': 'type', 'value': 'collection'})
         self.assertEqual(results['results']['total'], 2)
         self.assertEqual(results['results']['items'][0]['mediaType'],
                          'application/vnd.org.cnx.collection')
@@ -1777,7 +1785,7 @@ class ViewsTestCase(unittest.TestCase):
                          'Physics: An Introduction')
         self.assertEqual(
                 results['results']['items'][2]['title'],
-                u'Introduction: Further Applications of Newton’s Laws')
+                'Introduction: Further Applications of Newton’s Laws')
         pub_year = [limit['values'] for limit in results['results']['limits']
                     if limit['tag'] == 'pubYear'][0]
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
@@ -2010,111 +2018,111 @@ VALUES
         metadata = extras(self.request).json_body
         messages = metadata.pop('messages')
         self.assertEqual(metadata, {
-            u'subjects': [{u'id': 1, u'name': u'Arts',
-                           u'count': {u'module': 0, u'collection': 0},
-                           },
-                          {u'id': 2, u'name': u'Business',
-                           u'count': {u'module': 0, u'collection': 0},
-                           },
-                          {u'id': 3, u'name': u'Humanities',
-                           u'count': {u'module': 0, u'collection': 0},
-                           },
-                          {u'id': 4, u'name': u'Mathematics and Statistics',
-                           u'count': {u'module': 7, u'collection': 1},
-                           },
-                          {u'id': 5, u'name': u'Science and Technology',
-                           u'count': {u'module': 6, u'collection': 1},
-                           },
-                          {u'id': 6, u'name': u'Social Sciences',
-                           u'count': {u'module': 0, u'collection': 0},
-                           }],
-            u'featuredLinks': [{
-                u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                u'title': u'College Physics',
-                u'version': u'7.1',
-                u'legacy_id': u'col11406',
-                u'legacy_version': u'1.7',
-                u'resourcePath': u'/resources/6214e8dcdf2824dbf830b4a0d77a3fa2f53608d2',
-                u'type': u'OpenStax Featured',
-                u'abstract': u"""<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" \
+            'subjects': [{'id': 1, 'name': 'Arts',
+                          'count': {'module': 0, 'collection': 0},
+                          },
+                         {'id': 2, 'name': 'Business',
+                          'count': {'module': 0, 'collection': 0},
+                          },
+                         {'id': 3, 'name': 'Humanities',
+                          'count': {'module': 0, 'collection': 0},
+                          },
+                         {'id': 4, 'name': 'Mathematics and Statistics',
+                          'count': {'module': 7, 'collection': 1},
+                          },
+                         {'id': 5, 'name': 'Science and Technology',
+                          'count': {'module': 6, 'collection': 1},
+                          },
+                         {'id': 6, 'name': 'Social Sciences',
+                          'count': {'module': 0, 'collection': 0},
+                          }],
+            'featuredLinks': [{
+                'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                'title': 'College Physics',
+                'version': '7.1',
+                'legacy_id': 'col11406',
+                'legacy_version': '1.7',
+                'resourcePath': '/resources/6214e8dcdf2824dbf830b4a0d77a3fa2f53608d2',
+                'type': 'OpenStax Featured',
+                'abstract': """<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" \
 xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">\
 This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. \
 This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics \
 application problems.</div>""",
                 }],
-            u'licenses': [{u'code': u'by',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution License',
-                           u'url': u'http://creativecommons.org/licenses/by/1.0',
-                           u'version': u'1.0'},
-                          {u'code': u'by-nd',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NoDerivs License',
-                           u'url': u'http://creativecommons.org/licenses/by-nd/1.0',
-                           u'version': u'1.0'},
-                          {u'code': u'by-nd-nc',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NoDerivs-NonCommercial License',
-                           u'url': u'http://creativecommons.org/licenses/by-nd-nc/1.0',
-                           u'version': u'1.0'},
-                          {u'code': u'by-nc',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NonCommercial License',
-                           u'url': u'http://creativecommons.org/licenses/by-nc/1.0',
-                           u'version': u'1.0'},
-                          {u'code': u'by-sa',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-ShareAlike License',
-                           u'url': u'http://creativecommons.org/licenses/by-sa/1.0',
-                           u'version': u'1.0'},
-                          {u'code': u'by',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution License',
-                           u'url': u'http://creativecommons.org/licenses/by/2.0/',
-                           u'version': u'2.0'},
-                          {u'code': u'by-nd',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NoDerivs License',
-                           u'url': u'http://creativecommons.org/licenses/by-nd/2.0',
-                           u'version': u'2.0'},
-                          {u'code': u'by-nd-nc',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NoDerivs-NonCommercial License',
-                           u'url': u'http://creativecommons.org/licenses/by-nd-nc/2.0',
-                           u'version': u'2.0'},
-                          {u'code': u'by-nc',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-NonCommercial License',
-                           u'url': u'http://creativecommons.org/licenses/by-nc/2.0',
-                           u'version': u'2.0'},
-                          {u'code': u'by-sa',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution-ShareAlike License',
-                           u'url': u'http://creativecommons.org/licenses/by-sa/2.0',
-                           u'version': u'2.0'},
-                          {u'code': u'by',
-                           u'isValidForPublication': False,
-                           u'name': u'Creative Commons Attribution License',
-                           u'url': u'http://creativecommons.org/licenses/by/3.0/',
-                           u'version': u'3.0'},
-                          {u'code': u'by',
-                           u'isValidForPublication': True,
-                           u'name': u'Creative Commons Attribution License',
-                           u'url': u'http://creativecommons.org/licenses/by/4.0/',
-                           u'version': u'4.0'},
-                          {u'code': u'by-nc-sa',
-                           u'isValidForPublication': True,
-                           u'name': u'Creative Commons Attribution-NonCommercial-ShareAlike License',
-                           u'url': u'http://creativecommons.org/licenses/by-nc-sa/4.0/',
-                           u'version': u'4.0'}],
+            'licenses': [{'code': 'by',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution License',
+                          'url': 'http://creativecommons.org/licenses/by/1.0',
+                          'version': '1.0'},
+                         {'code': 'by-nd',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NoDerivs License',
+                          'url': 'http://creativecommons.org/licenses/by-nd/1.0',
+                          'version': '1.0'},
+                         {'code': 'by-nd-nc',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NoDerivs-NonCommercial License',
+                          'url': 'http://creativecommons.org/licenses/by-nd-nc/1.0',
+                          'version': '1.0'},
+                         {'code': 'by-nc',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NonCommercial License',
+                          'url': 'http://creativecommons.org/licenses/by-nc/1.0',
+                          'version': '1.0'},
+                         {'code': 'by-sa',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-ShareAlike License',
+                          'url': 'http://creativecommons.org/licenses/by-sa/1.0',
+                          'version': '1.0'},
+                         {'code': 'by',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution License',
+                          'url': 'http://creativecommons.org/licenses/by/2.0/',
+                          'version': '2.0'},
+                         {'code': 'by-nd',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NoDerivs License',
+                          'url': 'http://creativecommons.org/licenses/by-nd/2.0',
+                          'version': '2.0'},
+                         {'code': 'by-nd-nc',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NoDerivs-NonCommercial License',
+                          'url': 'http://creativecommons.org/licenses/by-nd-nc/2.0',
+                          'version': '2.0'},
+                         {'code': 'by-nc',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-NonCommercial License',
+                          'url': 'http://creativecommons.org/licenses/by-nc/2.0',
+                          'version': '2.0'},
+                         {'code': 'by-sa',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution-ShareAlike License',
+                          'url': 'http://creativecommons.org/licenses/by-sa/2.0',
+                          'version': '2.0'},
+                         {'code': 'by',
+                          'isValidForPublication': False,
+                          'name': 'Creative Commons Attribution License',
+                          'url': 'http://creativecommons.org/licenses/by/3.0/',
+                          'version': '3.0'},
+                         {'code': 'by',
+                          'isValidForPublication': True,
+                          'name': 'Creative Commons Attribution License',
+                          'url': 'http://creativecommons.org/licenses/by/4.0/',
+                          'version': '4.0'},
+                         {'code': 'by-nc-sa',
+                          'isValidForPublication': True,
+                          'name': 'Creative Commons Attribution-NonCommercial-ShareAlike License',
+                          'url': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+                          'version': '4.0'}],
             })
         expected_messages = [
-            {u'message': u'This site is scheduled to be down for maintaince, please excuse the interuption. Thank you.',
-             u'name': u'Maintenance',
-             u'priority': 1},
-            {u'message': u"We have free books at free prices! Don't miss out!",
-             u'name': u'Notice',
-             u'priority': 8}
+            {'message': 'This site is scheduled to be down for maintaince, please excuse the interuption. Thank you.',
+             'name': 'Maintenance',
+             'priority': 1},
+            {'message': "We have free books at free prices! Don't miss out!",
+             'name': 'Notice',
+             'priority': 8}
             ]
 
         def _remove_timestamps(messages):
@@ -2130,7 +2138,7 @@ application problems.</div>""",
         sitemap = sitemap(self.request).body
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
         with open(expected_file, 'r') as file:
-            self.assertMultiLineEqual(sitemap, file.read())
+            self.assertMultiLineEqual(sitemap.decode('utf-8'), file.read())
 
     def test_robots(self):
         # Call the view
@@ -2155,4 +2163,4 @@ application problems.</div>""",
         # Check robots.txt content
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
         with open(expected_file, 'r') as f:
-            self.assertMultiLineEqual(robots, f.read())
+            self.assertMultiLineEqual(robots.decode('utf-8'), f.read())

@@ -53,15 +53,16 @@ class ModuleHandler(sax.ContentHandler):
         self.parents = [None]
         self.childorder = 0
         self.map = {}
-        self.tag = u''
-        self.contentid = u''
-        self.version = u''
-        self.title = u''
+        self.tag = ''
+        self.contentid = ''
+        self.version = ''
+        self.title = ''
         self.nodeid = 0
         self.derivedfrom = [None]
 
-    def startElementNS(self, (uri, localname), qname, attrs):
-        self.map[localname] = u''
+    def startElementNS(self, uri_localname, qname, attrs):
+        uri, localname = uri_localname
+        self.map[localname] = ''
         self.tag = localname
 
         if localname == 'module':
@@ -86,7 +87,8 @@ class ModuleHandler(sax.ContentHandler):
     def characters(self,content):
         self.map[self.tag] += content
 
-    def endElementNS(self, (uris, localname), qname):
+    def endElementNS(self, uri_localname, qname):
+        uri, localname = uri_localname
         if localname == 'content-id' and not self.derivedfrom[-1]:
             self.contentid = self.map[localname]
         elif localname == 'version' and not self.derivedfrom[-1]:

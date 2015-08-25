@@ -5,11 +5,15 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import os
 import json
 import logging
 import psycopg2
-import urlparse
+try:
+    import urllib.parse as urlparse  # python 3
+except ImportError:
+    import urlparse  # python 2
 
 from lxml import etree
 from cnxquerygrammar.query_parser import grammar, DictFormater
@@ -23,6 +27,7 @@ from pyramid.view import view_config
 
 from . import config
 from . import cache
+from . import IS_PY2
 # FIXME double import
 from . import database
 from .database import SQL, get_tree
@@ -151,7 +156,7 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 'details': type_info['description'],
                 'path': request.route_path(
                     'export', ident_hash=join_ident_hash(id, version),
-                    type=type_name, ignore=u'/{}'.format(filename))
+                    type=type_name, ignore='/{}'.format(filename))
                 }
         except ExportError as e:
             # Some other problem, skip it
@@ -186,14 +191,14 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     legacy_version = metadata['legacy_version']
     legacy_filename = '{}-{}.{}'.format(
         legacy_id, legacy_version, LEGACY_EXTENSION_MAP[file_extension])
-    slugify_title_filename = u'{}-{}.{}'.format(slugify(metadata['title']),
-                                                version, file_extension)
+    slugify_title_filename = '{}-{}.{}'.format(slugify(metadata['title']),
+                                               version, file_extension)
 
     for exports_dir in exports_dirs:
         filepath = os.path.join(exports_dir, filename)
         legacy_filepath = os.path.join(exports_dir, legacy_filename)
         try:
-            with open(filepath, 'r') as file:
+            with open(filepath, 'rb') as file:
                 stats = os.fstat(file.fileno())
                 modtime = fromtimestamp(stats.st_mtime)
                 return (slugify_title_filename, mimetype,
@@ -202,7 +207,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
             # Let's see if the legacy file's there and make the new link if so
             # FIXME remove this code when we retire legacy
             try:
-                with open(legacy_filepath, 'r') as file:
+                with open(legacy_filepath, 'rb') as file:
                     stats = os.fstat(file.fileno())
                     modtime = fromtimestamp(stats.st_mtime)
                     os.link(legacy_filepath, filepath)
@@ -245,7 +250,7 @@ def html_listify(tree, root_ul_element):
 def tree_to_html(tree):
     ul = etree.Element('ul')
     html_listify([tree], ul)
-    return HTML_WRAPPER.format(etree.tostring(ul))
+    return HTML_WRAPPER.format(etree.tostring(ul).decode('utf-8'))
 
 
 def _get_page_in_book(page_uuid, page_version, book_uuid,
@@ -312,7 +317,10 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                     logger.debug("module found, but "
                                  "'index.cnxml.html' is missing.")
                     raise httpexceptions.HTTPNotFound()
-                result['content'] = content[:]
+                if IS_PY2:
+                    result['content'] = content[:].decode('utf-8')
+                else:
+                    result['content'] = content.tobytes().decode('utf-8')
 
     return result
 
@@ -351,7 +359,7 @@ def get_content_json(request):
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = 'application/json'
-    resp.body = result
+    resp.body = result.encode('utf-8')
     return resp
 
 
@@ -371,7 +379,7 @@ def get_content_html(request):
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = 'application/xhtml+xml'
-    resp.body = content
+    resp.body = content.encode('utf-8')
     return resp
 
 
@@ -416,7 +424,7 @@ def redirect_legacy_content(request):
                     resourceid = res[0]
                     raise httpexceptions.HTTPFound(request.route_path(
                         'resource', hash=resourceid,
-                        ignore=u'/{}'.format(filename)))
+                        ignore='/{}'.format(filename)))
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
@@ -469,7 +477,10 @@ def get_resource(request):
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = mimetype
-    resp.body = file[:]
+    if IS_PY2:
+        resp.body = file[:]
+    else:
+        resp.body = file.tobytes()
     return resp
 
 
@@ -495,7 +506,7 @@ def get_extra(request):
 
     resp = request.response
     resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
+    resp.body = json.dumps(results).encode('utf-8')
     return resp
 
 
@@ -520,7 +531,7 @@ def get_export(request):
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = mimetype
-    resp.content_disposition = u'attached; filename={}'.format(filename)
+    resp.content_disposition = 'attached; filename={}'.format(filename)
     resp.body = file_content
     return resp
 
@@ -530,15 +541,15 @@ def search(request):
     """Search API
     """
     empty_response = json.dumps({
-        u'query': {
-            u'limits': [],
-            u'per_page': DEFAULT_PER_PAGE,
-            u'page': 1,
+        'query': {
+            'limits': [],
+            'per_page': DEFAULT_PER_PAGE,
+            'page': 1,
             },
-        u'results': {
-            u'items': [],
-            u'total': 0,
-            u'limits': [],
+        'results': {
+            'items': [],
+            'total': 0,
+            'limits': [],
             },
         })
 
@@ -549,7 +560,7 @@ def search(request):
     try:
         search_terms = params.get('q', '')
     except IndexError:
-        resp.body = empty_response
+        resp.body = empty_response.encode('utf-8')
         return resp
     query_type = params.get('t', None)
     if query_type is None or query_type not in QUERY_TYPES:
@@ -570,7 +581,7 @@ def search(request):
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
-        resp.body = empty_response
+        resp.body = empty_response.encode('utf-8')
         return resp
 
     db_results = cache.search(
@@ -613,7 +624,7 @@ def search(request):
             'pubDate': record['pubDate'],
             })
     result_limits = []
-    for count_name, values in db_results.counts.items():
+    for count_name, values in sorted(db_results.counts.items()):
         if not values:
             continue
         result_limits.append({'tag': count_name,
@@ -662,7 +673,7 @@ def search(request):
         results['query']['limits'] = limits
         results['results']['auxiliary']['authors'] = authors_results
 
-    resp.body = json.dumps(results)
+    resp.body = json.dumps(results).encode('utf-8')
 
     return resp
 
@@ -728,7 +739,7 @@ def extras(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json'
-    resp.body = json.dumps(metadata)
+    resp.body = json.dumps(metadata).encode('utf-8')
     return resp
 
 
@@ -764,7 +775,7 @@ def sitemap(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'text/xml'
-    resp.body = xml()
+    resp.body = bytes(xml)
     return resp
 
 
@@ -775,15 +786,15 @@ def robots(request):
     """
     robots_dot_txt = Robots(sitemap=request.route_url('sitemap'))
 
-    bot_delays = {
-        '*': '',
-        'ScoutJet': '10',
-        'Baiduspider': '10',
-        'BecomeBot': '20',
-        'Slurp': '10'
-        }
+    bot_delays = [
+        ('*', ''),
+        ('ScoutJet', '10'),
+        ('Baiduspider', '10'),
+        ('BecomeBot', '20'),
+        ('Slurp', '10')
+        ]
 
-    for bot, delay in bot_delays.iteritems():
+    for bot, delay in bot_delays:
         robots_dot_txt.add_bot(bot, delay, PAGES_TO_BLOCK)
 
     gmt = timezone('GMT')
@@ -796,5 +807,5 @@ def robots(request):
     resp.cache_control = 'max-age=36000, must-revalidate'
     resp.last_modified = html_date(datetime.now(gmt))
     resp.expires = html_date(exp_time)
-    resp.body = robots_dot_txt.to_string()
+    resp.body = bytes(robots_dot_txt)
     return resp

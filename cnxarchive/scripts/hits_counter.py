@@ -11,6 +11,7 @@ Each line is processed as a hit for a document.
 The counts are processed into a time range
 and inserted into the cnx-archive database.
 """
+from __future__ import unicode_literals
 import re
 import argparse
 import gzip

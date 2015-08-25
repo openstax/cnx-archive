@@ -2,7 +2,7 @@
 import sys
 from setuptools import setup, find_packages
 
-IS_PY3 = sys.version_info > (3,)
+HAS_MOCK = sys.version_info >= (3, 3)
 
 install_requires = (
     'cnx-cnxml-transforms',  # used in triggers
@@ -20,7 +20,7 @@ tests_require = [
     ]
 description = "An archive for Connexions documents."
 
-if not IS_PY3:
+if not HAS_MOCK:
     tests_require.append('mock==1.0.1')
 
 setup(

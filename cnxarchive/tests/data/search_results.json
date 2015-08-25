@@ -138,15 +138,6 @@
   }, 
   "limits": [
    {
-    "tag": "pubYear", 
-    "values": [
-     {
-      "count": 3, 
-      "value": "2013"
-     }
-    ]
-   }, 
-   {
     "tag": "authorID", 
     "values": [
      {
@@ -158,19 +149,6 @@
       "count": 1, 
       "value": "cnxcap",
       "index": 0
-     }
-    ]
-   }, 
-   {
-    "tag": "type", 
-    "values": [
-     {
-      "count": 2, 
-      "value": "application/vnd.org.cnx.collection"
-     }, 
-     {
-      "count": 1, 
-      "value": "application/vnd.org.cnx.module"
      }
     ]
    }, 
@@ -376,6 +354,15 @@
     ]
    }, 
    {
+    "tag": "pubYear",
+    "values": [
+     {
+      "count": 3,
+      "value": "2013"
+     }
+    ]
+   },
+   {
     "tag": "subject", 
     "values": [
      {
@@ -389,6 +376,19 @@
      {
       "count": 1, 
       "value": "Science and Technology"
+     }
+    ]
+   },
+   {
+    "tag": "type",
+    "values": [
+     {
+      "count": 2,
+      "value": "application/vnd.org.cnx.collection"
+     },
+     {
+      "count": 1,
+      "value": "application/vnd.org.cnx.module"
      }
     ]
    }
