@@ -34,18 +34,21 @@ FROM (SELECT
                 full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.authors)
+         ORDER BY idx(m.authors, u.username)
          ) AS user_rows) AS authors,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
                 full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.maintainers)
+         ORDER BY idx(m.maintainers, u.username)
          ) AS user_rows) AS publishers,
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname, last_name AS surname,
                 full_name as fullname, title, suffix
          FROM users AS u
          WHERE u.username = ANY (m.licensors)
+         ORDER BY idx(m.licensors, u.username)
          ) user_rows) AS licensors,
   p.uuid AS "parentId",
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
@@ -56,6 +59,7 @@ FROM (SELECT
                                full_name as fullname, title, suffix
          FROM users
          WHERE users.username::text = ANY (m.parentauthors)
+         ORDER BY idx(m.parentauthors, users.username)
          ) user_rows) as "parentAuthors",
   (SELECT row_to_json(parent_row)
    FROM (
