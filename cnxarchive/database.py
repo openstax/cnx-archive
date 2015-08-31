@@ -104,12 +104,6 @@ def initdb(settings):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(get_schema())
-            sql_constants = [os.path.join(DB_SCHEMA_DIRECTORY, filename)
-                             for filename in os.listdir(DB_SCHEMA_DIRECTORY)
-                             if filename.startswith('constant-')]
-            for filepath in sql_constants:
-                with open(filepath, 'r') as f:
-                    cursor.execute(f.read())
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):

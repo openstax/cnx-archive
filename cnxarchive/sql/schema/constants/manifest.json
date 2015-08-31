@@ -1,0 +1,6 @@
+[
+    "licenses.sql",
+    "roles.sql",
+    "service-states.sql",
+    "tags.sql"
+]
