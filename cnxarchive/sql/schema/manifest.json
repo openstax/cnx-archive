@@ -20,11 +20,12 @@
         "description": "Custom aggregates used in grouped select queries."
     },
     "tables.sql",
-    "legacy-tables.sql",
     "triggers.sql",
-    "legacy-triggers.sql",
     "indexes.sql",
-    "legacy-indexes.sql",
+    {
+        "file": "legacy",
+        "description": "Adds legacy tables that are not directly used by archive."
+    },
     "views.sql",
     "trees.sql",
     "fulltext-indexing.sql",
