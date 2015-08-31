@@ -1539,7 +1539,6 @@ RETURNING
         self.assertEqual(uuid_, controls_uuid)
         self.assertEqual(license_id, controls_license_id)
 
-
     @testing.db_connect
     def test_new_module_user_upsert(self, cursor):
         """Verify legacy publishing of a new module upserts users
@@ -1598,7 +1597,6 @@ ORDER BY username
         self.assertEqual(user_records[1],
                          ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
 
-
     @testing.db_connect
     def test_update_user_update(self, cursor):
         """Verify legacy updating of user account also updates rewrite
@@ -1637,7 +1635,6 @@ ORDER BY username
 
         # Check for the update.
         self.assertEqual(rewrite_user_record, ('cnxcap', 'Univeristy', 'Maths', 'OSC Maths Maintainer'))
-
 
     @testing.db_connect
     def test_new_moduleoptionalroles_user_insert(self, cursor):
