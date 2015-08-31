@@ -17,9 +17,10 @@ from cnxepub.models import flatten_tree_to_ident_hashes
 from datetime import datetime, timedelta
 from pytz import timezone
 from re import compile
+from pyramid import httpexceptions
+from pyramid.view import view_config
 
 from . import get_settings
-from . import httpexceptions
 from . import config
 from . import cache
 # FIXME double import
@@ -244,9 +245,9 @@ def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=F
     return book_uuid, version
 
 
-def _get_content_json(environ=None, ident_hash=None, reqtype=None):
+def _get_content_json(request=None, ident_hash=None, reqtype=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
-    routing_args = environ and environ.get('wsgiorg.routing_args', {}) or {}
+    routing_args = request and request.matchdict or {}
     settings = get_settings()
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
@@ -319,24 +320,28 @@ def notblocked(page):
 #   Views   #
 # ######### #
 
-def get_content_json(environ, start_response):
+
+@view_config(route_name='content-json', request_method='GET')
+def get_content_json(request):
     """Retrieve a piece of content as JSON using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ=environ, reqtype='json')
+    result = _get_content_json(request=request, reqtype='json')
 
     result = json.dumps(result)
-    status = "200 OK"
-    headers = [('Content-type', 'application/json',)]
-    start_response(status, headers)
-    return [result]
+    resp = request.response
+    resp.status = "200 OK"
+    resp.content_type = 'application/json'
+    resp.body = result
+    return resp
 
 
-def get_content_html(environ, start_response):
+@view_config(route_name='content-html', request_method='GET')
+def get_content_html(request):
     """Retrieve a piece of content as HTML using
     the ident-hash (uuid@version).
     """
-    result = _get_content_json(environ=environ, reqtype='html')
+    result = _get_content_json(request=request, reqtype='html')
 
     media_type = result['mediaType']
     if media_type == MODULE_MIMETYPE:
@@ -344,29 +349,34 @@ def get_content_html(environ, start_response):
     elif media_type == COLLECTION_MIMETYPE:
         content = tree_to_html(result['tree'])
 
-    status = "200 OK"
-    headers = [('Content-type', 'application/xhtml+xml',)]
-    start_response(status, headers)
-    return [content]
+    resp = request.response
+    resp.status = "200 OK"
+    resp.content_type = 'application/xhtml+xml'
+    resp.body = content
+    return resp
 
 
-def get_content(environ, start_response):
+@view_config(route_name='content', request_method='GET')
+def get_content(request):
     """Retrieve a piece of content using the ident-hash (uuid@version).
     Depending on the HTTP_ACCEPT header return HTML or JSON.
     """
-    if 'application/xhtml+xml' in environ.get('HTTP_ACCEPT', ''):
-        return get_content_html(environ, start_response)
+    if 'application/xhtml+xml' in request.headers.get('ACCEPT', ''):
+        return get_content_html(request)
 
     else:
-        return get_content_json(environ, start_response)
+        return get_content_json(request)
 
 
-def redirect_legacy_content(environ, start_response):
+@view_config(route_name='legacy-redirect', request_method='GET')
+@view_config(route_name='legacy-redirect-latest', request_method='GET')
+@view_config(route_name='legacy-redirect-w-version', request_method='GET')
+def redirect_legacy_content(request):
     """Redirect from legacy /content/id/version url to new /contents/uuid@version.
        Handles collection context (book) as well
     """
     settings = get_settings()
-    routing_args = environ['wsgiorg.routing_args']
+    routing_args = request.matchdict
     objid = routing_args['objid']
     objver = routing_args.get('objver')
     filename = routing_args.get('filename')
@@ -390,9 +400,9 @@ def redirect_legacy_content(environ, start_response):
                     raise httpexceptions.HTTPNotFound()
 
 
-    params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
+    params = request.params
     if params.get('collection'): # page in book
-        objid, objver = split_legacy_hash(params['collection'][0])
+        objid, objver = split_legacy_hash(params['collection'])
         book_uuid, book_version = _convert_legacy_id(objid, objver)
         if book_uuid:
             id, version = _get_page_in_book(id, version, book_uuid, book_version)
@@ -415,10 +425,11 @@ def _convert_legacy_id(objid, objver=None):
                 return (None, None)
 
 
-def get_resource(environ, start_response):
+@view_config(route_name='resource', request_method='GET')
+def get_resource(request):
     """Retrieve a file's data."""
     settings = get_settings()
-    hash = environ['wsgiorg.routing_args']['hash']
+    hash = request.matchdict['hash']
 
     # Do the file lookup
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
@@ -430,18 +441,20 @@ def get_resource(environ, start_response):
             except TypeError:  # None returned
                 raise httpexceptions.HTTPNotFound()
 
-    status = "200 OK"
-    headers = [('Content-type', mimetype)]
-    start_response(status, headers)
-    return [file[:]]
+    resp = request.response
+    resp.status = "200 OK"
+    resp.content_type = mimetype
+    resp.body = file[:]
+    return resp
 
 
-def get_extra(environ, start_response):
+@view_config(route_name='content-extras', request_method='GET')
+def get_extra(request):
     """Return information about a module / collection that cannot be cached
     """
     settings = get_settings()
     exports_dirs = settings['exports-directories'].split()
-    args = environ['wsgiorg.routing_args']
+    args = request.matchdict
     id, version = split_ident_hash(args['ident_hash'])
     results = {}
 
@@ -454,16 +467,18 @@ def get_extra(environ, start_response):
             results['isLatest'] = is_latest(cursor, id, version)
             results['canPublish'] = database.get_module_can_publish(cursor, id)
 
-    headers = [('Content-type', 'application/json')]
-    start_response('200 OK', headers)
-    return [json.dumps(results)]
+    resp = request.response
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(results)
+    return resp
 
 
-def get_export(environ, start_response):
+@view_config(route_name='export', request_method='GET')
+def get_export(request):
     """Retrieve an export file."""
     settings = get_settings()
     exports_dirs = settings['exports-directories'].split()
-    args = environ['wsgiorg.routing_args']
+    args = request.matchdict
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
 
@@ -476,16 +491,16 @@ def get_export(environ, start_response):
                 logger.debug(str(e))
                 raise httpexceptions.HTTPNotFound()
 
-    status = "200 OK"
-    headers = [('Content-type', mimetype,),
-               ('Content-disposition',
-                'attached; filename={}'.format(filename),),
-               ]
-    start_response(status, headers)
-    return [file_content]
+    resp = request.response
+    resp.status = "200 OK"
+    resp.content_type = mimetype
+    resp.content_disposition = u'attached; filename={}'.format(filename)
+    resp.body = file_content
+    return resp
 
 
-def search(environ, start_response):
+@view_config(route_name='search', request_method='GET')
+def search(request):
     """Search API
     """
     empty_response = json.dumps({
@@ -501,24 +516,27 @@ def search(environ, start_response):
             },
         })
 
-    params = urlparse.parse_qs(environ.get('QUERY_STRING', ''))
+    params = request.params
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'application/json'
     try:
-        search_terms = params.get('q', [])[0]
+        search_terms = params.get('q', '')
     except IndexError:
-        start_response('200 OK', [('Content-type', 'application/json')])
-        return [empty_response]
+        resp.body = empty_response
+        return resp
     query_type = params.get('t', None)
     if query_type is None or query_type not in QUERY_TYPES:
         query_type = DEFAULT_QUERY_TYPE
 
     try:
-        per_page = int(params.get('per_page', [])[0])
+        per_page = int(params.get('per_page', ''))
     except (TypeError, ValueError, IndexError):
         per_page = None
     if per_page is None or per_page <= 0:
         per_page = DEFAULT_PER_PAGE
     try:
-        page = int(params.get('page', [])[0])
+        page = int(params.get('page', ''))
     except (TypeError, ValueError, IndexError):
         page = None
     if page is None or page <= 0:
@@ -526,12 +544,12 @@ def search(environ, start_response):
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
-        start_response('200 OK', [('Content-type', 'application/json')])
-        return [empty_response]
+        resp.body = empty_response
+        return resp
 
     db_results = cache.search(
             query, query_type,
-            nocache=params.get('nocache', [''])[0].lower() == 'true')
+            nocache=params.get('nocache', '').lower() == 'true')
 
     authors = db_results.auxiliary['authors']
     # create a mapping for author id to index in auxiliary authors list
@@ -618,11 +636,9 @@ def search(environ, start_response):
         results['query']['limits'] = limits
         results['results']['auxiliary']['authors'] = authors_results
 
-    status = '200 OK'
-    headers = [('Content-type', 'application/json')]
-    start_response(status, headers)
+    resp.body = json.dumps(results)
 
-    return [json.dumps(results)]
+    return resp
 
 
 def _get_subject_list(cursor):
@@ -670,7 +686,8 @@ def _get_licenses(cursor):
     return [json_row[0] for json_row in cursor.fetchall()]
 
 
-def extras(environ, start_response):
+@view_config(route_name='extras', request_method='GET')
+def extras(request):
     """Return a dict with archive metadata for webview
     """
     settings = get_settings()
@@ -683,18 +700,20 @@ def extras(environ, start_response):
                 'licenses': _get_licenses(cursor),
                 }
 
-    status = '200 OK'
-    headers = [('Content-type', 'application/json')]
-    start_response(status, headers)
-    return [json.dumps(metadata)]
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(metadata)
+    return resp
 
 
-def sitemap(environ, start_response):
+@view_config(route_name='sitemap', request_method='GET')
+def sitemap(request):
     """Return a sitemap xml file for search engines
     """
     settings = get_settings()
     xml = Sitemap()
-    hostname = environ['HTTP_HOST']
+    hostname = request.headers['HOST']
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
@@ -715,18 +734,20 @@ def sitemap(environ, start_response):
                     xml.add_url('http://%s/contents/%s/%s' % (
                         hostname, r[0], r[1]), lastmod=r[2])
 
-    status = '200 OK'
-    headers = [('Content-type', 'text/xml')]
-    start_response(status, headers)
-    return [xml()]
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'text/xml'
+    resp.body = xml()
+    return resp
 
 
-def robots(environ, start_response):
+@view_config(route_name='robots', request_method='GET')
+def robots(request):
     """
     Returns a robots.txt file
     """
 
-    hostname = environ['HTTP_HOST']
+    hostname = request.headers['HOST']
     robots_dot_txt = Robots(sitemap='http://%s/sitemap.xml' % (hostname))
 
     bot_delays = {
@@ -740,16 +761,15 @@ def robots(environ, start_response):
     for bot, delay in bot_delays.iteritems():
         robots_dot_txt.add_bot(bot, delay, PAGES_TO_BLOCK)
 
-    status = '200 OK'
-
     gmt = timezone('GMT')
     # it expires in 5 days
     exp_time = datetime.now(gmt) + timedelta(5)
 
-    headers = [('Content-type', 'text/plain'),
-               ('Last-Modified', html_date(datetime.now(gmt))),
-               ('Cache-Control', 'max-age=36000, must-revalidate'),
-               ('Expires', html_date(exp_time))]
-    start_response(status, headers)
-
-    return [robots_dot_txt.to_string()]
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'text/plain'
+    resp.cache_control = 'max-age=36000, must-revalidate'
+    resp.last_modified = html_date(datetime.now(gmt))
+    resp.expires = html_date(exp_time)
+    resp.body = robots_dot_txt.to_string()
+    return resp
