@@ -291,7 +291,7 @@ class SearchTestCase(unittest.TestCase):
             'username': 'jmiller',
             'first_name': 'Jill',
             'last_name': 'Miller',
-            'full_name': 'Jill M.',
+            'full_name': 'Jill S. Miller',
             'title': None,
             }
 
@@ -310,7 +310,9 @@ INSERT INTO users
     def test_author_search(self, cursor):
         # Test the results of an author search.
         user_info = self._add_dummy_user()
-        query_params = [('author', user_info['first_name'])]
+        # we want to make sure an author can be searched by first and last name
+        # even if they have a middle initial
+        query_params = [('author', 'Jill Miller')]
 
 
         # Update two modules in include this user as an author.

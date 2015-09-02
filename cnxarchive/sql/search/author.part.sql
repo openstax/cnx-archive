@@ -9,7 +9,7 @@ SELECT
   %({0})s::text||'-::-author' as key
 FROM
   latest_modules AS m,
-  users AS u 
+  users AS u
 WHERE
   u.username = ANY (m.authors)
   AND
@@ -17,7 +17,7 @@ WHERE
    OR
    u.last_name ~* req(%({0})s::text)
    OR
-   u.full_name ~* req(%({0})s::text)
+   u.full_name ~* regexp_replace(req(%({0})s::text), ' ', '.+', 'g')
    OR
    u.username ~* req(%({0})s::text)
    )
