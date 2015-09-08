@@ -479,31 +479,6 @@ FROM (
     return modified_state
 
 
-def assign_document_controls_default_trigger(plpy, td):
-    """A compatibilty trigger to fill in ``uuid`` and ``licenseid`` columns
-    of the ``document_controls`` table that are not
-    populated when inserting publications from legacy.
-
-    This uuid default is not on ``modules.uuid`` column itself,
-    because the value needs to be loosely associated
-    with the ``document_controls`` entry
-    to prevent uuid collisions and bridge the pending publications gap.
-    """
-    modified_state = "OK"
-    uuid = td['new']['uuid']
-
-    # Only do the procedure if this is a legacy publication.
-    if uuid is None:
-        modified_state = "MODIFY"
-        plan = plpy.prepare("""\
-INSERT INTO document_controls (uuid, licenseid) VALUES (DEFAULT, $1)
-RETURNING uuid""", ('integer',))
-        uuid_ = plpy.execute(plan, (td['new']['licenseid'],))[0]['uuid']
-        td['new']['uuid'] = uuid_
-
-    return modified_state
-
-
 def upsert_document_acl_trigger(plpy, td):
     """A compatibility trigger to upsert authorization control entries (ACEs)
     for legacy publications.
