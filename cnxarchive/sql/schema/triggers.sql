@@ -80,8 +80,250 @@ CREATE TRIGGER delete_from_latest_version
 CREATE OR REPLACE FUNCTION republish_module ()
   RETURNS trigger
 AS $$
-  from cnxarchive.database import republish_module_trigger
-  return republish_module_trigger(plpy, TD)
+    """Postgres database trigger for republishing a module
+
+    When a module is republished, the versions of the collections that it is
+    part of will need to be updated (a minor update).
+
+
+    e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+    m1 is updated, we have a new row in the modules table with m1 v4
+
+    this trigger will create increment the minor version of c1, so we'll have
+    c1 v2.2
+
+    we need to create a collection tree for c1 v2.2 which is exactly the same
+    as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
+    """
+
+    def set_version(portal_type, legacy_version):
+        """Sets the major_version and minor_version if they are not set
+        """
+        major = TD['new']['major_version']
+        minor = TD['new']['minor_version']
+        modified = 'OK'
+        legacy_major, legacy_minor = legacy_version.split('.')
+
+        if portal_type == 'Collection':
+            # For collections, both major and minor needs to be set
+            modified = 'MODIFY'
+            TD['new']['major_version'] = int(legacy_minor)
+            if TD['new']['minor_version'] is None:
+                TD['new']['minor_version'] = 1
+
+        elif portal_type == 'Module':
+            # For modules, major should be set and minor should be None
+            # N.B. a very few older modules had major=2 and minor zero-based. Add one for those
+            modified = 'MODIFY'
+            TD['new']['major_version'] = int(legacy_minor) + (int(legacy_major) - 1)
+            TD['new']['minor_version'] = None
+
+        return modified
+
+    def get_current_module_ident(moduleid):
+        sql = '''SELECT module_ident FROM modules
+                 WHERE moduleid = $1 ORDER BY revised DESC'''
+        plan = plpy.prepare(sql, ('text',))
+        results = plpy.execute(plan, (moduleid,), 1)
+        if results:
+            return results[0]['module_ident']
+
+    def get_module_uuid(moduleid):
+        plan = plpy.prepare('SELECT uuid FROM modules WHERE moduleid = $1',
+                            ('text',))
+        result = plpy.execute(plan, (moduleid,), 1)
+        if result:
+            return result[0]['uuid']
+
+    def get_collections(module_ident):
+        """Get all the collections that the module is part of
+        """
+        sql = '''
+        WITH RECURSIVE t(node, parent, path, document) AS (
+            SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
+            FROM trees tr
+            WHERE tr.documentid = $1
+        UNION ALL
+            SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
+            FROM trees c JOIN t ON (c.nodeid = t.parent)
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT m.module_ident
+        FROM t JOIN latest_modules m ON (t.document = m.module_ident)
+        WHERE t.parent IS NULL
+        '''
+        plan = plpy.prepare(sql, ('integer',))
+        for i in plpy.execute(plan, (module_ident,)):
+            yield i['module_ident']
+
+    def next_version(module_ident):
+        minor = get_minor_version(module_ident)
+        return minor + 1
+
+    def get_minor_version(module_ident):
+        sql = '''SELECT minor_version
+                FROM modules
+                WHERE module_ident = $1
+                ORDER BY revised DESC'''
+        plan = plpy.prepare(sql, ('integer',))
+        results = plpy.execute(plan, (module_ident,), 1)
+        if results:
+            return results[0]['minor_version']
+
+    def republish_collection(next_minor_version, collection_ident,
+            revised=None):
+        """Insert a new row for collection_ident with a new version and return
+        the module_ident of the row inserted
+        """
+        sql = '''
+        INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
+            abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
+            authors,maintainers,licensors,parentauthors,google_analytics,buylink,
+            major_version, minor_version)
+          SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
+            m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
+            m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
+            m.google_analytics, m.buylink, m.major_version, $1
+          FROM modules m
+          WHERE m.module_ident = $2
+        RETURNING module_ident
+        '''
+        if revised is None:
+            sql = sql.format('CURRENT_TIMESTAMP')
+            plan = plpy.prepare(sql, ('integer', 'integer'))
+            params = (next_minor_version, collection_ident)
+        else:
+            sql = sql.format('$3')
+            plan = plpy.prepare(sql, ('integer', 'integer', 'timestamp'))
+            params = (next_minor_version, collection_ident, revised)
+
+        new_ident = plpy.execute(plan, params, 1)[0]['module_ident']
+        plan = plpy.prepare("""\
+            INSERT INTO modulekeywords (module_ident, keywordid)
+            SELECT $1, keywordid
+            FROM modulekeywords
+            WHERE module_ident = $2""", ('integer', 'integer'))
+        plpy.execute(plan, (new_ident, collection_ident,))
+
+        plan = plpy.prepare("""\
+            INSERT INTO moduletags (module_ident, tagid)
+            SELECT $1, tagid
+            FROM moduletags
+            WHERE module_ident = $2""", ('integer', 'integer'))
+        plpy.execute(plan, (new_ident, collection_ident,))
+        return new_ident
+
+    def rebuild_collection_tree(old_collection_ident, new_document_id_map):
+        """Create a new tree for the collection based on the old tree but with
+        new document ids
+        """
+        sql = '''
+        WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
+            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = $1
+        UNION ALL
+            SELECT c.*, path || ARRAY[c.nodeid]
+            FROM trees c JOIN t ON (c.parent_id = t.node)
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT * FROM t
+        '''
+
+        def get_tree():
+            plan = plpy.prepare(sql, ('integer',))
+            for i in plpy.execute(plan, (old_collection_ident,)):
+                yield i
+
+        tree = {} # { old_nodeid: {'data': ...}, ...}
+        children = {} # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
+        for i in get_tree():
+            tree[i['node']] = {'data': i, 'new_nodeid': None}
+            children.setdefault(i['parent'], [])
+            children[i['parent']].append(i['node'])
+
+        sql = '''
+        INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
+        VALUES (DEFAULT, $1, $2, $3, $4, $5)
+        RETURNING nodeid
+        '''
+        plan = plpy.prepare(sql, ('integer', 'integer', 'text', 'integer', 'boolean',))
+
+        def execute(fields):
+            return plpy.execute(plan, fields, 1)[0]['nodeid']
+
+        root_node = children[None][0]
+        def build_tree(node, parent):
+            data = tree[node]['data']
+            new_node = execute([parent, new_document_id_map.get(data['document'],
+                data['document']), data['title'], data['childorder'],
+                data['latest']])
+            for i in children.get(node, []):
+                build_tree(i, new_node)
+        build_tree(root_node, None)
+
+    def republish_module():
+        """When a module is republished, the versions of the collections that it is
+        part of will need to be updated (a minor update).
+
+
+        e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+        m1 is updated, we have a new row in the modules table with m1 v4
+
+        this trigger will create increment the minor version of c1, so we'll have
+        c1 v2.2
+
+        we need to create a collection tree for c1 v2.2 which is exactly the same
+        as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
+        """
+        portal_type = TD['new']['portal_type']
+        modified = 'OK'
+        moduleid = TD['new']['moduleid']
+        legacy_version = TD['new']['version']
+
+        modified = set_version(portal_type, legacy_version)
+
+        current_module_ident = get_current_module_ident(moduleid)
+        if current_module_ident:
+            # need to overide autogen uuid to keep it constant per moduleid
+            uuid = get_module_uuid(moduleid)
+            TD['new']['uuid'] = uuid
+            modified = 'MODIFY'
+        else:
+            # nothing to do if the module/collection is new
+            return modified
+
+        if portal_type != 'Module':
+            # nothing else to do if something else is being published
+            return modified
+
+        new_module_ident = TD['new']['module_ident']
+        # Module is republished
+        for collection_id in get_collections(current_module_ident):
+            minor = next_version(collection_id)
+            new_ident = republish_collection(minor, collection_id)
+            rebuild_collection_tree(collection_id, {
+                collection_id: new_ident,
+                current_module_ident: new_module_ident,
+                })
+
+        return modified
+
+    # Is this an insert from legacy? Legacy always supplies the version.
+    is_legacy_publication = TD['new']['version'] is not None
+    if not is_legacy_publication:
+        # Bail out, because this trigger only applies to legacy publications.
+        return "OK"
+
+    plpy.log('Trigger fired on %s' % (TD['new']['moduleid'],))
+
+    modified = republish_module()
+    plpy.log('modified: {}'.format(modified))
+    plpy.log('insert values:\n{}\n'.format('\n'.join([
+        '{}: {}'.format(key, value)
+        for key, value in TD['new'].iteritems()])))
+
+    return modified
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION assign_moduleid_default ()
