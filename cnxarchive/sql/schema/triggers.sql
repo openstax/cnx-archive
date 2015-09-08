@@ -151,8 +151,38 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION upsert_document_acl ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import upsert_document_acl_trigger
-  return upsert_document_acl_trigger(plpy, TD)
+    """A compatibility trigger to upsert authorization control entries (ACEs)
+    for legacy publications.
+    """
+    modified_state = "OK"
+    uuid_ = TD['new']['uuid']
+    authors = TD['new']['authors'] and TD['new']['authors'] or []
+    maintainers = TD['new']['maintainers'] and TD['new']['maintainers'] or []
+    is_legacy_publication = TD['new']['version'] is not None
+
+    if not is_legacy_publication:
+        return modified_state
+
+    # Upsert all authors and maintainers into the ACL
+    # to give them publish permission.
+    permissibles = []
+    permissibles.extend(authors)
+    permissibles.extend(maintainers)
+    permissibles = set([(uid, 'publish',) for uid in permissibles])
+
+    plan = plpy.prepare("""\
+SELECT user_id, permission FROM document_acl WHERE uuid = $1""",
+                        ['uuid'])
+    existing_permissibles = set([(r['user_id'], r['permission'],)
+                                 for r in plpy.execute(plan, (uuid_,))])
+
+    new_permissibles = permissibles.difference(existing_permissibles)
+
+    for uid, permission in new_permissibles:
+        plan = plpy.prepare("""\
+INSERT INTO document_acl (uuid, user_id, permission)
+VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
+        plpy.execute(plan, (uuid_, uid, permission,))
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION upsert_user_shadow ()
