@@ -188,8 +188,39 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION upsert_user_shadow ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import upsert_users_from_legacy_publication_trigger
-  return upsert_users_from_legacy_publication_trigger(plpy, TD)
+    """A compatibility trigger to upsert users from the legacy persons table.
+    """
+    modified_state = "OK"
+    uuid_ = TD['new']['uuid']
+    authors = TD['new']['authors'] and TD['new']['authors'] or []
+    maintainers = TD['new']['maintainers'] and TD['new']['maintainers'] or []
+    licensors = TD['new']['licensors'] and TD['new']['licensors'] or []
+    is_legacy_publication = TD['new']['version'] is not None
+
+    if not is_legacy_publication:
+        return modified_state
+
+    # Upsert all roles into the users table.
+    users = []
+    users.extend(authors)
+    users.extend(maintainers)
+    users.extend(licensors)
+    users = list(set(users))
+
+    plan = plpy.prepare("""\
+SELECT username FROM users WHERE username = any($1)""",
+                        ['text[]'])
+    existing_users = set([r['username'] for r in plpy.execute(plan, (users,))])
+
+    new_users = set(users).difference(existing_users)
+    for username in new_users:
+        plan = plpy.prepare("""\
+INSERT INTO users (username, first_name, last_name, full_name, title)
+SELECT personid, firstname, surname, fullname, honorific
+FROM persons where personid = $1""", ['text'])
+        plpy.execute(plan, (username,))
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER act_10_module_uuid_default
