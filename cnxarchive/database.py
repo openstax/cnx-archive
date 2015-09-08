@@ -476,31 +476,6 @@ FROM (
     return modified_state
 
 
-def insert_users_for_optional_roles_trigger(plpy, td):
-    """A compatibility trigger to insert users from moduleoptionalroles
-    records. This is primarily for legacy compatibility, but it is not
-    possible to tell whether the entry came from legacy or cnx-publishing.
-    Therefore, we only insert into users.
-    """
-    modified_state = "OK"
-    users = td['new']['personids'] and td['new']['personids'] or []
-
-    plan = plpy.prepare("""\
-SELECT username FROM users WHERE username = any($1)""",
-                        ['text[]'])
-    existing_users = set([r['username'] for r in plpy.execute(plan, (users,))])
-
-    new_users = set(users).difference(existing_users)
-    for username in new_users:
-        plan = plpy.prepare("""\
-INSERT INTO users (username, first_name, last_name, full_name, title)
-SELECT personid, firstname, surname, fullname, honorific
-FROM persons where personid = $1""", ['text'])
-        plpy.execute(plan, (username,))
-
-    return modified_state
-
-
 def add_module_file(plpy, td):
     """Postgres database trigger for adding a module file
 
