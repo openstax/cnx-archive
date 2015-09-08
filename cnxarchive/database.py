@@ -476,41 +476,6 @@ FROM (
     return modified_state
 
 
-def upsert_document_acl_trigger(plpy, td):
-    """A compatibility trigger to upsert authorization control entries (ACEs)
-    for legacy publications.
-    """
-    modified_state = "OK"
-    uuid_ = td['new']['uuid']
-    authors = td['new']['authors'] and td['new']['authors'] or []
-    maintainers = td['new']['maintainers'] and td['new']['maintainers'] or []
-    is_legacy_publication = td['new']['version'] is not None
-
-    if not is_legacy_publication:
-        return modified_state
-
-    # Upsert all authors and maintainers into the ACL
-    # to give them publish permission.
-    permissibles = []
-    permissibles.extend(authors)
-    permissibles.extend(maintainers)
-    permissibles = set([(uid, 'publish',) for uid in permissibles])
-
-    plan = plpy.prepare("""\
-SELECT user_id, permission FROM document_acl WHERE uuid = $1""",
-                        ['uuid'])
-    existing_permissibles = set([(r['user_id'], r['permission'],)
-                                 for r in plpy.execute(plan, (uuid_,))])
-
-    new_permissibles = permissibles.difference(existing_permissibles)
-
-    for uid, permission in new_permissibles:
-        plan = plpy.prepare("""\
-INSERT INTO document_acl (uuid, user_id, permission)
-VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
-        plpy.execute(plan, (uuid_, uid, permission,))
-
-
 def upsert_users_from_legacy_publication_trigger(plpy, td):
     """A compatibility trigger to upsert users from the legacy persons table.
     """
