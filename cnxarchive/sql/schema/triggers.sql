@@ -94,8 +94,31 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION assign_version_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_version_default_trigger
-  return assign_version_default_trigger(plpy, TD)
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    If this is not a legacy publication the ``version`` will be set
+    based on the ``major_version`` value.
+    """
+    modified_state = "OK"
+    portal_type = TD['new']['portal_type']
+    version = TD['new']['version']
+    minor_version = TD['new']['minor_version']
+
+    # Set the minor version on collections, because by default it is
+    # None/Null, which is the correct default for modules.
+    if portal_type == 'Collection' and minor_version is None:
+        modified_state = "MODIFY"
+        TD['new']['minor_version'] = 1
+
+    # Set the legacy version field based on the major version.
+    if version is None:
+        major_version = TD['new']['major_version']
+        version = "1.{}".format(major_version)
+        modified_state = "MODIFY"
+        TD['new']['version'] = version
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION assign_uuid_default ()
