@@ -124,8 +124,28 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION assign_uuid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_document_controls_default_trigger
-  return assign_document_controls_default_trigger(plpy, TD)
+    """A compatibilty trigger to fill in ``uuid`` and ``licenseid`` columns
+    of the ``document_controls`` table that are not
+    populated when inserting publications from legacy.
+
+    This uuid default is not on ``modules.uuid`` column itself,
+    because the value needs to be loosely associated
+    with the ``document_controls`` entry
+    to prevent uuid collisions and bridge the pending publications gap.
+    """
+    modified_state = "OK"
+    uuid = TD['new']['uuid']
+
+    # Only do the procedure if this is a legacy publication.
+    if uuid is None:
+        modified_state = "MODIFY"
+        plan = plpy.prepare("""\
+INSERT INTO document_controls (uuid, licenseid) VALUES (DEFAULT, $1)
+RETURNING uuid""", ('integer',))
+        uuid_ = plpy.execute(plan, (TD['new']['licenseid'],))[0]['uuid']
+        TD['new']['uuid'] = uuid_
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION upsert_document_acl ()
