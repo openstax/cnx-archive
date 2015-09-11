@@ -101,7 +101,8 @@ class SplitIdentTestCase(unittest.TestCase):
         # Case of supplying the utility function with an empty indent-hash.
         ident_hash = ''
 
-        with self.assertRaises(ValueError):
+        from ..utils import IdentHashSyntaxError
+        with self.assertRaises(IdentHashSyntaxError):
             self.call_target(ident_hash)
 
     def test_complete_data(self):

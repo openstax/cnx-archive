@@ -41,10 +41,11 @@ def split_ident_hash(ident_hash, split_version=False):
     if HASH_CHAR not in ident_hash:
         ident_hash = '{}@'.format(ident_hash)
     split_value = ident_hash.split(HASH_CHAR)
-    if split_value[0] == '':
-        raise ValueError("Missing values")
 
     try:
+        if split_value[0] == '':
+            raise ValueError("Missing values")
+
         id, version = split_value
     except ValueError:
         raise IdentHashSyntaxError(ident_hash)
