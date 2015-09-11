@@ -69,22 +69,21 @@ def _read_schema_manifest(manifest_filepath):
     return manifest
 
 
-def _compile_schema(manifest, content_modifier=None, joiner=u''):
-    """Given a manifest, read each file item. Apply the optional
-    ``content_modifier`` to each file's contents. Lastly, join all the
-    file content together as one string.
+def _compile_manifest(manifest, content_modifier=None):
+    """Compiles a given ``manifest`` into a sequence of schema items.
+    Apply the optional ``content_modifier`` to each file's contents.
     """
     items = []
     for item in manifest:
         if isinstance(item, list):
-            items.append(_compile_schema(item, content_modifier, joiner))
+            items.extend(_compile_manifest(item, content_modifier))
         else:
             with open(item, 'rb') as fp:
                 content = fp.read()
             if content_modifier:
                 content = content_modifier(item, content)
             items.append(content)
-    return joiner.join(items)
+    return items
 
 
 def get_schema():
@@ -92,10 +91,10 @@ def get_schema():
                                      SCHEMA_MANIFEST_FILENAME)
     schema_manifest = _read_schema_manifest(manifest_filepath)
 
-    # Wrap the files in comments that say it's origin file.
+    # Modify the file so that it contains comments that say it's origin.
     file_wrapper = lambda f, c: u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
 
-    return _compile_schema(schema_manifest, file_wrapper, u'\n\n')
+    return _compile_manifest(schema_manifest, file_wrapper)
 
 
 def initdb(settings):
@@ -103,7 +102,8 @@ def initdb(settings):
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute(get_schema())
+            for schema_part in get_schema():
+                cursor.execute(schema_part)
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):
