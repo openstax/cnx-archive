@@ -18,23 +18,39 @@ from . import testing
 class InitializeDBTestCase(unittest.TestCase):
     fixture = testing.schema_fixture
 
-    @testing.db_connect
-    def setUp(self, cursor):
-        self.fixture.setUp()
+    def setUp(self):
+        self.settings = testing.integration_test_settings()
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    @property
+    def target(self):
+        from ..database import initdb
+        return initdb
+
+    @testing.db_connect
+    def test_success(self, cursor):
+        self.target(self.settings)
+        # Simply test for the 'licenses' table.
+        # This isn't comprehensive, but it tests that the schema was put in place
+        # and static data (constants) values have been added to tables.
+        cursor.execute("SELECT code, version FROM licenses ORDER BY code, version ASC;")
+        try:
+            license = cursor.fetchone()
+        except Exception as exc:
+            self.fail(exc)
+        self.assertEqual(license, ('by', '1.0'))
 
     def test_initdb_on_already_initialized_db(self):
         """Testing the ``initdb`` raises a discernible error when the
         database is already initialized.
         """
+        self.fixture.setUp()
         # The fixture has initialized the database, so we only need to
         #   run the function.
-        from ..database import initdb
-        settings = testing.integration_test_settings()
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
-            initdb(settings)
+            self.target(self.settings)
         self.assertEqual(caught_exception.exception.message,
                          'Database is already initialized.\n')
 
