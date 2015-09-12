@@ -23,8 +23,10 @@ VERSION_CHAR = '.'
 class IdentHashSyntaxError(Exception):
     """Raised when the ident-hash syntax is incorrect."""
 
+
 def fromtimestamp(ts):
     return datetime.datetime.fromtimestamp(ts, tz=tzlocal.get_localzone())
+
 
 def split_legacy_hash(legacy_hash):
     split_value = legacy_hash.split('/')
@@ -85,29 +87,17 @@ def join_ident_hash(id, version):
     return HASH_CHAR.join(join_args)
 
 
-def app_parser(prog='cnx-archive-initdb', description=None):
-    parser = argparse.ArgumentParser(prog=prog, description=description)
-    parser.add_argument('config_uri', help="Configuration INI file.")
-    parser.add_argument('--with-example-data', action='store_true',
-                        help="Initializes the database with example data.")
-    parser.add_argument('--superuser', action='store', help="NOT IMPLEMENTED")
-    parser.add_argument(
-        '--super-password', action='store', help="NOT IMPLEMENTED")
-    parser.add_argument('--config-name',
-                        action='store',
-                        default='main',
-                        help="Supply a name for the configuration")
-    return parser
-
-
-def app_settings(args):
+# FFF (11-Sept-2015) from pyramid.paster import get_appsettings
+#     Please remove this in favor of importing pyramid's version
+#     in all locations where this function is used.
+def get_appsettings(config_uri, name='main', options=None,
+                    appconfig=appconfig):
     """Parse the settings from the config file for the application.
     The application section defaults to name 'main'.
     """
-    config_path = os.path.abspath(args.config_uri)
-    settings = appconfig(
-        "config:{}".format(config_path), name=args.config_name)
-    settings.update(vars(args))
+    config_filepath = os.path.abspath(config_uri)
+    settings = appconfig("config:{}".format(config_filepath),
+                         name=name)
     return settings
 
 
@@ -122,6 +112,7 @@ def import_function(import_line):
     module = sys.modules[module_name]
     func = getattr(module, func_name)
     return func
+
 
 var_regex = re.compile(r'''
     \{          # The exact character "{"
@@ -153,9 +144,11 @@ PORTALTYPE_TO_MIMETYPE_MAPPING = {
     'Collection': COLLECTION_MIMETYPE,
     }
 
+
 def portaltype_to_mimetype(portal_type):
     """Map the given ``portal_type`` to a mimetype"""
     return PORTALTYPE_TO_MIMETYPE_MAPPING[portal_type]
+
 
 def slugify(string):
     """Return a slug for the unicode_string (lowercase, only letters and
@@ -173,6 +166,7 @@ def slugify(string):
         elif cat in 'Z':
             filtered_string.append(' ')
     return re.sub('\s+', '-', ''.join(filtered_string)).lower()
+
 
 def escape(s):
     """xml/html entity escaping of < > and &"""

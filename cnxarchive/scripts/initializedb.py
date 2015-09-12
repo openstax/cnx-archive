@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Commandline script used to initialize the SQL database."""
+from __future__ import print_function
 import os
 import sys
 import argparse
@@ -14,23 +15,33 @@ import psycopg2
 
 from .. import config
 from ..database import initdb
-from ..utils import app_settings
-from ..utils import app_parser
+from ._utils import create_parser, get_app_settings_from_arguments
+
 
 EXAMPLE_DATA_FILEPATHS = (
     config.TEST_DATA_SQL_FILE,
     )
 
 
-def main(argv=None):
-    parser = app_parser(description=__doc__)
+parser = create_parser('initdb', description=__doc__)
+parser.add_argument('--with-example-data', action='store_true',
+                    help="Initializes the database with example data.")
+parser.add_argument('--superuser', action='store', help="NOT IMPLEMENTED")
+parser.add_argument(
+    '--super-password', action='store', help="NOT IMPLEMENTED")
 
+
+def main(argv=None):
     args = parser.parse_args(argv)
 
-    settings = app_settings(args)
-    initdb(settings)
+    settings = get_app_settings_from_arguments(args)
+    try:
+        initdb(settings)
+    except psycopg2.InternalError as exc:
+        print("Error:  {}".format(exc.args[0]), file=sys.stderr)
+        return 1
 
-    if settings['with_example_data']:
+    if args.with_example_data:
         connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -38,6 +49,7 @@ def main(argv=None):
                     with open(filepath, 'r') as fb:
                         cursor.execute(fb.read())
     return 0
+
 
 if __name__ == '__main__':
     main()
