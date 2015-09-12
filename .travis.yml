@@ -1,6 +1,4 @@
 language: python
-# Note, /usr/bin/python is used because we must install to the system python
-#   in order to make the package available to the plpython Postgres extension.
 python:
   - "2.7"
 addons:
@@ -18,25 +16,32 @@ before_install:
   - sudo apt-get install libxml2-dev libxslt-dev postgresql-server-dev-9.3
   - git clone https://github.com/petere/plxslt.git
   - cd plxslt && sudo make && sudo make install && cd ..
-  # Install cnx-query-grammar
-  - git clone https://github.com/Connexions/cnx-query-grammar.git
-  - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
-  # Install cnx-epub
-  - git clone https://github.com/Connexions/cnx-epub.git
-  - cd cnx-epub && sudo /usr/bin/python setup.py install && cd ..
-  # Install rhaptos.cnxmlutils
+
+  # Install rhaptos.cnxmlutils (dependency of cnx-cnxml-transforms)
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
-  - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
+  - cd ./rhaptos.cnxmlutils && python setup.py install && cd ..
   # Install cnx-cnxml-transforms
   - git clone https://github.com/Connexions/cnx-cnxml-transforms.git
-  - cd cnx-cnxml-transforms && sudo /usr/bin/python setup.py install && cd ..
+  - cd ./cnx-cnxml-transforms && python setup.py install && cd ..
+  # Install cnx-query-grammar
+  - git clone https://github.com/Connexions/cnx-query-grammar.git
+  - cd ./cnx-query-grammar && python setup.py install && cd ..
+  # Install cnx-epub
+  - git clone https://github.com/Connexions/cnx-epub.git
+  - cd ./cnx-epub && python setup.py install && cd ..
+
   # Install the coverage utility and coveralls reporting utility
-  - sudo apt-get install python-pip
-  # Scripts get installed to /usr/local/bin
-  - sudo /usr/bin/pip install coverage
-  - sudo /usr/bin/pip install coveralls
+  - pip install coverage
+  - pip install coveralls
+
+  # FIXME patch triggers to include paths to cnx-cnxml-transforms and rhaptos.cnxmlutils
+  - CNXML_TRANSFORMS_PATH=$(python -c 'import os; import cnxmltransforms; print(os.path.abspath("{}/..".format(cnxmltransforms.__path__[0])))')
+  - RHAPTOS_CNXMLUTILS_PATH=$(python -c 'import os; import rhaptos.cnxmlutils; print(os.path.abspath("{}/../..".format(rhaptos.cnxmlutils.__path__[0])))')
+  - LXML_PATH=$(python -c 'import os; import lxml; print(os.path.abspath("{}/..".format(lxml.__path__[0])))')
+  - cd cnx-cnxml-transforms && python setup.py install && cd ..
+  - sed -i "s%from cnxmltransforms%import sys; sys.path.append('$CNXML_TRANSFORMS_PATH'); sys.path.append('$RHAPTOS_CNXMLUTILS_PATH'); sys.path.append('$LXML_PATH'); &%" cnxarchive/sql/schema/*.sql
 install:
-  - sudo /usr/bin/python setup.py install
+  - python setup.py install
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
@@ -47,10 +52,10 @@ before_script:
   - pep8 --max-line-length=200 cnxarchive/tests
 
 script:
-  # This is the same as `python -m unittest discover` with a coverage wrapper.
-  - sudo /usr/local/bin/coverage run --source=cnxarchive setup.py test
+  # This is the same as `python setup.py test` with a coverage wrapper.
+  - coverage run --source=cnxarchive setup.py test
 after_success:
   # Report test coverage to coveralls.io
-  - /usr/local/bin/coveralls
+  - coveralls
 notifications:
   email: false
