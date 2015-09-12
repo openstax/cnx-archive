@@ -69,7 +69,7 @@ CREATE OR REPLACE FUNCTION html_abstract(abstract text)
 AS $$
   plpy.warning('This function is deprecated, please use html_abstract(<module_ident>')
   import plpydbapi
-  from cnxarchive.transforms import transform_abstract_to_html
+  from cnxmltransforms import transform_abstract_to_html
   db_connection = plpydbapi.connect()
   html_abstract, warning_messages = transform_abstract_to_html(abstract, None, db_connection)
   if warning_messages:
@@ -82,7 +82,7 @@ CREATE OR REPLACE FUNCTION html_abstract(module_ident int)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.transforms import transform_abstract_to_html
+  from cnxmltransforms import transform_abstract_to_html
   with plpydbapi.connect() as db_connection:
     with db_connection.cursor() as cursor:
       cursor.execute("SELECT abstract FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
@@ -102,7 +102,7 @@ CREATE OR REPLACE FUNCTION html_content(cnxml text)
 AS $$
   plpy.warning('This function is deprecated, please use html_content(<module_ident>')
   import plpydbapi
-  from cnxarchive.transforms import transform_module_content
+  from cnxmltransforms import transform_module_content
   db_connection = plpydbapi.connect()
   html_content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection)
   if warning_messages:
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION html_content(module_ident int)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.transforms import transform_module_content
+  from cnxmltransforms import transform_module_content
   with plpydbapi.connect() as db_connection:
      with db_connection.cursor() as cursor:
           cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND (filename = 'index.cnxml' OR filename = 'index.html.cnxml')", (module_ident,))
@@ -131,7 +131,7 @@ CREATE OR REPLACE FUNCTION cnxml_abstract(module_ident int)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.transforms import transform_abstract_to_cnxml
+  from cnxmltransforms import transform_abstract_to_cnxml
   with plpydbapi.connect() as db_connection:
      with db_connection.cursor() as cursor:
           cursor.execute("SELECT html FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
@@ -146,7 +146,7 @@ CREATE OR REPLACE FUNCTION cnxml_content(module_ident int)
   RETURNS text
 AS $$
   import plpydbapi
-  from cnxarchive.transforms import transform_module_content
+  from cnxmltransforms import transform_module_content
   with plpydbapi.connect() as db_connection:
      with db_connection.cursor() as cursor:
           cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND filename = 'index.cnxml.html'", (module_ident,))
