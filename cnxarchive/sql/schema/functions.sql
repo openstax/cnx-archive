@@ -68,26 +68,21 @@ CREATE OR REPLACE FUNCTION html_abstract(abstract text)
   RETURNS text
 AS $$
   plpy.warning('This function is deprecated, please use html_abstract(<module_ident>')
-  import plpydbapi
   from cnxmltransforms import transform_abstract_to_html
-  db_connection = plpydbapi.connect()
-  html_abstract, warning_messages = transform_abstract_to_html(abstract, None, db_connection)
+  html_abstract, warning_messages = transform_abstract_to_html(abstract, None, plpy)
   if warning_messages:
     plpy.warning(warning_messages)
-  db_connection.close()
   return html_abstract
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION html_abstract(module_ident int)
   RETURNS text
 AS $$
-  import plpydbapi
   from cnxmltransforms import transform_abstract_to_html
-  with plpydbapi.connect() as db_connection:
-    with db_connection.cursor() as cursor:
-      cursor.execute("SELECT abstract FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
-      abstract = cursor.fetchone()[0]
-    html_abstract, warning_messages = transform_abstract_to_html(abstract, module_ident, db_connection)
+  plan = plpy.prepare("SELECT abstract FROM modules NATURAL JOIN abstracts WHERE module_ident = $1", ('integer',))
+  result = plpy.execute(plan, (module_ident,), 1)
+  abstract = result[0]['abstract']
+  html_abstract, warning_messages = transform_abstract_to_html(abstract, module_ident, plpy)
   if warning_messages:
     plpy.warning(warning_messages)
   return html_abstract
@@ -101,26 +96,21 @@ CREATE OR REPLACE FUNCTION html_content(cnxml text)
   RETURNS text
 AS $$
   plpy.warning('This function is deprecated, please use html_content(<module_ident>')
-  import plpydbapi
   from cnxmltransforms import transform_module_content
-  db_connection = plpydbapi.connect()
-  html_content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection)
+  html_content, warning_messages = transform_module_content(cnxml, 'cnxml2html', plpy)
   if warning_messages:
     plpy.warning(warning_messages)
-  db_connection.close()
   return html_content
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION html_content(module_ident int)
   RETURNS text
 AS $$
-  import plpydbapi
   from cnxmltransforms import transform_module_content
-  with plpydbapi.connect() as db_connection:
-     with db_connection.cursor() as cursor:
-          cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND (filename = 'index.cnxml' OR filename = 'index.html.cnxml')", (module_ident,))
-          cnxml = cursor.fetchone()[0]
-     content, warning_messages = transform_module_content(cnxml, 'cnxml2html', db_connection, module_ident)
+  plan = plpy.prepare("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = $1 AND (filename = 'index.cnxml' OR filename = 'index.html.cnxml')", ('integer',))
+  result = plpy.execute(plan, (module_ident,))
+  cnxml = result[0]['convert_from']
+  content, warning_messages = transform_module_content(cnxml, 'cnxml2html', plpy, module_ident)
   if warning_messages:
       plpy.warning(warning_messages)
   return content
@@ -130,13 +120,11 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION cnxml_abstract(module_ident int)
   RETURNS text
 AS $$
-  import plpydbapi
   from cnxmltransforms import transform_abstract_to_cnxml
-  with plpydbapi.connect() as db_connection:
-     with db_connection.cursor() as cursor:
-          cursor.execute("SELECT html FROM modules NATURAL JOIN abstracts WHERE module_ident = %s", (module_ident,))
-          abstract = cursor.fetchone()[0]
-     cnxml_abstract, warning_messages = transform_abstract_to_cnxml(abstract, module_ident, db_connection)
+  plan = plpy.prepare("SELECT html FROM modules NATURAL JOIN abstracts WHERE module_ident = $1", ('integer',))
+  result = plpy.execute(plan, (module_ident,))
+  abstract = result[0]['html']
+  cnxml_abstract, warning_messages = transform_abstract_to_cnxml(abstract, module_ident, plpy)
   if warning_messages:
       plpy.warning(warning_messages)
   return cnxml_abstract
@@ -145,14 +133,12 @@ $$ LANGUAGE plpythonu;
 CREATE OR REPLACE FUNCTION cnxml_content(module_ident int)
   RETURNS text
 AS $$
-  import plpydbapi
   from cnxmltransforms import transform_module_content
-  with plpydbapi.connect() as db_connection:
-     with db_connection.cursor() as cursor:
-          cursor.execute("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = %s AND filename = 'index.cnxml.html'", (module_ident,))
-          html = cursor.fetchone()[0]
+  plan = plpy.prepare("SELECT convert_from(file, 'utf-8') FROM module_files AS mf NATURAL JOIN files AS f WHERE module_ident = $1 AND filename = 'index.cnxml.html'", ('integer',))
+  result = plpy.execute(plan, (module_ident,))
+  html = result[0]['convert_from']
 
-     content, warning_messages = transform_module_content(html, 'html2cnxml', db_connection, module_ident)
+  content, warning_messages = transform_module_content(html, 'html2cnxml', plpy, module_ident)
   if warning_messages:
       plpy.warning(warning_messages)
   return content
