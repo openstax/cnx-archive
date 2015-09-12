@@ -616,8 +616,120 @@ CREATE TRIGGER update_files_sha1
 CREATE OR REPLACE FUNCTION add_module_file ()
   RETURNS trigger
 AS $$
-  from cnxarchive.database import add_module_file
-  return add_module_file(plpy, TD)
+    """Postgres database trigger for adding a module file
+
+    When a legacy ``index.cnxml`` is added, this trigger
+    transforms it into html and stores it as ``index.cnxml.html``.
+    When a cnx-publishing ``index.cnxml.html`` is added, this trigger
+    checks if ``index.html.cnxml`` exists before
+    transforming it into cnxml and stores it as ``index.html.cnxml``.
+
+    Note, we do not use ``index.html`` over ``index.cnxml.html``, because
+    legacy allows users to name files ``index.html``.
+
+    """
+    def _transform_abstract(cursor, module_ident):
+        """Transforms an abstract using one of content columns
+        ('abstract' or 'html') to determine which direction the transform
+        will go (cnxml->html or html->cnxml).
+        A transform is done on either one of them to make
+        the other value. If no value is supplied, the trigger raises an error.
+        If both values are supplied, the trigger will skip.
+        """
+        cursor.execute("""\
+    SELECT a.abstractid, a.abstract, a.html
+    FROM modules AS m NATURAL JOIN abstracts AS a
+    WHERE m.module_ident = %s""", (module_ident,))
+        abstractid, cnxml, html = cursor.fetchone()
+        if cnxml is not None and html is not None:
+            return  # skip
+        # TODO Prevent blank abstracts (abstract = null & html = null).
+
+        msg = "produce {}->{} for abstractid={}"
+        if cnxml is None:
+            # Transform html->cnxml
+            msg = msg.format('html', 'cnxml', abstractid)
+            content = html
+            column = 'abstract'
+            transform_func = transform_abstract_to_cnxml
+        else:
+            # Transform cnxml->html
+            msg = msg.format('cnxml', 'html', abstractid)
+            content = cnxml
+            column = 'html'
+            transform_func = transform_abstract_to_html
+
+        content, messages = transform_func(content, module_ident,
+                                           cursor.connection)
+        cursor.execute(
+            "UPDATE abstracts SET {} = %s WHERE abstractid = %s" \
+            .format(column),
+            (content, abstractid,))
+        return msg
+
+    import plpydbapi
+
+    from cnxmltransforms import (
+        produce_cnxml_for_module, produce_html_for_module,
+        transform_abstract_to_cnxml, transform_abstract_to_html,
+        )
+
+    module_ident = TD['new']['module_ident']
+    fileid = TD['new']['fileid']
+    filename = TD['new']['filename']
+    msg = "produce {}->{} for module_ident = {}"
+
+    def check_for(filenames, module_ident):
+        """Check for a file at ``filename`` associated with
+        module at ``module_ident``.
+        """
+        stmt = plpy.prepare("""\
+SELECT TRUE AS exists FROM module_files
+WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
+        any_exist = False
+        for filename in filenames:
+            result = plpy.execute(stmt, [filename, module_ident])
+            try:
+                exists = result[0]['exists']
+            except IndexError:
+                exists = False
+            any_exist = any_exist or exists
+        return any_exist
+
+    # Declare the content producer function variable,
+    #   because it is possible that it will not be assigned.
+    producer_func = None
+    if filename == 'index.cnxml':
+        new_filenames = ('index.cnxml.html',)
+        # Transform content to html.
+        other_exists = check_for(new_filenames, module_ident)
+        if not other_exists:
+            msg = msg.format('cnxml', 'html', module_ident)
+            producer_func = produce_html_for_module
+    elif filename == 'index.cnxml.html':
+        new_filenames = ('index.html.cnxml', 'index.cnxml',)
+        # Transform content to cnxml.
+        other_exists = check_for(new_filenames, module_ident)
+        if not other_exists:
+            msg = msg.format('html', 'cnxml', module_ident)
+            producer_func = produce_cnxml_for_module
+    else:
+        # Not one of the special named files.
+        return  # skip
+
+    with plpydbapi.connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            plpy.info(msg)
+            if producer_func is not None:
+                producer_func(cursor.connection, cursor,
+                              module_ident,
+                              source_filename=filename,
+                              destination_filenames=new_filenames)
+            _transform_abstract(cursor, module_ident)
+        # For whatever reason, the plpydbapi context manager
+        #   does not call commit on close.
+        db_connection.commit()
+    return
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER module_file_added
