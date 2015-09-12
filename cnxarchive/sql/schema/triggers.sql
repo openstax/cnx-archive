@@ -628,7 +628,12 @@ AS $$
     legacy allows users to name files ``index.html``.
 
     """
-    def _transform_abstract(cursor, module_ident):
+    from cnxmltransforms import (
+        produce_cnxml_for_module, produce_html_for_module,
+        transform_abstract_to_cnxml, transform_abstract_to_html,
+        )
+
+    def _transform_abstract(module_ident):
         """Transforms an abstract using one of content columns
         ('abstract' or 'html') to determine which direction the transform
         will go (cnxml->html or html->cnxml).
@@ -636,11 +641,14 @@ AS $$
         the other value. If no value is supplied, the trigger raises an error.
         If both values are supplied, the trigger will skip.
         """
-        cursor.execute("""\
-    SELECT a.abstractid, a.abstract, a.html
-    FROM modules AS m NATURAL JOIN abstracts AS a
-    WHERE m.module_ident = %s""", (module_ident,))
-        abstractid, cnxml, html = cursor.fetchone()
+        plan = plpy.prepare("""\
+SELECT a.abstractid, a.abstract, a.html
+FROM modules AS m NATURAL JOIN abstracts AS a
+WHERE m.module_ident = $1""", ('integer',))
+        result = plpy.execute(plan, (module_ident,), 1)
+        abstractid = result[0]['abstractid']
+        cnxml = result[0]['abstract']
+        html = result[0]['html']
         if cnxml is not None and html is not None:
             return  # skip
         # TODO Prevent blank abstracts (abstract = null & html = null).
@@ -660,19 +668,13 @@ AS $$
             transform_func = transform_abstract_to_html
 
         content, messages = transform_func(content, module_ident,
-                                           cursor.connection)
-        cursor.execute(
-            "UPDATE abstracts SET {} = %s WHERE abstractid = %s" \
+                                           plpy)
+        plan = plpy.prepare(
+            "UPDATE abstracts SET {} = $1 WHERE abstractid = $2" \
             .format(column),
-            (content, abstractid,))
+            ('text', 'integer'))
+        plpy.execute(plan, (content, abstractid,))
         return msg
-
-    import plpydbapi
-
-    from cnxmltransforms import (
-        produce_cnxml_for_module, produce_html_for_module,
-        transform_abstract_to_cnxml, transform_abstract_to_html,
-        )
 
     module_ident = TD['new']['module_ident']
     fileid = TD['new']['fileid']
@@ -717,18 +719,13 @@ WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
         # Not one of the special named files.
         return  # skip
 
-    with plpydbapi.connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            plpy.info(msg)
-            if producer_func is not None:
-                producer_func(cursor.connection, cursor,
-                              module_ident,
-                              source_filename=filename,
-                              destination_filenames=new_filenames)
-            _transform_abstract(cursor, module_ident)
-        # For whatever reason, the plpydbapi context manager
-        #   does not call commit on close.
-        db_connection.commit()
+    plpy.info(msg)
+    if producer_func is not None:
+        producer_func(plpy,
+                      module_ident,
+                      source_filename=filename,
+                      destination_filenames=new_filenames)
+    _transform_abstract(module_ident)
     return
 $$ LANGUAGE plpythonu;
 

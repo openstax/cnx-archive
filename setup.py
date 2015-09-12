@@ -9,7 +9,6 @@ install_requires = (
     'cnx-epub',
     'lxml',
     'python-memcached',
-    'plpydbapi',
     'psycopg2>=2.5',
     'pyramid',
     'rhaptos.cnxmlutils',
