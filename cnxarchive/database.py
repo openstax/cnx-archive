@@ -12,11 +12,12 @@ import json
 import psycopg2
 import re
 
-from . import config
-from .transforms import (
+from cnxmltransforms import (
     produce_cnxml_for_module, produce_html_for_module,
     transform_abstract_to_cnxml, transform_abstract_to_html,
     )
+
+from . import config
 from .utils import split_ident_hash
 
 
