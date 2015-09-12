@@ -5,6 +5,7 @@ from setuptools import setup, find_packages
 IS_PY3 = sys.version_info > (3,)
 
 install_requires = (
+    'cnx-cnxml-transforms',  # used in triggers
     'cnx-query-grammar',
     'cnx-epub',
     'lxml',
