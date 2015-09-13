@@ -17,7 +17,8 @@ import gzip
 
 import psycopg2
 from .. import config
-from ..utils import app_settings, split_ident_hash
+from ..utils import split_ident_hash
+from ._utils import create_parser, get_app_settings_from_arguments
 
 
 LOG_FORMAT_PLAIN = 'plain'
@@ -35,6 +36,7 @@ SELECT module_ident FROM modules
         AND concat_ws('.', major_version, minor_version) = %s
 ;
 """
+
 
 def parse_log(log, url_pattern):
     """Given a buffer as ``log``, parse the log bufer into
@@ -60,16 +62,12 @@ def parse_log(log, url_pattern):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = create_parser('hits_counter', description=__doc__)
     parser.add_argument('--hostname', default='cnx.org',
                         help="hostname of the site (default: cnx.org)")
     parser.add_argument('--log-format',
                         default=LOG_FORMAT_GZ, choices=LOG_FORMATS,
                         help="(default: {})".format(LOG_FORMAT_GZ))
-    parser.add_argument('--config-name', default='main',
-                        help="section name for the application in the " \
-                             "configuration file (default: main)")
-    parser.add_argument('config_uri', help="Configuration INI file.")
     parser.add_argument('log_file',
                         help="path to the logfile.")
     args = parser.parse_args(argv)
@@ -86,7 +84,7 @@ def main(argv=None):
         hits, start_timestamp, end_timestamp = parse_log(log, url_pattern)
 
     # Parse the configuration file for the postgres connection string.
-    settings = app_settings(args)
+    settings = get_app_settings_from_arguments(args)
 
     # Insert the hits into the database.
     connection_string = settings[config.CONNECTION_STRING]
