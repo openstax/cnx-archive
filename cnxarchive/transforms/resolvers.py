@@ -507,11 +507,11 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
         # Catch the invalid, unparsable, etc. references.
         bad_references = []
 
-        # Note, all c:link will have an @url. We purposely dumb down the xslt
-        #   in order to make the scan here easy. Plus the xslt could never
-        #   fully match and disassemble the url into the various attributes on
-        #   a link tag.
-        for link in self.apply_xpath('//c:link'):
+        # Note, all c:link will have an @url, and some c:cite do, as well. 
+        #   We purposely dumb down the xslt in order to make the scan here
+        #   easy. Plus the xslt could never fully match and disassemble
+        #   the url into the various attributes on a link tag.
+        for link in self.apply_xpath('//c:link|//c:cite'):
             ref = link.get('url')
 
             if not ref or self._should_ignore_reference(ref):
