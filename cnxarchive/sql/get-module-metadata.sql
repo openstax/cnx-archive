@@ -49,7 +49,7 @@ FROM (SELECT
          FROM users AS u
          WHERE u.username = ANY (m.licensors)
          ORDER BY idx(m.licensors, u.username)
-         ) user_rows) AS licensors,
+         ) AS user_rows) AS licensors,
   p.uuid AS "parentId",
   concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
   p.name as "parentTitle",
@@ -60,7 +60,7 @@ FROM (SELECT
          FROM users
          WHERE users.username::text = ANY (m.parentauthors)
          ORDER BY idx(m.parentauthors, users.username)
-         ) user_rows) as "parentAuthors",
+         ) AS user_rows) as "parentAuthors",
   (SELECT row_to_json(parent_row)
    FROM (
      SELECT p.uuid AS id,
@@ -72,7 +72,8 @@ FROM (SELECT
                                full_name as fullname, title, suffix
                         FROM users AS u
                         WHERE u.username = ANY (m.parentauthors)
-                  ) user_rows) AS authors
+                        ORDER BY idx(m.parentauthors, users.username)
+                  ) AS user_rows) AS authors
          ) parent_row) AS parent,
   m.language AS language,
   (select '{'||list(''''||roleparam||''':['''||array_to_string(personids,''',''')||''']')||'}' from roles natural join moduleoptionalroles where module_ident=m.module_ident group by module_ident) AS roles,
