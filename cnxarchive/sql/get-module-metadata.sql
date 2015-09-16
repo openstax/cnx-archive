@@ -72,7 +72,7 @@ FROM (SELECT
                                full_name as fullname, title, suffix
                         FROM users AS u
                         WHERE u.username = ANY (m.parentauthors)
-                        ORDER BY idx(m.parentauthors, users.username)
+                        ORDER BY idx(m.parentauthors, u.username)
                   ) AS user_rows) AS authors
          ) parent_row) AS parent,
   m.language AS language,
