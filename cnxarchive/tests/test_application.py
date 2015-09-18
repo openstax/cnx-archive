@@ -321,15 +321,23 @@ class RoutingTestCase(unittest.TestCase):
                     'filename': 'picture.jpg',
                     }),
                 ),
+            None: (
+                ('/extras/', {}),
+                ('/contents', {}),
+                ('/contents/', {}),
+                ),
             }
 
         for controller_name, args in tests.items():
             for path, routing_args in args:
                 environ = {'PATH_INFO': path}
                 controller = app.route(environ)
-                self.assertEqual(controller.__name__, controller_name)
-                self.assertEqual(environ['wsgiorg.routing_args'], routing_args)
-
+                if controller_name is not None:                
+                    self.assertEqual(controller.__name__, controller_name)
+                    self.assertEqual(environ['wsgiorg.routing_args'],
+                                     routing_args)
+                else:
+                    self.assertIsNone(controller)
 
 
 class CORSTestCase(unittest.TestCase):
