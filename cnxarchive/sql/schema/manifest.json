@@ -1,0 +1,38 @@
+[
+    {
+        "file": "precheck.sql",
+        "description": "Raises an exception if the database already has a schema."
+    },
+    "extensions.sql",
+    "functions.sql",
+    "hits-functions.sql",
+    "common-functions.sql",
+    {
+        "file": "sequences.sql",
+        "description": "Explicitly creates sequence values for tables."
+    },
+    {
+        "file": "types.sql",
+        "description": "Definition of custom column types."
+    },
+    {
+        "file": "aggregates.sql",
+        "description": "Custom aggregates used in grouped select queries."
+    },
+    "tables.sql",
+    "triggers.sql",
+    "indexes.sql",
+    {
+        "file": "legacy",
+        "description": "Adds legacy tables that are not directly used by archive."
+    },
+    "views.sql",
+    "trees.sql",
+    "fulltext-indexing.sql",
+    "shred_collxml.sql",
+    "tree_to_json.sql",
+    {
+        "file": "constants",
+        "description": "Contains table inserts for static/constant data."
+    }
+]

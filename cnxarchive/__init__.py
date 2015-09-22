@@ -32,7 +32,6 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
 def get_settings():
     """Retrieve the application settings"""
     return get_current_registry().settings
-
 def _set_settings(settings):
     """Assign the application settings."""
     get_current_registry().settings = settings
@@ -45,7 +44,7 @@ def declare_api_routes(config):
     add_route('content-html', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html')  # cnxarchive.views:get_content_html
     add_route('content-json', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.json')  # cnxarchive.views:get_content_json
     # add_route('content-snippet', '/contents/{ident_hash}.snippet')  # cnxarchive.views:get_content_snippet
-    add_route('content', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}')  # cnxarchive.views:get_content
+    add_route('content', '/contents/{ident_hash:([^:/]+)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}')  # cnxarchive.views:get_content
     add_route('resource', '/resources/{hash}{ignore:(/.*)?}')  # cnxarchive.views:get_resource
     add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # cnxarchive.views:get_export
     add_route('content-extras', '/extras/{ident_hash}')  # cnxarchive.views:get_extra

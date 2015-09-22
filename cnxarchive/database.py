@@ -8,6 +8,7 @@
 """Database models and utilities"""
 import datetime
 import os
+import json
 import psycopg2
 import re
 
@@ -22,27 +23,12 @@ from .utils import split_ident_hash
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
-DB_SCHEMA_FILES = (
-    'schema.sql',
-    # Collection trees
-    'trees.sql',
-    # Module fulltext indexing
-    'fulltext-indexing.sql',
-    # Functions for collections
-    'shred_collxml.sql',
-    'tree_to_json.sql',
-    'common-functions.sql',
-    'hits-functions.sql',
-    )
-DB_SCHEMA_FILE_PATHS = tuple([os.path.join(DB_SCHEMA_DIRECTORY, dsf)
-                              for dsf in DB_SCHEMA_FILES])
-
+SCHEMA_MANIFEST_FILENAME = 'manifest.json'
 
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
     with open(path, 'r') as fp:
         return fp.read()
-
 
 SQL = {
     'get-module': _read_sql_file('get-module'),
@@ -62,20 +48,62 @@ SQL = {
     }
 
 
+def _read_schema_manifest(manifest_filepath):
+    with open(os.path.abspath(manifest_filepath), 'rb') as fp:
+        raw_manifest = json.loads(fp.read())
+    manifest = []
+    relative_dir = os.path.abspath(os.path.dirname(manifest_filepath))
+    for item in raw_manifest:
+        if isinstance(item, dict):
+            file = item['file']
+        else:
+            file = item
+        if os.path.isdir(os.path.join(relative_dir, file)):
+            next_manifest = os.path.join(
+                relative_dir,
+                file,
+                SCHEMA_MANIFEST_FILENAME)
+            manifest.append(_read_schema_manifest(next_manifest))
+        else:
+            manifest.append(os.path.join(relative_dir, file))
+    return manifest
+
+
+def _compile_manifest(manifest, content_modifier=None):
+    """Compiles a given ``manifest`` into a sequence of schema items.
+    Apply the optional ``content_modifier`` to each file's contents.
+    """
+    items = []
+    for item in manifest:
+        if isinstance(item, list):
+            items.extend(_compile_manifest(item, content_modifier))
+        else:
+            with open(item, 'rb') as fp:
+                content = fp.read()
+            if content_modifier:
+                content = content_modifier(item, content)
+            items.append(content)
+    return items
+
+
+def get_schema():
+    manifest_filepath = os.path.join(DB_SCHEMA_DIRECTORY,
+                                     SCHEMA_MANIFEST_FILENAME)
+    schema_manifest = _read_schema_manifest(manifest_filepath)
+
+    # Modify the file so that it contains comments that say it's origin.
+    file_wrapper = lambda f, c: u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
+
+    return _compile_manifest(schema_manifest, file_wrapper)
+
+
 def initdb(settings):
     """Initialize the database from the given settings."""
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            for schema_filepath in DB_SCHEMA_FILE_PATHS:
-                with open(schema_filepath, 'r') as f:
-                    cursor.execute(f.read())
-            sql_constants = [os.path.join(DB_SCHEMA_DIRECTORY, filename)
-                             for filename in os.listdir(DB_SCHEMA_DIRECTORY)
-                             if filename.startswith('constant-')]
-            for filepath in sql_constants:
-                with open(filepath, 'r') as f:
-                    cursor.execute(f.read())
+            for schema_part in get_schema():
+                cursor.execute(schema_part)
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):

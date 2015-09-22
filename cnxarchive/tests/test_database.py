@@ -18,23 +18,39 @@ from . import testing
 class InitializeDBTestCase(unittest.TestCase):
     fixture = testing.schema_fixture
 
-    @testing.db_connect
-    def setUp(self, cursor):
-        self.fixture.setUp()
+    def setUp(self):
+        self.settings = testing.integration_test_settings()
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    @property
+    def target(self):
+        from ..database import initdb
+        return initdb
+
+    @testing.db_connect
+    def test_success(self, cursor):
+        self.target(self.settings)
+        # Simply test for the 'licenses' table.
+        # This isn't comprehensive, but it tests that the schema was put in place
+        # and static data (constants) values have been added to tables.
+        cursor.execute("SELECT code, version FROM licenses ORDER BY code, version ASC;")
+        try:
+            license = cursor.fetchone()
+        except Exception as exc:
+            self.fail(exc)
+        self.assertEqual(license, ('by', '1.0'))
 
     def test_initdb_on_already_initialized_db(self):
         """Testing the ``initdb`` raises a discernible error when the
         database is already initialized.
         """
+        self.fixture.setUp()
         # The fixture has initialized the database, so we only need to
         #   run the function.
-        from ..database import initdb
-        settings = testing.integration_test_settings()
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
-            initdb(settings)
+            self.target(self.settings)
         self.assertEqual(caught_exception.exception.message,
                          'Database is already initialized.\n')
 
@@ -607,19 +623,19 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         INSERT INTO modules
         (moduleid, portal_type, version, name, created, revised, authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent)
         VALUES (
-         'm47638', 
-         'Module', 
+         'm47638',
+         'Module',
          '1.13',
-         'test convert', 
-         '2013-12-09T16:57:29Z', 
-         '2013-12-09T17:14:08Z', 
-         ARRAY ['user1'], 
+         'test convert',
+         '2013-12-09T16:57:29Z',
+         '2013-12-09T17:14:08Z',
+         ARRAY ['user1'],
          ARRAY ['user1'],
          ARRAY ['user1'],
          20802,
          null,
-         7, 
-         '', 
+         7,
+         '',
          'user1',
          'Created module',
          'en',
@@ -651,7 +667,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         INSERT INTO modules
         (moduleid, portal_type, version, name,
          created, revised,
-         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog, 
+         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog,
          language, parent)
         VALUES ('m42955', 'Module', '1.2', 'Preface to College Physics',
         '2013-09-13 15:10:43.000000+02' , '2013-09-13 15:10:43.000000+02',
@@ -665,7 +681,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(cursor.fetchone()[0], old_n_modules + 3)
 
         # Test that the module inserted has the right major and minor versions
-        cursor.execute('''SELECT major_version, minor_version, uuid FROM modules 
+        cursor.execute('''SELECT major_version, minor_version, uuid FROM modules
             WHERE portal_type = 'Module' ORDER BY module_ident DESC''')
         major, minor, uuid = cursor.fetchone()
         self.assertEqual(major, 2)
@@ -741,9 +757,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
     def test_module_files_from_cnxml(self, cursor):
         # Insert abstract with cnxml
         cursor.execute('''
-        INSERT INTO abstracts 
-        (abstractid, abstract) 
-        VALUES 
+        INSERT INTO abstracts
+        (abstractid, abstract)
+        VALUES
         (20802, 'Here is my <emphasis>string</emphasis> summary.')
         ''')
 
@@ -1596,6 +1612,45 @@ ORDER BY username
                          ('legacy', 'Legacy', 'User', 'Legacy User',))
         self.assertEqual(user_records[1],
                          ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+
+    @testing.db_connect
+    def test_update_user_update(self, cursor):
+        """Verify legacy updating of user account also updates rewrite
+        """
+        # Insert the legacy persons records.
+        #   This person would have registered on legacy already, so we insert them there too.
+        cursor.execute("""\
+            INSERT INTO persons
+            (personid, firstname, surname, fullname)
+            VALUES
+            ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer')
+        """)
+        cursor.execute("""\
+            INSERT INTO users
+            (username, first_name, last_name, full_name)
+            VALUES
+            ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer')
+        """)
+
+        # Update user profile on legacy
+        cursor.execute("""\
+            UPDATE persons
+            SET firstname = 'Univeristy',
+                surname = 'Maths',
+                fullname = 'OSC Maths Maintainer'
+            WHERE personid = 'cnxcap'
+        """)
+
+        # Grab the user from users table to verify it's updated
+        cursor.execute("""\
+            SELECT username, first_name, last_name, full_name
+            FROM users
+            WHERE username = 'cnxcap'
+        """)
+        rewrite_user_record = cursor.fetchone()
+
+        # Check for the update.
+        self.assertEqual(rewrite_user_record, ('cnxcap', 'Univeristy', 'Maths', 'OSC Maths Maintainer'))
 
     @testing.db_connect
     def test_new_moduleoptionalroles_user_insert(self, cursor):
