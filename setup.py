@@ -9,11 +9,9 @@ install_requires = (
     'cnx-epub',
     'lxml',
     'python-memcached',
-    'PasteDeploy',
-    'PasteScript',
     'plpydbapi',
     'psycopg2>=2.5',
-    'PyYAML',
+    'pyramid',
     'rhaptos.cnxmlutils',
     'tzlocal',
     'waitress',  # wsgi server
