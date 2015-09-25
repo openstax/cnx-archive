@@ -12,6 +12,7 @@ import unittest
 import uuid
 
 import psycopg2
+from pyramid import testing as pyramid_testing
 
 from . import testing
 
@@ -50,7 +51,7 @@ class QueryTestCase(unittest.TestCase):
         self.assertEqual(expected, query.terms)
 
 
-class SearchModelTestCase(unittest.TestCase):
+class BaseSearchTestCase(unittest.TestCase):
     fixture = testing.data_fixture
 
     @classmethod
@@ -59,14 +60,15 @@ class SearchModelTestCase(unittest.TestCase):
 
     @testing.db_connect
     def setUp(self, cursor):
-        from .. import _set_settings
-        _set_settings(self.settings)
+        config = pyramid_testing.setUp(settings=self.settings)
         self.fixture.setUp()
 
     def tearDown(self):
-        from .. import _set_settings
-        _set_settings(None)
+        pyramid_testing.tearDown()
         self.fixture.tearDown()
+
+
+class SearchModelTestCase(BaseSearchTestCase):
 
     def make_queryrecord(self, *args, **kwargs):
         from ..search import QueryRecord
@@ -205,23 +207,7 @@ class SearchModelTestCase(unittest.TestCase):
         self.assertEqual(authors, expected)
 
 
-class SearchTestCase(unittest.TestCase):
-    fixture = testing.data_fixture
-
-    @classmethod
-    def setUpClass(cls):
-        cls.settings = testing.integration_test_settings()
-
-    @testing.db_connect
-    def setUp(self, cursor):
-        from .. import _set_settings
-        _set_settings(self.settings)
-        self.fixture.setUp()
-
-    def tearDown(self):
-        from .. import _set_settings
-        _set_settings(None)
-        self.fixture.tearDown()
+class SearchTestCase(BaseSearchTestCase):
 
     def call_target(self, query_params, query_type=None, weights=None):
         from ..search import DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS

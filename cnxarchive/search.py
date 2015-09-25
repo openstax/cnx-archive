@@ -14,11 +14,11 @@ from datetime import datetime
 from time import strptime
 
 import psycopg2
+from cnxquerygrammar.query_parser import grammar, DictFormater
 from parsimonious.exceptions import IncompleteParseError
 from psycopg2.tz import FixedOffsetTimezone, LocalTimezone
-from cnxquerygrammar.query_parser import grammar, DictFormater
+from pyramid.threadlocal import get_current_registry
 
-from . import get_settings
 from . import config
 from .database import SQL_DIRECTORY
 from .utils import (
@@ -188,7 +188,7 @@ class QueryRecord(Mapping):
         arguments = {'id': self['id'],
                      'query': ' & '.join(abstract_terms),
                      }
-        settings = get_settings()
+        settings = get_current_registry().settings
         connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -206,7 +206,7 @@ class QueryRecord(Mapping):
         arguments = {'id': self['id'],
                      'query': ' & '.join(terms),
                      }
-        settings = get_settings()
+        settings = get_current_registry().settings
         connection_string = settings[config.CONNECTION_STRING]
         with psycopg2.connect(connection_string) as db_connection:
             with db_connection.cursor() as cursor:
@@ -648,7 +648,7 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
     statement, arguments = _build_search(query, weights)
 
     # Execute the SQL.
-    settings = get_settings()
+    settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(statement, arguments)

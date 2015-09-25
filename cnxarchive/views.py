@@ -18,9 +18,9 @@ from datetime import datetime, timedelta
 from pytz import timezone
 from re import compile
 from pyramid import httpexceptions
+from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
-from . import get_settings
 from . import config
 from . import cache
 # FIXME double import
@@ -110,7 +110,8 @@ LEGACY_EXTENSION_MAP = {'epub':'epub','pdf':'pdf','zip':'complete.zip'}
 def get_type_info():
     if TYPE_INFO:
         return
-    for line in get_settings()['exports-allowable-types'].splitlines():
+    settings = get_current_registry().settings
+    for line in settings['exports-allowable-types'].splitlines():
         if not line.strip():
             continue
         type_name, type_info = line.strip().split(':', 1)
@@ -247,7 +248,7 @@ def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=F
 def _get_content_json(request=None, ident_hash=None, reqtype=None):
     """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
     routing_args = request and request.matchdict or {}
-    settings = get_settings()
+    settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
     try:
@@ -374,7 +375,7 @@ def redirect_legacy_content(request):
     """Redirect from legacy /content/id/version url to new /contents/uuid@version.
        Handles collection context (book) as well
     """
-    settings = get_settings()
+    settings = get_current_registry().settings
     routing_args = request.matchdict
     objid = routing_args['objid']
     objver = routing_args.get('objver')
@@ -411,7 +412,7 @@ def redirect_legacy_content(request):
 
 
 def _convert_legacy_id(objid, objver=None):
-    settings = get_settings()
+    settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if objver:
@@ -429,7 +430,7 @@ def _convert_legacy_id(objid, objver=None):
 @view_config(route_name='resource', request_method='GET')
 def get_resource(request):
     """Retrieve a file's data."""
-    settings = get_settings()
+    settings = get_current_registry().settings
     hash = request.matchdict['hash']
 
     # Do the file lookup
@@ -453,7 +454,7 @@ def get_resource(request):
 def get_extra(request):
     """Return information about a module / collection that cannot be cached
     """
-    settings = get_settings()
+    settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
     id, version = split_ident_hash(args['ident_hash'])
@@ -477,7 +478,7 @@ def get_extra(request):
 @view_config(route_name='export', request_method='GET')
 def get_export(request):
     """Retrieve an export file."""
-    settings = get_settings()
+    settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
     ident_hash, type = args['ident_hash'], args['type']
@@ -615,7 +616,7 @@ def search(request):
         authors_results = []
         limits = results['query']['limits']
         index = 0
-        settings = get_settings()
+        settings = get_current_registry().settings
         connection = settings[config.CONNECTION_STRING]
         statement = SQL['get-users-by-ids']
         with psycopg2.connect(connection) as db_connection:
@@ -691,7 +692,7 @@ def _get_licenses(cursor):
 def extras(request):
     """Return a dict with archive metadata for webview
     """
-    settings = get_settings()
+    settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             metadata = {
@@ -712,7 +713,7 @@ def extras(request):
 def sitemap(request):
     """Return a sitemap xml file for search engines
     """
-    settings = get_settings()
+    settings = get_current_registry().settings
     xml = Sitemap()
     hostname = request.headers['HOST']
     connection_string = settings[config.CONNECTION_STRING]
