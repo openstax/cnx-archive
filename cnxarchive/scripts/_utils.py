@@ -8,7 +8,7 @@
 import os
 import argparse
 
-from ..utils import get_appsettings
+from pyramid.paster import get_appsettings
 
 
 __all__ = ('create_parser', 'get_app_settings_from_arguments',)
