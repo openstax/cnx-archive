@@ -12,7 +12,6 @@ import HTMLParser
 import time
 import json
 import unittest
-from wsgiref.util import setup_testing_defaults
 
 try:
     from unittest import mock
@@ -20,9 +19,12 @@ except ImportError:
     import mock
 
 import psycopg2
+from pyramid import httpexceptions
+from pyramid import testing as pyramid_testing
+from pyramid.request import Request
+from pyramid.threadlocal import get_current_registry
 
 from . import testing
-from .. import httpexceptions
 
 
 COLLECTION_METADATA = {
@@ -319,6 +321,9 @@ class ViewsTestCase(unittest.TestCase):
         from .. import _set_settings
         _set_settings(self.settings)
         self.fixture.setUp()
+        self.request = pyramid_testing.DummyRequest()
+        self.request.headers['HOST'] = 'cnx.org'
+        config = pyramid_testing.setUp(settings=self.settings, request=self.request)
 
         # Clear all cached searches
         import memcache
@@ -343,30 +348,17 @@ class ViewsTestCase(unittest.TestCase):
         _set_settings(None)
         self.fixture.tearDown()
 
-    def _make_environ(self):
-        environ = {}
-        setup_testing_defaults(environ)
-        environ['HTTP_HOST']='cnx.org'
-        return environ
-
-    def _start_response(self, status, headers=[]):
-        """Used to capture the WSGI 'start_response'."""
-        self.captured_response = {'status': status, 'headers': headers}
-
     def test_collection_content(self):
         # Test for retrieving a piece of content.
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
         # Call the view.
         from ..views import get_content
-        content = get_content(environ, self._start_response)[0]
-        content = json.loads(content)
+        content = get_content(self.request).json_body
 
         # Remove the 'tree' from the content for separate testing.
         content_tree = content.pop('tree')
@@ -385,14 +377,11 @@ class ViewsTestCase(unittest.TestCase):
         version = '1.1'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
         # Call the view.
         from ..views import get_content
-        content = get_content(environ, self._start_response)[0]
-        content = json.loads(content)
+        content = get_content(self.request).json_body
 
         # Remove the 'tree' from the content for separate testing.
         content_tree = content.pop('tree')
@@ -418,14 +407,11 @@ class ViewsTestCase(unittest.TestCase):
         version = '6.1'
 
         # Build the request environment
-        environ = self._make_environ()
-        routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
 
         # Call the view
         from ..views import get_content
-        content = get_content(environ, self._start_response)[0]
-        content = json.loads(content)
+        content = get_content(self.request).json_body
 
         content_tree = content.pop('tree')
 
@@ -468,14 +454,11 @@ class ViewsTestCase(unittest.TestCase):
         version = '6.1'
 
         # Build the request environment
-        environ = self._make_environ()
-        routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
 
         # Call the view
         from ..views import get_content
-        content = get_content(environ, self._start_response)[0]
-        content = json.loads(content)
+        content = get_content(self.request).json_body
 
         # History should only include displayed version and older versions
         self.assertEqual(content['history'], [{
@@ -498,14 +481,11 @@ class ViewsTestCase(unittest.TestCase):
         version = '8'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
         # Call the view.
         from ..views import get_content
-        content = get_content(environ, self._start_response)[0]
-        content = json.loads(content)
+        content = get_content(self.request).json_body
 
         # Remove the 'content' text from the content for separate testing.
         content_text = content.pop('content')
@@ -524,42 +504,36 @@ class ViewsTestCase(unittest.TestCase):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}".format(uuid)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}".format(uuid)}
 
         # Call the view.
         from ..views import get_content
 
         # Check that the view redirects to the latest version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(environ, self._start_response)
+            get_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@5.json'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@5.json'.format(uuid))
 
     def test_content_not_found(self):
         # Build the request environment
-        environ = self._make_environ()
-        routing_args = {'ident_hash': '98c44aed-056b-450a-81b0-61af87ee75af'}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': '98c44aed-056b-450a-81b0-61af87ee75af'}
 
         # Call the view
         from ..views import get_content
-        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
-                          self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+                          self.request)
 
     def test_content_not_found_w_invalid_uuid(self):
         # Build the request environment
-        environ = self._make_environ()
-        routing_args = {'ident_hash': 'notfound@1'}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': 'notfound@1'}
 
         # Call the view
         from ..views import get_content
-        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
-                          self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+                          self.request)
 
     def test_content_page_inside_book_version_mismatch(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -568,16 +542,15 @@ class ViewsTestCase(unittest.TestCase):
         page_version = '3'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@0'.format(page_uuid),
                 }
 
         # Call the view
         from ..views import get_content
-        self.assertRaises(httpexceptions.HTTPNotFound, get_content, environ,
-                          self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+                          self.request)
 
     def test_content_page_inside_book_w_version(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -586,8 +559,7 @@ class ViewsTestCase(unittest.TestCase):
         page_version = '3'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
                 }
@@ -595,11 +567,11 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view
         from ..views import get_content
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(environ, self._start_response)
+            get_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers, [
-            ('Location', '/contents/{}@{}'.format(page_uuid, page_version))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@{}'.format(page_uuid, page_version))
 
     def test_content_page_inside_book_wo_version(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -608,8 +580,7 @@ class ViewsTestCase(unittest.TestCase):
         page_version = '3'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
             'ident_hash': book_uuid,
             'page_ident_hash': page_uuid,
             }
@@ -617,102 +588,93 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view
         from ..views import get_content
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(environ, self._start_response)
+            get_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
         path = '/contents/{}@{}:{}.json'.format(
             book_uuid, book_version, page_uuid)
-        self.assertEqual(cm.exception.headers, [('Location', path)])
+        self.assertEqual(cm.exception.headers['Location'], path)
 
         # Go to the redirected path
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': page_uuid,
             }
 
         # Call the view
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(environ, self._start_response)
+            get_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers, [
-            ('Location', '/contents/{}@{}'.format(page_uuid, page_version))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@{}'.format(page_uuid, page_version))
 
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@5'.format(uuid))])
+        self.assertIn(cm.exception.headers['Location'],
+                      '/contents/{}@5'.format(uuid))
 
     def test_legacy_id_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
         
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid, 'objver':'1.5'}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid, 'objver':'1.5'}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@5'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@5'.format(uuid))
 
     def test_legacy_id_old_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid, 'objver':'1.4'}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@4'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@4'.format(uuid))
 
     def test_legacy_bad_id_redirect(self):
         objid = 'foobar'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPNotFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '404 Not Found')
 
@@ -722,42 +684,38 @@ class ViewsTestCase(unittest.TestCase):
         colid = 'col15533'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid, 'objver':'1.4'}
-        environ['wsgiorg.routing_args'] = routing_args
-        environ['QUERY_STRING'] = 'collection={}/latest'.format(colid)
+        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
+        self.request.params = {'collection': '{}/latest'.format(colid)}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@1.1:14'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@1.1:14'.format(uuid))
 
     def test_legacy_id_old_ver_bad_collection_context(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid, 'objver':'1.4'}
-        environ['wsgiorg.routing_args'] = routing_args
-        environ['QUERY_STRING'] = 'collection=col45555/latest'
+        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
+        self.request.params = {'collection': 'col45555/latest'}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@4'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@4'.format(uuid))
 
     def test_legacy_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -767,23 +725,20 @@ class ViewsTestCase(unittest.TestCase):
         sha1 = '95430b74a5ee9e09037c589feb0685ee226a06b8'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid,
-                        'objver':objver,
-                        'filename':filename}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid,
+                                  'objver':objver,
+                                  'filename':filename}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view redirects to the resources url
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            redirect_legacy_content(environ, self._start_response)
+            redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(
-                cm.exception.headers,
-                [('Location', '/resources/{}/{}'.format(sha1, filename))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/resources/{}/{}'.format(sha1, filename))
 
     def test_legacy_no_such_filename_redirect(self):
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -792,18 +747,16 @@ class ViewsTestCase(unittest.TestCase):
         filename = 'nothere.png'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'objid':objid,
-                        'objver':objver,
-                        'filename':filename}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'objid':objid,
+                                  'objver':objver,
+                                  'filename':filename}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view 404s
         self.assertRaises(httpexceptions.HTTPNotFound,
-            redirect_legacy_content, environ, self._start_response)
+            redirect_legacy_content, self.request)
 
     @testing.db_connect
     def test_content_index_html(self, cursor):
@@ -831,14 +784,11 @@ class ViewsTestCase(unittest.TestCase):
 
         def get_content(version):
             # Build the request environment
-            environ = self._make_environ()
-            routing_args = {'ident_hash': '{}@{}'.format(uuid, version)}
-            environ['wsgiorg.routing_args'] = routing_args
+            self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
 
             # Call the view
             from ..views import get_content
-            content = get_content(environ, self._start_response)[0]
-            content = json.loads(content)
+            content = get_content(self.request).json_body
 
             return content.pop('content')
 
@@ -850,9 +800,7 @@ class ViewsTestCase(unittest.TestCase):
         version = '7.1'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
         expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9@3.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7@6.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66@7.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2.html">Introduction: Further Applications of Newton’s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59@5.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41@6.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca@8.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881@3.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325@5.html">Useful Inførmation</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@5.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
 
@@ -860,61 +808,52 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import get_content_html
 
         # Check that the view returns the expected html
-        resp_body = get_content_html(environ, self._start_response)
+        resp_body = get_content_html(self.request).body
         p = HTMLParser.HTMLParser()
-        self.assertEqual(p.unescape(resp_body[0]), expected)
+        self.assertEqual(p.unescape(resp_body), expected)
 
     def test_content_module_as_html(self):
         uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
         version = '4'
 
         # Build the request environment.
-        environ = self._make_environ()
-        routing_args = {'ident_hash': "{}@{}".format(uuid, version)}
-        environ['wsgiorg.routing_args'] = routing_args
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
         # Call the view.
         from ..views import get_content_html
 
         # Check that the view returns some html
-        resp_body = get_content_html(environ, self._start_response)
-        self.assertTrue(resp_body[0].startswith('<html'))
+        resp_body = get_content_html(self.request).body
+        self.assertTrue(resp_body.startswith('<html'))
 
     def test_resources(self):
         # Test the retrieval of resources contained in content.
         hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
 
         # Build the request.
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'hash': hash}
+        self.request.matchdict = {'hash': hash}
 
         # Call the view.
         from ..views import get_resource
-        resource = get_resource(environ, self._start_response)[0]
+        resource = get_resource(self.request).body
 
         expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
         # Check the response body.
         self.assertEqual(bytes(resource)[:len(expected_bits)],
                          expected_bits)
 
-        # Check for response headers, specifically the content-disposition.
-        headers = self.captured_response['headers']
-        expected_headers = [
-            ('Content-type', 'image/png',),
-            ]
-        self.assertEqual(headers, expected_headers)
+        self.assertEqual(self.request.response.content_type, 'image/png')
 
     def test_resources_404(self):
         hash = 'invalid-hash'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'hash': hash}
+        self.request.matchdict = {'hash': hash}
 
         # Call the view
         from ..views import get_resource
-        self.assertRaises(httpexceptions.HTTPNotFound, get_resource, environ,
-                          self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_resource,
+                          self.request)
 
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
@@ -925,17 +864,14 @@ class ViewsTestCase(unittest.TestCase):
         filename = "{}@{}.{}".format(id, version, type)
 
         # Build the request.
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
-                                           'type': type,
-                                           }
+        self.request.matchdict = {'ident_hash': ident_hash,
+                                  'type': type,
+                                  }
 
         from ..views import get_export
-        export = get_export(environ, self._start_response)[0]
+        export = get_export(self.request).body
 
-        headers = self.captured_response['headers']
-        headers = {x[0].lower(): x[1] for x in headers}
-        self.assertEqual(headers['content-disposition'],
+        self.assertEqual(self.request.response.content_disposition,
                          "attached; filename=college-physics-{}.pdf" \
                          .format(version))
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
@@ -948,15 +884,13 @@ class ViewsTestCase(unittest.TestCase):
         version = '8'
         ident_hash = '{}@{}'.format(id, version)
         filename = '{}@{}.pdf'.format(id, version)
-        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash,
-                                           'type': 'pdf'
-                                           }
+        self.request.matchdict = {'ident_hash': ident_hash,
+                                  'type': 'pdf'
+                                  }
 
-        export = get_export(environ, self._start_response)[0]
-        headers = self.captured_response['headers']
-        headers = {x[0].lower(): x[1] for x in headers}
+        export = get_export(self.request).body
         self.assertEqual(
-            headers['content-disposition'],
+            self.request.response.content_disposition,
             "attached; filename=elasticity-stress-and-strain-{}.pdf" \
             .format(version))
 
@@ -967,58 +901,53 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_exports_type_not_supported(self):
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
                 'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@8',
                 'type': 'txt'
                 }
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
-                get_export, environ, self._start_response)
+                get_export, self.request)
 
     def test_exports_404(self):
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {
+        self.request.matchdict = {
                 'ident_hash': '24184288-14b9-11e3-86ac-207c8f4fa432@0',
                 'type': 'pdf'
                 }
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
-                get_export, environ, self._start_response)
+                get_export, self.request)
 
     def test_exports_without_version(self):
         id = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': id, 'type': 'pdf'}
+        self.request.matchdict = {'ident_hash': id, 'type': 'pdf'}
 
         from ..views import get_export
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_export(environ, self._start_response)
+            get_export(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/exports/{}@5.pdf'.format(id))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/exports/{}@5.pdf'.format(id))
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '6.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
+        output = get_extra(self.request).json_body
 
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        output = json.loads(output)
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
             u'downloads': [{
@@ -1057,16 +986,15 @@ class ViewsTestCase(unittest.TestCase):
         version = '7.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
+        output = get_extra(self.request).json_body
 
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['downloads'], [
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(output['downloads'], [
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'PDF',
@@ -1115,17 +1043,16 @@ class ViewsTestCase(unittest.TestCase):
         self.addCleanup(remove_generated_files)
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': requested_ident_hash}
+        self.request.matchdict = {'ident_hash': requested_ident_hash}
 
         # Call the target
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
+        output = get_extra(self.request).json_body
 
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['downloads'], [
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(output['downloads'], [
             {
                 u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
                     .format(id, version),
@@ -1162,30 +1089,28 @@ class ViewsTestCase(unittest.TestCase):
         version = '7.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
+        output = get_extra(self.request).json_body
 
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['isLatest'], True)
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(output['isLatest'], True)
 
         version = '6.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
+        output = get_extra(self.request).json_body
 
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        self.assertEqual(json.loads(output)['isLatest'], False)
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(output['isLatest'], False)
 
     def test_extra_wo_version(self):
         # Request the extras for a document, but without specifying
@@ -1197,17 +1122,15 @@ class ViewsTestCase(unittest.TestCase):
         expected_ident_hash = "{}@{}".format(id, version)
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': requested_ident_hash}
+        self.request.matchdict = {'ident_hash': requested_ident_hash}
 
         # Call the target
         from ..views import get_extra
         with self.assertRaises(httpexceptions.HTTPFound) as raiser:
-            get_extra(environ, self._start_response)
+            get_extra(self.request)
         exception = raiser.exception
         expected_location = "/extras/{}".format(expected_ident_hash)
-        self.assertEqual(exception.headers,
-                         [('Location', expected_location)])
+        self.assertEqual(exception.headers['Location'], expected_location)
 
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
@@ -1215,16 +1138,14 @@ class ViewsTestCase(unittest.TestCase):
         ident_hash = '{}@{}'.format(id, version)
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': ident_hash}
+        self.request.matchdict = {'ident_hash': ident_hash}
 
         # Call the target
         from ..views import get_extra
-        output = get_extra(environ, self._start_response)[0]
-        self.assertEqual(self.captured_response['status'], '200 OK')
-        self.assertEqual(self.captured_response['headers'][0],
-                ('Content-type', 'application/json'))
-        output = json.loads(output)
+        output = get_extra(self.request).json_body
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
             u'canPublish': [
@@ -1265,37 +1186,33 @@ class ViewsTestCase(unittest.TestCase):
         version = '1.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
         from ..views import get_extra
-        self.assertRaises(httpexceptions.HTTPNotFound, get_extra, environ,
-                self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
+                          self.request)
 
         # Test id not found
         id = 'c694e5cc-47bd-41a4-b319-030647d93440'
         version = '1.1'
 
         # Build the request
-        environ = self._make_environ()
-        environ['wsgiorg.routing_args'] = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
-        self.assertRaises(httpexceptions.HTTPNotFound, get_extra, environ,
-                self._start_response)
+        self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
+                          self.request)
 
     def test_search(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="college physics" sort:version'
+        self.request.params = {'q': '"college physics" sort:version'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(sorted(results.keys()), sorted(SEARCH_RESULTS.keys()))
         self.maxDiff = None
         for key in results:
@@ -1303,17 +1220,15 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_filter_by_authorID(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="college physics" authorID:cnxcap'
+        self.request.params = {'q': '"college physics" authorID:cnxcap'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(results['results']['total'], 1)
         self.assertEqual(results['query'], {
             u'sort': [],
@@ -1333,19 +1248,16 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         import string
-        environ = self._make_environ()
         sub = 'subject:"Arguing with Judge Judy: Popular ‘Logic’ on TV Judge Shows"'
         auth0 = 'authorID:cnxcap'
         auth1 = 'authorID:OpenStaxCollege'
         auth2 = 'authorID:DrBunsenHoneydew'
         fields = [sub, auth0, auth1, auth2]
-        environ['QUERY_STRING'] = 'q=' + string.join(fields, ' ')
+        self.request.params = {'q': string.join(fields, ' ')}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
+        results = search(self.request).json_body
 
-        results = json.loads(results)
-        
         self.assertEqual(results['results']['total'], 0)
 
         expected = [
@@ -1387,17 +1299,15 @@ class ViewsTestCase(unittest.TestCase):
         # they link to the search page like: /search?q=subject:"Arts"
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=subject:"Science and Technology"'
+        self.request.params = {'q': 'subject:"Science and Technology"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query'], {
             u'per_page': 20,
@@ -1408,17 +1318,15 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_with_subject(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=title:"college physics" subject:"Science and Technology"'
+        self.request.params = {'q': 'title:"college physics" subject:"Science and Technology"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['query'], {
             u'per_page': 20,
@@ -1432,17 +1340,15 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_highlight_abstract(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="college physics"'
+        self.request.params = {'q': '"college physics"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['results']['items'][0]['summarySnippet'],
                 'algebra-based, two-semester <b>college</b> <b>physics</b> book '
@@ -1465,16 +1371,15 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
         # Test for no highlighting on specific field queries.
-        environ['QUERY_STRING'] = 'q=title:"college physics"'
+        self.request.params = {'q': 'title:"college physics"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['results']['items'][0]['summarySnippet'],
                 ' This introductory, algebra-based, two-semester college physics '
@@ -1497,17 +1402,15 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][2]['summarySnippet'], ' A number list:   one  two  three   ')
 
     def test_search_no_params(self):
-        environ = self._make_environ()
-
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results, json.dumps({
+        self.assertEqual(results, {
             u'query': {
                 u'limits': [],
                 u'per_page': 20,
@@ -1518,19 +1421,18 @@ class ViewsTestCase(unittest.TestCase):
                 u'total': 0,
                 u'limits': [],
                 },
-            }))
+            })
 
     def test_search_whitespace(self):
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q= '
+        self.request.params = {'q': ' '}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results, json.dumps({
             u'query': {
@@ -1546,16 +1448,15 @@ class ViewsTestCase(unittest.TestCase):
             }))
 
     def test_search_utf8(self):
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="你好"'
+        self.request.params = {'q': '"你好"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
         expected = {
             u'query': {
@@ -1588,20 +1489,18 @@ class ViewsTestCase(unittest.TestCase):
                     }, 
                 },
             }
-        self.assertEqual(json.loads(results), expected)
+        self.assertEqual(results, expected)
 
     def test_search_punctuations(self):
-        environ = self._make_environ()
-        # %2B is +
-        environ['QUERY_STRING'] = r"q=:\.%2B'?"
+        self.request.params = {'q': r":\.+'?"}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
         expected = {
             u'query': {
@@ -1634,19 +1533,18 @@ class ViewsTestCase(unittest.TestCase):
                     }, 
                 },
             }
-        self.assertEqual(json.loads(results), expected)
+        self.assertEqual(results, expected)
 
     def test_search_unbalanced_quotes(self):
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = r'q="a phrase" "something else sort:pubDate author:"first last"'
+        self.request.params = {'q': r'"a phrase" "something else sort:pubDate author:"first last"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
         expected = {
             u'query': {
@@ -1683,24 +1581,22 @@ class ViewsTestCase(unittest.TestCase):
                     }, 
                 },
             }
-        self.assertEqual(json.loads(results), expected)
+        self.assertEqual(results, expected)
 
     def test_search_type_page_or_module(self):
         # Test searching "page"
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=title:"college physics" type:page'
+        self.request.params = {'q': 'title:"college physics" type:page'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'page'})
         self.assertEqual(results['results']['total'], 1)
@@ -1710,18 +1606,16 @@ class ViewsTestCase(unittest.TestCase):
         # Test searching "module"
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = r'q="college physics" type:module'
+        self.request.params = {'q': '"college physics" type:module'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'module'})
         self.assertEqual(results['results']['total'], 1)
@@ -1732,18 +1626,16 @@ class ViewsTestCase(unittest.TestCase):
         # Test searching "book"
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=title:physics type:book'
+        self.request.params = {'q': 'title:physics type:book'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'book'})
         self.assertEqual(results['results']['total'], 2)
@@ -1753,18 +1645,16 @@ class ViewsTestCase(unittest.TestCase):
         # Test searching "collection"
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = r'q=title:physics type:collection'
+        self.request.params = {'q': 'title:physics type:collection'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query']['limits'][-1],
                          {u'tag': u'type', u'value': u'collection'})
         self.assertEqual(results['results']['total'], 2)
@@ -1778,50 +1668,49 @@ class ViewsTestCase(unittest.TestCase):
         _set_settings(self.settings)
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['results']['total'], 5)
         self.assertEqual(len(results['results']['items']), 3)
 
         # Fetch next page
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '2'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['results']['total'], 5)
         self.assertEqual(len(results['results']['items']), 2)
 
         # Fetch next page
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['results']['total'], 5)
         self.assertEqual(len(results['results']['items']), 0)
 
@@ -1832,18 +1721,17 @@ class ViewsTestCase(unittest.TestCase):
         # Test search results with pagination
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query'], {
             'sort': [],
             'limits': [{'tag': 'text', 'value': 'introduction'}],
@@ -1866,18 +1754,18 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
         # Fetch next page
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '2'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query'], {
             'sort': [],
             'limits': [{'tag': 'text', 'value': 'introduction'}],
@@ -1895,18 +1783,18 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
         # Fetch next page
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
 
-        results = json.loads(results)
         self.assertEqual(results['query'], {
             'sort': [],
             'limits': [{'tag': 'text', 'value': 'introduction'}],
@@ -1928,115 +1816,114 @@ class ViewsTestCase(unittest.TestCase):
         # Disable caching from url with nocache=True
 
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again (should use cache)
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again but with caching disabled
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&nocache=True'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'nocache': 'True'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 2)
 
     def test_search_w_cache_expired(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 1)
 
         # Fetch next page (should use cache)
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '2'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 1)
 
         # Wait for cache to expire
         time.sleep(30)
 
         # Fetch the same page (cache expired)
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=introduction&per_page=3&page=2'
+        self.request.params = {'q': 'introduction',
+                               'per_page': '3',
+                               'page': '2'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 2)
 
     def test_search_w_normal_cache(self):
         # Build the request
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q="college physics"'
+        self.request.params = {'q': '"college physics"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['results']['total'], 3)
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again (should use cache)
-        results = search(environ, self._start_response)[0]
-        results = json.loads(results)
+        results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 3)
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again after cache is expired
         time.sleep(20)
-        results = search(environ, self._start_response)[0]
-        results = json.loads(results)
+        results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 3)
         self.assertEqual(self.db_search_call_count, 2)
@@ -2045,42 +1932,35 @@ class ViewsTestCase(unittest.TestCase):
         # Test searches which should be cached for longer
 
         # Build the request for subject search
-        environ = self._make_environ()
-        environ['QUERY_STRING'] = 'q=subject:"Science and Technology"'
+        self.request.params = {'q': 'subject:"Science and Technology"'}
 
         from ..views import search
-        results = search(environ, self._start_response)[0]
-        status = self.captured_response['status']
-        headers = self.captured_response['headers']
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
 
         self.assertEqual(status, '200 OK')
-        self.assertEqual(headers[0], ('Content-type', 'application/json'))
-        results = json.loads(results)
+        self.assertEqual(content_type, 'application/json')
 
         self.assertEqual(results['results']['total'], 7)
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again (should use cache)
         time.sleep(20)
-        results = search(environ, self._start_response)[0]
-        results = json.loads(results)
+        results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 7)
         self.assertEqual(self.db_search_call_count, 1)
 
         # Search again after cache is expired
         time.sleep(15)
-        results = search(environ, self._start_response)[0]
-        results = json.loads(results)
+        results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 7)
         self.assertEqual(self.db_search_call_count, 2)
 
     @testing.db_connect
     def test_extras(self, cursor):
-        # Build the request
-        environ = self._make_environ()
-
         # Setup a few service state messages.
         cursor.execute("""\
 INSERT INTO service_state_messages
@@ -2098,8 +1978,7 @@ VALUES
 
         # Call the view
         from ..views import extras
-        metadata = extras(environ, self._start_response)[0]
-        metadata = json.loads(metadata)
+        metadata = extras(self.request).json_body
         messages = metadata.pop('messages')
         self.assertEqual(metadata, {
             u'subjects': [{u'id': 1, u'name': u'Arts',
@@ -2212,20 +2091,14 @@ VALUES
         self.assertEqual(expected_messages, _remove_timestamps(messages))
 
     def test_sitemap(self):
-        # Build the request
-        environ = self._make_environ()
-
         # Call the view
         from ..views import sitemap
-        sitemap = sitemap(environ, self._start_response)[0]
+        sitemap = sitemap(self.request).body
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
         with open(expected_file, 'r') as file:
             self.assertMultiLineEqual(sitemap, file.read())
 
     def test_robots(self):
-        # Build the request
-        environ = self._make_environ()
-
         # Call the view
         mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
         with mock.patch('cnxarchive.views.datetime') as mock_datetime:
@@ -2233,16 +2106,17 @@ VALUES
                 return timezone.localize(mocked_time)
             mock_datetime.now.side_effect = patched_now_side_effect
             from ..views import robots
-            robots = robots(environ, self._start_response)[0]
+            robots = robots(self.request).body
 
         # Check the headers
-        headers = self.captured_response['headers']
-        self.assertIn(('Content-type', 'text/plain'), headers)
-        self.assertIn(('Last-Modified', 'Wed, 04 Mar 2015 18:03:29 GMT'),
-                       headers)
-        self.assertIn(('Cache-Control', 'max-age=36000, must-revalidate'),
-                      headers)
-        self.assertIn(('Expires', 'Mon, 09 Mar 2015 18:03:29 GMT'), headers)
+        resp = self.request.response
+        self.assertEqual(resp.content_type, 'text/plain')
+        self.assertEqual(
+            str(resp.cache_control), 'max-age=36000, must-revalidate')
+        self.assertEqual(resp.headers['Last-Modified'],
+                         'Wed, 04 Mar 2015 18:03:29 GMT')
+        self.assertEqual(resp.headers['Expires'],
+                         'Mon, 09 Mar 2015 18:03:29 GMT')
 
         # Check robots.txt content
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')

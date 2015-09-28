@@ -9,6 +9,9 @@ services:
   - memcached
 before_install:
   - sudo apt-get update
+  # Remove python-zope.interface, not compatible with the pyramid version we're
+  # using
+  - sudo apt-get remove python-zope.interface
   # Install the 'plpython' extension language
   - sudo apt-get install postgresql-plpython-9.3
   # Install the 'plxslt' extension language
