@@ -11,10 +11,9 @@ import functools
 from datetime import datetime
 
 import psycopg2
-
+from pyramid.paster import get_appsettings
 
 from .. import config
-from ..utils import get_appsettings
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
 

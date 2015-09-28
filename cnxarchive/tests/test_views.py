@@ -318,12 +318,11 @@ class ViewsTestCase(unittest.TestCase):
 
     @testing.db_connect
     def setUp(self, cursor):
-        from .. import _set_settings
-        _set_settings(self.settings)
         self.fixture.setUp()
         self.request = pyramid_testing.DummyRequest()
         self.request.headers['HOST'] = 'cnx.org'
-        config = pyramid_testing.setUp(settings=self.settings, request=self.request)
+        config = pyramid_testing.setUp(settings=self.settings,
+                                       request=self.request)
 
         # Clear all cached searches
         import memcache
@@ -344,8 +343,7 @@ class ViewsTestCase(unittest.TestCase):
         self.addCleanup(setattr, cache, 'database_search', original_search)
 
     def tearDown(self):
-        from .. import _set_settings
-        _set_settings(None)
+        pyramid_testing.tearDown()
         self.fixture.tearDown()
 
     def test_collection_content(self):
@@ -1664,16 +1662,20 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_wo_cache(self):
         # Patch settings so caching is disabled
-        from .. import _set_settings
-        self.settings['memcache-servers'] = ''
-        _set_settings(self.settings)
+        settings = self.settings.copy()
+        settings['memcache-servers'] = ''
+        config_kwargs = dict(settings=settings, request=self.request)
+        from ..views import search
 
         # Build the request
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
 
-        from ..views import search
-        results = search(self.request).json_body
+        def call_search_view():
+            with pyramid_testing.testConfig(**config_kwargs):
+                return search(self.request)
+
+        results = call_search_view().json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
 
@@ -1688,8 +1690,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '2'}
 
-        from ..views import search
-        results = search(self.request).json_body
+        results = call_search_view().json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
 
@@ -1704,8 +1705,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '3'}
 
-        from ..views import search
-        results = search(self.request).json_body
+        results = call_search_view().json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
 

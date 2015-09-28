@@ -11,15 +11,16 @@ import base64
 import copy
 
 import memcache
+from pyramid.threadlocal import get_current_registry
 
-from . import get_settings
 from .search import search as database_search
+
 
 def search(query, query_type, nocache=False):
     """Look up search results in cache, if not in cache, do a database search
     and cache the result
     """
-    settings = get_settings()
+    settings = get_current_registry().settings
     memcache_servers = settings['memcache-servers'].split()
     if not memcache_servers:
         # memcache is not enabled, do a database search directly

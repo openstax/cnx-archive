@@ -6,15 +6,10 @@
 # See LICENCE.txt for details.
 # ###
 """Document and collection archive web application."""
-import os
-import re
-import logging
-from logging.config import dictConfig as load_logging_configuration
-
 from pyramid.config import Configurator
-from pyramid.threadlocal import get_current_registry
 
 
+# XXX (25-Sep-2015) This should probably go somewhere?
 DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
     'origin',
     'dnt',
@@ -27,15 +22,6 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
     'cache-control',
     'content-type',
     ]
-
-# XXX (25-Jul-2015) Should be removed ASAP
-def get_settings():
-    """Retrieve the application settings"""
-    return get_current_registry().settings
-def _set_settings(settings):
-    """Assign the application settings."""
-    get_current_registry().settings = settings
-# /XXX
 
 
 def declare_api_routes(config):

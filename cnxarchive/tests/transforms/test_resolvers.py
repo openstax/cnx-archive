@@ -10,6 +10,7 @@ import io
 import unittest
 
 from lxml import etree
+from pyramid import testing as pyramid_testing
 
 from .. import testing
 
@@ -19,12 +20,12 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        self.fixture.setUp()
-        from ... import _set_settings
         settings = testing.integration_test_settings()
-        _set_settings(settings)
+        config = pyramid_testing.setUp(settings=settings)
+        self.fixture.setUp()
 
     def tearDown(self):
+        pyramid_testing.tearDown()
         self.fixture.tearDown()
 
     @property
@@ -277,12 +278,12 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
     maxDiff = None
 
     def setUp(self):
-        self.fixture.setUp()
-        from ... import _set_settings
         settings = testing.integration_test_settings()
-        _set_settings(settings)
+        config = pyramid_testing.setUp(settings=settings)
+        self.fixture.setUp()
 
     def tearDown(self):
+        pyramid_testing.tearDown()
         self.fixture.tearDown()
 
     @property

@@ -5,7 +5,6 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-from .application_helpers import *
 from .date import *
 from .ident_hash import *
 from .mimetype import *
