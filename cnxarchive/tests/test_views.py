@@ -695,8 +695,8 @@ class ViewsTestCase(unittest.TestCase):
             redirect_legacy_content(self.request)
 
         self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers,
-                         [('Location', '/contents/{}@1.1:14'.format(uuid))])
+        self.assertEqual(cm.exception.headers['Location'],
+                         '/contents/{}@1.1:14'.format(uuid))
 
     def test_legacy_id_old_ver_bad_collection_context(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
