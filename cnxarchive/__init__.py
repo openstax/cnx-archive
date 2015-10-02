@@ -26,7 +26,25 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
 
 def declare_api_routes(config):
     """Declaration of routing"""
-    add_route = config.add_route
+    # The pregenerator makes sure we can generate a path using
+    # request.route_path even if we don't have all the variables.
+    #
+    # For example, instead of having to do this:
+    #     request.route_path('resource', hash=hash, ignore='')
+    # it's possible to do this:
+    #     request.route_path('resource', hash=hash)
+    def pregenerator(path):
+        # find all the variables in the path
+        variables = [(s.split(':')[0], '') for s in path.split('{')[1:]]
+        def wrapper(request, elements, kwargs):
+            modified_kwargs = dict(variables)
+            modified_kwargs.update(kwargs)
+            return elements, modified_kwargs
+        return wrapper
+
+    def add_route(name, path, *args, **kwargs):
+        return config.add_route(name, path, *args, pregenerator=pregenerator(path), **kwargs)
+
     add_route('content-html', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html')  # cnxarchive.views:get_content_html
     add_route('content-json', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.json')  # cnxarchive.views:get_content_json
     # add_route('content-snippet', '/contents/{ident_hash}.snippet')  # cnxarchive.views:get_content_snippet
