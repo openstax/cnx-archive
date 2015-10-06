@@ -525,6 +525,127 @@ def get_export(request):
     return resp
 
 
+@view_config(route_name='in-book-search', request_method='GET')
+def in_book_search(request):
+    """ Full text, in-book search """
+    results = {}
+
+    args = request.matchdict
+    ident_hash = args['ident_hash']
+    args['uuid'] = args['ident_hash'].split('@')[0]
+
+    try:
+        args['search_term'] = request.params.get('q', '')
+    except (TypeError, ValueError, IndexError):
+        args['search_term'] = None
+
+    id, version = split_ident_hash(ident_hash)
+    if version:
+        if '.' in version:
+            args['major_version'], \
+                args['minor_version'] = [int(v) for v in version.split('.')]
+        else:
+            args['major_version'] = int(version)
+            args['minor_version'] = None
+
+    settings = get_current_registry().settings
+    connection_string = settings[config.CONNECTION_STRING]
+    statement = SQL['get-in-book-search']
+    with psycopg2.connect(connection_string) as db_connection:
+        with db_connection.cursor() as cursor:
+            if not version:
+                redirect_to_latest(cursor, id, 'in-book-search',
+                                   route_args=request.params.copy())
+
+            cursor.execute(statement, args)
+            res = cursor.fetchall()
+
+            results['results'] = {'query': [],
+                                  'total': len(res),
+                                  'items': []}
+            results['results']['query'] = {
+                'id': ident_hash,
+                'search_term': args['search_term'],
+            }
+            for uuid, version, title, headline, rank in res:
+                results['results']['items'].append({
+                    'rank': '{}'.format(rank),
+                    'id': '{}@{}'.format(uuid, version),
+                    'title': '{}'.format(title),
+                    'headline': '{}'.format(headline),
+                })
+
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(results)
+
+    return resp
+
+
+@view_config(route_name='in-book-search-page', request_method='GET')
+def in_book_search_highlighted_results(request):
+    """ in-book search - returns a highlighted version of the HTML """
+    results = {}
+
+    args = request.matchdict
+    ident_hash = args['ident_hash']
+    args['uuid'] = args['ident_hash'].split('@')[0]
+
+    page_ident_hash = args['page_ident_hash']
+    args['page_ident_hash'] = args['page_ident_hash'].split('@')[0]
+
+    try:
+        args['search_term'] = request.params.get('q', '')
+    except (TypeError, ValueError, IndexError):
+        args['search_term'] = None
+
+    # Get version from URL params
+    id, version = split_ident_hash(ident_hash)
+    if version:
+        if '.' in version:
+            args['major_version'], \
+                args['minor_version'] = [int(v) for v in version.split('.')]
+        else:
+            args['major_version'] = int(version)
+            args['minor_version'] = None
+
+    settings = get_current_registry().settings
+    connection_string = settings[config.CONNECTION_STRING]
+    statement = SQL['get-in-book-search-full-page']
+    with psycopg2.connect(connection_string) as db_connection:
+        with db_connection.cursor() as cursor:
+            if not version:
+                redirect_to_latest(cursor, id,
+                                   'in-book-search-page',
+                                   route_args=request.params.copy())
+
+            cursor.execute(statement, args)
+            res = cursor.fetchall()
+
+            results['results'] = {'query': [],
+                                  'total': len(res),
+                                  'items': []}
+            results['results']['query'] = {
+                'search_term': args['search_term'],
+                'collection_id': ident_hash,
+            }
+            for uuid, version, title, headline, rank in res:
+                results['results']['items'].append({
+                    'rank': '{}'.format(rank),
+                    'id': '{}'.format(page_ident_hash),
+                    'title': '{}'.format(title),
+                    'html': '{}'.format(headline),
+                })
+
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(results)
+
+    return resp
+
+
 @view_config(route_name='search', request_method='GET')
 def search(request):
     """Search API
