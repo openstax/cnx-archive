@@ -17,7 +17,7 @@ import gzip
 
 import psycopg2
 from .. import config
-from ..utils import split_ident_hash
+from ..utils import split_ident_hash, CNXHash
 from ._utils import create_parser, get_app_settings_from_arguments
 
 
@@ -93,14 +93,18 @@ def main(argv=None):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
-                cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
-                               split_ident_hash(ident_hash))
-                module_ident = cursor.fetchone()
-                payload = (module_ident, start_timestamp, end_timestamp,
-                           hit_count,)
-                cursor.execute("INSERT INTO document_hits "
-                               "  VALUES (%s, %s, %s, %s);",
-                               payload)
+                id, version, id_type = split_ident_hash(ident_hash)
+                if id_type == CNXHash.FULLUUID:
+                    cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
+                                   (id, version))
+                    module_ident = cursor.fetchone()
+                    payload = (module_ident, start_timestamp, end_timestamp,
+                               hit_count,)
+                    cursor.execute("INSERT INTO document_hits "
+                                   "  VALUES (%s, %s, %s, %s);",
+                                   payload)
+                else:
+                    raise NotImplemented
             cursor.execute("SELECT update_hit_ranks();")
     return 0
 

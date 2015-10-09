@@ -47,6 +47,7 @@ COLLECTION_METADATA = {
     u'created': u'2013-07-31T19:07:20Z',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    u'short_id': u'55_943-0',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -85,6 +86,7 @@ COLLECTION_METADATA = {
     u'parent': {
         'authors': [],
         'id': None,
+        'short_id': None,
         'title': None,
         'version': '',
         },
@@ -227,6 +229,7 @@ MODULE_METADATA = {
     u'created': u'2013-07-31T19:07:24Z',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
+    u'short_id': u'VvHFwUAU',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -265,6 +268,7 @@ MODULE_METADATA = {
     u'parent': {
         u'authors': [],
         u'id': None,
+        'short_id': None,
         u'title': None,
         u'version': '',
         },
@@ -487,6 +491,23 @@ class ViewsTestCase(unittest.TestCase):
                 },
             }])
 
+    def test_truncated_hash(self):
+        # Test for retreiving a module.
+        from ..utils import CNXHash
+        cnxhash = CNXHash('56f1c5c1-4014-450d-a477-2121e276beca')
+        version = '8'
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
+
+        # Call the view.
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@{}.json'.format(cnxhash,version)))
+
     def test_module_content(self):
         # Test for retreiving a module.
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -495,8 +516,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
-        # Call the view.
         from ..views import get_content
+
         content = get_content(self.request).json_body
 
         # Remove the 'content' text from the content for separate testing.
@@ -518,6 +539,52 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {
             'ident_hash': uuid,
+            }
+
+        # Call the view.
+        from ..views import get_content
+
+        # Check that the view redirects to the latest version
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@5.json'.format(uuid)))
+
+    def test_content_shortid_version(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        from uuid import UUID
+        import base64
+        u = UUID(uuid)
+        version = 5
+        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': "{}@{}".format(short_id, version)
+            }
+
+        # Call the view.
+        from ..views import get_content
+
+        # Check that the view redirects to the latest version
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@{}.json'.format(uuid, version)))
+
+    def test_content_shortid_no_version(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        from uuid import UUID
+        import base64
+        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': short_id
             }
 
         # Call the view.
@@ -1144,6 +1211,54 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': requested_ident_hash}
+
+        # Call the target
+        from ..views import get_extra
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_extra(self.request)
+        exception = raiser.exception
+        expected_location = "/extras/{}".format(expected_ident_hash)
+        self.assertEqual(exception.headers['Location'],
+                         quote(expected_location))
+
+    def test_extra_shortid(self):
+        # Request the extras for a document with a shortid and
+        #   version. The expectation is that this will redirect to the
+        #   fullid (uuid@version)
+        from uuid import UUID
+        import base64
+
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
+        version = '7.1'
+        expected_ident_hash = "{}@{}".format(id, version)
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': "{}@{}".format(short_id, version)}
+
+        # Call the target
+        from ..views import get_extra
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_extra(self.request)
+        exception = raiser.exception
+        expected_location = "/extras/{}".format(expected_ident_hash)
+        self.assertEqual(exception.headers['Location'],
+                         quote(expected_location))
+
+    def test_extra_shortid_wo_version(self):
+        # Request the extras for a document with a shortid and no
+        #   version. The expectation is that this will redirect to the
+        #   fullid (uuid@version)
+        from uuid import UUID
+        import base64
+
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
+        version = '7.1'
+        expected_ident_hash = "{}@{}".format(id, version)
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': short_id}
 
         # Call the target
         from ..views import get_extra
