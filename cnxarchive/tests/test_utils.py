@@ -247,3 +247,118 @@ class Utf8TestCase(unittest.TestCase):
     def test_dict(self):
         self.assertEqual({u'inførmation': u'inførm'},
                          self.call_target({'inførmation': 'inførm'}))
+
+class TestUUIDConversionFunctions(unittest.TestCase):
+
+    def test_error_handling(self):
+        from ..utils import uuid2base64, base642uuid
+        with self.assertRaises(TypeError):
+            uuid2base64(1)
+        with self.assertRaises(ValueError):
+            uuid2base64('a')
+        with self.assertRaises(TypeError):
+            base642uuid(1)
+        with self.assertRaises(ValueError):
+            base642uuid('a')
+
+    def test_convert_uuid(self):
+        from ..utils import uuid2base64, base642uuid
+        for i in range(0,10000):
+            expected_id = uuid.uuid4()
+            returned_id = uuid2base64(expected_id)
+            self.assertGreater(len(str(expected_id)),len(returned_id))
+            returned_id = base642uuid(returned_id)
+            self.assertEqual(expected_id,returned_id)
+
+    def test_identifiers_equal(self):
+        from ..utils import uuid2base64, base642uuid, identifiers_equal
+        id1 = uuid.uuid4()
+        id2 = id1
+
+        self.assertTrue(identifiers_equal(id1,id2))
+
+        id1 = uuid.uuid4()
+        id2 = str(id1)
+
+        self.assertTrue(identifiers_equal(id1,id2))
+        self.assertTrue(identifiers_equal(id2,id1))
+
+        id1 = uuid.uuid4()
+        id2 = uuid2base64(id1)
+
+        self.assertTrue(identifiers_equal(id1,id2))
+        self.assertTrue(identifiers_equal(id2,id1))
+
+        tempid = uuid.uuid4()
+        id1 = uuid2base64(tempid)
+        id2 = uuid2base64(tempid)
+
+        self.assertTrue(identifiers_equal(id1,id2))
+
+        id1 = uuid.uuid4()
+        id2 = uuid.uuid4()
+
+        self.assertFalse(identifiers_equal(id1,id2))
+
+        id1 = uuid.uuid4()
+        id2 = uuid2base64(uuid.uuid4())
+
+        self.assertFalse(identifiers_equal(id1,id2))
+        self.assertFalse(identifiers_equal(id2,id1))
+
+        id1 = uuid2base64(uuid.uuid4())
+        id2 = uuid2base64(uuid.uuid4())
+
+        self.assertFalse(identifiers_equal(id1,id2))
+
+class TestHashTruncationFunctions(unittest.TestCase):
+    def test_class_setup(self):
+        pass
+
+    def test_truncation(self):
+        expected_id = uuid.uuid4()
+        returned_id = hash_truncate(uuid2base64(expected_id))
+        self.assertEqual(len(returned_id), 8)
+        returned_id = base642uuid(hash_untruncate(expected_id))
+        self.assertEqual(expected_id,returned_id)
+
+from ..utils import CNXHash 
+class TestCNXHash(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._uuid=uuid.uuid4()
+        cls._cnxhash=CNXHash(cls._uuid)
+    def setUp(self):
+        self.uuid=self._uuid
+        self.cnxhash=self._cnxhash
+
+    def test_class_init(self):
+        expected_uuid=self.uuid
+        returned_uuid=CNXHash(expected_uuid)
+        self.assertEqual(str(expected_uuid),str(returned_uuid))
+        returned_uuid=CNXHash(hex=expected_uuid.get_hex())
+        self.assertEqual(str(expected_uuid),str(returned_uuid))
+        returned_uuid=CNXHash(str(expected_uuid))
+        self.assertEqual(str(expected_uuid),str(returned_uuid))
+        returned_uuid=CNXHash(bytes=expected_uuid.get_bytes())
+        self.assertEqual(str(expected_uuid),str(returned_uuid))
+
+    def test_truncated_hash(self):
+        cnxhash=CNXHash(self.uuid)
+        self.assertLessEqual(len(cnxhash.get_shortid()),len(str(cnxhash)))
+        self.assertEqual(len(cnxhash.get_shortid()),CNXHash.short_hash_length)
+
+    def test_validate(self):
+        self.assertFalse(CNXHash.validate(1))
+        self.assertFalse(CNXHash.validate([]))
+        self.assertFalse(CNXHash.validate('a'))
+        self.assertTrue(CNXHash.validate(self.uuid))
+        self.assertTrue(CNXHash.validate(self.cnxhash))
+        self.assertTrue(CNXHash.validate(self.cnxhash.get_shortid()))
+
+    def test_equality(self):
+        self.assertTrue(self.cnxhash==self.cnxhash)
+        self.assertTrue(self.uuid==self.cnxhash)
+        self.assertTrue(CNXHash.identifiers_equal(self.uuid,self.cnxhash))
+        self.assertTrue(CNXHash.identifiers_equal(self.cnxhash,str(self.cnxhash)))
+        self.assertTrue(CNXHash.identifiers_equal(str(self.cnxhash),self.cnxhash))

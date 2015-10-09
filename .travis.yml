@@ -48,7 +48,7 @@ before_script:
 
 script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.
-  - sudo /usr/local/bin/coverage run --source=cnxarchive setup.py test
+  - sudo /usr/local/bin/coverage run --source=cnxarchive -m unittest cnxarchive.tests.test_utils.TestUUIDConversionFunctions cnxarchive.tests.test_utils.TestUUIDConversionFunctions
 after_success:
   # Report test coverage to coveralls.io
   - /usr/local/bin/coveralls
