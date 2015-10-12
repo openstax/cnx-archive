@@ -54,7 +54,7 @@ def declare_api_routes(config):
     add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_export
     add_route('content-extras', '/extras/{ident_hash}')  # noqa cnxarchive.views:get_extra
     add_route('search', '/search')  # cnxarchive.views:search
-    add_route('search', '/search-content')  # cnxarchive.views:search_content
+    add_route('in-book-search', '/in_book_search')  # cnxarchive.views:search_content
     add_route('extras', '/extras')  # cnxarchive.views:extras
     add_route('sitemap', '/sitemap.xml')  # cnxarchive.views:sitemap
     add_route('robots', '/robots.txt')  # cnxarchive.views:robots
