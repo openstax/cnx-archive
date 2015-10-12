@@ -516,11 +516,13 @@ def get_export(request):
     return resp
 
 
-@view_config(route_name='content-search', request_method='GET')
-def content_search(request):
+@view_config(route_name='in-book-search', request_method='GET')
+def in_book_search(request):
     """ Full text, in-book search """
-
-    return None
+    resp = request.response
+    resp.status = "200 OK"
+    
+    return resp
     
     
 @view_config(route_name='search', request_method='GET')
