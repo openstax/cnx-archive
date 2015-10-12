@@ -528,6 +528,7 @@ def get_export(request):
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
     """ Full text, in-book search """
+<<<<<<< HEAD
     empty_response = json.dumps({
         u'query': {
             u'limits': [],
@@ -564,6 +565,7 @@ def in_book_search(request):
     resp.body = empty_response
 
     return resp
+
     
     
 @view_config(route_name='search', request_method='GET')
