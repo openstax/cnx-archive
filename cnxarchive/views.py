@@ -519,57 +519,6 @@ def get_export(request):
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
     """ Full text, in-book search """
-    settings = get_current_registry().settings
-    connection_string = settings[config.CONNECTION_STRING]
-    
-    
-    with psycopg2.connect(connection_string) as db_connection:
-        with db_connection.cursor() as cursor:
-            cursor.execute("""\
-                    WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
-                     SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
-                     FROM 
-                	   trees tr, 
-                       modules m
-                     WHERE 
-                       m.uuid::text = '031da8d3-b525-429c-80cf-6c8ed997733a' AND
-                       m.major_version = 8 AND  m.minor_version = 32 AND
-                       tr.documentid = m.module_ident AND
-                       tr.parent_id IS NULL
-                 UNION ALL
-                     SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder]
-                     FROM trees c1 JOIN t ON (c1.parent_id = t.node)
-                     WHERE NOT nodeid = any (t.path)
-                 )
-                
-                SELECT
-                M .uuid,
-                 COALESCE(T .title, M . NAME),
-                 ts_headline(
-                	convert_from(f.file, 'utf8'),
-                	plainto_tsquery('acceleration vector'),
-                	'MaxFragments=1'
-                ),
-                 ts_rank_cd(mft.module_idx, plainto_tsquery('acceleration vector')) AS rank
-                FROM
-                
-                   t left join  modules m on t.value = m.module_ident join modulefti mft on mft.module_ident = m.module_ident join module_files mf on m.module_ident = mf.module_ident join files f on mf.fileid = f.fileid
-                WHERE 
-                   mft.module_idx @@ plainto_tsquery('acceleration vector') 
-                   and mf.filename = 'index.cnxml.html' 
-                ORDER BY 
-                  rank, 
-                  path """)
-            res = cursor.fetchall()
-            
-            for ident_hash, headline, rank in res:
-                print headline
-            #    url = request.route_url('content',
-            #                             ident_hash=ident_hash,
-            #                             ignore='/{}'.format(page_name))
-            #    if notblocked(url):
-            #        xml.add_url(url, lastmod=revised)
-
     empty_response = json.dumps({
         u'query': {
             u'limits': [],
@@ -581,7 +530,56 @@ def in_book_search(request):
             u'total': 0,
             u'limits': [],
             },
-        })
+    })
+        
+    try:
+        search_terms = params.get('q', '')
+    except IndexError:
+        resp.body = empty_response
+        return resp
+        
+    settings = get_current_registry().settings
+    connection_string = settings[config.CONNECTION_STRING]
+    
+    with psycopg2.connect(connection_string) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute("""\
+                WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
+                    SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
+                    FROM 
+                      trees tr, 
+                      modules m
+                    WHERE 
+                      m.uuid::text = '031da8d3-b525-429c-80cf-6c8ed997733a' AND
+                      m.major_version = 8 AND  m.minor_version = 32 AND
+                      tr.documentid = m.module_ident AND
+                      tr.parent_id IS NULL
+                    UNION ALL
+                    SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder]
+                    FROM trees c1 JOIN t ON (c1.parent_id = t.node)
+                    WHERE NOT nodeid = any (t.path)
+                )
+                SELECT
+                M .uuid,
+                COALESCE(T .title, M . NAME),
+                ts_headline(
+                  convert_from(f.file, 'utf8'),
+                  plainto_tsquery('acceleration vector'),
+                  'MaxFragments=1'
+                ),
+                ts_rank_cd(mft.module_idx, plainto_tsquery('acceleration vector')) AS rank
+                FROM
+                   t left join  modules m on t.value = m.module_ident join modulefti mft on mft.module_ident = m.module_ident join module_files mf on m.module_ident = mf.module_ident join files f on mf.fileid = f.fileid
+                WHERE 
+                  mft.module_idx @@ plainto_tsquery('acceleration vector') 
+                  and mf.filename = 'index.cnxml.html' 
+                ORDER BY 
+                  rank, 
+                  path """)
+            res = cursor.fetchall()
+            
+            for ident_hash, headline, rank in res:
+                print headline
         
     resp = request.response
     resp.status = '200 OK'
@@ -589,7 +587,6 @@ def in_book_search(request):
     resp.body = empty_response
 
     return resp
-
     
     
 @view_config(route_name='search', request_method='GET')
@@ -634,6 +631,15 @@ def search(request):
         page = None
     if page is None or page <= 0:
         page = 1
+    try:
+        in_book_uuid = params.get('uuid', '')
+    except (TypeError, ValueError, IndexError):
+        in_book_uuid = None
+        
+    if in_book_uuid:
+        print in_book_uuid
+        print search_terms
+    
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
