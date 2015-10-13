@@ -599,14 +599,6 @@ def search(request):
         page = None
     if page is None or page <= 0:
         page = 1
-    try:
-        in_book_uuid = params.get('uuid', '')
-    except (TypeError, ValueError, IndexError):
-        in_book_uuid = None
-        
-    if in_book_uuid:
-        print in_book_uuid
-        print search_terms
     
 
     query = Query.from_raw_query(search_terms)
