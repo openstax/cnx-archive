@@ -306,8 +306,9 @@ def set_version(portal_type, legacy_version, td):
 
     elif portal_type == 'Module':
         # For modules, major should be set and minor should be None
+        # N.B. a very few older modules had major=2 and minor zero-based. Add one for those
         modified = 'MODIFY'
-        td['new']['major_version'] = int(legacy_minor)
+        td['new']['major_version'] = int(legacy_minor)+(int(legacy_major)-1)
         td['new']['minor_version'] = None
 
     return modified
