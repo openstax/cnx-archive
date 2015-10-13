@@ -13,7 +13,7 @@ FROM
   modules m
 WHERE 
   m.uuid::text = %(uuid)s AND
-  m.major_version = %(major_version)i AND  m.minor_version = %(minor_version)i AND
+  m.major_version = %(major_version)s AND  m.minor_version = %(minor_version)s AND
   tr.documentid = m.module_ident AND
   tr.parent_id IS NULL
 UNION ALL
