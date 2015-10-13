@@ -529,6 +529,9 @@ def get_export(request):
 def in_book_search(request):
     """ Full text, in-book search """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> a56ee62... add ?uuid to search()
     empty_response = json.dumps({
         u'query': {
             u'limits': [],
@@ -553,7 +556,43 @@ def in_book_search(request):
     
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
+<<<<<<< HEAD
             cursor.execute(SQL['get-in-book-search'], args)
+=======
+            cursor.execute("""\
+                WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
+                    SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
+                    FROM 
+                      trees tr, 
+                      modules m
+                    WHERE 
+                      m.uuid::text = '031da8d3-b525-429c-80cf-6c8ed997733a' AND
+                      m.major_version = 8 AND  m.minor_version = 32 AND
+                      tr.documentid = m.module_ident AND
+                      tr.parent_id IS NULL
+                    UNION ALL
+                    SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder]
+                    FROM trees c1 JOIN t ON (c1.parent_id = t.node)
+                    WHERE NOT nodeid = any (t.path)
+                )
+                SELECT
+                M .uuid,
+                COALESCE(T .title, M . NAME),
+                ts_headline(
+                  convert_from(f.file, 'utf8'),
+                  plainto_tsquery('acceleration vector'),
+                  'MaxFragments=1'
+                ),
+                ts_rank_cd(mft.module_idx, plainto_tsquery('acceleration vector')) AS rank
+                FROM
+                   t left join  modules m on t.value = m.module_ident join modulefti mft on mft.module_ident = m.module_ident join module_files mf on m.module_ident = mf.module_ident join files f on mf.fileid = f.fileid
+                WHERE 
+                  mft.module_idx @@ plainto_tsquery('acceleration vector') 
+                  and mf.filename = 'index.cnxml.html' 
+                ORDER BY 
+                  rank, 
+                  path """)
+>>>>>>> a56ee62... add ?uuid to search()
             res = cursor.fetchall()
             
             for ident_hash, headline, rank in res:
@@ -565,7 +604,6 @@ def in_book_search(request):
     resp.body = empty_response
 
     return resp
-
     
     
 @view_config(route_name='search', request_method='GET')
