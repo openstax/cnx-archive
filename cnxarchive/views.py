@@ -519,9 +519,20 @@ def get_export(request):
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
     """ Full text, in-book search """    
+    results = {}
+    
     args = request.matchdict
     ident_hash = args['ident_hash']
-    args['search_term'] = "acceleration"
+    
+    print args
+    
+    #args['search_term'] = "acceleration vector"
+    try:
+        args['search_term'] = request.params.get('q', '')
+    except (TypeError, ValueError, IndexError):
+        args['search_term'] = None
+    
+    
     id, version = split_ident_hash(ident_hash)
     if version:
         if '.' in version:
@@ -529,7 +540,7 @@ def in_book_search(request):
         else:
             args['major_version'] = int(version)
             args['minor_version'] = None
-                
+    
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
@@ -541,6 +552,7 @@ def in_book_search(request):
             with open(sql_file, 'r') as fp:
                 cursor.execute(fp.read(), args)
                 res = cursor.fetchall()
+                results['results'] = {'uuid': ident_hash, 'term': args['search_term'], 'total': len(res), 'items': [args]}
             
             for ident_hash, headline, rank in res:
                 print headline
@@ -548,7 +560,7 @@ def in_book_search(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json' 
-    resp.body = "Foo Bar"  
+    resp.body = json.dumps(results) 
 
     return resp
     
