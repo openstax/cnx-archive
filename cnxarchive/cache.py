@@ -43,13 +43,14 @@ def search(query, query_type, nocache=False):
     mc_search_key = base64.b64encode(search_key)
 
     # look for search results in memcache first, unless nocache
-    mc = memcache.Client(memcache_servers, server_max_value_length=128*1024*1024, debug=0)
+    mc = memcache.Client(memcache_servers,
+                         server_max_value_length=128*1024*1024, debug=0)
 
     if not nocache:
         search_results = mc.get(mc_search_key)
     else:
         search_results = None
-    
+
     if not search_results:
         # search results is not in memcache, do a database search
         search_results = database_search(query, query_type)
@@ -58,11 +59,12 @@ def search(query, query_type, nocache=False):
 
         # for particular searches, store in memcache for longer
         if (len(search_params) == 2 and
-            # search by subject
-            search_params[0][0] == 'subject' or
-            # search single terms
-            search_params[0][0] == 'text' and ' ' not in search_params[0][1]):
-            # search with one term or one filter, plus query_type
+                # search by subject
+                search_params[0][0] == 'subject' or
+                # search single terms
+                search_params[0][0] == 'text' and
+                                       ' ' not in search_params[0][1]):
+                # search with one term or one filter, plus query_type
             cache_length = int(settings['search-long-cache-expiration'])
 
         # store in memcache

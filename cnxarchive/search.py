@@ -34,8 +34,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 LOCAL_TZINFO = LocalTimezone()
 with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     # stopwords are all the common english words plus single characters
-    STOPWORDS = (f.read().split(',')
-                 + [chr(i) for i in range(ord('a'), ord('z') + 1)])
+    STOPWORDS = (f.read().split(',') +
+                 [chr(i) for i in range(ord('a'), ord('z') + 1)])
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
 # The maximum number of keywords and authors to return in the search result
@@ -153,8 +153,8 @@ class QueryRecord(Mapping):
         self._record = {k: v for k, v in kwargs.items()
                         if k not in ('_keys', 'matched', 'fields',)}
         if self._record.get('mediaType') in PORTALTYPE_TO_MIMETYPE_MAPPING:
-            self._record['mediaType'] = portaltype_to_mimetype(
-                    self._record['mediaType'])
+            self._record['mediaType'] = \
+                portaltype_to_mimetype(self._record['mediaType'])
         self.matched = {}
         self.fields = {}
         # Parse the matching fields
@@ -231,7 +231,8 @@ def _apply_query_type(records, query, query_type):
         all_matched_records = []
         term_matches = []
         query_terms_wo_stopwords = [utf8(term) for ttype, term in query
-                if ttype != 'text' or term.lower() not in STOPWORDS]
+                                    if ttype != 'text' or term.lower()
+                                    not in STOPWORDS]
         if not query_terms_wo_stopwords:
             query_terms_wo_stopwords = [utf8(term) for ttype, term in query]
         query_terms_wo_stopwords.sort()
@@ -270,7 +271,7 @@ class QueryResults(Sequence):
 
     def __init__(self, rows, query, query_type=DEFAULT_QUERY_TYPE):
         if query_type not in QUERY_TYPES:
-            raise ValueError("Invalid query type supplied: '{}'" \
+            raise ValueError("Invalid query type supplied: '{}'"
                              .format(query_type))
         self._query = query
         # Capture all the rows for interal usage.
@@ -412,7 +413,7 @@ class QueryResults(Sequence):
             if date is None:
                 continue
             date = datetime(*strptime(date, "%Y-%m-%dT%H:%M:%SZ")[:6],
-                                      tzinfo=FixedOffsetTimezone())
+                            tzinfo=FixedOffsetTimezone())
             year = unicode(date.astimezone(LOCAL_TZINFO).year)
             counts.setdefault(year, 0)
             counts[year] += 1
@@ -454,7 +455,7 @@ def _transmute_filter(keyword, value):
         elif value in ['page', 'module']:
             type_name = 'Module'
         else:
-            raise ValueError("Invalid filter value '{}' for filter '{}'." \
+            raise ValueError("Invalid filter value '{}' for filter '{}'."
                              .format(value, keyword))
         return ('portal_type = %({})s', type_name)
 
@@ -549,7 +550,7 @@ def _build_search(structured_query, weights):
             arguments.update(args)
 
     # get text terms and filter out common words
-    text_terms = [term for ttype,term in structured_query.terms
+    text_terms = [term for ttype, term in structured_query.terms
                   if ttype == 'text']
     text_terms_wo_stopwords = [term for term in text_terms
                                if term.lower() not in STOPWORDS]
