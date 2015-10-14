@@ -25,7 +25,7 @@ from . import config
 from . import cache
 # FIXME double import
 from . import database
-from .database import SQL, get_tree
+from .database import SQL, get_tree, SQL_DIRECTORY
 from .search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
@@ -527,45 +527,37 @@ def get_export(request):
 
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
-    """ Full text, in-book search """
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> a56ee62... add ?uuid to search()
-    empty_response = json.dumps({
-        u'query': {
-            u'limits': [],
-            u'per_page': DEFAULT_PER_PAGE,
-            u'page': 1,
-            },
-        u'results': {
-            u'items': [],
-            u'total': 0,
-            u'limits': [],
-            },
-    })
-        
-    try:
-        search_terms = params.get('q', '')
-    except IndexError:
-        resp.body = empty_response
-        return resp
-        
+    """ Full text, in-book search """    
+    args = request.matchdict
+    ident_hash = args['ident_hash']
+    args['search_term'] = "acceleration"
+    id, version = split_ident_hash(ident_hash)
+    if version:
+        if '.' in version:
+            args['major_version'], args['minor_version'] = [int(v) for v in version.split('.')]
+        else:
+            args['major_version'] = int(version)
+            args['minor_version'] = None
+                
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
-    
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-in-book-search'], args)
-            res = cursor.fetchall()
+            if not version:
+                redirect_to_latest(cursor, id, 'in-book-search', route_args=request.params.copy())
+            
+            sql_file = os.path.join(SQL_DIRECTORY, 'get-in-book-search.sql')
+            with open(sql_file, 'r') as fp:
+                cursor.execute(fp.read(), args)
+                res = cursor.fetchall()
             
             for ident_hash, headline, rank in res:
                 print headline
-        
+    
     resp = request.response
     resp.status = '200 OK'
-    resp.content_type = 'application/json'
-    resp.body = empty_response
+    resp.content_type = 'application/json' 
+    resp.body = "Foo Bar"  
 
     return resp
     
