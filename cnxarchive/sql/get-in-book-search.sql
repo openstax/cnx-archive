@@ -5,14 +5,14 @@
 -- See LICENCE.txt for details.
 -- ###
 
--- arguments: uuid:string, major_version:int, minor_version:int, search_term:string
+-- arguments: ident_hash:string, major_version:int, minor_version:int, search_term:string
 WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
 SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
 FROM 
   trees tr, 
   modules m
 WHERE 
-  m.uuid::text = %(uuid)s AND
+  m.uuid::text = %(ident_hash)s AND
   m.major_version = %(major_version)s AND  m.minor_version = %(minor_version)s AND
   tr.documentid = m.module_ident AND
   tr.parent_id IS NULL
