@@ -534,14 +534,10 @@ def in_book_search(request):
     ident_hash = args['ident_hash']
     args['ident_hash'] = args['ident_hash'].split('@')[0]
     
-    print args
-    
-    #args['search_term'] = "acceleration vector"
     try:
         args['search_term'] = request.params.get('q', '')
     except (TypeError, ValueError, IndexError):
         args['search_term'] = None
-    
     
     id, version = split_ident_hash(ident_hash)
     if version:
@@ -565,17 +561,14 @@ def in_book_search(request):
                 results['results'] = {'total': len(res), 'query': [args], 'items': []}
             
                 # Build the result dict
-                i = 0
-                while i < len(res):
-                    for uuid, version, title, headline, rank in res:
-                        results['results']['items'].append({
-                            'rank':'{}'.format(rank),
-                            'uuid':'{}'.format(uuid),
-                            'version':'{}'.format(version),
-                            'title':'{}'.format(title),
-                            'headline':'{}'.format(headline),
-                        })
-                        i = i + 1
+                for uuid, version, title, headline, rank in res:
+                    results['results']['items'].append({
+                        'rank':'{}'.format(rank),
+                        'uuid':'{}'.format(uuid),
+                        'version':'{}'.format(version),
+                        'title':'{}'.format(title),
+                        'headline':'{}'.format(headline),
+                    })
                     
     
     resp = request.response
