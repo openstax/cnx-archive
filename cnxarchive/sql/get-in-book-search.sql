@@ -23,6 +23,7 @@ WHERE NOT nodeid = any (t.path)
 )
 SELECT
 M .uuid,
+M .version,
 COALESCE(T .title, M . NAME),
 ts_headline(
 convert_from(f.file, 'utf8'),
