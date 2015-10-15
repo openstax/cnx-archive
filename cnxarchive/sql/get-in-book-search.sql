@@ -36,6 +36,7 @@ t left join  modules m on t.value = m.module_ident join modulefti mft on mft.mod
 WHERE 
 mft.module_idx @@ plainto_tsquery(%(search_term)s) 
 and mf.filename = 'index.cnxml.html' 
+-- this might be a very expensive WHERE clause, leave it out?
+and ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) > 0.01
 ORDER BY 
-rank, 
 path
