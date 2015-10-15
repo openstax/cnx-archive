@@ -532,6 +532,7 @@ def in_book_search(request):
     
     args = request.matchdict
     ident_hash = args['ident_hash']
+    args['ident_hash'] = args['ident_hash'].split('@')[0]
     
     print args
     
@@ -561,10 +562,21 @@ def in_book_search(request):
             with open(sql_file, 'r') as fp:
                 cursor.execute(fp.read(), args)
                 res = cursor.fetchall()
-                results['results'] = {'uuid': ident_hash, 'term': args['search_term'], 'total': len(res), 'items': [args]}
+                results['results'] = {'total': len(res), 'query': [args], 'items': []}
             
-            for ident_hash, headline, rank in res:
-                print headline
+                # Build the result dict
+                i = 0
+                while i < len(res):
+                    for uuid, version, title, headline, rank in res:
+                        results['results']['items'].append({
+                            'rank':'{}'.format(rank),
+                            'uuid':'{}'.format(uuid),
+                            'version':'{}'.format(version),
+                            'title':'{}'.format(title),
+                            'headline':'{}'.format(headline),
+                        })
+                        i = i + 1
+                    
     
     resp = request.response
     resp.status = '200 OK'
