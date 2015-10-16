@@ -8,6 +8,7 @@
 import unittest
 from pyramid.testing import DummyRequest
 
+
 class RoutingTestCase(unittest.TestCase):
 
     def test_route_setup(self):
@@ -217,7 +218,7 @@ class RoutingTestCase(unittest.TestCase):
             for path, routing_args in args:
                 req = DummyRequest(environ={'PATH_INFO': path})
                 routemap = app.routes_mapper(req)
-                route=routemap['route']
-                routename = getattr(route,'name', None)
+                route = routemap['route']
+                routename = getattr(route, 'name', None)
                 self.assertEqual(routename, controller_name)
                 self.assertEqual(routemap['match'], routing_args)

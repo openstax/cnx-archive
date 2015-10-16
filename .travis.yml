@@ -44,6 +44,7 @@ before_script:
   - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
   - pip install pep8
   - pep8 --exclude=tests *.py cnxarchive/
+  - pep8 --max-line-length=200 cnxarchive/tests
 
 script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.

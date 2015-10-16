@@ -82,7 +82,9 @@ class SearchModelTestCase(BaseSearchTestCase):
         # Confirm the record highlights on found terms in the abstract/summary.
         record = self.make_queryrecord(**RAW_QUERY_RECORDS[0][0])
 
-        expected = """algebra-based, two-semester college <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems."""
+        expected = """algebra-based, two-semester college <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental \
+<b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities \
+to solve traditional <b>physics</b> application problems."""
         self.assertEqual(record.highlighted_abstract, expected)
 
     def test_fulltext_highlighting(self):
@@ -98,6 +100,7 @@ class SearchModelTestCase(BaseSearchTestCase):
         # Set the test to return top 5 keywords
         from .. import search
         old_max_values_for_keywords = search.MAX_VALUES_FOR_KEYWORDS
+
         def reset_max_values_for_keywords():
             search.MAX_VALUES_FOR_KEYWORDS = old_max_values_for_keywords
         self.addCleanup(reset_max_values_for_keywords)
@@ -150,7 +153,7 @@ class SearchModelTestCase(BaseSearchTestCase):
                                     (u'Modern physics', 2),
                                     (u'Quantum mechanics', 2),
                                     (u'Scientific method', 2),
-                                   ])
+                                    ])
 
     def test_result_counts_with_author_limit(self):
         # Set the test to return top 1 author
@@ -299,7 +302,6 @@ INSERT INTO users
         # we want to make sure an author can be searched by first and last name
         # even if they have a middle initial
         query_params = [('author', 'Jill Miller')]
-
 
         # Update two modules in include this user as an author.
         cursor.execute(
@@ -459,17 +461,17 @@ INSERT INTO users
     def _pubYear_setup(self, cursor):
         # Modify some modules to give them different year of publication
         pub_year_mods = {
-                '2010': ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                         '209deb1f-1a46-4369-9e0d-18674cf58a3e'],
-                '2012': ['f3c9ab70-a916-4d8c-9256-42953287b4e9'],
-                }
+            '2010': ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                     '209deb1f-1a46-4369-9e0d-18674cf58a3e'],
+            '2012': ['f3c9ab70-a916-4d8c-9256-42953287b4e9'],
+            }
 
         for year, ids in pub_year_mods.iteritems():
             cursor.execute(
-                    "UPDATE latest_modules "
-                    "SET revised = '{}-07-31 12:00:00.000000-07'"
-                    "WHERE uuid IN %s RETURNING module_ident".format(year),
-                    [tuple(ids)])
+                "UPDATE latest_modules "
+                "SET revised = '{}-07-31 12:00:00.000000-07'"
+                "WHERE uuid IN %s RETURNING module_ident".format(year),
+                [tuple(ids)])
 
     def test_pubYear_limit(self):
         self._pubYear_setup()
@@ -547,9 +549,9 @@ INSERT INTO users
 
         for id, date in pub_year_mods:
             cursor.execute(
-                    "UPDATE latest_modules "
-                    "SET revised = %s "
-                    "WHERE uuid = %s", (date, id,))
+                "UPDATE latest_modules "
+                "SET revised = %s "
+                "WHERE uuid = %s", (date, id,))
         cursor.connection.commit()
 
         query_params = [('pubYear', '2020')]
@@ -591,15 +593,15 @@ INSERT INTO users
     def _language_setup(self, cursor):
         # Modify some modules to give them different languages
         language_mods = {
-                'fr': ['209deb1f-1a46-4369-9e0d-18674cf58a3e'],
-                }
+            'fr': ['209deb1f-1a46-4369-9e0d-18674cf58a3e'],
+            }
 
         for language, ids in language_mods.iteritems():
             cursor.execute(
-                    "UPDATE latest_modules "
-                    "SET language = %s"
-                    "WHERE uuid IN %s RETURNING module_ident",
-                    [language, tuple(ids)])
+                "UPDATE latest_modules "
+                "SET language = %s"
+                "WHERE uuid IN %s RETURNING module_ident",
+                [language, tuple(ids)])
 
     def test_language_without_term(self):
         self._language_setup()
@@ -618,13 +620,13 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 7)
         self.assertEqual(result_weights,
-                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597',222),
-                          (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',22),
-                          (u'56f1c5c1-4014-450d-a477-2121e276beca',22),
-                          (u'f6024d8a-1868-44c7-ab65-45419ef54881',21),
-                          (u'c0a76659-c311-405f-9a99-15c71af39325',21),
-                          (u'26346a42-84b9-48ad-9f6a-62303c16ad41',21),
-                          (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',21),
+                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 222),
+                          (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59', 22),
+                          (u'56f1c5c1-4014-450d-a477-2121e276beca', 22),
+                          (u'f6024d8a-1868-44c7-ab65-45419ef54881', 21),
+                          (u'c0a76659-c311-405f-9a99-15c71af39325', 21),
+                          (u'26346a42-84b9-48ad-9f6a-62303c16ad41', 21),
+                          (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d', 21),
                           ])
 
     def test_weighted_by_derivation_count(self):
@@ -733,8 +735,8 @@ INSERT INTO users
                         ('keyword', 'stress'),
                         ]
         expectations = ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                         '56f1c5c1-4014-450d-a477-2121e276beca',
-                         ]
+                        '56f1c5c1-4014-450d-a477-2121e276beca',
+                        ]
         matched_on = [{u'force': set([u'fulltext', u'keyword']),
                        u'physics': set([u'maintainer']),
                        u'stress': set([u'keyword'])},
