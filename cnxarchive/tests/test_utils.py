@@ -357,6 +357,7 @@ class TestCNXHash(unittest.TestCase):
             self.assertFalse(CNXHash.validate('a'))
         self.assertEqual(CNXHash.validate(self.uuid),CNXHash.FULLUUID)
         self.assertEqual(CNXHash.validate(self.cnxhash),CNXHash.FULLUUID)
+        self.assertEqual(CNXHash.validate(CNXHash.uuid2base64(self.uuid)),CNXHash.BASE64HASH)
         self.assertEqual(CNXHash.validate(self.cnxhash.get_shortid()),CNXHash.SHORTID)
 
     def test_equality(self):
