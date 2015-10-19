@@ -102,7 +102,9 @@ HASH_UNUSED_CHAR_SUFFIX='='
 class CNXHash(uuid.UUID):
     short_hash_length = 8
     max_short_hash_length = 22
-
+    SHORTID = 0
+    BASE64HASH = 1
+    FULLUUID = 2
     def __init__(self,uu=None,*args,**kwargs):
         if type(uu)==uuid.UUID:
             uuid.UUID.__init__(self,bytes=uu.get_bytes())
@@ -114,19 +116,6 @@ class CNXHash(uuid.UUID):
     def get_shortid(self):
         shortid = self.uuid2base64(self.__str__())[:self.short_hash_length]
         return shortid
-
-#    def __cmp__(self, other):
-#        if isinstance(other, uuid.UUID) or isinstance(other,CNXHash):
-#            return cmp(self.int, other.int)
-#        if isinstance(other, str ):
-#            return self.identifiers_equal(self.__str__(),other)
-#        return NotImplemented
-#    def __eq__(self, other):
-#        if isinstance(other, CNXHash):
-#            return self.int == other.int
-#        if isinstance(other, uuid.UUID):
-#            return self.int == other.int
-#        return NotImplemented
 
     @staticmethod
     def uuid2base64(identifier):
@@ -169,25 +158,32 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def validate(cls,hash_id):
-        if type(hash_id)==cls or type(hash_id) == uuid.UUID:
-            pass
-        elif type(hash_id) == str and len(hash_id)==cls.short_hash_length:
+        if type(hash_id)==cls 
+           or type(hash_id) == uuid.UUID:
+            return cls.FULLUUID
+        elif type(hash_id) == str 
+             and len(hash_id)==cls.short_hash_length:
             try:
                 hash_id = hash_id + '0'*(cls.max_short_hash_length-cls.short_hash_length)
                 cls.base642uuid(hash_id)
             except (TypeError,ValueError):
-                return False
-        elif type(hash_id) == str and len(hash_id)==cls.max_short_hash_length:
+                raise IdentHashSyntaxError
+            return cls.SHORTID
+        elif type(hash_id) == str 
+             and len(hash_id)==cls.max_short_hash_length:
             try:
                 cls.base642uuid(hash_id)
             except (TypeError,ValueError):
-                return False
-        elif type(hash_id) == str :
+                raise IdentHashSyntaxError
+            return cls.BASE64HASH
+        elif type(hash_id) == str 
+             and len(hash_id)!=cls.short_hash_length 
+             and len(hash_id)!=cls.max_short_hash_length:
             try:
                 cls.uuid2base64(hash_id)
             except (TypeError,ValueError):
-                return False
-        else:
-            return False
-        return True
+                raise IdentHashSyntaxError
+            return cls.FULLUUID
+        raise IdentHashSyntaxError
+
 
