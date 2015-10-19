@@ -580,7 +580,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format((uuid, version))))
+                         quote('/contents/{}@{}.json'.format(uuid, version)))
 
     def test_content_shortid_no_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'

@@ -35,7 +35,7 @@ from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash,
+    join_ident_hash, split_ident_hash, split_legacy_hash, CNXHash
     )
 
 
@@ -56,21 +56,36 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to_latest(cursor, id, route_name='content', route_args=None):
+def redirect_to_canonical(cursor, id, version, id_type, route_name='content', route_args=None):
     """Redirect to latest version of a module / collection using the provided
     path
     """
-    cursor.execute(SQL['get-module-versions'], {'id': id})
-    try:
-        latest_version = cursor.fetchone()[0]
-    except (TypeError, IndexError,):  # None returned
-        logger.debug("version was not supplied and could not be discovered.")
-        raise httpexceptions.HTTPNotFound()
+    if id_type == CNXHash.SHORTID:
+        cursor.execute(SQL['get-module-uuid'], {'id': id})
+        try:
+            full_id = cursor.fetchone()[0] 
+        except (TypeError, IndexError,):  # None returned
+            logger.debug("Short ID was not supplied and could not discover UUID.")
+            raise httpexceptions.HTTPNotFound()
+    elif id_type == CNXHash.FULLUUID:
+        full_id = id
+    else:
+        logger.debug("Neither short_id nor full UUID: not implemented.")
+        raise NotImplemented()
+
+    
+    if not version:
+        cursor.execute(SQL['get-module-versions'], {'id': id})
+        try:
+            version = cursor.fetchone()[0] # Get latest (implied by absence of version)
+        except (TypeError, IndexError,):  # None returned
+            logger.debug("version was not supplied and could not be discovered.")
+            raise httpexceptions.HTTPNotFound()
 
     if route_args is None:
         route_args = {}
     request = get_current_request()
-    route_args['ident_hash'] = join_ident_hash(id, latest_version)
+    route_args['ident_hash'] = join_ident_hash(full_id, version)
     raise httpexceptions.HTTPFound(request.route_path(
         route_name, **route_args))
 
@@ -274,7 +289,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
+            if not version or id_type == CNXHash.SHORTID:
                 page_ident_hash = routing_args.get('page_ident_hash', '')
 
                 route_name = 'content'
@@ -284,7 +299,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                     route_args['page_ident_hash'] = page_ident_hash
                 if reqtype:
                     route_name = 'content-{}'.format(reqtype)
-                redirect_to_latest(cursor, id, route_name=route_name,
+                redirect_to_canonical(cursor, id, version, id_type, route_name=route_name,
                                    route_args=route_args)
 
             result = get_content_metadata(id, version, cursor)
