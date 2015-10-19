@@ -158,27 +158,22 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def validate(cls,hash_id):
-        if type(hash_id)==cls 
-           or type(hash_id) == uuid.UUID:
+        if type(hash_id)==cls or type(hash_id) == uuid.UUID:
             return cls.FULLUUID
-        elif type(hash_id) == str 
-             and len(hash_id)==cls.short_hash_length:
+        elif type(hash_id) == str and len(hash_id)==cls.short_hash_length:
             try:
                 hash_id = hash_id + '0'*(cls.max_short_hash_length-cls.short_hash_length)
                 cls.base642uuid(hash_id)
             except (TypeError,ValueError):
                 raise IdentHashSyntaxError
             return cls.SHORTID
-        elif type(hash_id) == str 
-             and len(hash_id)==cls.max_short_hash_length:
+        elif type(hash_id) == str and len(hash_id)==cls.max_short_hash_length:
             try:
                 cls.base642uuid(hash_id)
             except (TypeError,ValueError):
                 raise IdentHashSyntaxError
             return cls.BASE64HASH
-        elif type(hash_id) == str 
-             and len(hash_id)!=cls.short_hash_length 
-             and len(hash_id)!=cls.max_short_hash_length:
+        elif type(hash_id) == str and len(hash_id)!=cls.short_hash_length and len(hash_id)!=cls.max_short_hash_length:
             try:
                 cls.uuid2base64(hash_id)
             except (TypeError,ValueError):

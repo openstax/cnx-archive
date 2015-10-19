@@ -322,7 +322,7 @@ class TestHashTruncationFunctions(unittest.TestCase):
         returned_id = base642uuid(hash_untruncate(expected_id))
         self.assertEqual(expected_id,returned_id)
 
-from ..utils import CNXHash 
+from ..utils import CNXHash, IdentHashSyntaxError 
 class TestCNXHash(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -349,12 +349,15 @@ class TestCNXHash(unittest.TestCase):
         self.assertEqual(len(cnxhash.get_shortid()),CNXHash.short_hash_length)
 
     def test_validate(self):
-        self.assertFalse(CNXHash.validate(1))
-        self.assertFalse(CNXHash.validate([]))
-        self.assertFalse(CNXHash.validate('a'))
-        self.assertTrue(CNXHash.validate(self.uuid))
-        self.assertTrue(CNXHash.validate(self.cnxhash))
-        self.assertTrue(CNXHash.validate(self.cnxhash.get_shortid()))
+        with self.assertRaises(IdentHashSyntaxError):
+            self.assertFalse(CNXHash.validate(1))
+        with self.assertRaises(IdentHashSyntaxError):
+            self.assertFalse(CNXHash.validate([]))
+        with self.assertRaises(IdentHashSyntaxError):
+            self.assertFalse(CNXHash.validate('a'))
+        self.assertEqual(CNXHash.validate(self.uuid),CNXHash.FULLUUID)
+        self.assertEqual(CNXHash.validate(self.cnxhash),CNXHash.FULLUUID)
+        self.assertEqual(CNXHash.validate(self.cnxhash.get_shortid()),CNXHash.SHORTID)
 
     def test_equality(self):
         self.assertTrue(self.cnxhash==self.cnxhash)
