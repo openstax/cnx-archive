@@ -12,6 +12,8 @@ import unittest
 
 class SplitIdentTestCase(unittest.TestCase):
 
+    from ..utils import CNXHash
+
     def call_target(self, *args, **kwargs):
         from ..utils import split_ident_hash
         return split_ident_hash(*args, **kwargs)
@@ -31,10 +33,11 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = "{}@{}".format(expected_id, expected_version)
 
-        id, version = self.call_target(ident_hash)
+        id, version, id_type = self.call_target(ident_hash)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
+        self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_uuid_only(self):
         # Case where the UUID has been the only value supplied in the
@@ -45,7 +48,7 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = "{}@{}".format(expected_id, expected_version)
 
-        id, version = self.call_target(ident_hash)
+        id, version, id_type = self.call_target(ident_hash)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, None)
@@ -73,10 +76,11 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = "{}@{}".format(expected_id, '.'.join(expected_version))
 
-        id, version = self.call_target(ident_hash, True)
+        id, version, id_type = self.call_target(ident_hash, True)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
+        self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_w_split_version_on_major_version(self):
         expected_id, expected_version = (
@@ -85,10 +89,12 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = "{}@{}".format(expected_id, expected_version[0])
 
-        id, version = self.call_target(ident_hash, True)
+        id, version, id_type = self.call_target(ident_hash, True)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
+        self.assertEqual(id_type, CNXHash.FULLUUID)
+
 
     def test_w_split_version_no_version(self):
         expected_id, expected_version = (
@@ -97,10 +103,12 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = expected_id
 
-        id, version = self.call_target(ident_hash, True)
+        id, version, id_type = self.call_target(ident_hash, True)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
+        self.assertEqual(id_type, CNXHash.FULLUUID)
+
 
 
 class JoinIdentTestCase(unittest.TestCase):
