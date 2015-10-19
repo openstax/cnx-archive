@@ -18,7 +18,8 @@ $$ language 'plpgsql' immutable;
 
 
 CREATE OR REPLACE FUNCTION short_id (u uuid) RETURNS text as $$
-    select substring(replace(replace(replace(encode(uuid_send(u),'base64'),'+','-'),'/','_'),'=',''),1,8) IMMUTABLE STRICT LANGUAGE SQL;
+select substring(replace(replace(replace(encode(uuid_send(u),'base64'),'+','-'),'/','_'),'=',''),1,8) $$
+IMMUTABLE STRICT LANGUAGE SQL;
 
 
 CREATE OR REPLACE FUNCTION req(text) RETURNS text AS $$

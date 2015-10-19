@@ -3,15 +3,15 @@ CREATE INDEX modules_upmodid_idx ON modules  (upper(moduleid));
 CREATE INDEX modules_upname_idx ON modules  (upper(name));
 CREATE INDEX modules_portal_type_idx on modules (portal_type);
 CREATE INDEX modules_uuid_idx on modules (uuid);
-CREATE INDEX modules_short_id_idx on modules short_id(uuid);
+CREATE INDEX modules_short_id_idx on modules (short_id(uuid));
 
 CREATE INDEX latest_modules_upmodid_idx ON latest_modules  (upper(moduleid));
 CREATE INDEX latest_modules_upname_idx ON latest_modules  (upper(name));
 CREATE INDEX latest_modules_moduleid_idx on latest_modules (moduleid);
 CREATE INDEX latest_modules_module_ident_idx on latest_modules (module_ident);
 CREATE INDEX latest_modules_portal_type_idx on latest_modules (portal_type);
-CREATE UNIQUE INDEX modules_uuid_idx on latest_modules (uuid);
-CREATE UNIQUE INDEX modules_short_id_idx on latest_modules short_id(uuid);
+CREATE UNIQUE INDEX lastest_modules_uuid_idx on latest_modules (uuid);
+CREATE UNIQUE INDEX lastest_modules_short_id_idx on latest_modules (short_id(uuid));
 
 CREATE INDEX fti_idx ON modulefti USING gist (module_idx);
 
