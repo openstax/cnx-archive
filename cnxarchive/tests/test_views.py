@@ -558,6 +558,53 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@5.json'.format(uuid)))
 
+    def test_content_shortid_version(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        from uuid import UUID
+        u = UUID(uuid)
+        version = 5
+        base64_uuid = u.bytes.encode('base64').replace('+','-').replace('/','_').replace('=','')
+        short_id = base64_uuid[:8]
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': "{}@{}".format(short_id, version)
+            }
+
+        # Call the view.
+        from ..views import get_content
+
+        # Check that the view redirects to the latest version
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@{}.json'.format((uuid,version))))
+
+    def test_content_shortid_no_version(self):
+        uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        from uuid import UUID
+        u = UUID(uuid)
+        base64_uuid = u.bytes.encode('base64').replace('+','-').replace('/','_').replace('=','')
+        short_id = base64_uuid[:8]
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': short_id
+            }
+
+        # Call the view.
+        from ..views import get_content
+
+        # Check that the view redirects to the latest version
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@{}.json'.format((uuid,version))))
+
     def test_content_not_found(self):
         # Build the request environment
         self.request.matchdict = {'ident_hash': '98c44aed-056b-450a-81b0-61af87ee75af'}
