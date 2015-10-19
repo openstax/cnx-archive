@@ -508,8 +508,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
         for key in content:
             self.assertEqual(content[key], MODULE_METADATA[key],
-                    u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
-                        key=key, v1=content[key], v2=MODULE_METADATA[key]))
+                             u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
+                             key=key, v1=content[key], v2=MODULE_METADATA[key]))
 
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
@@ -563,7 +563,7 @@ class ViewsTestCase(unittest.TestCase):
         from uuid import UUID
         u = UUID(uuid)
         version = 5
-        base64_uuid = u.bytes.encode('base64').replace('+','-').replace('/','_').replace('=','')
+        base64_uuid = u.bytes.encode('base64').replace('+', '-').replace('/', '_').replace('=', '')
         short_id = base64_uuid[:8]
 
         # Build the request environment.
@@ -580,13 +580,13 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format((uuid,version))))
+                         quote('/contents/{}@{}.json'.format((uuid, version))))
 
     def test_content_shortid_no_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         from uuid import UUID
         u = UUID(uuid)
-        base64_uuid = u.bytes.encode('base64').replace('+','-').replace('/','_').replace('=','')
+        base64_uuid = u.bytes.encode('base64').replace('+', '-').replace('/', '_').replace('=', '')
         short_id = base64_uuid[:8]
 
         # Build the request environment.
@@ -603,7 +603,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format((uuid,version))))
+                         quote('/contents/{}@{}.json'.format((uuid, version))))
 
     def test_content_not_found(self):
         # Build the request environment
