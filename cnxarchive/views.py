@@ -268,7 +268,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
     try:
-        id, version = split_ident_hash(ident_hash)
+        id, version, id_type = split_ident_hash(ident_hash)
     except IdentHashSyntaxError:
         raise httpexceptions.HTTPNotFound()
 
