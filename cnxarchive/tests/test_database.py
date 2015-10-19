@@ -304,34 +304,32 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         cursor.execute("SELECT cnxml_content(4) FROM files")
         self.assertIn("<document", cursor.fetchone()[0])
 
-
     @testing.db_connect
     def test_uuid2base64_function(self, cursor):
         import uuid
         from cnxarchive.utils import uuid2base64
 
-        identifier=uuid.uuid4()
-        expected_identifier=uuid2base64(identifier)
+        identifier = uuid.uuid4()
+        expected_identifier = uuid2base64(identifier)
         cursor.execute("select uuid2base64('{}')".format(str(identifier)))
-        returned_identifier=cursor.fetchone()[0]
-        self.assertEqual(expected_identifier,returned_identifier)
-        
-        identifier=uuid.uuid4()
-        expected_identifier=uuid2base64(identifier)
-        cursor.execute("select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
-        returned_identifier=cursor.fetchone()[0]
-        self.assertEqual(expected_identifier,returned_identifier)
+        returned_identifier = cursor.fetchone()[0]
+        self.assertEqual(expected_identifier, returned_identifier)
 
+        identifier = uuid.uuid4()
+        expected_identifier = uuid2base64(identifier)
+        cursor.execute("select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
+        returned_identifier = cursor.fetchone()[0]
+        self.assertEqual(expected_identifier, returned_identifier)
 
     @testing.db_connect
     def test_base642uuid_function(self, cursor):
         import uuid
         from cnxarchive.utils import uuid2base64
-        expected_identifier=str(uuid.uuid4())
-        identifier=uuid2base64(expected_identifier)
+        expected_identifier = str(uuid.uuid4())
+        identifier = uuid2base64(expected_identifier)
         cursor.execute("select base642uuid('{}')".format(str(identifier)))
-        returned_identifier=cursor.fetchone()[0]
-        self.assertEqual(expected_identifier,returned_identifier)
+        returned_identifier = cursor.fetchone()[0]
+        self.assertEqual(expected_identifier, returned_identifier)
 
     @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
@@ -348,34 +346,35 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         cursor.execute("select identifiers_equal(uuid2base64(uuid_generate_v4()), uuid2base64(uuid_generate_v4()))")
         self.assertFalse(cursor.fetchone()[0])
 
-        identifier=str(uuid.uuid4())
-        
-        cursor.execute("select identifiers_equal('{}','{}')".format(identifier,identifier))
+        identifier = str(uuid.uuid4())
+
+        cursor.execute("select identifiers_equal('{}','{}')".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid,'{}'::uuid)".format(identifier,identifier))
+        cursor.execute("select identifiers_equal('{}'::uuid,'{}'::uuid)".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}','{}'::uuid)".format(identifier,identifier))
+        cursor.execute("select identifiers_equal('{}','{}'::uuid)".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid,'{}')".format(identifier,identifier))
+        cursor.execute("select identifiers_equal('{}'::uuid,'{}')".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}', uuid2base64('{}'))".format(identifier,identifier))
+        cursor.execute("select identifiers_equal('{}', uuid2base64('{}'))".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid, uuid2base64('{}'))".format(identifier,identifier))
+        cursor.execute("select identifiers_equal('{}'::uuid, uuid2base64('{}'))".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}')".format(identifier,identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}')".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}'::uuid)".format(identifier,identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}'::uuid)".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'), uuid2base64('{}'))".format(identifier,identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'), uuid2base64('{}'))".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
+
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
     """Tests for the postgresql triggers when a module is published
@@ -2040,5 +2039,3 @@ class DocumentHitsTestCase(unittest.TestCase):
         #   which expectedly boosts its rank.
         self.assertEqual(hit_ranks[3],
                          ('dd7b92c2-e82e-43bb-b224-accbc3cd395a', 39, 7.8, 4))
-
-
