@@ -29,6 +29,7 @@ __all__ = (
 here = os.path.abspath(os.path.dirname(__file__))
 config_uri = None
 
+
 def mocked_fromtimestamp(timestamp):
     """Always return 2015-03-04 10:03:29-08:00"""
     return datetime.fromtimestamp(1425492209, tz=pytz.timezone('America/Whitehorse'))

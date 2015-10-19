@@ -32,7 +32,10 @@ def slugify(string):
 
 def escape(s):
     """xml/html entity escaping of < > and &"""
-    s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', "&quot;")
+    s = s.replace('&', '&amp;')\
+        .replace('<', '&lt;')\
+        .replace('>', '&gt;')\
+        .replace('"', "&quot;")
     return s
 
 
@@ -47,5 +50,5 @@ def utf8(item):
         return {utf8(k): utf8(v) for k, v in item.items()}
     try:
         return item.decode('utf-8')
-    except: # bare except since this method is supposed to be safe anywhere
+    except:  # bare except since this method is supposed to be safe anywhere
         return item

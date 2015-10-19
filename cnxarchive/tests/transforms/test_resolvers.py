@@ -158,7 +158,6 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
     </body>
 </html>''')
 
-
     @testing.db_connect
     def test_get_resource_info(self, cursor):
         from ...transforms.resolvers import (
@@ -175,7 +174,7 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
 
         # Test getting a file in module 3
         self.assertEqual(resolver.get_resource_info('Figure_01_00_01.jpg'),
-                {'hash': 'd47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9', 'id': 6})
+                         {'hash': 'd47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9', 'id': 6})
 
         # Test file not found outside of module 3
         self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
@@ -183,8 +182,9 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
 
         # Test getting a file in another module
         self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
-            document_id='m42092'),
-            {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c', 'id': 23})
+                                                    document_id='m42092'),
+                         {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c',
+                          'id': 23})
 
         # Test file not found with version
         self.assertRaises(ReferenceNotFound, resolver.get_resource_info,
@@ -193,8 +193,10 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
 
         # Test getting a file with version
         self.assertEqual(resolver.get_resource_info('PhET_Icon.png',
-            document_id='m42092', version='1.4'),
-            {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c', 'id': 23})
+                                                    document_id='m42092',
+                                                    version='1.4'),
+                         {'hash': '075500ad9f71890a85fe3f7a4137ac08e2b7907c',
+                          'id': 23})
 
     def test_parse_reference(self):
         from ...transforms.resolvers import (
@@ -202,42 +204,52 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
             parse_legacy_reference as parse_reference,
             )
 
-        self.assertEqual(parse_reference('/m12345'),
-                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
+        self.assertEqual(
+            parse_reference('/m12345'),
+            (MODULE_REFERENCE, ('m12345', None, None, None, '')))
 
-        self.assertEqual(parse_reference('/content/m12345'),
-                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
+        self.assertEqual(
+            parse_reference('/content/m12345'),
+            (MODULE_REFERENCE, ('m12345', None, None, None, '')))
 
-        self.assertEqual(parse_reference('http://cnx.org/content/m12345'),
-                (MODULE_REFERENCE, ('m12345', None, None, None, '')))
+        self.assertEqual(
+            parse_reference('http://cnx.org/content/m12345'),
+            (MODULE_REFERENCE, ('m12345', None, None, None, '')))
 
         # m10278 "The Advanced CNXML"
-        self.assertEqual(parse_reference('/m9007'),
-                (MODULE_REFERENCE, ('m9007', None, None, None, '')))
+        self.assertEqual(
+            parse_reference('/m9007'),
+            (MODULE_REFERENCE, ('m9007', None, None, None, '')))
 
         # m11374 "KCL"
-        self.assertEqual(parse_reference('/m0015#current'),
-                (MODULE_REFERENCE, ('m0015', None, None, None, '#current')))
+        self.assertEqual(
+            parse_reference('/m0015#current'),
+            (MODULE_REFERENCE, ('m0015', None, None, None, '#current')))
 
         # m11351 "electron and hole density equations"
-        self.assertEqual(parse_reference('/m11332#ntypeq'),
-                (MODULE_REFERENCE, ('m11332', None, None, None, '#ntypeq')))
+        self.assertEqual(
+            parse_reference('/m11332#ntypeq'),
+            (MODULE_REFERENCE, ('m11332', None, None, None, '#ntypeq')))
 
         # m19809 "Gavin Bakers entry..."
-        self.assertEqual(parse_reference('/ m19770'),
-                (MODULE_REFERENCE, ('m19770', None, None, None, '')))
+        self.assertEqual(
+            parse_reference('/ m19770'),
+            (MODULE_REFERENCE, ('m19770', None, None, None, '')))
 
         # m16562 "Flat Stanley.pdf"
-        self.assertEqual(parse_reference(' Flat Stanley.pdf'),
-                (RESOURCE_REFERENCE, ('Flat Stanley.pdf', None, None)))
+        self.assertEqual(
+            parse_reference(' Flat Stanley.pdf'),
+            (RESOURCE_REFERENCE, ('Flat Stanley.pdf', None, None)))
 
         # m34830 "Auto_fatalities_data.xls"
-        self.assertEqual(parse_reference('/Auto_fatalities_data.xls'),
-                (RESOURCE_REFERENCE, ('Auto_fatalities_data.xls', None, None)))
+        self.assertEqual(
+            parse_reference('/Auto_fatalities_data.xls'),
+            (RESOURCE_REFERENCE, ('Auto_fatalities_data.xls', None, None)))
 
         # m35999 "version 2.3 of the first module"
-        self.assertEqual(parse_reference('/m0000@2.3'),
-                (MODULE_REFERENCE, ('m0000', '2.3', None, None, '')))
+        self.assertEqual(
+            parse_reference('/m0000@2.3'),
+            (MODULE_REFERENCE, ('m0000', '2.3', None, None, '')))
 
         # m14396 "Adding a Table..."
         # m11837
@@ -341,7 +353,7 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
 
         # Binder with document
         self.assertEqual(
-            parse_reference('/contents/{}@{}:{}@{}' \
+            parse_reference('/contents/{}@{}:{}@{}'
                             .format(id, ver2, id2, ver)),
             (BINDER_REFERENCE, (id, ver2, '{}@{}'.format(id2, ver), '',)))
         self.assertEqual(
@@ -349,11 +361,11 @@ class CnxmlReferenceResolutionTestCase(unittest.TestCase):
             (BINDER_REFERENCE, (id, ver2, id2, '',)))
         # With a fragement...
         self.assertEqual(
-            parse_reference('/contents/{}@{}:{}/{}' \
+            parse_reference('/contents/{}@{}:{}/{}'
                             .format(id, ver2, id2, title)),
             (BINDER_REFERENCE, (id, ver2, id2, '/{}'.format(title),)))
         self.assertEqual(
-            parse_reference('/contents/{}@{}:{}@{}/{}' \
+            parse_reference('/contents/{}@{}:{}@{}/{}'
                             .format(id, ver2, id2, ver, title)),
             (BINDER_REFERENCE,
              (id, ver2, '{}@{}'.format(id2, ver), '/{}'.format(title),)))

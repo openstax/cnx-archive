@@ -34,8 +34,8 @@ from .sitemap import Sitemap
 from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
-    portaltype_to_mimetype,
-    join_ident_hash, slugify, split_ident_hash, split_legacy_hash, fromtimestamp
+    portaltype_to_mimetype, slugify, fromtimestamp,
+    join_ident_hash, split_ident_hash, split_legacy_hash,
     )
 
 
@@ -63,7 +63,7 @@ def redirect_to_latest(cursor, id, route_name='content', route_args=None):
     cursor.execute(SQL['get-module-versions'], {'id': id})
     try:
         latest_version = cursor.fetchone()[0]
-    except (TypeError, IndexError,): # None returned
+    except (TypeError, IndexError,):  # None returned
         logger.debug("version was not supplied and could not be discovered.")
         raise httpexceptions.HTTPNotFound()
 
@@ -106,12 +106,14 @@ def is_latest(cursor, id, version):
     try:
         latest_version = cursor.fetchone()[0]
         return latest_version == version
-    except (TypeError, IndexError,): # None returned
+    except (TypeError, IndexError,):  # None returned
         raise httpexceptions.HTTPNotFound()
 
 
 TYPE_INFO = []
-LEGACY_EXTENSION_MAP = {'epub':'epub','pdf':'pdf','zip':'complete.zip'}
+LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
+
+
 def get_type_info():
     if TYPE_INFO:
         return
@@ -138,8 +140,8 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
 
     for type_name, type_info in TYPE_INFO:
         try:
-            filename, mimetype, file_size, file_created, state, file_content = get_export_file(cursor,
-                    id, version, type_name, exports_dirs)
+            (filename, mimetype, file_size, file_created, state, file_content
+             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
             yield {
                 'format': type_info['user_friendly_name'],
                 'filename': filename,
@@ -167,9 +169,9 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         cursor.execute(SQL['get-module-versions'], {'id': id})
         try:
             latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,): # None returned
+        except (TypeError, IndexError,):  # None returned
             raise ExportError("version was not supplied and could not be "
-                    "discovered.")
+                              "discovered.")
         request = get_current_request()
         raise httpexceptions.HTTPFound(
             request.route_path('export',
@@ -182,10 +184,10 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     filename = '{}@{}.{}'.format(id, version, file_extension)
     legacy_id = metadata['legacy_id']
     legacy_version = metadata['legacy_version']
-    legacy_filename = '{}-{}.{}'.format(legacy_id, legacy_version, 
-            LEGACY_EXTENSION_MAP[file_extension])
+    legacy_filename = '{}-{}.{}'.format(
+        legacy_id, legacy_version, LEGACY_EXTENSION_MAP[file_extension])
     slugify_title_filename = u'{}-{}.{}'.format(slugify(metadata['title']),
-            version, file_extension)
+                                                version, file_extension)
 
     for exports_dir in exports_dirs:
         filepath = os.path.join(exports_dir, filename)
@@ -194,26 +196,28 @@ def get_export_file(cursor, id, version, type, exports_dirs):
             with open(filepath, 'r') as file:
                 stats = os.fstat(file.fileno())
                 modtime = fromtimestamp(stats.st_mtime)
-                return (slugify_title_filename, mimetype, stats.st_size, modtime, 'good', file.read())
+                return (slugify_title_filename, mimetype,
+                        stats.st_size, modtime, 'good', file.read())
         except IOError:
             # Let's see if the legacy file's there and make the new link if so
-            #FIXME remove this code when we retire legacy
+            # FIXME remove this code when we retire legacy
             try:
                 with open(legacy_filepath, 'r') as file:
                     stats = os.fstat(file.fileno())
                     modtime = fromtimestamp(stats.st_mtime)
-                    os.link(legacy_filepath,filepath)
-                    return (slugify_title_filename, mimetype, stats.st_size, modtime,'good', file.read())
+                    os.link(legacy_filepath, filepath)
+                    return (slugify_title_filename, mimetype,
+                            stats.st_size, modtime, 'good', file.read())
             except IOError as e:
-                # to be handled by the else part below if unable to find file 
+                # to be handled by the else part below if unable to find file
                 # in any of the export dirs
-                if not str(e).startswith('[Errno 2] No such file or directory:'):
-                    logger.warn('IOError when accessing legacy export filepath:\n'
+                if not str(e).startswith('[Errno 2] No such file or direct'):
+                    logger.warn('IOError when accessing legacy export file:\n'
                                 'exception: {}\n'
                                 'filepath: {}\n'
                                 .format(str(e), legacy_filepath))
     else:
-        #No file, return "missing" state
+        # No file, return "missing" state
         return (slugify_title_filename, mimetype, 0, None, 'missing', None)
 
 
@@ -244,20 +248,21 @@ def tree_to_html(tree):
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
-def _get_page_in_book(page_uuid, page_version, book_uuid, book_version, latest=False):
+def _get_page_in_book(page_uuid, page_version, book_uuid,
+                      book_version, latest=False):
     book_ident_hash = join_ident_hash(book_uuid, book_version)
     coltree = _get_content_json(ident_hash=book_ident_hash)['tree']
     pages = list(flatten_tree_to_ident_hashes(coltree))
     page_ident_hash = join_ident_hash(page_uuid, page_version)
     if page_ident_hash in pages:
         return book_uuid, '{}:{}'.format(
-                latest and book_uuid or book_ident_hash, page_uuid)
+            latest and book_uuid or book_ident_hash, page_uuid)
     # book not in page
     return page_uuid, page_ident_hash
 
 
 def _get_content_json(request=None, ident_hash=None, reqtype=None):
-    """Helper that return a piece of content as a dict using the ident-hash (uuid@version)."""
+    """Return a content as a dict from its ident-hash (uuid@version)."""
     routing_args = request and request.matchdict or {}
     settings = get_current_registry().settings
     if not ident_hash:
@@ -304,7 +309,8 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 try:
                     content = cursor.fetchone()[0]
                 except (TypeError, IndexError,):  # None returned
-                    logger.debug("module found, but 'index.cnxml.html' is missing.")
+                    logger.debug("module found, but "
+                                 "'index.cnxml.html' is missing.")
                     raise httpexceptions.HTTPNotFound()
                 result['content'] = content[:]
 
@@ -385,10 +391,11 @@ def get_content(request):
 @view_config(route_name='legacy-redirect-latest', request_method='GET')
 @view_config(route_name='legacy-redirect-w-version', request_method='GET')
 def redirect_legacy_content(request):
-    """Redirect from legacy /content/id/version url to new /contents/uuid@version.
+    """Redirect from legacy /content/id/version to new /contents/uuid@version.
        Handles collection context (book) as well
     """
     settings = get_current_registry().settings
+    db_conn_string = settings[config.CONNECTION_STRING]
     routing_args = request.matchdict
     objid = routing_args['objid']
     objver = routing_args.get('objver')
@@ -400,7 +407,7 @@ def redirect_legacy_content(request):
         raise httpexceptions.HTTPNotFound()
 
     if filename:
-        with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with psycopg2.connect(db_conn_string) as db_connection:
             with db_connection.cursor() as cursor:
                 args = dict(id=id, version=version, filename=filename)
                 cursor.execute(SQL['get-resourceid-by-filename'], args)
@@ -415,12 +422,12 @@ def redirect_legacy_content(request):
 
     ident_hash = join_ident_hash(id, version)
     params = request.params
-    if params.get('collection'): # page in book
+    if params.get('collection'):  # page in book
         objid, objver = split_legacy_hash(params['collection'])
         book_uuid, book_version = _convert_legacy_id(objid, objver)
         if book_uuid:
-            id, ident_hash = _get_page_in_book(
-                    id, version, book_uuid, book_version)
+            id, ident_hash = \
+                _get_page_in_book(id, version, book_uuid, book_version)
 
     raise httpexceptions.HTTPFound(
         request.route_path('content', ident_hash=ident_hash))
@@ -434,7 +441,8 @@ def _convert_legacy_id(objid, objver=None):
                 args = dict(objid=objid, objver=objver)
                 cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
             else:
-                cursor.execute(SQL['get-content-from-legacy-id'], dict(objid=objid))
+                cursor.execute(SQL['get-content-from-legacy-id'],
+                               dict(objid=objid))
             try:
                 id, version = cursor.fetchone()
                 return (id, version)
@@ -479,8 +487,9 @@ def get_extra(request):
         with db_connection.cursor() as cursor:
             if not version:
                 redirect_to_latest(cursor, id, 'content-extras')
-            results['downloads'] = list(get_export_allowable_types(cursor,
-                exports_dirs, id, version))
+            results['downloads'] = \
+                list(get_export_allowable_types(cursor, exports_dirs,
+                                                id, version))
             results['isLatest'] = is_latest(cursor, id, version)
             results['canPublish'] = database.get_module_can_publish(cursor, id)
 
@@ -502,8 +511,8 @@ def get_export(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             try:
-                filename, mimetype, size, modtime, state, file_content = get_export_file(cursor,
-                        id, version, type, exports_dirs)
+                filename, mimetype, size, modtime, state, file_content = \
+                    get_export_file(cursor, id, version, type, exports_dirs)
             except ExportError as e:
                 logger.debug(str(e))
                 raise httpexceptions.HTTPNotFound()
@@ -565,8 +574,8 @@ def search(request):
         return resp
 
     db_results = cache.search(
-            query, query_type,
-            nocache=params.get('nocache', '').lower() == 'true')
+        query, query_type,
+        nocache=params.get('nocache', '').lower() == 'true')
 
     authors = db_results.auxiliary['authors']
     # create a mapping for author id to index in auxiliary authors list
@@ -581,11 +590,11 @@ def search(request):
         if v in author_mapping:
             limits[-1]['index'] = author_mapping[v]
     results['query'] = {
-            'limits': limits,
-            'sort': query.sorts,
-            'per_page': per_page,
-            'page': page,
-            }
+        'limits': limits,
+        'sort': query.sorts,
+        'per_page': per_page,
+        'page': page,
+        }
     results['results'] = {'total': len(db_results), 'items': []}
 
     for record in db_results[((page - 1) * per_page):(page * per_page)]:
@@ -673,8 +682,7 @@ def _get_subject_list(cursor):
                 yield subject
             subject = {'id': tagid,
                        'name': tagname,
-                       'count': {'module': 0, 'collection': 0},
-                      }
+                       'count': {'module': 0, 'collection': 0}, }
             last_tagid = tagid
 
         if tagid == last_tagid and portal_type:
@@ -738,16 +746,18 @@ def sitemap(request):
             # to multiple sitemaps before we have more content
             cursor.execute("""\
                     SELECT
-                        uuid||'@'||concat_ws('.',major_version,minor_version) AS idver,
-                        REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name), '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
+                        uuid||'@'||concat_ws('.',major_version,minor_version)
+                            AS idver,
+                        REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
+                            '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
                         revised
                     FROM latest_modules
                     ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 url = request.route_url('content',
-                                         ident_hash=ident_hash,
-                                         ignore='/{}'.format(page_name))
+                                        ident_hash=ident_hash,
+                                        ignore='/{}'.format(page_name))
                 if notblocked(url):
                     xml.add_url(url, lastmod=revised)
 

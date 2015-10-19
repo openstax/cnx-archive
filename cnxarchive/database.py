@@ -25,6 +25,7 @@ SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
 SCHEMA_MANIFEST_FILENAME = 'manifest.json'
 
+
 def _read_sql_file(name):
     path = os.path.join(SQL_DIRECTORY, '{}.sql'.format(name))
     with open(path, 'r') as fp:
@@ -33,7 +34,8 @@ def _read_sql_file(name):
 SQL = {
     'get-module': _read_sql_file('get-module'),
     'get-content-from-legacy-id': _read_sql_file('get-content-from-legacy-id'),
-    'get-content-from-legacy-id-ver': _read_sql_file('get-content-from-legacy-id-ver'),
+    'get-content-from-legacy-id-ver': _read_sql_file(
+        'get-content-from-legacy-id-ver'),
     'get-module-metadata': _read_sql_file('get-module-metadata'),
     'get-resource': _read_sql_file('get-resource'),
     'get-resource-by-filename': _read_sql_file('get-resource-by-filename'),
@@ -92,7 +94,8 @@ def get_schema():
     schema_manifest = _read_schema_manifest(manifest_filepath)
 
     # Modify the file so that it contains comments that say it's origin.
-    file_wrapper = lambda f, c: u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
+    def file_wrapper(f, c):
+        return u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
 
     return _compile_manifest(schema_manifest, file_wrapper)
 
@@ -141,7 +144,7 @@ def get_tree(ident_hash, cursor):
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
         raise ContentNotFound()
-    if type(tree) in (type(''),type(u'')):
+    if type(tree) in (type(''), type(u'')):
         import json
         return json.loads(tree)
     else:
@@ -155,8 +158,9 @@ def get_module_uuid(db_connection, moduleid):
         uuid = None
         result = cursor.fetchone()
         if result:
-            uuid=result[0]
+            uuid = result[0]
     return uuid
+
 
 def get_current_module_ident(moduleid, cursor):
     sql = '''SELECT m.module_ident FROM modules m
@@ -166,18 +170,21 @@ def get_current_module_ident(moduleid, cursor):
     if results:
         return results[0]
 
+
 def get_minor_version(module_ident, cursor):
     sql = '''SELECT m.minor_version
-            FROM modules m 
+            FROM modules m
             WHERE m.module_ident = %s
             ORDER BY m.revised DESC'''
     cursor.execute(sql, [module_ident])
     results = cursor.fetchone()[0]
     return results
 
+
 def next_version(module_ident, cursor):
     minor = get_minor_version(module_ident, cursor)
     return minor + 1
+
 
 def get_collections(module_ident, cursor):
     """Get all the collections that the module is part of
@@ -200,13 +207,15 @@ def get_collections(module_ident, cursor):
     for i in cursor.fetchall():
         yield i[0]
 
+
 def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
     """Create a new tree for the collection based on the old tree but with
     new document ids
     """
     sql = '''
-    WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
-        SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = %s
+    WITH RECURSIVE t(node, parent, document, title, childorder, latest, path)
+        AS (SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr
+            WHERE tr.documentid = %s
     UNION ALL
         SELECT c.*, path || ARRAY[c.nodeid]
         FROM trees c JOIN t ON (c.parent_id = t.node)
@@ -215,21 +224,22 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
     SELECT * FROM t
     '''
 
-    def get_tree():
+    def get_old_tree():
         cursor.execute(sql, [old_collection_ident])
         for i in cursor.fetchall():
             yield dict(zip(('node', 'parent', 'document', 'title',
-                'childorder', 'latest', 'path'), i))
+                            'childorder', 'latest', 'path'), i))
 
-    tree = {} # { old_nodeid: {'data': ...}, ...}
-    children = {} # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
-    for i in get_tree():
+    tree = {}  # { old_nodeid: {'data': ...}, ...}
+    children = {}  # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
+    for i in get_old_tree():
         tree[i['node']] = {'data': i, 'new_nodeid': None}
         children.setdefault(i['parent'], [])
         children[i['parent']].append(i['node'])
 
     sql = '''
-    INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
+    INSERT INTO trees (nodeid, parent_id, documentid,
+        title, childorder, latest)
     VALUES (DEFAULT, %s, %s, %s, %s, %s)
     RETURNING nodeid
     '''
@@ -240,29 +250,31 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
         return results
 
     root_node = children[None][0]
+
     def build_tree(node, parent):
         data = tree[node]['data']
         new_node = execute([parent, new_document_id_map.get(data['document'],
-            data['document']), data['title'], data['childorder'],
-            data['latest']])
+                            data['document']), data['title'],
+                            data['childorder'], data['latest']])
         for i in children.get(node, []):
             build_tree(i, new_node)
     build_tree(root_node, None)
 
+
 def republish_collection(next_minor_version, collection_ident, cursor,
-        revised=None):
+                         revised=None):
     """Insert a new row for collection_ident with a new version and return
     the module_ident of the row inserted
     """
     sql = '''
-    INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
-        abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
-        authors,maintainers,licensors,parentauthors,google_analytics,buylink,
-        major_version, minor_version)
-      SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
-        m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
-        m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
-        m.google_analytics, m.buylink, m.major_version, %s
+    INSERT INTO modules (portal_type, moduleid, uuid, version, name, created,
+        revised, abstractid, licenseid, doctype, submitter, submitlog,
+        stateid, parent, language, authors, maintainers, licensors,
+        parentauthors, google_analytics, buylink, major_version, minor_version)
+      SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created,
+        {}, m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog,
+        m.stateid, m.parent, m.language, m.authors, m.maintainers, m.licensors,
+        m.parentauthors, m.google_analytics, m.buylink, m.major_version, %s
       FROM modules m
       WHERE m.module_ident = %s
     RETURNING module_ident
@@ -289,6 +301,7 @@ def republish_collection(next_minor_version, collection_ident, cursor,
                    (new_ident, collection_ident,))
     return new_ident
 
+
 def set_version(portal_type, legacy_version, td):
     """Sets the major_version and minor_version if they are not set
     """
@@ -306,12 +319,14 @@ def set_version(portal_type, legacy_version, td):
 
     elif portal_type == 'Module':
         # For modules, major should be set and minor should be None
-        # N.B. a very few older modules had major=2 and minor zero-based. Add one for those
+        # N.B. a very few older modules had major=2 and minor zero-based.
+        # The odd math below adds one to the minor for those
         modified = 'MODIFY'
         td['new']['major_version'] = int(legacy_minor)+(int(legacy_major)-1)
         td['new']['minor_version'] = None
 
     return modified
+
 
 def republish_module(td, cursor, db_connection):
     """When a module is republished, the versions of the collections that it is
@@ -359,6 +374,7 @@ def republish_module(td, cursor, db_connection):
             }, cursor)
 
     return modified
+
 
 def republish_module_trigger(plpy, td):
     """Postgres database trigger for republishing a module
@@ -453,8 +469,8 @@ FROM (
         args.extend([portal_type, moduleid])
         plpy.execute(plan, args)
 
-    plpy.log("Fixed identifier and version for publication at '{}' " \
-             "with the following values: {} and {}" \
+    plpy.log("Fixed identifier and version for publication at '{}' "
+             "with the following values: {} and {}"
              .format(uuid, moduleid, version))
 
     return modified_state
@@ -716,9 +732,8 @@ WHERE m.module_ident = %s""", (module_ident,))
     content, messages = transform_func(content, module_ident,
                                        cursor.connection)
     cursor.execute(
-        "UPDATE abstracts SET {} = %s WHERE abstractid = %s" \
-        .format(column),
-        (content, abstractid,))
+        "UPDATE abstracts SET {} = %s WHERE abstractid = %s"
+        .format(column), (content, abstractid,))
     return msg
 
 
@@ -734,7 +749,8 @@ def get_collection_tree(collection_ident, cursor):
         WHERE NOT c.nodeid = ANY(t.path)
     )
     SELECT t.document, m.portal_type
-    from t JOIN modules m ON t.document = m.module_ident''', [collection_ident])
+    FROM t JOIN modules m
+    ON t.document = m.module_ident''', [collection_ident])
     for i in cursor.fetchall():
         yield i
 

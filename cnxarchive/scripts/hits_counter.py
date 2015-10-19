@@ -46,7 +46,9 @@ def parse_log(log, url_pattern):
     """
     hits = {}
     initial_timestamp = None
-    clean_timestamp = lambda v: ' '.join(v).strip('[]')
+
+    def clean_timestamp(v):
+        return ' '.join(v).strip('[]')
     for line in log:
         data = line.split()
         if not initial_timestamp:

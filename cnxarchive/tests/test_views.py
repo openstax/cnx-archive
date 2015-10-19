@@ -34,7 +34,11 @@ from . import testing
 COLLECTION_METADATA = {
     u'roles': None,
     u'subjects': [u'Mathematics and Statistics', u'Science and Technology', u'OpenStax Featured'],
-    u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
+    u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" '
+                 u'xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">'
+                 u'This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, '
+                 u'fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample '
+                 u'practice opportunities to solve traditional physics application problems.</div>',
     u'authors': [{u'id': u'OpenStaxCollege',
                   u'fullname': u'OpenStax College',
                   u'surname': None, u'suffix': None,
@@ -65,7 +69,7 @@ COLLECTION_METADATA = {
                      u'id': u'OpenStaxCollege',
                      u'fullname': u'OpenStax College',
                      },
-                     {u'surname': u'Physics',
+                    {u'surname': u'Physics',
                      u'firstname': u'College',
                      u'suffix': None,
                      u'title': None,
@@ -200,8 +204,8 @@ COLLECTION_DERIVED_METADATA = {
     u'parent': {
         u'authors': [
             {u'surname': None, u'suffix': None,
-             u'firstname': u'OpenStax College', 
-             u'title': None, u'id': u'OpenStaxCollege', 
+             u'firstname': u'OpenStax College',
+             u'title': None, u'id': u'OpenStaxCollege',
              u'fullname': u'OpenStax College',
              }],
         u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
@@ -245,7 +249,7 @@ MODULE_METADATA = {
                      u'id': u'OpenStaxCollege',
                      u'fullname': u'OpenStax College',
                      },
-                     {u'surname': u'Physics',
+                    {u'surname': u'Physics',
                      u'firstname': u'College',
                      u'suffix': None,
                      u'title': None,
@@ -279,8 +283,8 @@ MODULE_METADATA = {
     u'version': u'8',
     u'googleAnalytics': None,
     u'buyLink': u'http://openstaxcollege.worksmartsuite.com/',
-    u'legacy_id':u'm42081',
-    u'legacy_version':u'1.8',
+    u'legacy_id': u'm42081',
+    u'legacy_version': u'1.8',
     u'history': [
         {
             u'version': u'8',
@@ -345,6 +349,7 @@ class ViewsTestCase(unittest.TestCase):
         from .. import cache
         original_search = cache.database_search
         self.db_search_call_count = 0
+
         def patched_search(*args, **kwargs):
             self.db_search_call_count += 1
             return original_search(*args, **kwargs)
@@ -501,8 +506,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
         for key in content:
             self.assertEqual(content[key], MODULE_METADATA[key],
-                    u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
-                        key=key, v1=content[key], v2=MODULE_METADATA[key]))
+                             u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
+                             key=key, v1=content[key], v2=MODULE_METADATA[key]))
 
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
@@ -609,7 +614,7 @@ class ViewsTestCase(unittest.TestCase):
         objid = 'm42709'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid}
+        self.request.matchdict = {'objid': objid}
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -625,9 +630,9 @@ class ViewsTestCase(unittest.TestCase):
     def test_legacy_id_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
-        
+
         # Build the request environment.
-        self.request.matchdict = {'objid':objid, 'objver':'1.5'}
+        self.request.matchdict = {'objid': objid, 'objver': '1.5'}
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -645,7 +650,7 @@ class ViewsTestCase(unittest.TestCase):
         objid = 'm42709'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
+        self.request.matchdict = {'objid': objid, 'objver': '1.4'}
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -662,7 +667,7 @@ class ViewsTestCase(unittest.TestCase):
         objid = 'foobar'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid}
+        self.request.matchdict = {'objid': objid}
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -680,7 +685,7 @@ class ViewsTestCase(unittest.TestCase):
         colid = 'col15533'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
+        self.request.matchdict = {'objid': objid, 'objver': '1.4'}
         self.request.params = {'collection': '{}/latest'.format(colid)}
 
         # Call the view.
@@ -700,7 +705,7 @@ class ViewsTestCase(unittest.TestCase):
         objid = 'm42709'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid, 'objver':'1.4'}
+        self.request.matchdict = {'objid': objid, 'objver': '1.4'}
         self.request.params = {'collection': 'col45555/latest'}
 
         # Call the view.
@@ -722,9 +727,9 @@ class ViewsTestCase(unittest.TestCase):
         sha1 = '95430b74a5ee9e09037c589feb0685ee226a06b8'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid,
-                                  'objver':objver,
-                                  'filename':filename}
+        self.request.matchdict = {'objid': objid,
+                                  'objver': objver,
+                                  'filename': filename}
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -744,16 +749,16 @@ class ViewsTestCase(unittest.TestCase):
         filename = 'nothere.png'
 
         # Build the request environment.
-        self.request.matchdict = {'objid':objid,
-                                  'objver':objver,
-                                  'filename':filename}
+        self.request.matchdict = {'objid': objid,
+                                  'objver': objver,
+                                  'filename': filename}
 
         # Call the view.
         from ..views import redirect_legacy_content
 
         # Check that the view 404s
         self.assertRaises(httpexceptions.HTTPNotFound,
-            redirect_legacy_content, self.request)
+                          redirect_legacy_content, self.request)
 
     @testing.db_connect
     def test_content_index_html(self, cursor):
@@ -766,17 +771,17 @@ class ViewsTestCase(unittest.TestCase):
             (%s) RETURNING fileid''', [memoryview('Version 4')])
         fileid = cursor.fetchone()[0]
         cursor.execute('''INSERT INTO module_files
-            (module_ident, fileid, filename, mimetype) VALUES
-            (%s, %s, 'index.cnxml.html', 'text/html')''',
-            [16, fileid])
+                       (module_ident, fileid, filename, mimetype) VALUES
+                       (%s, %s, 'index.cnxml.html', 'text/html')''',
+                       [16, fileid])
         # Insert a file for version 5
         cursor.execute('''INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview('Version 5')])
         fileid = cursor.fetchone()[0]
         cursor.execute('''INSERT INTO module_files
-            (module_ident, fileid, filename, mimetype) VALUES
-            (%s, %s, 'index.cnxml.html', 'text/html')''',
-            [15, fileid])
+                       (module_ident, fileid, filename, mimetype) VALUES
+                       (%s, %s, 'index.cnxml.html', 'text/html')''',
+                       [15, fileid])
         cursor.connection.commit()
 
         def get_content(version):
@@ -796,7 +801,25 @@ class ViewsTestCase(unittest.TestCase):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
-        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">\n  <body><ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a><ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li><li><a>Introduction: The Nature of Science and Physics</a><ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9%403.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li><li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce%404.html">Physics: An Introduction</a></li><li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7%406.html">Physical Quantities and Units</a></li><li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66%407.html">Accuracy, Precision, and Significant Figures</a></li><li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3%405.html">Approximation</a></li></ul></li><li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a><ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d%402.html">Introduction: Further Applications of Newton’s Laws</a></li><li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59%405.html">Friction</a></li><li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41%406.html">Drag Forces</a></li><li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca%408.html">Elasticity: Stress and Strain</a></li></ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881%403.html">Atomic Masses</a></li><li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc%402.html">Selected Radioactive Isotopes</a></li><li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325%405.html">Useful Inførmation</a></li><li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3%405.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
+        expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">
+  <body>\
+<ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a>\
+<ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li>\
+<li><a>Introduction: The Nature of Science and Physics</a>\
+<ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9%403.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li>\
+<li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce%404.html">Physics: An Introduction</a></li>\
+<li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7%406.html">Physical Quantities and Units</a></li>\
+<li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66%407.html">Accuracy, Precision, and Significant Figures</a></li>\
+<li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3%405.html">Approximation</a></li></ul></li>\
+<li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a>\
+<ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d%402.html">Introduction: Further Applications of Newton’s Laws</a></li>\
+<li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59%405.html">Friction</a></li>\
+<li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41%406.html">Drag Forces</a></li>\
+<li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca%408.html">Elasticity: Stress and Strain</a></li>\
+</ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881%403.html">Atomic Masses</a></li>\
+<li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc%402.html">Selected Radioactive Isotopes</a></li>\
+<li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325%405.html">Useful Inførmation</a></li>\
+<li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3%405.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
 
         # Build the environment
         self.request.matchdict = {
@@ -871,7 +894,7 @@ class ViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
 
         self.assertEqual(self.request.response.content_disposition,
-                         "attached; filename=college-physics-{}.pdf" \
+                         "attached; filename=college-physics-{}.pdf"
                          .format(version))
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
@@ -890,7 +913,7 @@ class ViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attached; filename=elasticity-stress-and-strain-{}.pdf" \
+            "attached; filename=elasticity-stress-and-strain-{}.pdf"
             .format(version))
 
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
@@ -907,7 +930,7 @@ class ViewsTestCase(unittest.TestCase):
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
-                get_export, self.request)
+                          get_export, self.request)
 
     def test_exports_404(self):
         # Build the request
@@ -918,7 +941,7 @@ class ViewsTestCase(unittest.TestCase):
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
-                get_export, self.request)
+                          get_export, self.request)
 
     def test_exports_without_version(self):
         id = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -1029,8 +1052,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_extra_downloads_with_legacy_filenames(self):
         # Tests for finding legacy filenames after a module is published from
         # the legacy site
-        id = '209deb1f-1a46-4369-9e0d-18674cf58a3e' # m42955
-        version = '7' # legacy_version: 1.7
+        id = '209deb1f-1a46-4369-9e0d-18674cf58a3e'  # m42955
+        version = '7'  # legacy_version: 1.7
         requested_ident_hash = '{}@{}'.format(id, version)
 
         # Remove the generated files after the test
@@ -1054,7 +1077,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(output['downloads'], [
             {
                 u'path': quote(u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
-                    .format(id, version)),
+                               .format(id, version)),
                 u'format': u'PDF',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -1064,7 +1087,7 @@ class ViewsTestCase(unittest.TestCase):
                 },
             {
                 u'path': quote(u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
-                    .format(id, version)),
+                               .format(id, version)),
                 u'format': u'EPUB',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -1081,7 +1104,6 @@ class ViewsTestCase(unittest.TestCase):
                 u'size': 0,
                 u'state': u'missing'}
             ])
-
 
     def test_extra_latest(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1352,24 +1374,26 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results['results']['items'][0]['summarySnippet'],
-                'algebra-based, two-semester <b>college</b> <b>physics</b> book '
-                'is grounded with real-world examples, illustrations, and '
-                'explanations to help students grasp key, fundamental '
-                '<b>physics</b> concepts. This online, fully editable and '
-                'customizable title includes learning objectives, concept '
-                'questions, links to labs and simulations, and ample practice '
-                'opportunities to solve traditional <b>physics</b> application '
-                'problems. ')
-        self.assertEqual(results['results']['items'][1]['summarySnippet'],
-                'algebra-based, two-semester <b>college</b> <b>physics</b> book '
-                'is grounded with real-world examples, illustrations, and '
-                'explanations to help students grasp key, fundamental '
-                '<b>physics</b> concepts. This online, fully editable and '
-                'customizable title includes learning objectives, concept '
-                'questions, links to labs and simulations, and ample practice '
-                'opportunities to solve traditional <b>physics</b> application '
-                'problems. ')
+        self.assertEqual(
+            results['results']['items'][0]['summarySnippet'],
+            'algebra-based, two-semester <b>college</b> <b>physics</b> book '
+            'is grounded with real-world examples, illustrations, and '
+            'explanations to help students grasp key, fundamental '
+            '<b>physics</b> concepts. This online, fully editable and '
+            'customizable title includes learning objectives, concept '
+            'questions, links to labs and simulations, and ample practice '
+            'opportunities to solve traditional <b>physics</b> application '
+            'problems. ')
+        self.assertEqual(
+            results['results']['items'][1]['summarySnippet'],
+            'algebra-based, two-semester <b>college</b> <b>physics</b> book '
+            'is grounded with real-world examples, illustrations, and '
+            'explanations to help students grasp key, fundamental '
+            '<b>physics</b> concepts. This online, fully editable and '
+            'customizable title includes learning objectives, concept '
+            'questions, links to labs and simulations, and ample practice '
+            'opportunities to solve traditional <b>physics</b> application '
+            'problems. ')
         self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
         # Test for no highlighting on specific field queries.
@@ -1383,23 +1407,24 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results['results']['items'][0]['summarySnippet'],
-                ' This introductory, algebra-based, two-semester college physics '
-                'book is grounded with real-world examples, illustrations, and '
-                'explanations to help students grasp key, fundamental physics '
-                'concepts. This online, fully editable and customizable title '
-                'includes learning objectives, concept questions, links to labs '
-                'and simulations, and ample practice opportunities to solve '
-                'traditional')
-        self.assertEqual(results['results']['items'][1]['summarySnippet'],
-                ' This introductory, algebra-based, two-semester college physics '
-                'book is grounded with real-world examples, illustrations, and '
-                'explanations to help students grasp key, fundamental physics '
-                'concepts. This online, fully editable and customizable title '
-                'includes learning objectives, concept questions, links to labs '
-                'and simulations, and ample practice opportunities to solve '
-                'traditional')
-
+        self.assertEqual(
+            results['results']['items'][0]['summarySnippet'],
+            ' This introductory, algebra-based, two-semester college physics '
+            'book is grounded with real-world examples, illustrations, and '
+            'explanations to help students grasp key, fundamental physics '
+            'concepts. This online, fully editable and customizable title '
+            'includes learning objectives, concept questions, links to labs '
+            'and simulations, and ample practice opportunities to solve '
+            'traditional')
+        self.assertEqual(
+            results['results']['items'][1]['summarySnippet'],
+            ' This introductory, algebra-based, two-semester college physics '
+            'book is grounded with real-world examples, illustrations, and '
+            'explanations to help students grasp key, fundamental physics '
+            'concepts. This online, fully editable and customizable title '
+            'includes learning objectives, concept questions, links to labs '
+            'and simulations, and ample practice opportunities to solve '
+            'traditional')
 
         self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
@@ -1488,7 +1513,7 @@ class ViewsTestCase(unittest.TestCase):
                         {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
-                    }, 
+                    },
                 },
             }
         self.assertEqual(results, expected)
@@ -1532,7 +1557,7 @@ class ViewsTestCase(unittest.TestCase):
                         {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
-                    }, 
+                    },
                 },
             }
         self.assertEqual(results, expected)
@@ -1580,7 +1605,7 @@ class ViewsTestCase(unittest.TestCase):
                         {u'name': u'Page',
                          u'id': u'application/vnd.org.cnx.module'},
                         ],
-                    }, 
+                    },
                 },
             }
         self.assertEqual(results, expected)
@@ -1754,7 +1779,7 @@ class ViewsTestCase(unittest.TestCase):
                 results['results']['items'][2]['title'],
                 u'Introduction: Further Applications of Newton’s Laws')
         pub_year = [limit['values'] for limit in results['results']['limits']
-                                    if limit['tag'] == 'pubYear'][0]
+                    if limit['tag'] == 'pubYear'][0]
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
         # Fetch next page
@@ -1783,7 +1808,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][1]['title'],
                          'Physical Quantities and Units')
         pub_year = [limit['values'] for limit in results['results']['limits']
-                                    if limit['tag'] == 'pubYear'][0]
+                    if limit['tag'] == 'pubYear'][0]
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
         # Fetch next page
@@ -1808,7 +1833,7 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['total'], 5)
         self.assertEqual(len(results['results']['items']), 0)
         pub_year = [limit['values'] for limit in results['results']['limits']
-                                    if limit['tag'] == 'pubYear'][0]
+                    if limit['tag'] == 'pubYear'][0]
         self.assertEqual(pub_year, [{'value': '2013', 'count': 5}])
 
         # Fetching all the pages should only query the
@@ -1987,22 +2012,22 @@ VALUES
         self.assertEqual(metadata, {
             u'subjects': [{u'id': 1, u'name': u'Arts',
                            u'count': {u'module': 0, u'collection': 0},
-                          },
+                           },
                           {u'id': 2, u'name': u'Business',
                            u'count': {u'module': 0, u'collection': 0},
-                          },
+                           },
                           {u'id': 3, u'name': u'Humanities',
                            u'count': {u'module': 0, u'collection': 0},
-                          },
+                           },
                           {u'id': 4, u'name': u'Mathematics and Statistics',
                            u'count': {u'module': 7, u'collection': 1},
-                          },
+                           },
                           {u'id': 5, u'name': u'Science and Technology',
                            u'count': {u'module': 6, u'collection': 1},
-                          },
+                           },
                           {u'id': 6, u'name': u'Social Sciences',
                            u'count': {u'module': 0, u'collection': 0},
-                          }],
+                           }],
             u'featuredLinks': [{
                 u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
                 u'title': u'College Physics',
@@ -2011,7 +2036,11 @@ VALUES
                 u'legacy_version': u'1.7',
                 u'resourcePath': u'/resources/6214e8dcdf2824dbf830b4a0d77a3fa2f53608d2',
                 u'type': u'OpenStax Featured',
-                u'abstract': u'<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</div>',
+                u'abstract': u"""<div xmlns="http://www.w3.org/1999/xhtml" xmlns:md="http://cnx.rice.edu/mdml" xmlns:c="http://cnx.rice.edu/cnxml" xmlns:qml="http://cnx.rice.edu/qml/1.0" \
+xmlns:data="http://dev.w3.org/html5/spec/#custom" xmlns:bib="http://bibtexml.sf.net/" xmlns:html="http://www.w3.org/1999/xhtml" xmlns:mod="http://cnx.rice.edu/#moduleIds">\
+This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. \
+This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics \
+application problems.</div>""",
                 }],
             u'licenses': [{u'code': u'by',
                            u'isValidForPublication': False,
@@ -2087,6 +2116,7 @@ VALUES
              u'name': u'Notice',
              u'priority': 8}
             ]
+
         def _remove_timestamps(messages):
             for message in messages:
                 message.pop('starts')

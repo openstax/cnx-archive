@@ -24,7 +24,8 @@ LEGACY_PATH_REFERENCE_REGEX = re.compile(
     r'(/?(content/)? *'
     r'(?P<module>(m|col)\d{4,5})([/@](?P<version>([.\d]+|latest)))?)?/?'
     r'(?P<resource>[^#?][ -_.@\w\d]+)?'
-    r'(?:\?collection=(?P<collection>(col\d{4,5}))(?:[/@](?P<collection_version>([.\d]+|latest)))?)?'
+    r'(?:\?collection=(?P<collection>(col\d{4,5}))'
+    r'(?:[/@](?P<collection_version>([.\d]+|latest)))?)?'
     r'(?P<fragment>#?.*)?$',
     re.IGNORECASE)
 PATH_REFERENCE_REGEX = re.compile(r"""
@@ -48,14 +49,11 @@ PATH_REFERENCE_REGEX = re.compile(r"""
   (?P<resource>[0-9a-f]{40})?
   )?
 (?P<fragment>.*)
-""", re.IGNORECASE|re.VERBOSE)
+""", re.IGNORECASE | re.VERBOSE)
 MODULE_REFERENCE = 'module-reference'  # Used in legacy refs
 RESOURCE_REFERENCE = 'resource-reference'
 DOCUMENT_REFERENCE = 'document-reference'
 BINDER_REFERENCE = 'binder-reference'
-
-
-
 
 SQL_MODULE_ID_TO_MODULE_IDENT = """\
 SELECT module_ident FROM modules
@@ -112,7 +110,7 @@ class BaseReferenceException(Exception):
         self.document_ident = document_ident
         self.reference = reference
         message = "{}: document={}, reference={}" \
-                .format(message, self.document_ident, self.reference)
+            .format(message, self.document_ident, self.reference)
         super(BaseReferenceException, self).__init__(message)
 
 
@@ -138,7 +136,7 @@ def parse_legacy_reference(ref):
         # Dictionary keyed by named groups, None values for no match
         matches = match.groupdict()
     except:  # None type
-        raise ValueError("Unable to parse reference with value '{}'" \
+        raise ValueError("Unable to parse reference with value '{}'"
                          .format(ref))
 
     version = matches['version']
@@ -178,7 +176,7 @@ def parse_html_reference(ref):
         # Dictionary keyed by named groups, None values for no match
         matches = match.groupdict()
     except:  # None type
-        raise ValueError("Unable to parse reference with value '{}'" \
+        raise ValueError("Unable to parse reference with value '{}'"
                          .format(ref))
 
     try:
@@ -253,13 +251,13 @@ class BaseReferenceResolver:
         """
         ref = ref.strip()
         should_ignore = not ref \
-                        or ref.startswith('#') \
-                        or ref.startswith('http') \
-                        or ref.startswith('mailto') \
-                        or ref.startswith('file') \
-                        or ref.startswith('/help') \
-                        or ref.startswith('ftp') \
-                        or ref.startswith('javascript:')
+            or ref.startswith('#') \
+            or ref.startswith('http') \
+            or ref.startswith('mailto') \
+            or ref.startswith('file') \
+            or ref.startswith('/help') \
+            or ref.startswith('ftp') \
+            or ref.startswith('javascript:')
         return should_ignore
 
 
@@ -271,8 +269,9 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
     def get_uuid_n_version(self, module_id, version=None):
         with self.db_connection.cursor() as cursor:
             if version:
-                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT,
-                               (module_id, version))
+                cursor.execute(
+                    SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT,
+                    (module_id, version))
             else:
                 cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
                                (module_id,))
@@ -287,23 +286,28 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         with self.db_connection.cursor() as cursor:
             if document_id:
                 if version:
-                    cursor.execute(SQL_DOCUMENT_IDENT_BY_ID_N_VERSION, [document_id, version])
+                    cursor.execute(
+                        SQL_DOCUMENT_IDENT_BY_ID_N_VERSION,
+                        [document_id, version])
                     try:
                         document_ident = cursor.fetchone()[0]
                     except TypeError:
                         raise ReferenceNotFound(
-                                "Missing resource with filename '{}', moduleid {} version {}." \
-                                        .format(filename, document_id, version),
-                                document_ident, filename)
+                            "Missing resource with filename '{}', "
+                            "moduleid {} version {}."
+                            .format(filename, document_id, version),
+                            document_ident, filename)
                 else:
-                    cursor.execute(SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
+                    cursor.execute(
+                        SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
                     try:
                         document_ident = cursor.fetchone()[0]
                     except TypeError:
                         raise ReferenceNotFound(
-                                "Missing resource with filename '{}', moduleid {} version {}." \
-                                        .format(filename, document_id, version),
-                                document_ident, filename)
+                            "Missing resource with filename '{}', "
+                            "moduleid {} version {}."
+                            .format(filename, document_id, version),
+                            document_ident, filename)
 
             cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
                            (document_ident, filename,))
@@ -311,16 +315,17 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                 info = cursor.fetchone()[0]
             except TypeError:
                 raise ReferenceNotFound(
-                    "Missing resource with filename '{}', moduleid {} version {}." \
-                        .format(filename, document_id, version),
+                    "Missing resource with filename '{}', "
+                    "moduleid {} version {}."
+                    .format(filename, document_id, version),
                     document_ident, filename)
             else:
                 if isinstance(info, basestring):
                     info = json.loads(info)
                 return info
 
-    def get_page_ident_hash(self, page_uuid, page_version, book_uuid, book_version,
-                            latest=None):
+    def get_page_ident_hash(self, page_uuid, page_version,
+                            book_uuid, book_version, latest=None):
         """Returns the uuid of the page and full ident_hash of the page
         which may or may not include the book uuid depending on whether
         the page is within the book.
@@ -345,14 +350,14 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         bad_references = []
 
         media_xpath = {
-                '//html:img': 'src',
-                '//html:audio': 'src',
-                '//html:video': 'src',
-                '//html:object': 'data',
-                '//html:object/html:embed': 'src',
-                '//html:source': 'src',
-                '//html:span': 'data-src',
-                }
+            '//html:img': 'src',
+            '//html:audio': 'src',
+            '//html:video': 'src',
+            '//html:object': 'data',
+            '//html:object/html:embed': 'src',
+            '//html:source': 'src',
+            '//html:span': 'data-src',
+            }
 
         for xpath, attr in media_xpath.iteritems():
             for elem in self.apply_xpath(xpath):
@@ -373,7 +378,8 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
-                    elem.set(attr, '/resources/{}/{}'.format(info['hash'],filename))
+                    elem.set(attr, '/resources/{}/{}'
+                                   .format(info['hash'], filename))
         return bad_references
 
     def fix_anchor_references(self):
@@ -394,19 +400,20 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                 continue
 
             if ref_type == MODULE_REFERENCE:
-                module_id, version, collection_id, collection_version, url_frag = payload
+                module_id, version, collection_id,\
+                    collection_version, url_frag = payload
                 uuid, version = self.get_uuid_n_version(module_id, version)
                 ident_hash = '{}@{}'.format(uuid, version)
                 if uuid is None:
                     bad_references.append(
                         ReferenceNotFound("Unable to find a reference to "
-                                          "'{}' at version '{}'." \
-                                              .format(module_id, version),
+                                          "'{}' at version '{}'."
+                                          .format(module_id, version),
                                           self.document_ident, ref))
 
                 if collection_id:
                     book_uuid, book_version = self.get_uuid_n_version(
-                            collection_id, collection_version)
+                        collection_id, collection_version)
                     if book_uuid:
                         uuid, ident_hash = self.get_page_ident_hash(
                             uuid, version, book_uuid, book_version,
@@ -422,7 +429,8 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
                 except ReferenceNotFound as exc:
                     bad_references.append(exc)
                 else:
-                    anchor.set('href', '/resources/{}/{}'.format(info['hash'],filename))
+                    anchor.set('href', '/resources/{}/{}'.
+                                       format(info['hash'], filename))
             else:
                 exc = InvalidReference(self.document_ident, ref)
                 bad_references.append(exc)
@@ -456,11 +464,13 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
     def get_mid_n_version(self, id, version):
         with self.db_connection.cursor() as cursor:
             if version:
-                cursor.execute(SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT,
-                               (id, version))
+                cursor.execute(
+                    SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT,
+                    (id, version))
             else:
-                cursor.execute(SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT,
-                               (id,))
+                cursor.execute(
+                    SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT,
+                    (id,))
             try:
                 module_id, version = cursor.fetchone()
             except (TypeError, ValueError):  # None or unpack problem
@@ -536,8 +546,8 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
                 if mid is None:
                     bad_references.append(
                         ReferenceNotFound("Unable to find a reference to "
-                                          "'{}' at version '{}'." \
-                                              .format(id, version),
+                                          "'{}' at version '{}'."
+                                          .format(id, version),
                                           self.document_ident, ref))
                 else:
                     # Assign the document specific attributes.
@@ -558,16 +568,16 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
                             link.attrib['version'] = version
                     else:
                         # Process the ref as an external url.
-                        url = "http://legacy.cnx.org/content/{}/{}/?collection={}" \
-                              .format(mid, version, cid)
+                        url = "http://legacy.cnx.org/content/" \
+                              "{}/{}/?collection={}".format(mid, version, cid)
                         if cversion is not None:
                             url = "{}/{}".format(url, cversion)
                         link.attrib['url'] = url
                 else:
                     bad_references.append(
                         ReferenceNotFound("Unable to find a reference to "
-                                          "'{}' at version '{}'." \
-                                              .format(id, version),
+                                          "'{}' at version '{}'."
+                                          .format(id, version),
                                           self.document_ident, ref))
             elif ref_type == RESOURCE_REFERENCE:
                 # TODO If the filename is in the url_frag, use it

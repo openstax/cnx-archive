@@ -52,8 +52,8 @@ def split_ident_hash(ident_hash, split_version=False):
     try:
         uuid.UUID(id)
     except ValueError:
-        raise IdentHashSyntaxError("invalid identification value, {}" \
-                                       .format(id))
+        raise IdentHashSyntaxError(
+            "invalid identification value, {}".format(id))
     # None'ify the version on empty string.
     version = version and version or None
 

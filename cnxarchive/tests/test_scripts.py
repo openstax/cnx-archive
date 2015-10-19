@@ -10,6 +10,7 @@ import unittest
 
 from . import testing
 
+
 class ParserTestCase(unittest.TestCase):
 
     @property

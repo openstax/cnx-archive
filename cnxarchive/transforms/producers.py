@@ -18,7 +18,7 @@ from .resolvers import resolve_cnxml_urls, resolve_html_urls
 
 
 __all__ = (
-    'MissingDocumentOrSource', 'MissingAbstract', 'IndexFileExistsError', 
+    'MissingDocumentOrSource', 'MissingAbstract', 'IndexFileExistsError',
     'produce_cnxml_for_abstract', 'produce_html_for_abstract',
     'produce_cnxml_for_module', 'produce_html_for_module',
     'transform_abstract_to_cnxml', 'transform_abstract_to_html',
@@ -52,7 +52,7 @@ class MissingAbstract(Exception):
     def __init__(self, document_ident):
         self.document_ident = document_ident
         msg = "Cannot find abstract for document (at ident: {})." \
-                .format(self.document_ident)
+            .format(self.document_ident)
         super(MissingAbstract, self).__init__(msg)
 
 
@@ -129,7 +129,13 @@ def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
 
 def transform_abstract_to_html(abstract, document_ident, db_connection):
     warning_messages = None
-    abstract = '<document xmlns="http://cnx.rice.edu/cnxml" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:md="http://cnx.rice.edu/mdml/0.4" xmlns:bib="http://bibtexml.sf.net/" xmlns:q="http://cnx.rice.edu/qml/1.0" cnxml-version="0.7"><content>{}</content></document>'.format(abstract)
+    abstract = '<document xmlns="http://cnx.rice.edu/cnxml" '\
+        'xmlns:m="http://www.w3.org/1998/Math/MathML" '\
+        'xmlns:md="http://cnx.rice.edu/mdml/0.4" '\
+        'xmlns:bib="http://bibtexml.sf.net/" '\
+        'xmlns:q="http://cnx.rice.edu/qml/1.0" '\
+        'cnxml-version="0.7"><content>{}</content></document>'\
+        .format(abstract)
     # Does it have a wrapping tag?
     abstract_html = cnxml_to_html(abstract)
 
@@ -147,7 +153,7 @@ def transform_abstract_to_html(abstract, document_ident, db_connection):
                                               document_ident)
     if bad_refs:
         warning_messages = 'Invalid References (Abstract): {}' \
-                .format('; '.join(bad_refs))
+            .format('; '.join(bad_refs))
 
     return fixed_html, warning_messages
 
@@ -207,7 +213,8 @@ def produce_html_for_module(db_connection, cursor, ident,
 
 def produce_cnxml_for_module(db_connection, cursor, ident,
                              source_filename='index.cnxml.html',
-                             destination_filenames=('index.html.cnxml', 'index.cnxml',),
+                             destination_filenames=('index.html.cnxml',
+                                                    'index.cnxml',),
                              overwrite=False):
     """Produce an ``destination_filename`` (default 'index.html.cnxml') file
     for the module at ``ident`` using the ``source_filename``
@@ -248,7 +255,7 @@ def produce_transformed_file(cursor, ident, transform_type,
     try:
         content = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
     except TypeError:  # None returned
-        raise MissingDocumentOrSource(ident, source_filename)    
+        raise MissingDocumentOrSource(ident, source_filename)
 
     # Remove destination if overwrite is True and if it exists
     cursor.execute('SELECT fileid FROM module_files '
@@ -275,7 +282,7 @@ def produce_transformed_file(cursor, ident, transform_type,
     warning_messages = None
     if bad_refs:
         warning_messages = 'Invalid References: {}' \
-                .format('; '.join(bad_refs))
+            .format('; '.join(bad_refs))
 
     # Insert the cnxml into the database.
     payload = (memoryview(new_content),)
@@ -304,5 +311,5 @@ def transform_module_content(content, transform_type, db_connection,
     warning_messages = None
     if bad_refs:
         warning_messages = 'Invalid References: {}' \
-                .format('; '.join(bad_refs))
+            .format('; '.join(bad_refs))
     return new_content, warning_messages

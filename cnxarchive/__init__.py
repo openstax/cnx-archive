@@ -36,6 +36,7 @@ def declare_api_routes(config):
     def pregenerator(path):
         # find all the variables in the path
         variables = [(s.split(':')[0], '') for s in path.split('{')[1:]]
+
         def wrapper(request, elements, kwargs):
             modified_kwargs = dict(variables)
             modified_kwargs.update(kwargs)
@@ -43,22 +44,22 @@ def declare_api_routes(config):
         return wrapper
 
     def add_route(name, path, *args, **kwargs):
-        return config.add_route(name, path, *args, pregenerator=pregenerator(path), **kwargs)
+        return config.add_route(name, path, *args,
+                                pregenerator=pregenerator(path), **kwargs)
 
-    add_route('content-html', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html')  # cnxarchive.views:get_content_html
-    add_route('content-json', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.json')  # cnxarchive.views:get_content_json
-    # add_route('content-snippet', '/contents/{ident_hash}.snippet')  # cnxarchive.views:get_content_snippet
-    add_route('content', '/contents/{ident_hash:([^:/]+)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}')  # cnxarchive.views:get_content
-    add_route('resource', '/resources/{hash}{ignore:(/.*)?}')  # cnxarchive.views:get_resource
-    add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # cnxarchive.views:get_export
-    add_route('content-extras', '/extras/{ident_hash}')  # cnxarchive.views:get_extra
+    add_route('content-html', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html')  # noqa cnxarchive.views:get_content_html
+    add_route('content-json', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.json')  # noqa cnxarchive.views:get_content_json
+    add_route('content', '/contents/{ident_hash:([^:/]+)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_content
+    add_route('resource', '/resources/{hash}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_resource
+    add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_export
+    add_route('content-extras', '/extras/{ident_hash}')  # noqa cnxarchive.views:get_extra
     add_route('search', '/search')  # cnxarchive.views:search
     add_route('extras', '/extras')  # cnxarchive.views:extras
     add_route('sitemap', '/sitemap.xml')  # cnxarchive.views:sitemap
     add_route('robots', '/robots.txt')  # cnxarchive.views:robots
-    add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # cnxarchive.views:redirect_legacy_content
-    add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # cnxarchive.views:redirect_legacy_content
-    add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # cnxarchive.views:redirect_legacy_content
+    add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # noqa cnxarchive.views:redirect_legacy_content
+    add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
+    add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
 
 
 def main(global_config, **settings):
@@ -69,7 +70,7 @@ def main(global_config, **settings):
     mandatory_settings = ['exports-directories', 'exports-allowable-types']
     for setting in mandatory_settings:
         if not settings.get(setting, None):
-            raise ValueError('Missing {} configuration setting.'.format(setting))
+            raise ValueError('Missing {} config setting.'.format(setting))
 
     config.scan(ignore='.tests')
     config.include('cnxarchive.events.main')

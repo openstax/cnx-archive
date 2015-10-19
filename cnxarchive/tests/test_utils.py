@@ -151,7 +151,6 @@ class JoinIdentTestCase(unittest.TestCase):
         ident_hash = self.call_target(id, version)
         self.assertEqual(expected, ident_hash)
 
-
     def test_w_double_null_version(self):
         id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
         version = (None, None,)
@@ -181,7 +180,7 @@ class SlugifyTestCase(unittest.TestCase):
 
     def test_ascii(self):
         self.assertEqual(self.call_target('How to Work for Yourself: 100 Ways'),
-                'how-to-work-for-yourself-100-ways')
+                         'how-to-work-for-yourself-100-ways')
 
     def test_hyphen(self):
         self.assertEqual(self.call_target('Any Red-Blooded Girl'),
@@ -199,6 +198,7 @@ class SlugifyTestCase(unittest.TestCase):
                                           u'　知っておきたいビジネス理論'),
                          u'40文字でわかる-知っておきたいビジネス理論')
 
+
 class EscapeTestCase(unittest.TestCase):
 
     def call_target(self, *args, **kwargs):
@@ -207,7 +207,7 @@ class EscapeTestCase(unittest.TestCase):
 
     def test_ascii(self):
         self.assertEqual(self.call_target('How to Work for Yourself: 100 Ways'),
-                'How to Work for Yourself: 100 Ways')
+                         'How to Work for Yourself: 100 Ways')
 
     def test_greater(self):
         self.assertEqual(self.call_target('this > that'),
@@ -220,7 +220,6 @@ class EscapeTestCase(unittest.TestCase):
     def test_amp(self):
         self.assertEqual(self.call_target('this & that'),
                          'this &amp; that')
-
 
 
 class Utf8TestCase(unittest.TestCase):

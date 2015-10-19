@@ -22,6 +22,7 @@ from utils import escape
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
+
 class Sitemap(object):
     """A helper class that creates sitemap.xml."""
 
@@ -82,16 +83,15 @@ class UrlEntry(object):
     """
 
     freq_values = [
-            'always', 'hourly', 'daily', 'weekly',
-            'monthly', 'yearly', 'never'
-    ]
+        'always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never']
 
     def __init__(self, loc=None, **kwargs):
         self.loc = loc
         self.lastmod = kwargs.get('lastmod')
         self.changefreq = kwargs.get('changefreq')
         if self.changefreq and self.changefreq not in self.freq_values:
-            raise ValueError('changefreq must be one of %s' % (', '.join(self.freq_values)))
+            raise ValueError('changefreq must be one of %s' %
+                             (', '.join(self.freq_values)))
         self.priority = kwargs.get('priority')
         if self.priority and self.priority < 0.0 or self.priority > 1.0:
             raise ValueError('priority must be between 0.0 and 1.0')
@@ -110,8 +110,9 @@ class UrlEntry(object):
         yield u'<url>\n'
         yield u'<loc>%s</loc>\n' % escape(self.loc)
         if self.lastmod:
-            if  hasattr(self.lastmod, 'strftime'):
-                yield u'<lastmod>%s</lastmod>\n' % self.lastmod.strftime('%Y-%m-%d')
+            if hasattr(self.lastmod, 'strftime'):
+                yield u'<lastmod>%s</lastmod>\n' % \
+                    self.lastmod.strftime('%Y-%m-%d')
             elif isinstance(self.lastmod, str):
                 yield u'<lastmod>%s</lastmod>\n' % self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
