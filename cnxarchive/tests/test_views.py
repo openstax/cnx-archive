@@ -1254,7 +1254,8 @@ class ViewsTestCase(unittest.TestCase):
             u"total": 3,
             u"items": [
               {
-                u"headline": u"Newton&#8217;s laws of motion. We have in mind the forces of friction, <b>air</b> or <b>liquid</b> <b>drag</b>, and deformation",
+                u"headline": u"Newton&#8217;s laws of motion. We have in mind the forces of friction,
+                                    <b>air</b> or <b>liquid</b> <b>drag</b>, and deformation",
                 u"version": u"1.2",
                 u"uuid": u"24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d",
                 u"rank": u"0.05",
