@@ -533,7 +533,8 @@ def in_book_search(request):
     id, version = split_ident_hash(ident_hash)
     if version:
         if '.' in version:
-            args['major_version'], args['minor_version'] = [int(v) for v in version.split('.')]
+            args['major_version'],
+            args['minor_version'] = [int(v) for v in version.split('.')]
         else:
             args['major_version'] = int(version)
             args['minor_version'] = None
@@ -543,7 +544,8 @@ def in_book_search(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, 'in-book-search', route_args=request.params.copy())
+                redirect_to_latest(cursor, id, 'in-book-search',
+                                   route_args=request.params.copy())
 
             sql_file = os.path.join(SQL_DIRECTORY, 'get-in-book-search.sql')
             with open(sql_file, 'r') as fp:
@@ -611,7 +613,6 @@ def search(request):
         page = None
     if page is None or page <= 0:
         page = 1
-    
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
