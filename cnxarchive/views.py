@@ -551,7 +551,8 @@ def in_book_search(request):
             with open(sql_file, 'r') as fp:
                 cursor.execute(fp.read(), args)
                 res = cursor.fetchall()
-                results['results'] = {'total': len(res), 'query': [args], 'items': []}
+                results['results'] = {'total': len(res),
+                                      'query': [args], 'items': []}
 
                 # Build the result dict
                 for uuid, version, title, headline, rank in res:
