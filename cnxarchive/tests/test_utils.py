@@ -331,8 +331,8 @@ class TestHashTruncationFunctions(unittest.TestCase):
         self.assertEqual(expected_id, returned_id)
 
 
+from ..utils import CNXHash, IdentHashSyntaxError
 class TestCNXHash(unittest.TestCase):
-    from ..utils import CNXHash, IdentHashSyntaxError
 
     @classmethod
     def setUpClass(cls):
