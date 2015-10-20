@@ -1204,6 +1204,62 @@ class ViewsTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
                           self.request)
 
+    
+    def test_in_book_search(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        # search query param
+        self.request.params = {'q': 'air or liquid drag'}
+        
+        from ..views import in_book_search
+        results = in_book_search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+        
+        IN_BOOK_SEARCH_RESULT = {
+          u"results": {
+            u"query": [
+              {
+                u"ident_hash": u"e79ffde3-7fb4-4af3-9ec8-df648b391597",
+                u"search_term": u"air or liquid drag",
+                u"major_version": 7,
+                u"minor_version": 1
+              }
+            ],
+            u"total": 3,
+            u"items": [
+              {
+                u"headline": u"Newton&#8217;s laws of motion. We have in mind the forces of friction, <b>air</b> or <b>liquid</b> <b>drag</b>, and deformation",
+                u"version": u"1.2",
+                u"uuid": u"24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d",
+                u"rank": u"0.05",
+                u"title": u"Introduction: Further Applications of Newton\u2019s Laws"
+              },
+              {
+                u"headline": u"drop would achieve falling from 5.00 km (a) in the absence of <b>air</b> <b>drag</b> (b) with <b>air</b> <b>drag</b>. Take the size across of the drop to be 4 mm, the density",
+                u"version": u"1.6",
+                u"uuid": u"26346a42-84b9-48ad-9f6a-62303c16ad41",
+                u"rank": u"0.00424134",
+                u"title": u"Drag Forces"
+              },
+              {
+                u"headline": "link] . It is relatively easy to compress gases and extremely difficult to compress <b>liquids</b> and solids. For example, <b>air</b> in a wine bottle is compressed when it is corked. But if you try corking",
+                u"version": u"1.8",
+                u"uuid": u"56f1c5c1-4014-450d-a477-2121e276beca",
+                u"rank": u"2.59875e-05",
+                u"title": u"Elasticity: Stress and Strain"
+              }
+            ]
+          }
+        }
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
+    
     def test_search(self):
         # Build the request
         self.request.params = {'q': '"college physics" sort:version'}
