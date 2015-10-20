@@ -93,6 +93,9 @@ class CNXHash(uuid.UUID):
     FULLUUID = 2
 
     def __init__(self, uu=None, *args, **kwargs):
+        if type(uu) == unicode:
+            uu=str(uu)
+
         if type(uu) == uuid.UUID:
             uuid.UUID.__init__(self, bytes=uu.get_bytes())
         elif type(uu) == str:
@@ -144,6 +147,7 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def validate(cls, hash_id):
+        hash_id=str(hash_id)
         if type(hash_id) == cls or type(hash_id) == uuid.UUID:
             return cls.FULLUUID
         elif type(hash_id) == str and len(hash_id) == cls.short_hash_length:
