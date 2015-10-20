@@ -527,18 +527,18 @@ def get_export(request):
 
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
-    """ Full text, in-book search """    
+    """ Full text, in-book search """
     results = {}
-    
+
     args = request.matchdict
     ident_hash = args['ident_hash']
     args['ident_hash'] = args['ident_hash'].split('@')[0]
-    
+
     try:
         args['search_term'] = request.params.get('q', '')
     except (TypeError, ValueError, IndexError):
         args['search_term'] = None
-    
+
     id, version = split_ident_hash(ident_hash)
     if version:
         if '.' in version:
@@ -546,39 +546,38 @@ def in_book_search(request):
         else:
             args['major_version'] = int(version)
             args['minor_version'] = None
-    
+
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
                 redirect_to_latest(cursor, id, 'in-book-search', route_args=request.params.copy())
-            
+
             sql_file = os.path.join(SQL_DIRECTORY, 'get-in-book-search.sql')
             with open(sql_file, 'r') as fp:
                 cursor.execute(fp.read(), args)
                 res = cursor.fetchall()
                 results['results'] = {'total': len(res), 'query': [args], 'items': []}
-            
+
                 # Build the result dict
                 for uuid, version, title, headline, rank in res:
                     results['results']['items'].append({
-                        'rank':'{}'.format(rank),
-                        'uuid':'{}'.format(uuid),
-                        'version':'{}'.format(version),
-                        'title':'{}'.format(title),
-                        'headline':'{}'.format(headline),
+                        'rank': '{}'.format(rank),
+                        'uuid': '{}'.format(uuid),
+                        'version': '{}'.format(version),
+                        'title': '{}'.format(title),
+                        'headline': '{}'.format(headline),
                     })
-                    
-    
+
     resp = request.response
     resp.status = '200 OK'
-    resp.content_type = 'application/json' 
-    resp.body = json.dumps(results) 
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(results)
 
     return resp
-    
-    
+
+
 @view_config(route_name='search', request_method='GET')
 def search(request):
     """Search API
