@@ -128,17 +128,17 @@ class CNXHash(uuid.UUID):
             raise ValueError(" badly formed string")
         return identifier
 
-    @staticmethod
-    def identifiers_equal(identifier1, identifier2):
+    @classmethod
+    def identifiers_equal(cls,identifier1, identifier2):
         identifier1 = str(identifier1)
         identifier2 = str(identifier2)
 
         if len(identifier1) < len(identifier2):
-            return identifier1 == uuid2base64(identifier2)
+            return identifier1 == cls.uuid2base64(identifier2)
         if len(identifier1) == len(identifier2):
             return identifier1 == identifier2
         if len(identifier1) > len(identifier2):
-            return uuid2base64(identifier1) == identifier2
+            return cls.uuid2base64(identifier1) == identifier2
 
     @classmethod
     def identifiers_similar(cls, identifier1, identifier2):

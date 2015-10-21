@@ -307,16 +307,16 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
     @testing.db_connect
     def test_uuid2base64_function(self, cursor):
         import uuid
-        from cnxarchive.utils import uuid2base64
+        from cnxarchive.utils import CNXHash
 
         identifier = uuid.uuid4()
-        expected_identifier = uuid2base64(identifier)
+        expected_identifier = CNXHash.uuid2base64(identifier)
         cursor.execute("select uuid2base64('{}')".format(str(identifier)))
         returned_identifier = cursor.fetchone()[0]
         self.assertEqual(expected_identifier, returned_identifier)
 
         identifier = uuid.uuid4()
-        expected_identifier = uuid2base64(identifier)
+        expected_identifier = CNXHash.uuid2base64(identifier)
         cursor.execute("select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
         returned_identifier = cursor.fetchone()[0]
         self.assertEqual(expected_identifier, returned_identifier)
@@ -324,9 +324,9 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
     @testing.db_connect
     def test_base642uuid_function(self, cursor):
         import uuid
-        from cnxarchive.utils import uuid2base64
+        from cnxarchive.utils import CNXHash
         expected_identifier = str(uuid.uuid4())
-        identifier = uuid2base64(expected_identifier)
+        identifier = CNXHash.uuid2base64(expected_identifier)
         cursor.execute("select base642uuid('{}')".format(str(identifier)))
         returned_identifier = cursor.fetchone()[0]
         self.assertEqual(expected_identifier, returned_identifier)
