@@ -131,9 +131,13 @@ class CNXHash(uuid.UUID):
     def identifiers_similar(cls, identifier1, identifier2):
         shortid1=None
         shortid2=None
-        type1=cls.validate(identifier1)
-        type2=cls.validate(identifier2)
 
+        try:
+            type1=cls.validate(identifier1)
+            type2=cls.validate(identifier2)
+        except IdentHashSyntaxError:
+            return False
+        
         if isinstance(identifier1,cls):
             shortid1=identifier1.get_shortid()
         elif type1==cls.FULLUUID:
@@ -143,7 +147,7 @@ class CNXHash(uuid.UUID):
         elif type1==cls.SHORTID:
             shortid1=identifier1
         else:
-            raise TypeError
+            return False
 
         if isinstance(identifier2,cls):
             shortid2=identifier2.get_shortid()
@@ -154,7 +158,7 @@ class CNXHash(uuid.UUID):
         elif type2==cls.SHORTID:
             shortid2=identifier2
         else:
-            raise TypeError
+            return False
                     
         return shortid1==shortid2 
            
