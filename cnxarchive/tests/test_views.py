@@ -47,6 +47,7 @@ COLLECTION_METADATA = {
     u'created': u'2013-07-31T19:07:20Z',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
+    u'short_id': u'55_943-0',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -85,6 +86,7 @@ COLLECTION_METADATA = {
     u'parent': {
         'authors': [],
         'id': None,
+        'short_id': None,
         'title': None,
         'version': '',
         },
@@ -227,6 +229,7 @@ MODULE_METADATA = {
     u'created': u'2013-07-31T19:07:24Z',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
+    u'short_id': u'VvHFwUAU',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -265,6 +268,7 @@ MODULE_METADATA = {
     u'parent': {
         u'authors': [],
         u'id': None,
+        'short_id': None,
         u'title': None,
         u'version': '',
         },
@@ -512,7 +516,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
-        # Call th        froption.headers['Location']views import get_content
+        # Call the view
+        from ..views import get_content
         content = get_content(self.request).json_body
 
         # Remove the 'content' text from the content for separate testing.
@@ -552,8 +557,7 @@ class ViewsTestCase(unittest.TestCase):
         from uuid import UUID
         u = UUID(uuid)
         version = 5
-        base64_uuid = u.bytes.encode('base64').replace('+', '-').replace('/', '_').replace('=', '')
-        short_id = base64_uuid[:8]
+        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
 
         # Build the request environment.
         self.request.matchdict = {
@@ -574,9 +578,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_content_shortid_no_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         from uuid import UUID
-        u = UUID(uuid)
-        base64_uuid = u.bytes.encode('base64').replace('+', '-').replace('/', '_').replace('=', '')
-        short_id = base64_uuid[:8]
+        import base64
+        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
 
         # Build the request environment.
         self.request.matchdict = {

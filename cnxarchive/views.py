@@ -310,7 +310,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
-                        id, version, id_type = split_ident_hash(id_)
+                        uuid, version, id_type = split_ident_hash(id_)
                         if uuid == page_ident_hash or id_ == page_ident_hash:
                             raise httpexceptions.HTTPFound(request.route_path(
                                 'content',
