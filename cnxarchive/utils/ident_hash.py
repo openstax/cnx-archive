@@ -120,7 +120,8 @@ class CNXHash(uuid.UUID):
         if not(isinstance(identifier, basestring)):
             raise TypeError(" must be a string.")
         try:
-            identifier = identifier+HASH_PADDING_CHAR*(len(identifier) % 4)
+            identifier = str(identifier + 
+                             HASH_PADDING_CHAR * (len(identifier) % 4))
             identifier = uuid.UUID(bytes=base64.urlsafe_b64decode(identifier))
         except TypeError:
             raise ValueError(" badly formed string")
