@@ -128,6 +128,39 @@ class CNXHash(uuid.UUID):
         return identifier
 
     @classmethod
+    def identifiers_similar(cls, identifier1, identifier2):
+        shortid1=None
+        shortid2=None
+        type1=cls.validate(identifier1)
+        type2=cls.validate(identifier2)
+
+        if isinstance(identifier1,cls):
+            shortid1=identifier1.get_shortid()
+        elif type1==cls.FULLUUID:
+            shortid1=cls.uuid2base64(identifier1)[cls.short_hash_length]
+        elif type1==cls.BASE64HASH:
+            shortid1=identifier1[cls.short_hash_length]
+        elif type1==cls.SHORTID:
+            shortid1=identifier1
+        else:
+            raise TypeError
+
+        if isinstance(identifier2,cls):
+            shortid2=identifier2.get_shortid()
+        elif type2==cls.FULLUUID:
+            shortid2=cls.uuid2base64(identifier2)[cls.short_hash_length]
+        elif type2==cls.BASE64HASH:
+            shortid2=identifier2[cls.short_hash_length]
+        elif type2==cls.SHORTID:
+            shortid2=identifier2
+        else:
+            raise TypeError
+                    
+        return shortid1==shortid2 
+           
+        
+
+    @classmethod
     def identifiers_equal(cls, identifier1, identifier2):
         identifier1 = str(identifier1)
         identifier2 = str(identifier2)

@@ -318,6 +318,11 @@ class TestCNXHash(unittest.TestCase):
         with self.assertRaises(IdentHashSyntaxError):
             self.assertFalse(CNXHash.validate(1))
 
+    def test_similarity(self):
+        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
+        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash,self.cnxhash.get_shortid()))
+
+
     def test_equality(self):
         self.assertTrue(self.cnxhash == self.cnxhash)
         self.assertTrue(self.uuid == self.cnxhash)
