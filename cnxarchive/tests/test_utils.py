@@ -255,80 +255,6 @@ class Utf8TestCase(unittest.TestCase):
                          self.call_target({'inførmation': 'inførm'}))
 
 
-class TestUUIDConversionFunctions(unittest.TestCase):
-
-    def test_error_handling(self):
-        from ..utils import uuid2base64, base642uuid
-        with self.assertRaises(TypeError):
-            uuid2base64(1)
-        with self.assertRaises(ValueError):
-            uuid2base64('a')
-        with self.assertRaises(TypeError):
-            base642uuid(1)
-        with self.assertRaises(ValueError):
-            base642uuid('a')
-
-    def test_convert_uuid(self):
-        from ..utils import uuid2base64, base642uuid
-        for i in range(0, 10000):
-            expected_id = uuid.uuid4()
-            returned_id = uuid2base64(expected_id)
-            self.assertGreater(len(str(expected_id)), len(returned_id))
-            returned_id = base642uuid(returned_id)
-            self.assertEqual(expected_id, returned_id)
-
-    def test_identifiers_equal(self):
-        from ..utils import uuid2base64, base642uuid, identifiers_equal
-        id1 = uuid.uuid4()
-        id2 = id1
-
-        self.assertTrue(identifiers_equal(id1, id2))
-
-        id1 = uuid.uuid4()
-        id2 = str(id1)
-
-        self.assertTrue(identifiers_equal(id1, id2))
-        self.assertTrue(identifiers_equal(id2, id1))
-
-        id1 = uuid.uuid4()
-        id2 = uuid2base64(id1)
-
-        self.assertTrue(identifiers_equal(id1, id2))
-        self.assertTrue(identifiers_equal(id2, id1))
-
-        tempid = uuid.uuid4()
-        id1 = uuid2base64(tempid)
-        id2 = uuid2base64(tempid)
-
-        self.assertTrue(identifiers_equal(id1, id2))
-
-        id1 = uuid.uuid4()
-        id2 = uuid.uuid4()
-
-        self.assertFalse(identifiers_equal(id1, id2))
-
-        id1 = uuid.uuid4()
-        id2 = uuid2base64(uuid.uuid4())
-
-        self.assertFalse(identifiers_equal(id1, id2))
-        self.assertFalse(identifiers_equal(id2, id1))
-
-        id1 = uuid2base64(uuid.uuid4())
-        id2 = uuid2base64(uuid.uuid4())
-
-        self.assertFalse(identifiers_equal(id1, id2))
-
-
-class TestHashTruncationFunctions(unittest.TestCase):
-    def test_class_setup(self):
-        pass
-
-    def test_truncation(self):
-        expected_id = uuid.uuid4()
-        returned_id = hash_truncate(uuid2base64(expected_id))
-        self.assertEqual(len(returned_id), 8)
-        returned_id = base642uuid(hash_untruncate(expected_id))
-        self.assertEqual(expected_id, returned_id)
 
 
 from ..utils import CNXHash, IdentHashSyntaxError
@@ -342,6 +268,14 @@ class TestCNXHash(unittest.TestCase):
     def setUp(self):
         self.uuid = self._uuid
         self.cnxhash = self._cnxhash
+
+    def test_convert_uuid(self):
+        for i in range(0, 10000):
+            expected_id = uuid.uuid4()
+            returned_id = CNXHash.uuid2base64(expected_id)
+            self.assertGreater(len(str(expected_id)), len(returned_id))
+            returned_id = CNXHash.base642uuid(returned_id)
+            self.assertEqual(expected_id, returned_id)
 
     def test_class_init(self):
         expected_uuid = self.uuid
@@ -372,6 +306,17 @@ class TestCNXHash(unittest.TestCase):
         self.assertEqual(CNXHash.validate(self.cnxhash.get_shortid()), CNXHash.SHORTID) 
         self.assertEqual(CNXHash.validate(unicode(self.cnxhash.get_shortid())), CNXHash.SHORTID)
 
+    def test_error_handling(self):
+        with self.assertRaises(TypeError):
+            CNXHash.uuid2base64(1)
+        with self.assertRaises(ValueError):
+            CNXHash.uuid2base64('a')
+        with self.assertRaises(TypeError):
+            CNXHash.base642uuid(1)
+        with self.assertRaises(ValueError):
+            CNXHash.base642uuid('a')
+        with self.assertRaises(IdentHashSyntaxError):
+            self.assertFalse(CNXHash.validate(1))
 
     def test_equality(self):
         self.assertTrue(self.cnxhash == self.cnxhash)

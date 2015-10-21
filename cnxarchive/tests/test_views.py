@@ -490,29 +490,19 @@ class ViewsTestCase(unittest.TestCase):
     def test_truncated_hash(self):
         # Test for retreiving a module.
         from ..utils import CNXHash
-        uuid = CNXHash('56f1c5c1-4014-450d-a477-2121e276beca').get_shortid()
-#        uuid =  '56f1c5c1-4014-450d-a477-2121e276beca'
+        cnxhash = CNXHash('56f1c5c1-4014-450d-a477-2121e276beca')
         version = '8'
 
         # Build the request environment.
-        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matchdict = {'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
 
         # Call the view.
         from ..views import get_content
-        content = get_content(self.request).json_body
-
-        # Remove the 'content' text from the content for separate testing.
-        content_text = content.pop('content')
-
-        # Check the metadata for correctness.
-        self.assertEqual(sorted(content.keys()), sorted(MODULE_METADATA.keys()))
-        for key in content:
-            self.assertEqual(content[key], MODULE_METADATA[key],
-                             u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
-                             key=key, v1=content[key], v2=MODULE_METADATA[key]))
-
-        # Check the content is the html file.
-        self.assertTrue(content_text.find('<html') >= 0)
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.headers['Location'],
+                         quote('/contents/{}@{}.json'.format(cnxhash,version)))
 
     def test_module_content(self):
         # Test for retreiving a module.
@@ -522,8 +512,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
-        # Call the view.
-        from ..views import get_content
+        # Call th        froption.headers['Location']views import get_content
         content = get_content(self.request).json_body
 
         # Remove the 'content' text from the content for separate testing.
