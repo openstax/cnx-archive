@@ -512,7 +512,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
 
-        # Call th        froption.headers['Location']views import get_content
+        from ..views import get_content
+
         content = get_content(self.request).json_body
 
         # Remove the 'content' text from the content for separate testing.
@@ -592,7 +593,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format((uuid, version))))
+                         quote('/contents/{}@5.json'.format(uuid)))
 
     def test_content_not_found(self):
         # Build the request environment

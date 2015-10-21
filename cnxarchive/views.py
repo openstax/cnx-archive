@@ -75,7 +75,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
         raise NotImplemented()
 
     if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
+        cursor.execute(SQL['get-module-versions'], {'id': full_id})
         try:
             version = cursor.fetchone()[0]  # Get latest (implied)
         except (TypeError, IndexError,):  # None returned
@@ -311,10 +311,10 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version, id_type = split_ident_hash(id_)
-                        if uuid == page_ident_hash or id_ == page_ident_hash:
+                        if id == page_ident_hash or id_ == page_ident_hash:
                             raise httpexceptions.HTTPFound(request.route_path(
                                 'content',
-                                ident_hash=join_ident_hash(uuid, version)))
+                                ident_hash=join_ident_hash(id, version)))
                     raise httpexceptions.HTTPNotFound()
             else:
                 # Grab the html content.
@@ -501,7 +501,7 @@ def get_extra(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, 'content-extras')
+                redirect_to_canonical(cursor, id,version,id_type, route_name='content-extras')
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
