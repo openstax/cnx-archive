@@ -310,7 +310,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
-                        uuid, version = split_ident_hash(id_)
+                        id, version, id_type = split_ident_hash(id_)
                         if uuid == page_ident_hash or id_ == page_ident_hash:
                             raise httpexceptions.HTTPFound(request.route_path(
                                 'content',
@@ -495,7 +495,7 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    id, version = split_ident_hash(args['ident_hash'])
+    id, version, id_type = split_ident_hash(args['ident_hash'])
     results = {}
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
@@ -521,7 +521,7 @@ def get_export(request):
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
     ident_hash, type = args['ident_hash'], args['type']
-    id, version = split_ident_hash(ident_hash)
+    id, version, id_type = split_ident_hash(ident_hash)
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
