@@ -94,9 +94,9 @@ def main(argv=None):
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
                 id, version, id_type = split_ident_hash(ident_hash)
-                if id_type==CNXHash.FULLUUID:
+                if id_type == CNXHash.FULLUUID:
                     cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
-                                   (id,version))
+                                   (id, version))
                     module_ident = cursor.fetchone()
                     payload = (module_ident, start_timestamp, end_timestamp,
                                hit_count,)
