@@ -595,7 +595,7 @@ class ViewsTestCase(unittest.TestCase):
 
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format((uuid, version))))
+                         quote('/contents/{}@5.json'.format(uuid)))
 
     def test_content_not_found(self):
         # Build the request environment

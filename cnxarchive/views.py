@@ -75,7 +75,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
         raise NotImplemented()
 
     if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
+        cursor.execute(SQL['get-module-versions'], {'id': full_id})
         try:
             version = cursor.fetchone()[0]  # Get latest (implied)
         except (TypeError, IndexError,):  # None returned
@@ -501,7 +501,8 @@ def get_extra(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, 'content-extras')
+                redirect_to_canonical(cursor, id, version, id_type,
+                                      route_name='content-extras')
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
