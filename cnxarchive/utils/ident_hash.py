@@ -120,7 +120,7 @@ class CNXHash(uuid.UUID):
         if not(isinstance(identifier, basestring)):
             raise TypeError(" must be a string.")
         try:
-            identifier = str(identifier + 
+            identifier = str(identifier +
                              HASH_PADDING_CHAR * (len(identifier) % 4))
             identifier = uuid.UUID(bytes=base64.urlsafe_b64decode(identifier))
         except TypeError:
@@ -163,5 +163,5 @@ class CNXHash(uuid.UUID):
                     cls.uuid2base64(hash_id)
                 except (TypeError, ValueError):
                     raise IdentHashSyntaxError
-            return cls.FULLUUID
+                return cls.FULLUUID
         raise IdentHashSyntaxError
