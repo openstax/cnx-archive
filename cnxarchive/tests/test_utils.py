@@ -316,12 +316,16 @@ class TestCNXHash(unittest.TestCase):
         with self.assertRaises(ValueError):
             CNXHash.base642uuid('a')
         with self.assertRaises(IdentHashSyntaxError):
-            self.assertFalse(CNXHash.validate(1))
+            CNXHash.validate(1)
 
     def test_similarity(self):
-        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
+        self.assertTrue(self.cnxhash.similar(self.cnxhash.get_shortid()))
+        self.assertFalse(self.cnxhash.similar(uuid.uuid4()))
+        self.assertFalse(self.cnxhash.similar([]))
+        self.assertTrue(self.cnxhash.similar(self.uuid))
         self.assertTrue(CNXHash.identifiers_similar(self.cnxhash,self.cnxhash.get_shortid()))
-
+        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash.get_shortid(),self.cnxhash))
+        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash.get_shortid(),self.uuid))
 
     def test_equality(self):
         self.assertTrue(self.cnxhash == self.cnxhash)
@@ -329,3 +333,6 @@ class TestCNXHash(unittest.TestCase):
         self.assertTrue(CNXHash.identifiers_equal(self.uuid, self.cnxhash))
         self.assertTrue(CNXHash.identifiers_equal(self.cnxhash, str(self.cnxhash)))
         self.assertTrue(CNXHash.identifiers_equal(str(self.cnxhash), self.cnxhash))
+        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
+        self.assertTrue(CNXHash.identifiers_equal(self.cnxhash.get_shortid(),self.cnxhash.get_shortid()))
+        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,[]))
