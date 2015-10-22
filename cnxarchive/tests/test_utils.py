@@ -336,3 +336,4 @@ class TestCNXHash(unittest.TestCase):
         self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
         self.assertTrue(CNXHash.identifiers_equal(self.cnxhash.get_shortid(),self.cnxhash.get_shortid()))
         self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,[]))
+        self.assertFalse(CNXHash.identifiers_equal(uuid.uuid4(),uuid.uuid4()))

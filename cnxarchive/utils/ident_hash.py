@@ -176,6 +176,8 @@ class CNXHash(uuid.UUID):
     def identifiers_equal(cls, identifier1, identifier2):
         fulluuid1=None
         fulluuid2=None
+        base64hash1=None
+        base64hash2=None
         shortid1=None
         shortid2=None
 
@@ -185,31 +187,40 @@ class CNXHash(uuid.UUID):
         except IdentHashSyntaxError:
             return False
 
-        if type1==cls.FULLUUID:
-            if (isinstance(fulluuid1,cls) or isinstance(fulluuid1,uuid.UUID)):
+
+        if type1==cls.FULLUUID and type2==cls.FULLUUID:
+            if (isinstance(identifier1,cls) or isinstance(identifier1,uuid.UUID)):
                 fulluuid1=identifier1.__str__()
             else:
                 fulluuid1=identifier1
-        elif type1==cls.BASE64HASH:
-            fulluuid1=cls.base642uuid(identifier1).__str__()
-        elif type1==cls.SHORTID:
-            shortid1=identifier1
-        else:
-            return False
-
-        if type2==cls.FULLUUID:
-            if (isinstance(fulluuid2,cls) or isinstance(fulluuid2,uuid.UUID)):
+            if (isinstance(identifier2,cls) or isinstance(fulluuid2,uuid.UUID)):
                 fulluuid2=identifier2.__str__()
             else:
                 fulluuid2=identifier2
-        elif type2==cls.BASE64HASH:
-            fulluuid2=cls.base642uuid(identifier2).__str__()
-        elif type2==cls.SHORTID:
-            shortid2=identifier2
+            return fulluuid1==fulluuid2
+        elif type1==cls.BASE64HASH and type2==cls.BASE64HASH:
+            base64hash1=identifier1
+            base64hash2=identifier2
+            return base64hash1==base64hash2
+        elif type1==cls.SHORTID and type2==cls.SHORTID:
+            shortid1==identifier1
+            shortid2==identifier2
+            return shortid1==shortid2
+        elif type1==cls.BASE64HASH and type2==cls.FULLUUID:
+            base64hash1=identifier1
+            base64hash2=cls.uuid2base64(identifier2)
+            return base64hash1==base64hash2
+        elif type1==cls.FULLUUID and type2==cls.BASE64HASH:
+            base64hash1=cls.uuid2base64(identifier1)
+            base64hash2=identifier2
+            return base64hash1==base64hash2
+        elif type1==cls.SHORTID and (type2==cls.BASE64HASH or type2==cls.FULLUUID):
+            return False
+        elif (type1==cls.BASE64HASH or type1==cls.FULLUUID) and type2==cls.SHORTID:
+            return False
         else:
             return False
 
-        return (fulluuid1==fulluuid2) or (shortid1==shortid2)
 
 
     @classmethod
