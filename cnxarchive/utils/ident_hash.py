@@ -106,6 +106,10 @@ class CNXHash(uuid.UUID):
         shortid = self.uuid2base64(self.__str__())[:self._SHORT_HASH_LENGTH]
         return shortid
 
+    def get_base64id(self):
+        shortid = self.uuid2base64(self.__str__())
+        return shortid
+
     @classmethod
     def uuid2base64(cls,identifier):
         if isinstance(identifier, basestring):
