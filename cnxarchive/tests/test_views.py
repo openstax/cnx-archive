@@ -555,6 +555,7 @@ class ViewsTestCase(unittest.TestCase):
     def test_content_shortid_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         from uuid import UUID
+        import base64
         u = UUID(uuid)
         version = 5
         short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
