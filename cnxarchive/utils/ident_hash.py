@@ -85,12 +85,13 @@ def join_ident_hash(id, version):
 
 
 class CNXHash(uuid.UUID):
-    short_hash_length = 8
-    max_short_hash_length = 22
+    SHORT_HASH_LENGTH = 8
+    MAX_SHORT_HASH_LENGTH = 22
     SHORTID = 0
     BASE64HASH = 1
     FULLUUID = 2
     HASH_PADDING_CHAR = '='
+    HASH_DUMMY_CHAR = '0'
 
     def __init__(self, uu=None, *args, **kwargs):
 
@@ -102,7 +103,7 @@ class CNXHash(uuid.UUID):
             uuid.UUID.__init__(self, *args, **kwargs)
 
     def get_shortid(self):
-        shortid = self.uuid2base64(self.__str__())[:self.short_hash_length]
+        shortid = self.uuid2base64(self.__str__())[:self.SHORT_HASH_LENGTH]
         return shortid
 
     @classmethod
@@ -110,7 +111,7 @@ class CNXHash(uuid.UUID):
         if isinstance(identifier, basestring):
             identifier = uuid.UUID(identifier)
         elif not(isinstance(identifier, uuid.UUID)):
-            raise TypeError(" must be uuid or string.")
+            raise TypeError("must be uuid or string.")
         identifier = base64.urlsafe_b64encode(identifier.get_bytes())
         identifier = identifier.rstrip(cls.HASH_PADDING_CHAR)
         return identifier
@@ -118,13 +119,13 @@ class CNXHash(uuid.UUID):
     @classmethod
     def base642uuid(cls,identifier):
         if not(isinstance(identifier, basestring)):
-            raise TypeError(" must be a string.")
+            raise TypeError("must be a string.")
         try:
             identifier = str(identifier +
                              cls.HASH_PADDING_CHAR * (len(identifier) % 4))
             identifier = uuid.UUID(bytes=base64.urlsafe_b64decode(identifier))
         except TypeError:
-            raise ValueError(" badly formed string")
+            raise ValueError("badly formed string")
         return identifier
 
     @classmethod
@@ -141,9 +142,9 @@ class CNXHash(uuid.UUID):
         if isinstance(identifier1,cls):
             shortid1=identifier1.get_shortid()
         elif type1==cls.FULLUUID:
-            shortid1=cls.uuid2base64(identifier1)[:cls.short_hash_length]
+            shortid1=cls.uuid2base64(identifier1)[:cls.SHORT_HASH_LENGTH]
         elif type1==cls.BASE64HASH:
-            shortid1=identifier1[cls.short_hash_length]
+            shortid1=identifier1[cls.SHORT_HASH_LENGTH]
         elif type1==cls.SHORTID:
             shortid1=identifier1
         else:
@@ -152,9 +153,9 @@ class CNXHash(uuid.UUID):
         if isinstance(identifier2,cls):
             shortid2=identifier2.get_shortid()
         elif type2==cls.FULLUUID:
-            shortid2=cls.uuid2base64(identifier2)[:cls.short_hash_length]
+            shortid2=cls.uuid2base64(identifier2)[:cls.SHORT_HASH_LENGTH]
         elif type2==cls.BASE64HASH:
-            shortid2=identifier2[cls.short_hash_length]
+            shortid2=identifier2[cls.SHORT_HASH_LENGTH]
         elif type2==cls.SHORTID:
             shortid2=identifier2
         else:
@@ -221,22 +222,20 @@ class CNXHash(uuid.UUID):
         else:
             return False
 
-
-
     @classmethod
     def validate(cls, hash_id):
         if isinstance(hash_id, uuid.UUID):
             return cls.FULLUUID
         elif isinstance(hash_id, basestring):
-            if len(hash_id) == cls.short_hash_length:
+            if len(hash_id) == cls.SHORT_HASH_LENGTH:
                 try:  # convert short_id to one possible full hash to validate
-                    hash_id = hash_id + '0'*(cls.max_short_hash_length -
-                                             cls.short_hash_length)
+                    hash_id = hash_id + cls.HASH_DUMMY_CHAR*(cls.MAX_SHORT_HASH_LENGTH -
+                                             cls.SHORT_HASH_LENGTH)
                     cls.base642uuid(hash_id)
                 except (TypeError, ValueError):
                     raise IdentHashSyntaxError
                 return cls.SHORTID
-            elif len(hash_id) == cls.max_short_hash_length:
+            elif len(hash_id) == cls.MAX_SHORT_HASH_LENGTH:
                 try:
                     cls.base642uuid(hash_id)
                 except (TypeError, ValueError):
