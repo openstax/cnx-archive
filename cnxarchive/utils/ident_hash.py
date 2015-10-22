@@ -224,7 +224,7 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def validate(cls, hash_id):
-        if isinstance(hash_id, uuid.UUID):
+        if isinstance(hash_id, uuid.UUID) or isinstance(hash_id,cls):
             return cls.FULLUUID
         elif isinstance(hash_id, basestring):
             if len(hash_id) == cls._SHORT_HASH_LENGTH:
