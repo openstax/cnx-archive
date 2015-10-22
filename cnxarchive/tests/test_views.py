@@ -1221,6 +1221,54 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(exception.headers['Location'],
                          quote(expected_location))
 
+    def test_extra_shortid(self):
+        # Request the extras for a document with a shortid and
+        #   version. The expectation is that this will redirect to the
+        #   fullid (uuid@version)
+        from uuid import UUID
+        import base64
+
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
+        version = '7.1'
+        expected_ident_hash = "{}@{}".format(id, version)
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': "{}@{}".format(short_id, version)}
+
+        # Call the target
+        from ..views import get_extra
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_extra(self.request)
+        exception = raiser.exception
+        expected_location = "/extras/{}".format(expected_ident_hash)
+        self.assertEqual(exception.headers['Location'],
+                         quote(expected_location))
+
+    def test_extra_shortid_wo_version(self):
+        # Request the extras for a document with a shortid and no
+        #   version. The expectation is that this will redirect to the
+        #   fullid (uuid@version)
+        from uuid import UUID
+        import base64
+
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
+        version = '7.1'
+        expected_ident_hash = "{}@{}".format(id, version)
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': short_id}
+
+        # Call the target
+        from ..views import get_extra
+        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+            get_extra(self.request)
+        exception = raiser.exception
+        expected_location = "/extras/{}".format(expected_ident_hash)
+        self.assertEqual(exception.headers['Location'],
+                         quote(expected_location))
+
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = '5'

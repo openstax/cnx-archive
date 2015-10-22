@@ -500,7 +500,7 @@ def get_extra(request):
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
+            if not version or id_type == CNXHash.SHORTID:
                 redirect_to_canonical(cursor, id, version, id_type,
                                       route_name='content-extras')
             results['downloads'] = \
