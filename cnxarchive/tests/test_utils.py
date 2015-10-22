@@ -291,7 +291,7 @@ class TestCNXHash(unittest.TestCase):
     def test_truncated_hash(self):
         cnxhash = CNXHash(self.uuid)
         self.assertLessEqual(len(cnxhash.get_shortid()), len(str(cnxhash)))
-        self.assertEqual(len(cnxhash.get_shortid()), CNXHash.SHORT_HASH_LENGTH)
+        self.assertEqual(len(cnxhash.get_shortid()), CNXHash._SHORT_HASH_LENGTH)
 
     def test_validate(self):
         with self.assertRaises(IdentHashSyntaxError):
