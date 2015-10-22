@@ -320,6 +320,8 @@ class TestCNXHash(unittest.TestCase):
 
     def test_similarity(self):
         self.assertTrue(self.cnxhash.similar(self.cnxhash.get_shortid()))
+        self.assertFalse(self.cnxhash.similar(uuid.uuid4()))
+        self.assertFalse(self.cnxhash.similar([]))
         self.assertTrue(self.cnxhash.similar(self.uuid))
         self.assertTrue(CNXHash.identifiers_similar(self.cnxhash,self.cnxhash.get_shortid()))
         self.assertTrue(CNXHash.identifiers_similar(self.cnxhash.get_shortid(),self.cnxhash))
@@ -332,4 +334,5 @@ class TestCNXHash(unittest.TestCase):
         self.assertTrue(CNXHash.identifiers_equal(self.cnxhash, str(self.cnxhash)))
         self.assertTrue(CNXHash.identifiers_equal(str(self.cnxhash), self.cnxhash))
         self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
-
+        self.assertTrue(CNXHash.identifiers_equal(self.cnxhash.get_shortid(),self.cnxhash.get_shortid()))
+        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,[]))
