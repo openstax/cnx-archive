@@ -107,8 +107,8 @@ class CNXHash(uuid.UUID):
         return shortid
 
     def get_base64id(self):
-        shortid = self.uuid2base64(self.__str__())
-        return shortid
+        base64id = self.uuid2base64(self.__str__())
+        return base64id
 
     @classmethod
     def uuid2base64(cls,identifier):
@@ -139,9 +139,14 @@ class CNXHash(uuid.UUID):
 
         try:
             type1=cls.validate(identifier1)
+        except IdentHashSyntaxError:
+            return False
+
+        try:
             type2=cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
+
         
         if isinstance(identifier1,cls):
             shortid1=identifier1.get_shortid()
@@ -188,10 +193,13 @@ class CNXHash(uuid.UUID):
 
         try:
             type1=cls.validate(identifier1)
-            type2=cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
 
+        try:
+           type2=cls.validate(identifier2)
+        except IdentHashSyntaxError:
+            return False
 
         if type1==cls.FULLUUID and type2==cls.FULLUUID:
             if (isinstance(identifier1,cls) or isinstance(identifier1,uuid.UUID)):
