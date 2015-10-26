@@ -5,8 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Code and classes for handling uuid@ver CNX hash identifiers."""
 import uuid
-import tzlocal
 import base64
 
 HASH_CHAR = '@'
@@ -27,6 +27,7 @@ class IdentHashSyntaxError(Exception):
 
 
 def split_legacy_hash(legacy_hash):
+    """Return id and version from a legacy id."""
     split_value = legacy_hash.split('/')
     id = split_value[0]
     version = None
@@ -37,7 +38,7 @@ def split_legacy_hash(legacy_hash):
 
 
 def split_ident_hash(ident_hash, split_version=False):
-    """Returns a valid id and version from the <id>@<version> hash syntax."""
+    """Return a valid id and version from the <id>@<version> hash syntax."""
     if HASH_CHAR not in ident_hash:
         ident_hash = '{}@'.format(ident_hash)
     split_value = ident_hash.split(HASH_CHAR)
@@ -58,7 +59,7 @@ def split_ident_hash(ident_hash, split_version=False):
 
     if split_version:
         if version is None:
-            version = (None, None,)
+            version = (None, None, )
         else:
             split_version = version.split(VERSION_CHAR)
             if len(split_version) == 1:
@@ -68,14 +69,15 @@ def split_ident_hash(ident_hash, split_version=False):
 
 
 def join_ident_hash(id, version):
-    """Returns a valid ident_hash from the given ``id`` and ``version``
-    where ``id`` can be a string or UUID instance and ``version`` can be a
+    """Return a valid ident_hash from the given ``id`` and ``version``.
+
+    ``id`` can be a string or UUID instance and ``version`` can be a
     string or tuple of major and minor version.
     """
     if isinstance(id, uuid.UUID):
         id = str(id)
     join_args = [id]
-    if isinstance(version, (tuple, list,)):
+    if isinstance(version, (tuple, list, )):
         assert len(version) == 2, "version sequence must be two values."
         version = VERSION_CHAR.join([str(x) for x in version if x is not None])
     if version:
@@ -83,8 +85,17 @@ def join_ident_hash(id, version):
     return HASH_CHAR.join(join_args)
 
 
-
 class CNXHash(uuid.UUID):
+    """Extend native uuid type with shortid support and utility functions.
+
+    Acts just like native uuid, except able to generate reduced length shortid,
+    8 chars from base64 encoding of underlying 128 bit uuid value.
+
+    Extra utility functions for conversion between identity and similarity
+    between different forms of uuid:
+        - FIXME list them here
+    """
+
     SHORTID = 0
     BASE64HASH = 1
     FULLUUID = 2
@@ -94,7 +105,7 @@ class CNXHash(uuid.UUID):
     _HASH_DUMMY_CHAR = '0'
 
     def __init__(self, uu=None, *args, **kwargs):
-
+        """Generate a uuid from a variety of inputs."""
         if isinstance(uu, uuid.UUID):
             uuid.UUID.__init__(self, bytes=uu.get_bytes())
         elif isinstance(uu, basestring):
@@ -103,6 +114,7 @@ class CNXHash(uuid.UUID):
             uuid.UUID.__init__(self, *args, **kwargs)
 
     def get_shortid(self):
+        """Return shortid."""
         shortid = self.uuid2base64(self.__str__())[:self._SHORT_HASH_LENGTH]
         return shortid
 
@@ -111,7 +123,8 @@ class CNXHash(uuid.UUID):
         return base64id
 
     @classmethod
-    def uuid2base64(cls,identifier):
+    def uuid2base64(cls, identifier):
+        """Return base64 version of a full uuid (string or type)."""
         if isinstance(identifier, basestring):
             identifier = uuid.UUID(identifier)
         elif not(isinstance(identifier, uuid.UUID)):
@@ -121,7 +134,8 @@ class CNXHash(uuid.UUID):
         return identifier
 
     @classmethod
-    def base642uuid(cls,identifier):
+    def base642uuid(cls, identifier):
+        """Return uuid from a base64 string (full 22 char)."""
         if not(isinstance(identifier, basestring)):
             raise TypeError("must be a string.")
         try:
@@ -134,32 +148,28 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def identifiers_similar(cls, identifier1, identifier2):
-        shortid1=None
-        shortid2=None
+        """Compare identifiers returns true if they could be the same."""
+        shortid1 = None
+        shortid2 = None
 
         try:
-            type1=cls.validate(identifier1)
+            type1 = cls.validate(identifier1)
+            type2 = cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
-
-        try:
-            type2=cls.validate(identifier2)
-        except IdentHashSyntaxError:
-            return False
-
-        
-        if isinstance(identifier1,cls):
-            shortid1=identifier1.get_shortid()
-        elif type1==cls.FULLUUID:
-            shortid1=cls.uuid2base64(identifier1)[:cls._SHORT_HASH_LENGTH]
-        elif type1==cls.BASE64HASH:
-            shortid1=identifier1[cls.SHORT_HASH_LENGTH]
-        elif type1==cls.SHORTID:
-            shortid1=identifier1
+   
+        if isinstance(identifier1, cls):
+            shortid1 = identifier1.get_shortid()
+        elif type1 == cls.FULLUUID:
+            shortid1 = cls.uuid2base64(identifier1)[:cls._SHORT_HASH_LENGTH]
+        elif type1 == cls.BASE64HASH:
+            shortid1 = identifier1[cls.short_hash_length]
+        elif type1 == cls.SHORTID:
+            shortid1 = identifier1
         else:
             return False
 
-        if isinstance(identifier2,cls):
+        if isinstance(identifier2, cls):
             shortid2=identifier2.get_shortid()
         elif type2==cls.FULLUUID:
             shortid2=cls.uuid2base64(identifier2)[:cls._SHORT_HASH_LENGTH]
@@ -172,15 +182,15 @@ class CNXHash(uuid.UUID):
                     
         return shortid1==shortid2 
            
-    def equal(self,identifier):
+    def equal(self, identifier):
         identifier1=self.__str__()
         identifier2=identifier
-        return self.identifiers_equal(identifier1,identifier2)
+        return self.identifiers_equal(identifier1, identifier2)
 
-    def similar(self,identifier):
+    def similar(self, identifier):
         identifier1=self.__str__()
         identifier2=identifier
-        return self.identifiers_similar(identifier1,identifier2)
+        return self.identifiers_similar(identifier1, identifier2)
 
     @classmethod
     def identifiers_equal(cls, identifier1, identifier2):
@@ -193,11 +203,7 @@ class CNXHash(uuid.UUID):
 
         try:
             type1=cls.validate(identifier1)
-        except IdentHashSyntaxError:
-            return False
-
-        try:
-           type2=cls.validate(identifier2)
+            type2=cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
 
