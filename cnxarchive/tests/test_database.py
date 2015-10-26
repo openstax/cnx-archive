@@ -317,7 +317,8 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
         identifier = uuid.uuid4()
         expected_identifier = CNXHash.uuid2base64(identifier)
-        cursor.execute("select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
+        cursor.execute(
+            "select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
         returned_identifier = cursor.fetchone()[0]
         self.assertEqual(expected_identifier, returned_identifier)
 
@@ -334,45 +335,58 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
     @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
         import uuid
-        cursor.execute("select identifiers_equal(uuid_generate_v4(),uuid_generate_v4())")
+        cursor.execute(
+            "select identifiers_equal(uuid_generate_v4(),uuid_generate_v4())")
         self.assertFalse(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid_generate_v4(), uuid2base64(uuid_generate_v4()))")
+        cursor.execute(
+            "select identifiers_equal(uuid_generate_v4(), uuid2base64(uuid_generate_v4()))")
         self.assertFalse(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64(uuid_generate_v4()),uuid_generate_v4())")
+        cursor.execute(
+            "select identifiers_equal(uuid2base64(uuid_generate_v4()),uuid_generate_v4())")
         self.assertFalse(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64(uuid_generate_v4()), uuid2base64(uuid_generate_v4()))")
+        cursor.execute(
+            "select identifiers_equal(uuid2base64(uuid_generate_v4()), uuid2base64(uuid_generate_v4()))")
         self.assertFalse(cursor.fetchone()[0])
 
         identifier = str(uuid.uuid4())
 
-        cursor.execute("select identifiers_equal('{}','{}')".format(identifier, identifier))
+        cursor.execute(
+            "select identifiers_equal('{}','{}')".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid,'{}'::uuid)".format(identifier, identifier))
+        cursor.execute("select identifiers_equal('{}'::uuid,'{}'::uuid)".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}','{}'::uuid)".format(identifier, identifier))
+        cursor.execute(
+            "select identifiers_equal('{}','{}'::uuid)".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid,'{}')".format(identifier, identifier))
+        cursor.execute(
+            "select identifiers_equal('{}'::uuid,'{}')".format(identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}', uuid2base64('{}'))".format(identifier, identifier))
+        cursor.execute("select identifiers_equal('{}', uuid2base64('{}'))".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal('{}'::uuid, uuid2base64('{}'))".format(identifier, identifier))
+        cursor.execute("select identifiers_equal('{}'::uuid, uuid2base64('{}'))".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}')".format(identifier, identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}')".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}'::uuid)".format(identifier, identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'),'{}'::uuid)".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
-        cursor.execute("select identifiers_equal(uuid2base64('{}'), uuid2base64('{}'))".format(identifier, identifier))
+        cursor.execute("select identifiers_equal(uuid2base64('{}'), uuid2base64('{}'))".format(
+            identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
 

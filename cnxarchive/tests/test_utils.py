@@ -9,6 +9,8 @@ import os
 import uuid
 import unittest
 
+from ..utils import CNXHash, IdentHashSyntaxError
+
 
 class SplitIdentTestCase(unittest.TestCase):
 
@@ -73,7 +75,7 @@ class SplitIdentTestCase(unittest.TestCase):
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
             ('1', '12', ),
-            )
+        )
         ident_hash = "{}@{}".format(expected_id, '.'.join(expected_version))
 
         id, version, id_type = self.call_target(ident_hash, True)
@@ -86,7 +88,7 @@ class SplitIdentTestCase(unittest.TestCase):
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
             ('1', None, ),
-            )
+        )
         ident_hash = "{}@{}".format(expected_id, expected_version[0])
 
         id, version, id_type = self.call_target(ident_hash, True)
@@ -99,7 +101,7 @@ class SplitIdentTestCase(unittest.TestCase):
         expected_id, expected_version = (
             '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
             (None, None, )
-            )
+        )
         ident_hash = expected_id
 
         id, version, id_type = self.call_target(ident_hash, True)
@@ -255,9 +257,6 @@ class Utf8TestCase(unittest.TestCase):
                          self.call_target({'inførmation': 'inførm'}))
 
 
-
-
-from ..utils import CNXHash, IdentHashSyntaxError
 class TestCNXHash(unittest.TestCase):
 
     @classmethod
@@ -291,7 +290,8 @@ class TestCNXHash(unittest.TestCase):
     def test_truncated_hash(self):
         cnxhash = CNXHash(self.uuid)
         self.assertLessEqual(len(cnxhash.get_shortid()), len(str(cnxhash)))
-        self.assertEqual(len(cnxhash.get_shortid()), CNXHash._SHORT_HASH_LENGTH)
+        self.assertEqual(
+            len(cnxhash.get_shortid()), CNXHash._SHORT_HASH_LENGTH)
 
     def test_validate(self):
         with self.assertRaises(IdentHashSyntaxError):
@@ -302,10 +302,14 @@ class TestCNXHash(unittest.TestCase):
             self.assertFalse(CNXHash.validate('a'))
         self.assertEqual(CNXHash.validate(self.uuid), CNXHash.FULLUUID)
         self.assertEqual(CNXHash.validate(self.cnxhash), CNXHash.FULLUUID)
-        self.assertEqual(CNXHash.validate(self.cnxhash.get_base64id()), CNXHash.BASE64HASH)
-        self.assertEqual(CNXHash.validate(CNXHash.uuid2base64(self.uuid)), CNXHash.BASE64HASH)
-        self.assertEqual(CNXHash.validate(self.cnxhash.get_shortid()), CNXHash.SHORTID) 
-        self.assertEqual(CNXHash.validate(unicode(self.cnxhash.get_shortid())), CNXHash.SHORTID)
+        self.assertEqual(
+            CNXHash.validate(self.cnxhash.get_base64id()), CNXHash.BASE64HASH)
+        self.assertEqual(
+            CNXHash.validate(CNXHash.uuid2base64(self.uuid)), CNXHash.BASE64HASH)
+        self.assertEqual(
+            CNXHash.validate(self.cnxhash.get_shortid()), CNXHash.SHORTID)
+        self.assertEqual(
+            CNXHash.validate(unicode(self.cnxhash.get_shortid())), CNXHash.SHORTID)
 
     def test_error_handling(self):
         with self.assertRaises(TypeError):
@@ -324,17 +328,24 @@ class TestCNXHash(unittest.TestCase):
         self.assertFalse(self.cnxhash.similar(uuid.uuid4()))
         self.assertFalse(self.cnxhash.similar([]))
         self.assertTrue(self.cnxhash.similar(self.uuid))
-        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash,self.cnxhash.get_shortid()))
-        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash.get_shortid(),self.cnxhash))
-        self.assertTrue(CNXHash.identifiers_similar(self.cnxhash.get_shortid(),self.uuid))
+        self.assertTrue(
+            CNXHash.identifiers_similar(self.cnxhash, self.cnxhash.get_shortid()))
+        self.assertTrue(
+            CNXHash.identifiers_similar(self.cnxhash.get_shortid(), self.cnxhash))
+        self.assertTrue(
+            CNXHash.identifiers_similar(self.cnxhash.get_shortid(), self.uuid))
 
     def test_equality(self):
         self.assertTrue(self.cnxhash == self.cnxhash)
         self.assertTrue(self.uuid == self.cnxhash)
         self.assertTrue(CNXHash.identifiers_equal(self.uuid, self.cnxhash))
-        self.assertTrue(CNXHash.identifiers_equal(self.cnxhash, str(self.cnxhash)))
-        self.assertTrue(CNXHash.identifiers_equal(str(self.cnxhash), self.cnxhash))
-        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,self.cnxhash.get_shortid()))
-        self.assertTrue(CNXHash.identifiers_equal(self.cnxhash.get_shortid(),self.cnxhash.get_shortid()))
-        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash,[]))
-        self.assertFalse(CNXHash.identifiers_equal(uuid.uuid4(),uuid.uuid4()))
+        self.assertTrue(
+            CNXHash.identifiers_equal(self.cnxhash, str(self.cnxhash)))
+        self.assertTrue(
+            CNXHash.identifiers_equal(str(self.cnxhash), self.cnxhash))
+        self.assertFalse(
+            CNXHash.identifiers_equal(self.cnxhash, self.cnxhash.get_shortid()))
+        self.assertTrue(CNXHash.identifiers_equal(
+            self.cnxhash.get_shortid(), self.cnxhash.get_shortid()))
+        self.assertFalse(CNXHash.identifiers_equal(self.cnxhash, []))
+        self.assertFalse(CNXHash.identifiers_equal(uuid.uuid4(), uuid.uuid4()))

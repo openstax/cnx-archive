@@ -300,7 +300,8 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 if reqtype:
                     route_name = 'content-{}'.format(reqtype)
                 redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name=route_name, route_args=route_args)
+                                      route_name=route_name,
+                                      route_args=route_args)
 
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:

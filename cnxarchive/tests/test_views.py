@@ -498,7 +498,8 @@ class ViewsTestCase(unittest.TestCase):
         version = '8'
 
         # Build the request environment.
-        self.request.matchdict = {'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
+        self.request.matchdict = {
+            'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
 
         # Call the view.
         from ..views import get_content
@@ -506,7 +507,7 @@ class ViewsTestCase(unittest.TestCase):
             get_content(self.request)
         self.assertEqual(cm.exception.status, '302 Found')
         self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format(cnxhash,version)))
+                         quote('/contents/{}@{}.json'.format(cnxhash, version)))
 
     def test_module_content(self):
         # Test for retreiving a module.
@@ -563,7 +564,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {
             'ident_hash': "{}@{}".format(short_id, version)
-            }
+        }
 
         # Call the view.
         from ..views import get_content
@@ -585,7 +586,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {
             'ident_hash': short_id
-            }
+        }
 
         # Call the view.
         from ..views import get_content
@@ -1234,7 +1235,8 @@ class ViewsTestCase(unittest.TestCase):
         expected_ident_hash = "{}@{}".format(id, version)
 
         # Build the request
-        self.request.matchdict = {'ident_hash': "{}@{}".format(short_id, version)}
+        self.request.matchdict = {
+            'ident_hash': "{}@{}".format(short_id, version)}
 
         # Call the target
         from ..views import get_extra

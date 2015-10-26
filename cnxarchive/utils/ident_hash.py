@@ -83,7 +83,6 @@ def join_ident_hash(id, version):
     return HASH_CHAR.join(join_args)
 
 
-
 class CNXHash(uuid.UUID):
     SHORTID = 0
     BASE64HASH = 1
@@ -111,7 +110,7 @@ class CNXHash(uuid.UUID):
         return base64id
 
     @classmethod
-    def uuid2base64(cls,identifier):
+    def uuid2base64(cls, identifier):
         if isinstance(identifier, basestring):
             identifier = uuid.UUID(identifier)
         elif not(isinstance(identifier, uuid.UUID)):
@@ -121,7 +120,7 @@ class CNXHash(uuid.UUID):
         return identifier
 
     @classmethod
-    def base642uuid(cls,identifier):
+    def base642uuid(cls, identifier):
         if not(isinstance(identifier, basestring)):
             raise TypeError("must be a string.")
         try:
@@ -134,115 +133,120 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def identifiers_similar(cls, identifier1, identifier2):
-        shortid1=None
-        shortid2=None
+        shortid1 = None
+        shortid2 = None
 
         try:
-            type1=cls.validate(identifier1)
+            type1 = cls.validate(identifier1)
         except IdentHashSyntaxError:
             return False
 
         try:
-            type2=cls.validate(identifier2)
+            type2 = cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
 
-        
-        if isinstance(identifier1,cls):
-            shortid1=identifier1.get_shortid()
-        elif type1==cls.FULLUUID:
-            shortid1=cls.uuid2base64(identifier1)[:cls._SHORT_HASH_LENGTH]
-        elif type1==cls.BASE64HASH:
-            shortid1=identifier1[cls.SHORT_HASH_LENGTH]
-        elif type1==cls.SHORTID:
-            shortid1=identifier1
+        if isinstance(identifier1, cls):
+            shortid1 = identifier1.get_shortid()
+        elif type1 == cls.FULLUUID:
+            shortid1 = cls.uuid2base64(identifier1)[:cls._SHORT_HASH_LENGTH]
+        elif type1 == cls.BASE64HASH:
+            shortid1 = identifier1[cls.SHORT_HASH_LENGTH]
+        elif type1 == cls.SHORTID:
+            shortid1 = identifier1
         else:
             return False
 
-        if isinstance(identifier2,cls):
-            shortid2=identifier2.get_shortid()
-        elif type2==cls.FULLUUID:
-            shortid2=cls.uuid2base64(identifier2)[:cls._SHORT_HASH_LENGTH]
-        elif type2==cls.BASE64HASH:
-            shortid2=identifier2[cls.SHORT_HASH_LENGTH]
-        elif type2==cls.SHORTID:
-            shortid2=identifier2
+        if isinstance(identifier2, cls):
+            shortid2 = identifier2.get_shortid()
+        elif type2 == cls.FULLUUID:
+            shortid2 = cls.uuid2base64(identifier2)[:cls._SHORT_HASH_LENGTH]
+        elif type2 == cls.BASE64HASH:
+            shortid2 = identifier2[cls.SHORT_HASH_LENGTH]
+        elif type2 == cls.SHORTID:
+            shortid2 = identifier2
         else:
             return False
-                    
-        return shortid1==shortid2 
-           
-    def equal(self,identifier):
-        identifier1=self.__str__()
-        identifier2=identifier
-        return self.identifiers_equal(identifier1,identifier2)
 
-    def similar(self,identifier):
-        identifier1=self.__str__()
-        identifier2=identifier
-        return self.identifiers_similar(identifier1,identifier2)
+        return shortid1 == shortid2
+
+    def equal(self, identifier):
+        identifier1 = self.__str__()
+        identifier2 = identifier
+        return self.identifiers_equal(identifier1, identifier2)
+
+    def similar(self, identifier):
+        identifier1 = self.__str__()
+        identifier2 = identifier
+        return self.identifiers_similar(identifier1, identifier2)
 
     @classmethod
     def identifiers_equal(cls, identifier1, identifier2):
-        fulluuid1=None
-        fulluuid2=None
-        base64hash1=None
-        base64hash2=None
-        shortid1=None
-        shortid2=None
+        fulluuid1 = None
+        fulluuid2 = None
+        base64hash1 = None
+        base64hash2 = None
+        shortid1 = None
+        shortid2 = None
 
         try:
-            type1=cls.validate(identifier1)
+            type1 = cls.validate(identifier1)
         except IdentHashSyntaxError:
             return False
 
         try:
-           type2=cls.validate(identifier2)
+            type2 = cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
 
-        if type1==cls.FULLUUID and type2==cls.FULLUUID:
-            if (isinstance(identifier1,cls) or isinstance(identifier1,uuid.UUID)):
-                fulluuid1=identifier1.__str__()
+        if type1 == cls.FULLUUID and type2 == cls.FULLUUID:
+            if (isinstance(identifier1, cls) or isinstance(identifier1,
+                                                           uuid.UUID)):
+                fulluuid1 = identifier1.__str__()
             else:
-                fulluuid1=identifier1
-            if (isinstance(identifier2,cls) or isinstance(fulluuid2,uuid.UUID)):
-                fulluuid2=identifier2.__str__()
+                fulluuid1 = identifier1
+            if (isinstance(identifier2, cls) or isinstance(fulluuid2,
+                                                           uuid.UUID)):
+                fulluuid2 = identifier2.__str__()
             else:
-                fulluuid2=identifier2
-            return fulluuid1==fulluuid2
-        elif type1==cls.BASE64HASH and type2==cls.BASE64HASH:
-            base64hash1=identifier1
-            base64hash2=identifier2
-            return base64hash1==base64hash2
-        elif type1==cls.SHORTID and type2==cls.SHORTID:
-            shortid1==identifier1
-            shortid2==identifier2
-            return shortid1==shortid2
-        elif type1==cls.BASE64HASH and type2==cls.FULLUUID:
-            base64hash1=identifier1
-            base64hash2=cls.uuid2base64(identifier2)
-            return base64hash1==base64hash2
-        elif type1==cls.FULLUUID and type2==cls.BASE64HASH:
-            base64hash1=cls.uuid2base64(identifier1)
-            base64hash2=identifier2
-            return base64hash1==base64hash2
-        elif type1==cls.SHORTID and (type2==cls.BASE64HASH or type2==cls.FULLUUID):
+                fulluuid2 = identifier2
+            return fulluuid1 == fulluuid2
+        elif type1 == cls.BASE64HASH and type2 == cls.BASE64HASH:
+            base64hash1 = identifier1
+            base64hash2 = identifier2
+            return base64hash1 == base64hash2
+        elif type1 == cls.SHORTID and type2 == cls.SHORTID:
+            shortid1 == identifier1
+            shortid2 == identifier2
+            return shortid1 == shortid2
+        elif type1 == cls.BASE64HASH and type2 == cls.FULLUUID:
+            base64hash1 = identifier1
+            base64hash2 = cls.uuid2base64(identifier2)
+            return base64hash1 == base64hash2
+        elif type1 == cls.FULLUUID and type2 == cls.BASE64HASH:
+            base64hash1 = cls.uuid2base64(identifier1)
+            base64hash2 = identifier2
+            return base64hash1 == base64hash2
+        elif type1 == cls.SHORTID and (type2 == cls.BASE64HASH or
+                                       type2 == cls.FULLUUID):
             return False
-        elif (type1==cls.BASE64HASH or type1==cls.FULLUUID) and type2==cls.SHORTID:
+        elif (type1 == cls.BASE64HASH or
+              type1 == cls.FULLUUID) and type2 == cls.SHORTID:
             return False
         else:
             return False
 
     @classmethod
     def validate(cls, hash_id):
-        if isinstance(hash_id, uuid.UUID) or isinstance(hash_id,cls):
+        if isinstance(hash_id, uuid.UUID) or isinstance(hash_id, cls):
             return cls.FULLUUID
         elif isinstance(hash_id, basestring):
             if len(hash_id) == cls._SHORT_HASH_LENGTH:
                 try:  # convert short_id to one possible full hash to validate
-                    hash_id = hash_id + cls._HASH_DUMMY_CHAR*(cls._MAX_SHORT_HASH_LENGTH -
-                                             cls._SHORT_HASH_LENGTH)
+                    hash_id = hash_id + \
+                        cls._HASH_DUMMY_CHAR * \
+                        (cls._MAX_SHORT_HASH_LENGTH -
+                         cls._SHORT_HASH_LENGTH)
                     cls.base642uuid(hash_id)
                 except (TypeError, ValueError):
                     raise IdentHashSyntaxError
