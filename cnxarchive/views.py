@@ -5,14 +5,13 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""All the views."""
 import os
 import json
 import logging
 import psycopg2
-import urlparse
 
 from lxml import etree
-from cnxquerygrammar.query_parser import grammar, DictFormater
 from cnxepub.models import flatten_tree_to_ident_hashes
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -49,6 +48,8 @@ PAGES_TO_BLOCK = [
 
 
 class ExportError(Exception):
+    """Used as catchall for other export errors."""
+
     pass
 
 
@@ -58,8 +59,9 @@ class ExportError(Exception):
 
 def redirect_to_canonical(cursor, id, version, id_type,
                           route_name='content', route_args=None):
-    """Redirect to latest version of a module / collection using the provided
-    path
+    """Redirect to latest version of a module / collection.
+
+    Looks up path associated with the provided router.
     """
     if id_type == CNXHash.SHORTID:
         cursor.execute(SQL['get-module-uuid'], {'id': id})
@@ -91,8 +93,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
 
 
 def get_content_metadata(id, version, cursor):
-    """Return metadata related to the content from the database
-    """
+    """Return metadata related to the content from the database."""
     # Do the module lookup
     args = dict(id=id, version=version)
     # FIXME We are doing two queries here that can hopefully be
@@ -117,6 +118,7 @@ def get_content_metadata(id, version, cursor):
 
 
 def is_latest(cursor, id, version):
+    """Determine if this is the latest version of this content."""
     cursor.execute(SQL['get-module-versions'], {'id': id})
     try:
         latest_version = cursor.fetchone()[0]
@@ -130,6 +132,7 @@ LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
 
 
 def get_type_info():
+    """Lookup type info from app configuration."""
     if TYPE_INFO:
         return
     settings = get_current_registry().settings
@@ -148,8 +151,7 @@ def get_type_info():
 
 
 def get_export_allowable_types(cursor, exports_dirs, id, version):
-    """Return export types
-    """
+    """Return export types."""
     get_type_info()
     request = get_current_request()
 
@@ -168,12 +170,13 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                     'export', ident_hash=join_ident_hash(id, version),
                     type=type_name, ignore=u'/{}'.format(filename))
                 }
-        except ExportError as e:
+        except ExportError as e:  # noqa
             # Some other problem, skip it
             pass
 
 
 def get_export_file(cursor, id, version, type, exports_dirs):
+    """Retrieve file associated with document."""
     get_type_info()
     type_info = dict(TYPE_INFO)
 
@@ -244,6 +247,7 @@ HTML_WRAPPER = """\
 
 
 def html_listify(tree, root_ul_element):
+    """Recursively construct HTML nested list version of book tree."""
     request = get_current_request()
     for node in tree:
         li_elm = etree.SubElement(root_ul_element, 'li')
@@ -258,6 +262,7 @@ def html_listify(tree, root_ul_element):
 
 
 def tree_to_html(tree):
+    """Return html list version of book tree."""
     ul = etree.Element('ul')
     html_listify([tree], ul)
     return HTML_WRAPPER.format(etree.tostring(ul))
@@ -350,13 +355,16 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
 
 def html_date(datetime):
     """
-    Returns the HTTP-date format of python's datetime time as per:
+    Return the HTTP-date format of python's datetime time.
+
+    Based on:
     http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
     """
     return datetime.strftime("%a, %d %b %Y %X %Z")
 
 
 def notblocked(page):
+    """Determine if given url is a page that should be in sitemap."""
     for blocked in PAGES_TO_BLOCK:
         if blocked[0] != '*':
             blocked = '*' + blocked
@@ -373,9 +381,7 @@ def notblocked(page):
 
 @view_config(route_name='content-json', request_method='GET')
 def get_content_json(request):
-    """Retrieve a piece of content as JSON using
-    the ident-hash (uuid@version).
-    """
+    """Retrieve content as JSON using the ident-hash (uuid@version)."""
     result = _get_content_json(request=request, reqtype='json')
 
     result = json.dumps(result)
@@ -388,9 +394,7 @@ def get_content_json(request):
 
 @view_config(route_name='content-html', request_method='GET')
 def get_content_html(request):
-    """Retrieve a piece of content as HTML using
-    the ident-hash (uuid@version).
-    """
+    """Retrieve content as HTML using the ident-hash (uuid@version)."""
     result = _get_content_json(request=request, reqtype='html')
 
     media_type = result['mediaType']
@@ -408,7 +412,8 @@ def get_content_html(request):
 
 @view_config(route_name='content', request_method='GET')
 def get_content(request):
-    """Retrieve a piece of content using the ident-hash (uuid@version).
+    """Retrieve content using the ident-hash (uuid@version).
+
     Depending on the HTTP_ACCEPT header return HTML or JSON.
     """
     if 'application/xhtml+xml' in request.headers.get('ACCEPT', ''):
@@ -423,7 +428,8 @@ def get_content(request):
 @view_config(route_name='legacy-redirect-w-version', request_method='GET')
 def redirect_legacy_content(request):
     """Redirect from legacy /content/id/version to new /contents/uuid@version.
-       Handles collection context (book) as well
+
+    Handles collection context (book) as well.
     """
     settings = get_current_registry().settings
     db_conn_string = settings[config.CONNECTION_STRING]
@@ -506,8 +512,7 @@ def get_resource(request):
 
 @view_config(route_name='content-extras', request_method='GET')
 def get_extra(request):
-    """Return information about a module / collection that cannot be cached
-    """
+    """Return information about a module / collection that cannot be cached."""
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
@@ -681,8 +686,7 @@ def in_book_search_highlighted_results(request):
 
 @view_config(route_name='search', request_method='GET')
 def search(request):
-    """Search API
-    """
+    """Search API."""
     empty_response = json.dumps({
         u'query': {
             u'limits': [],
@@ -822,8 +826,7 @@ def search(request):
 
 
 def _get_subject_list(cursor):
-    """Return all subjects (tags) in the database except "internal" scheme
-    """
+    """Return all subjects (tags) in the database except "internal" scheme."""
     subject = None
     last_tagid = None
     cursor.execute(SQL['get-subject-list'])
@@ -848,13 +851,13 @@ def _get_subject_list(cursor):
 
 
 def _get_featured_links(cursor):
-    """Return featured books for the front page"""
+    """Return featured books for the front page."""
     cursor.execute(SQL['get-featured-links'])
     return [i[0] for i in cursor.fetchall()]
 
 
 def _get_service_state_messages(cursor):
-    """Returns a list of service messages."""
+    """Return a list of service messages."""
     cursor.execute(SQL['get-service-state-messages'])
     return [i[0] for i in cursor.fetchall()]
 
@@ -867,8 +870,7 @@ def _get_licenses(cursor):
 
 @view_config(route_name='extras', request_method='GET')
 def extras(request):
-    """Return a dict with archive metadata for webview
-    """
+    """Return a dict with archive metadata for webview."""
     settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
@@ -888,8 +890,7 @@ def extras(request):
 
 @view_config(route_name='sitemap', request_method='GET')
 def sitemap(request):
-    """Return a sitemap xml file for search engines
-    """
+    """Return a sitemap xml file for search engines."""
     settings = get_current_registry().settings
     xml = Sitemap()
     connection_string = settings[config.CONNECTION_STRING]
@@ -924,9 +925,7 @@ def sitemap(request):
 
 @view_config(route_name='robots', request_method='GET')
 def robots(request):
-    """
-    Returns a robots.txt file
-    """
+    """Return a robots.txt file."""
     robots_dot_txt = Robots(sitemap=request.route_url('sitemap'))
 
     bot_delays = {
