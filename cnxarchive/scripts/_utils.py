@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Utility methods for commandline scripts."""
+
 import os
 import argparse
 
@@ -24,8 +26,8 @@ def _gen_prog_name(sub_name, base_name=BASE_PROG_NAME):
 
 
 def create_parser(name, description=None):
-    """Create an argument parser with the given ``name``
-    and ``description``.
+    """Create an argument parser with the given ``name`` and ``description``.
+
     The name is used to make ``cnx-archive-<name>`` program name.
     This creates and returns a parser with
     the ``config_uri`` argument declared.
@@ -41,7 +43,9 @@ def create_parser(name, description=None):
 
 
 def get_app_settings_from_arguments(args):
-    """Give an ``argparse`` set of arguments as ``args``
+    """Parse ``argparse`` style arguments into app settings.
+
+    Given an ``argparse`` set of arguments as ``args``
     parse the arguments to return the application settings.
     This assumes the parser was created using ``create_parser``.
     """

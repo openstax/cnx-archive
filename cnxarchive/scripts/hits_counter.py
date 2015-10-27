@@ -6,13 +6,13 @@
 # See LICENCE.txt for details.
 # ###
 """Commandline script used to capture document hit statistics.
+
 This parses a Varnish-Cache log file for document access lines.
 Each line is processed as a hit for a document.
 The counts are processed into a time range
 and inserted into the cnx-archive database.
 """
 import re
-import argparse
 import gzip
 
 import psycopg2
@@ -39,7 +39,9 @@ SELECT module_ident FROM modules
 
 
 def parse_log(log, url_pattern):
-    """Given a buffer as ``log``, parse the log bufer into
+    """Parse ``log`` buffer based on ``url_pattern``.
+
+    Given a buffer as ``log``, parse the log buffer into
     a mapping of ident-hashes to a hit count,
     the timestamp of the initial log,
     and the last timestamp in the log.
@@ -64,6 +66,7 @@ def parse_log(log, url_pattern):
 
 
 def main(argv=None):
+    """Count the hits from logfile."""
     parser = create_parser('hits_counter', description=__doc__)
     parser.add_argument('--hostname', default='cnx.org',
                         help="hostname of the site (default: cnx.org)")
@@ -78,7 +81,7 @@ def main(argv=None):
 
     # Build the URL pattern.
     hostname = args.hostname.replace('.', '\.')
-    url_pattern = URL_PATTERN_TMPLT.format(args.hostname)
+    url_pattern = URL_PATTERN_TMPLT.format(hostname)
     url_pattern = re.compile(url_pattern)
 
     # Parse the log to structured data.

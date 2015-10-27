@@ -25,7 +25,7 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
 
 
 def declare_api_routes(config):
-    """Declaration of routing"""
+    """Declaration of routing."""
     # The pregenerator makes sure we can generate a path using
     # request.route_path even if we don't have all the variables.
     #

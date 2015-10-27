@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""commandline tool for parsing collxml into a DB tree."""
+
 
 from xml import sax
 import sys
@@ -60,7 +62,10 @@ def _do_update(title, nid):
 
 
 class ModuleHandler(sax.ContentHandler):
+    """Handler for module link."""
+
     def __init__(self):
+        """Create module handler with default values."""
         self.parents = [None]
         self.childorder = 0
         self.map = {}
@@ -72,6 +77,7 @@ class ModuleHandler(sax.ContentHandler):
         self.derivedfrom = [None]
 
     def startElementNS(self, (uri, localname), qname, attrs):
+        """Handle element."""
         self.map[localname] = u''
         self.tag = localname
 
@@ -97,9 +103,11 @@ class ModuleHandler(sax.ContentHandler):
             self.derivedfrom.append(True)
 
     def characters(self, content):
+        """Copy characters to tag."""
         self.map[self.tag] += content
 
     def endElementNS(self, (uris, localname), qname):
+        """Assign local values."""
         if localname == 'content-id' and not self.derivedfrom[-1]:
             self.contentid = self.map[localname]
         elif localname == 'version' and not self.derivedfrom[-1]:
