@@ -7,9 +7,7 @@
 # ###
 """Commandline script used to initialize the SQL database."""
 from __future__ import print_function
-import os
 import sys
-import argparse
 
 import psycopg2
 
@@ -32,6 +30,7 @@ parser.add_argument(
 
 
 def main(argv=None):
+    """Initialize the database."""
     args = parser.parse_args(argv)
 
     settings = get_app_settings_from_arguments(args)

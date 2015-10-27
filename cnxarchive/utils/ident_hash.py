@@ -6,7 +6,6 @@
 # See LICENCE.txt for details.
 # ###
 import uuid
-import tzlocal
 import base64
 
 HASH_CHAR = '@'
@@ -92,7 +91,7 @@ class CNXHash(uuid.UUID):
     FULLUUID = 2
     _SHORT_HASH_LENGTH = 8
     _MAX_SHORT_HASH_LENGTH = 22
-    _HASH_PADDING_CHAR = '='
+    _HASH_PADDING_CHAR = ' = '
     _HASH_DUMMY_CHAR = '0'
 
     def __init__(self, uu=None, *args, **kwargs):
@@ -109,6 +108,7 @@ class CNXHash(uuid.UUID):
         return shortid
 
     def get_base64id(self):
+        """Return base64 encoded id."""
         base64id = self.uuid2base64(self.__str__())
         return base64id
 
@@ -174,17 +174,20 @@ class CNXHash(uuid.UUID):
         return shortid1 == shortid2
 
     def equal(self, identifier):
+        """Test if ``identifier`` equal to this uuid."""
         identifier1 = self.__str__()
         identifier2 = identifier
         return self.identifiers_equal(identifier1, identifier2)
 
     def similar(self, identifier):
+        """Test id ``identifier`` could be equal to this uuid."""
         identifier1 = self.__str__()
         identifier2 = identifier
         return self.identifiers_similar(identifier1, identifier2)
 
     @classmethod
     def identifiers_equal(cls, identifier1, identifier2):
+        """Compare to identifiers for equality, regardless of format."""
         fulluuid1 = None
         fulluuid2 = None
         base64hash1 = None
@@ -194,10 +197,6 @@ class CNXHash(uuid.UUID):
 
         try:
             type1 = cls.validate(identifier1)
-        except IdentHashSyntaxError:
-            return False
-
-        try:
             type2 = cls.validate(identifier2)
         except IdentHashSyntaxError:
             return False
@@ -241,6 +240,7 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def validate(cls, hash_id):
+        """Determine if ``hash_id`` is or could be a valid UUID."""
         if isinstance(hash_id, uuid.UUID) or isinstance(hash_id, cls):
             return cls.FULLUUID
         elif isinstance(hash_id, basestring):

@@ -5,9 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""Database search utilties"""
+"""Database search utilties."""
 import os
-import json
 import re
 from collections import Mapping, OrderedDict, Sequence
 from datetime import datetime
@@ -92,28 +91,31 @@ DEFAULT_PER_PAGE = 20
 
 
 class Query(Sequence):
-    """A structured respresentation of the query string"""
+    """A structured respresentation of the query string."""
 
     def __init__(self, query):
+        """Create a query object."""
         self.filters = [q for q in query if q[0] in VALID_FILTER_KEYWORDS]
         self.sorts = [q[1] for q in query if q[0] == 'sort']
         self.terms = [q for q in query
                       if q not in self.filters and q[0] != 'sort']
 
     def __repr__(self):
+        """String repr."""
         s = "<{} with '{}' >".format(self.__class__.__name__, self.terms)
         return s
 
     def __getitem__(self, index):
+        """Return terms."""
         return self.terms[index]
 
     def __len__(self):
+        """Length is number of terms."""
         return len(self.terms)
 
     @classmethod
     def fix_quotes(cls, query_string):
-        # Attempt to fix unbalanced quotes in query_string
-
+        """Heuristic attempt to fix unbalanced quotes in query_string."""
         if query_string.count('"') % 2 == 0:
             # no unbalanced quotes to fix
             return query_string
@@ -132,7 +134,9 @@ class Query(Sequence):
 
     @classmethod
     def from_raw_query(cls, query_string):
-        """Given a raw string (typically typed by the user),
+        """Parse raw string to query.
+
+        Given a raw string (typically typed by the user),
         parse to a structured format and initialize the class.
         """
         try:
@@ -217,7 +221,9 @@ class QueryRecord(Mapping):
 
 
 def _apply_query_type(records, query, query_type):
-    """Apply a AND, weak AND or OR operation to the results records.
+    """Boolean combination of records.
+
+    Apply a AND, weak AND or OR operation to the results records.
     Returns the revised list of records, unmatched terms, and matched terms.
     """
     # These all get revised an returned at the end.
@@ -264,7 +270,9 @@ def _apply_query_type(records, query, query_type):
 
 
 class QueryResults(Sequence):
-    """A listing of query results as well as hit counts and the parsed query
+    """List of search results.
+
+    A listing of query results as well as hit counts and the parsed query
     string. The query is necessary to do in-python set operations on the
     rows.
     """
@@ -424,7 +432,9 @@ class QueryResults(Sequence):
 
 
 def _transmute_filter(keyword, value):
-    """Produces a SQL condition statement that is a python format statement,
+    """SQL producer for conditionals.
+
+    Produces a SQL condition statement that is a python format statement,
     to be used with the string ``format`` method.
     This is to allow for the input of argument names for later
     SQL query preparation.
@@ -472,7 +482,7 @@ def _transmute_filter(keyword, value):
 
 
 def _transmute_sort(sort_value):
-    """Provides a value translation to the SQL column name."""
+    """Provide a value translation to the SQL column name."""
     try:
         return SORT_VALUES_MAPPING[sort_value.lower()]
     except KeyError:
@@ -480,7 +490,7 @@ def _transmute_sort(sort_value):
 
 
 class WeightedSelect:
-    """A SQL SELECT builder with weighted results"""
+    """A SQL SELECT builder with weighted results."""
 
     def __init__(self, name, template, weight=0,
                  is_keyword_exclusive=True):
@@ -490,7 +500,7 @@ class WeightedSelect:
         self.is_keyword_exclusive = is_keyword_exclusive
 
     def prepare(self, query):
-        """Prepares the statement for DBAPI 2.0 execution.
+        """Prepare the statement for DBAPI 2.0 execution.
 
         :returns: A tuple of the statement text and the arguments in an ordered
                   dictionary.
@@ -520,7 +530,9 @@ def _make_weighted_select(name, weight=0):
 
 
 def _build_search(structured_query, weights):
-    """Produces the search statement and argument dictionary to be executed
+    """Construct search statment for db execution.
+
+    Produces the search statement and argument dictionary to be executed
     by the DBAPI v2 execute method.
     For example, ``cursor.execute(*_build_search(query, weights))``
 
@@ -628,7 +640,9 @@ FROM latest_modules""".format(keys)
 
 def search(query, query_type=DEFAULT_QUERY_TYPE,
            weights=DEFAULT_SEARCH_WEIGHTS):
-    """Executes a database search query from the given ``query``
+    """Search database using parsed query.
+
+    Executes a database search query from the given ``query``
     (a ``Query`` object) and optionally accepts a list of search weights.
     By default, the search results are ordered by weight.
 

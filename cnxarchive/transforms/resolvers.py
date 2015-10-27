@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Resolver methods for fixing up references in transformed documents."""
+
 import re
 import inspect
 import json
@@ -128,9 +130,11 @@ class InvalidReference(BaseReferenceException):
 
 
 def parse_legacy_reference(ref):
-    """Parse the legacy reference to a reference type and type specific value.
+    """Parse legacy reference into parts. Returns a tuple.
+
+    Parse the legacy reference to a reference type and type specific value.
     A module-reference value contains the id, version and fragment.
-    A resource-reference value resource filename.
+    A resource-reference value contains resource filename.
     """
     match = LEGACY_PATH_REFERENCE_REGEX.match(ref)
     try:
@@ -166,7 +170,9 @@ def parse_legacy_reference(ref):
 
 
 def parse_html_reference(ref):
-    """Parse the html reference to a reference type and type specific value.
+    """Parse HTML cross reference.
+
+    Parse the html reference to a reference type and type specific value.
     A document-reference value contains the ident-hash.
     A binder-reference value contains the ident-hash and possibly a document
     ident-hash.

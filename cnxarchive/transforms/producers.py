@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Producer functions that wrap basic transforms to create complete docs."""
+
 from io import BytesIO
 
 from lxml import etree
@@ -33,11 +35,10 @@ TRANSFORM_TYPES = {
 
 
 class MissingDocumentOrSource(Exception):
-    """Used to signify that the document or source XML document
-    cannot be found.
-    """
+    """Document or source XML document cannot be found."""
 
     def __init__(self, document_ident, filename):
+        """Create exception with details."""
         self.document_ident = document_ident
         self.filename = filename
         msg = "Cannot find document (at ident: {}) " \
@@ -50,6 +51,7 @@ class MissingAbstract(Exception):
     """Used to signify that the abstract is missing from a document entry."""
 
     def __init__(self, document_ident):
+        """Create exception with details."""
         self.document_ident = document_ident
         msg = "Cannot find abstract for document (at ident: {})." \
             .format(self.document_ident)
@@ -57,11 +59,13 @@ class MissingAbstract(Exception):
 
 
 class IndexFileExistsError(Exception):
-    """Raised when index.** file for an ident already exists but we are not
-    overwriting it
+    """Raised when index.** file for an ident already exists.
+
+    Not raised if we are overwriting it.
     """
 
     def __init__(self, document_ident, filename):
+        """Create exception with details."""
         message = 'One of {} already exists for document {}' \
             .format(filename, document_ident)
         super(IndexFileExistsError, self).__init__(message)
@@ -128,6 +132,7 @@ def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
 
 
 def transform_abstract_to_html(abstract, document_ident, db_connection):
+    """Convert abstract to html."""
     warning_messages = None
     abstract = '<document xmlns="http://cnx.rice.edu/cnxml" '\
         'xmlns:m="http://www.w3.org/1998/Math/MathML" '\
@@ -159,7 +164,7 @@ def transform_abstract_to_html(abstract, document_ident, db_connection):
 
 
 def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
-    """Transforms an html abstract to cnxml."""
+    """Transform an html abstract to cnxml."""
     warning_messages = None
     cnxml = None
 
@@ -193,7 +198,9 @@ def produce_html_for_module(db_connection, cursor, ident,
                             source_filename='index.cnxml',
                             destination_filenames=('index.cnxml.html',),
                             overwrite_html=False):
-    """Produce an ``destination_filename`` (default 'index.cnxml.html') file
+    """Produce an html file from a given module from specified source file.
+
+    Produce an ``destination_filename`` (default 'index.cnxml.html') file
     for the module at ``ident`` using the ``source_filename``
     (default 'index.cnxml').
 
@@ -216,7 +223,9 @@ def produce_cnxml_for_module(db_connection, cursor, ident,
                              destination_filenames=('index.html.cnxml',
                                                     'index.cnxml',),
                              overwrite=False):
-    """Produce an ``destination_filename`` (default 'index.html.cnxml') file
+    """Produce a cnxml file from a given module from specified source file.
+
+    Produce an ``destination_filename`` (default 'index.html.cnxml') file
     for the module at ``ident`` using the ``source_filename``
     (default 'index.cnxml.html').
 
@@ -235,7 +244,9 @@ def produce_cnxml_for_module(db_connection, cursor, ident,
 def produce_transformed_file(cursor, ident, transform_type,
                              source_filename, destination_filenames,
                              overwrite=False):
-    """Produce an ``destination_filename`` file for the module at ``ident``
+    """Produce a file from a given module source file with a specifc transform.
+
+    Produce an ``destination_filename`` file for the module at ``ident``
     using the ``source_filename``.
 
     Raises exceptions when the transform cannot be completed.
@@ -243,7 +254,6 @@ def produce_transformed_file(cursor, ident, transform_type,
     Returns a message containing warnings and other information that
     does not effect the content, but may affect the user experience
     of it.
-
     """
     transformer, reference_resolver, mimetype = TRANSFORM_TYPES[transform_type]
     cursor.execute("SELECT convert_from(file, 'utf-8') "
@@ -300,6 +310,7 @@ def produce_transformed_file(cursor, ident, transform_type,
 
 def transform_module_content(content, transform_type, db_connection,
                              ident=None):
+    """Transform content from a module."""
     transformer, reference_resolver, _ = TRANSFORM_TYPES[transform_type]
 
     new_content = transformer(content)

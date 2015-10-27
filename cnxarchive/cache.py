@@ -5,7 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""Memcached utilities"""
+"""Memcached utilities."""
 
 import base64
 import copy
@@ -17,8 +17,10 @@ from .search import search as database_search
 
 
 def search(query, query_type, nocache=False):
-    """Look up search results in cache, if not in cache, do a database search
-    and cache the result
+    """Search archive contents.
+
+    Look up search results in cache, if not in cache,
+    do a database search and cache the result
     """
     settings = get_current_registry().settings
     memcache_servers = settings['memcache-servers'].split()

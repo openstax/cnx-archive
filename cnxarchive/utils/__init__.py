@@ -5,7 +5,9 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-from .date import *
-from .ident_hash import *
-from .mimetype import *
-from .text import *
+"""Various utility methods for various data types."""
+
+from .date import *  # noqa
+from .ident_hash import *  # noqa
+from .mimetype import *  # noqa
+from .text import *  # noqa
