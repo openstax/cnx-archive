@@ -72,7 +72,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
         full_id = id
     else:
         logger.debug("Neither short_id nor full UUID: not implemented.")
-        raise NotImplemented()
+        raise httpexceptions.HTTPNotFound()
 
     if not version:
         cursor.execute(SQL['get-module-versions'], {'id': full_id})
