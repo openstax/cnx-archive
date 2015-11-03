@@ -93,7 +93,7 @@ def main(argv=None):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
-                id, version, id_type = split_ident_hash(ident_hash)
+                id, version, id_type = split_ident_hash(ident_hash,return_type=True)
                 if id_type == CNXHash.FULLUUID:
                     cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
                                    (id, version))
