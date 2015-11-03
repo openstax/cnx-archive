@@ -283,7 +283,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
     try:
-        id, version, id_type = split_ident_hash(ident_hash,return_type=True)
+        id, version, id_type = split_ident_hash(ident_hash, return_type=True)
     except IdentHashSyntaxError:
         raise httpexceptions.HTTPNotFound()
 
@@ -496,7 +496,8 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    id, version, id_type = split_ident_hash(args['ident_hash'],return_type=True)
+    id, version, id_type = split_ident_hash(
+        args['ident_hash'], return_type=True)
     results = {}
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:

@@ -36,7 +36,7 @@ def split_legacy_hash(legacy_hash):
     return id, version
 
 
-def split_ident_hash(ident_hash, split_version=False, return_type = False):
+def split_ident_hash(ident_hash, split_version=False, return_type=False):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
     if HASH_CHAR not in ident_hash:
         ident_hash = '{}@'.format(ident_hash)
