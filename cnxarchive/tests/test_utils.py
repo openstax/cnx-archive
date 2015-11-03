@@ -14,7 +14,6 @@ from ..utils import CNXHash, IdentHashSyntaxError
 
 class SplitIdentTestCase(unittest.TestCase):
 
-    from ..utils import CNXHash
 
     def call_target(self, *args, **kwargs):
         from ..utils import split_ident_hash
