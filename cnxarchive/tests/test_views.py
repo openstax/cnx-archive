@@ -1226,6 +1226,80 @@ class ViewsTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
                           self.request)
 
+    def test_in_book_search(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        # search query param
+        self.request.params = {'q': 'air or liquid drag'}
+
+        from ..views import in_book_search
+        results = in_book_search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        IN_BOOK_SEARCH_RESULT = {
+            u'results': {
+                u'query': {
+                    u'search_term': u'air or liquid drag',
+                    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+                },
+                u'total': 3,
+                u'items': [
+                    {
+                        u'headline': (u"link] . It is relatively easy to compress gases and extremely difficult to compress <q-match>liquids</q-match> and solids. For example, "
+                                      "<q-match>air</q-match> in a wine bottle is compressed when it is corked. But if you try corking"),
+                        u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@1.8',
+                        u'rank': u'2.59875e-05',
+                        u'title': u'Elasticity: Stress and Strain'
+                    },
+                    {
+                        u'headline': (u"drop would achieve falling from 5.00 km (a) in the absence of <q-match>air</q-match> <q-match>drag</q-match>"
+                                      " (b) with <q-match>air</q-match> <q-match>drag</q-match>. Take the size across of the drop to be 4 mm, the density"),
+                        u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@1.6',
+                        u'rank': u'0.00424134',
+                        u'title': u'Drag Forces'
+                    },
+                    {
+                        u'headline': (u"Newton&#8217;s laws of motion. We have in mind the forces of friction, <q-match>air</q-match> "
+                                      "or <q-match>liquid</q-match> <q-match>drag</q-match>, and deformation"),
+                        u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@1.2',
+                        u'rank': u'0.05',
+                        u'title': u'Introduction: Further Applications of Newton\u2019s Laws'
+                    }
+                ]
+            }
+        }
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
+
+    def test_in_book_search_highlighted_results(self):
+        collection_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        collection_version = '7.1'
+        page_uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        page_version = '1.8'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(collection_uuid, collection_version),
+                                  'page_ident_hash': '{}@{}'.format(page_uuid, page_version)}
+        # search query param
+        self.request.params = {'q': 'air or liquid drag'}
+
+        from ..views import in_book_search_highlighted_results
+        results = in_book_search_highlighted_results(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        title = results['results']['items'][0]['title']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual(title, "Elasticity: Stress and Strain")
+
     def test_search(self):
         # Build the request
         self.request.params = {'q': '"college physics" sort:version'}
