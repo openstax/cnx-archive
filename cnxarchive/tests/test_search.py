@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import os
 import json
 import datetime
@@ -119,40 +120,40 @@ to solve traditional <b>physics</b> application problems."""
             (MODULE_MIMETYPE, 14,),
             ])
         # Check the author counts
-        osc_physics = {u'firstname': u'College',
-                       u'fullname': u'OSC Physics Maintainer',
-                       u'id': u'cnxcap',
-                       u'surname': u'Physics',
-                       u'title': None,
+        osc_physics = {'firstname': 'College',
+                       'fullname': 'OSC Physics Maintainer',
+                       'id': 'cnxcap',
+                       'surname': 'Physics',
+                       'title': None,
                        }
-        open_stax_college = {u'surname': None,
-                             u'firstname': u'OpenStax College',
-                             u'title': None,
-                             u'id': u'OpenStaxCollege',
-                             u'fullname': u'OpenStax College',
+        open_stax_college = {'surname': None,
+                             'firstname': 'OpenStax College',
+                             'title': None,
+                             'id': 'OpenStaxCollege',
+                             'fullname': 'OpenStax College',
                              }
         expected = [(open_stax_college['id'], 15,), (osc_physics['id'], 1,)]
         self.assertEqual(results.counts['authorID'], expected)
 
         # Check counts for publication year.
         pub_years = list(results.counts['pubYear'])
-        self.assertEqual(pub_years, [(u'2013', 12), (u'2012', 1), (u'2011', 2)])
+        self.assertEqual(pub_years, [('2013', 12), ('2012', 1), ('2011', 2)])
 
         # Check the subject counts.
         subjects = dict(results.counts['subject'])
         self.assertEqual(subjects,
-                         {u'Mathematics and Statistics': 8,
-                          u'Science and Technology': 7,
+                         {'Mathematics and Statistics': 8,
+                          'Science and Technology': 7,
                           })
 
         # Check the keyword counts.
         keywords = results.counts['keyword']
         self.assertEqual(len(keywords), 5)
-        self.assertEqual(keywords, [(u'force', 3),
-                                    (u'friction', 4),
-                                    (u'Modern physics', 2),
-                                    (u'Quantum mechanics', 2),
-                                    (u'Scientific method', 2),
+        self.assertEqual(keywords, [('force', 3),
+                                    ('friction', 4),
+                                    ('Units', 2),
+                                    ('velocity', 2),
+                                    ('Young’s modulus', 2),
                                     ])
 
     def test_result_counts_with_author_limit(self):
@@ -167,12 +168,12 @@ to solve traditional <b>physics</b> application problems."""
         results = self.make_queryresults(RAW_QUERY_RECORDS, query)
 
         open_stax_college = {
-            u'surname': None,
-            u'suffix': None,
-            u'firstname': u'OpenStax College',
-            u'title': None,
-            u'id': u'OpenStaxCollege',
-            u'fullname': u'OpenStax College',
+            'surname': None,
+            'suffix': None,
+            'firstname': 'OpenStax College',
+            'title': None,
+            'id': 'OpenStaxCollege',
+            'fullname': 'OpenStax College',
             }
 
         # Check there is only one author returned
@@ -192,19 +193,19 @@ to solve traditional <b>physics</b> application problems."""
         # Check the contents after sorting the results.
         authors = sorted(authors, key=lambda x: x['id'])
         expected = [
-            {u'surname': None,
-             u'firstname': u'OpenStax College',
-             u'suffix': None,
-             u'title': None,
-             u'fullname': u'OpenStax College',
-             u'id': u'OpenStaxCollege',
+            {'surname': None,
+             'firstname': 'OpenStax College',
+             'suffix': None,
+             'title': None,
+             'fullname': 'OpenStax College',
+             'id': 'OpenStaxCollege',
              },
-            {u'surname': u'Physics',
-             u'firstname': u'College',
-             u'suffix': None,
-             u'title': None,
-             u'fullname': u'OSC Physics Maintainer',
-             u'id': u'cnxcap',
+            {'surname': 'Physics',
+             'firstname': 'College',
+             'suffix': None,
+             'title': None,
+             'fullname': 'OSC Physics Maintainer',
+             'id': 'cnxcap',
              },
             ]
         self.assertEqual(authors, expected)
@@ -466,7 +467,7 @@ INSERT INTO users
             '2012': ['f3c9ab70-a916-4d8c-9256-42953287b4e9'],
             }
 
-        for year, ids in pub_year_mods.iteritems():
+        for year, ids in pub_year_mods.items():
             cursor.execute(
                 "UPDATE latest_modules "
                 "SET revised = '{}-07-31 12:00:00.000000-07'"
@@ -557,7 +558,7 @@ INSERT INTO users
         query_params = [('pubYear', '2020')]
         results = self.call_target(query_params)
 
-        self.assertEqual(results.counts['pubYear'], [(u'2020', 3)])
+        self.assertEqual(results.counts['pubYear'], [('2020', 3)])
 
     def test_type_without_term(self):
         query_params = [('type', 'book')]
@@ -596,7 +597,7 @@ INSERT INTO users
             'fr': ['209deb1f-1a46-4369-9e0d-18674cf58a3e'],
             }
 
-        for language, ids in language_mods.iteritems():
+        for language, ids in language_mods.items():
             cursor.execute(
                 "UPDATE latest_modules "
                 "SET language = %s"
@@ -620,13 +621,13 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 7)
         self.assertEqual(result_weights,
-                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 222),
-                          (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59', 22),
-                          (u'56f1c5c1-4014-450d-a477-2121e276beca', 22),
-                          (u'f6024d8a-1868-44c7-ab65-45419ef54881', 21),
-                          (u'c0a76659-c311-405f-9a99-15c71af39325', 21),
-                          (u'26346a42-84b9-48ad-9f6a-62303c16ad41', 21),
-                          (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d', 21),
+                         [('e79ffde3-7fb4-4af3-9ec8-df648b391597', 222),
+                          ('ea271306-f7f2-46ac-b2ec-1d80ff186a59', 22),
+                          ('56f1c5c1-4014-450d-a477-2121e276beca', 22),
+                          ('f6024d8a-1868-44c7-ab65-45419ef54881', 21),
+                          ('c0a76659-c311-405f-9a99-15c71af39325', 21),
+                          ('26346a42-84b9-48ad-9f6a-62303c16ad41', 21),
+                          ('24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d', 21),
                           ])
 
     def test_weighted_by_derivation_count(self):
@@ -638,8 +639,8 @@ INSERT INTO users
         self.assertEqual(len(results), 2)
         # Both of these are books, the a733d0d2 is derived from e79ffde3.
         # Because the e79ffde3 has not derived parentage, it get's a +1 bonus.
-        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 2),
-                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', 1),
+        expected = [('e79ffde3-7fb4-4af3-9ec8-df648b391597', 2),
+                    ('a733d0d2-de9b-43f9-8aa9-f0895036899e', 1),
                     ]
         self.assertEqual(result_weights, expected)
 
@@ -702,14 +703,14 @@ INSERT INTO users
         expectations = [
             # ident: uuid
             # books first
-            (1, u'e79ffde3-7fb4-4af3-9ec8-df648b391597',),
+            (1, 'e79ffde3-7fb4-4af3-9ec8-df648b391597',),
             # books with no hits applied, normal ordering expected.
-            (18, u'a733d0d2-de9b-43f9-8aa9-f0895036899e',),
+            (18, 'a733d0d2-de9b-43f9-8aa9-f0895036899e',),
             # then pages
-            (8, u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),
-            (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),
+            (8, '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),
+            (7, '5838b105-41cd-4c3d-a957-3ac004a48af3',),
             # No hits applied from here on, normal ordering expected.
-            (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),
+            (9, 'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),
             ]
         hits_to_apply = {8: 25, 7: 15, 9: 0, 1: 10, 18: 0}
 
@@ -737,12 +738,12 @@ INSERT INTO users
         expectations = ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
                         '56f1c5c1-4014-450d-a477-2121e276beca',
                         ]
-        matched_on = [{u'force': set([u'fulltext', u'keyword']),
-                       u'physics': set([u'maintainer']),
-                       u'stress': set([u'keyword'])},
-                      {u'force': set([u'fulltext', u'keyword']),
-                       u'physics': set([u'fulltext', u'maintainer']),
-                       u'stress': set([u'keyword'])},
+        matched_on = [{'force': set(['fulltext', 'keyword']),
+                       'physics': set(['maintainer']),
+                       'stress': set(['keyword'])},
+                      {'force': set(['fulltext', 'keyword']),
+                       'physics': set(['fulltext', 'maintainer']),
+                       'stress': set(['keyword'])},
                       ]
 
         results = self.call_target(query_params, query_type='AND')
@@ -768,17 +769,17 @@ INSERT INTO users
                         'f3c9ab70-a916-4d8c-9256-42953287b4e9',
                         'd395b566-5fe3-4428-bcb2-19016e3aa3ce',
                         ]
-        matched_on_keys = [[u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'physics', u'force'],
+        matched_on_keys = [['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
+                           ['force', 'physics'],
                            ]
 
         results = self.call_target(query_params, query_type='weakAND')
@@ -790,5 +791,5 @@ INSERT INTO users
             self.assertEqual(results[i]['id'], id)
         # This just verifies that only two of the three terms
         #   matched on each result.
-        self.assertEqual([r.matched.keys() for r in results],
+        self.assertEqual([sorted(list(r.matched.keys())) for r in results],
                          matched_on_keys)

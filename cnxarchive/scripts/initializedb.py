@@ -6,7 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Commandline script used to initialize the SQL database."""
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import os
 import sys
 import argparse

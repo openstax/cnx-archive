@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import datetime
 import os
 import time
@@ -12,6 +13,7 @@ import unittest
 
 import psycopg2
 
+from .. import IS_PY2
 from . import testing
 
 
@@ -51,7 +53,7 @@ class InitializeDBTestCase(unittest.TestCase):
         #   run the function.
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
             self.target(self.settings)
-        self.assertEqual(caught_exception.exception.message,
+        self.assertEqual(str(caught_exception.exception),
                          'Database is already initialized.\n')
 
 
@@ -212,7 +214,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
         cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
                                       'm42033-1.3.cnxml')
-        with open(cnxml_filepath, 'r') as f:
+        with open(cnxml_filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -250,7 +252,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
         cnxml_filepath = os.path.join(testing.DATA_DIRECTORY,
                                       'm42033-1.3.cnxml')
-        with open(cnxml_filepath, 'r') as f:
+        with open(cnxml_filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -287,7 +289,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         cursor.execute('SELECT fileid FROM files')
 
         filepath = os.path.join(testing.DATA_DIRECTORY, 'm42033-1.3.html')
-        with open(filepath, 'r') as f:
+        with open(filepath, 'rb') as f:
             cursor.execute('''\
             INSERT INTO files (file) VALUES
             (%s) RETURNING fileid''', [memoryview(f.read())])
@@ -315,328 +317,6 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.fixture.tearDown()
-
-    @testing.db_connect
-    def test_get_current_module_ident(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import get_current_module_ident
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, 1)''')
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
-
-        module_ident = cursor.fetchone()[0]
-
-        self.assertEqual(get_current_module_ident('m1', cursor=cursor),
-                         module_ident)
-
-    @testing.db_connect
-    def test_next_version(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import next_version
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
-        module_ident = cursor.fetchone()[0]
-
-        self.assertEqual(next_version(module_ident, cursor=cursor), 2)
-
-    @testing.db_connect
-    def test_get_collections(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import get_collections
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
-        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
-        collection_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col2', DEFAULT, '1.8', 'Name of c1',
-        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 8, 1) RETURNING module_ident''')
-        collection2_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
-        module_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
-                       [collection_ident])
-        nodeid = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
-                       [collection2_ident])
-        nodeid = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
-
-        self.assertEqual(list(get_collections(module_ident, cursor=cursor)),
-                         [collection_ident, collection2_ident])
-
-    @testing.db_connect
-    def test_rebuild_collection_tree(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import rebuild_collection_tree
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
-        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
-        collection_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
-        module_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm2', DEFAULT, '1.1', 'Name of m2',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 1, 1) RETURNING module_ident''')
-        module2_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, NULL, %s, 'title', 0, NULL) RETURNING nodeid''',
-                       [collection_ident])
-        nodeid = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
-
-        cursor.execute('''INSERT INTO trees VALUES (
-        DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module2_ident])
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
-        '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 10, 1) RETURNING module_ident''')
-        new_collection_ident = cursor.fetchone()[0]
-
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
-        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 3, 1) RETURNING module_ident''')
-        new_module_ident = cursor.fetchone()[0]
-
-        new_document_id_map = {
-            collection_ident: new_collection_ident,
-            module_ident: new_module_ident
-            }
-        rebuild_collection_tree(collection_ident, new_document_id_map,
-                                cursor=cursor)
-
-        cursor.execute('''\
-        WITH RECURSIVE t(node, parent, document, path) AS (
-            SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
-            FROM trees tr WHERE tr.documentid = %s
-        UNION ALL
-            SELECT c.nodeid, c.parent_id, c.documentid, path || ARRAY[c.nodeid]
-            FROM trees c JOIN t ON (t.node = c.parent_id)
-            WHERE not c.nodeid = ANY(t.path)
-        )
-        SELECT document FROM t
-        ''', [new_collection_ident])
-        self.assertEqual(cursor.fetchall(), [(new_collection_ident,),
-                         (new_module_ident,), (module2_ident,)])
-
-    @testing.db_connect
-    def test_republish_collection(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
-        from ..database import republish_collection
-
-        cursor.execute("""INSERT INTO document_controls (uuid)
-        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
-        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
-        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
-        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
-        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
-        ) RETURNING module_ident''')
-        collection_ident = cursor.fetchone()[0]
-
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
-
-        cursor.execute('''SELECT * FROM modules WHERE
-        module_ident = %s''', [new_ident])
-        data = cursor.fetchone()
-        self.assertEqual(data[1], 'Collection')
-        self.assertEqual(data[2], 'col1')
-        self.assertEqual(data[3], '3a5344bd-410d-4553-a951-87bccd996822')
-        self.assertEqual(data[4], '1.10')
-        self.assertEqual(data[5], 'Name of c1')
-        self.assertEqual(str(data[6]), '2013-07-31 12:00:00-07:00')
-        self.assertNotEqual(str(data[7]), '2013-10-03 21:59:12-07:00')
-        self.assertEqual(data[8], 1)
-        self.assertEqual(data[9], 11)
-        self.assertEqual(data[10], 'doctype')
-        self.assertEqual(data[11], 'submitter')
-        self.assertEqual(data[12], 'submitlog')
-        self.assertEqual(data[13], None)
-        self.assertEqual(data[14], None)
-        self.assertEqual(data[15], 'en')
-        self.assertEqual(data[16], ['authors'])
-        self.assertEqual(data[17], ['maintainers'])
-        self.assertEqual(data[18], ['licensors'])
-        self.assertEqual(data[19], ['parentauthors'])
-        self.assertEqual(data[20], 'analytics code')
-        self.assertEqual(data[21], 'buylink')
-        self.assertEqual(data[22], 10)
-        self.assertEqual(data[23], 3)
-
-    @testing.db_connect
-    def test_republish_collection_w_keywords(self, cursor):
-        # Ensure association of the new collection with existing keywords.
-        settings = testing.integration_test_settings()
-        cursor.execute("""\
-ALTER TABLE modules DISABLE TRIGGER module_published""")
-        cursor.connection.commit()
-
-        cursor.execute("""INSERT INTO document_controls (uuid)
-        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
-        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
-        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
-        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
-        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
-        ) RETURNING module_ident;''')
-        collection_ident = cursor.fetchone()[0]
-        keywords = ['smoo', 'dude', 'gnarly', 'felice']
-        values_expr = ", ".join("('{}')".format(v) for v in keywords)
-        cursor.execute("""INSERT INTO keywords (word)
-        VALUES {}
-        RETURNING keywordid;""".format(values_expr))
-        keywordids = [x[0] for x in cursor.fetchall()]
-        values_expr = ", ".join(["({}, '{}')".format(collection_ident, id)
-                                 for id in keywordids])
-        cursor.execute("""INSERT INTO modulekeywords (module_ident, keywordid)
-        VALUES {};""".format(values_expr))
-        cursor.connection.commit()
-
-        from ..database import republish_collection
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
-
-        cursor.execute("""\
-        SELECT word
-        FROM modulekeywords NATURAL JOIN keywords
-        WHERE module_ident = %s""", (new_ident,))
-
-        inserted_keywords = [x[0] for x in cursor.fetchall()]
-        self.assertEqual(sorted(inserted_keywords), sorted(keywords))
-
-    @testing.db_connect
-    def test_republish_collection_w_subjects(self, cursor):
-        # Ensure association of the new collection with existing keywords.
-        settings = testing.integration_test_settings()
-        cursor.execute("""\
-ALTER TABLE modules DISABLE TRIGGER module_published""")
-        cursor.connection.commit()
-
-        cursor.execute("""INSERT INTO document_controls (uuid)
-        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
-        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
-        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
-        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
-        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
-        ) RETURNING module_ident;''')
-        collection_ident = cursor.fetchone()[0]
-
-        subjects = [(2, 'Business',), (3, 'Humanities',)]
-
-        values_expr = ", ".join(["({}, '{}')".format(collection_ident, id)
-                                 for id, name in subjects])
-        cursor.execute("""INSERT INTO moduletags (module_ident, tagid)
-        VALUES {};""".format(values_expr))
-        cursor.connection.commit()
-
-        from ..database import republish_collection
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
-
-        cursor.execute("""\
-        SELECT tag
-        FROM moduletags NATURAL JOIN tags
-        WHERE module_ident = %s""", (new_ident,))
-
-        inserted_subjects = [x[0] for x in cursor.fetchall()]
-        self.assertEqual(sorted(inserted_subjects),
-                         sorted([name for id, name in subjects]))
-
-    def test_set_version(self):
-        from ..database import set_version
-
-        # set_version for modules
-        td = {
-            'new': {
-                'portal_type': 'Module',
-                'major_version': 1,
-                'minor_version': None,
-                'version': '1.13',
-                }
-            }
-        modified = set_version(td['new']['portal_type'], td['new']['version'], td)
-        self.assertEqual(modified, 'MODIFY')
-        self.assertEqual(td['new'], {
-            'portal_type': 'Module',
-            'major_version': 13,
-            'minor_version': None,
-            'version': '1.13',
-            })
-
-        # set_version for collections
-        td = {
-            'new': {
-                'portal_type': 'Collection',
-                'major_version': 1,
-                'minor_version': None,
-                'version': '1.100',
-                }
-            }
-        modified = set_version(td['new']['portal_type'], td['new']['version'], td)
-        self.assertEqual(modified, 'MODIFY')
-        self.assertEqual(td['new'], {
-            'portal_type': 'Collection',
-            'major_version': 100,
-            'minor_version': 1,
-            'version': '1.100',
-            })
 
     @testing.db_connect
     def test_insert_new_module(self, cursor):
@@ -858,8 +538,12 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         # Test that we generated exactly one index.cnxml.html for new_module_ident
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains html
-        html = index_htmls[0][0][:]
-        self.assertIn('<html', html)
+        html = index_htmls[0][0]
+        if IS_PY2:
+            html = html[:]
+        else:
+            html = html.tobytes()
+        self.assertIn(b'<html', html)
 
     @testing.db_connect
     def test_module_files_from_html(self, cursor):
@@ -943,8 +627,12 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(sorted([fn for f, fn in index_cnxmls]),
                          ['index.cnxml', 'index.html.cnxml'])
         # Test that the index.html.cnxml contains cnxml
-        cnxml = index_cnxmls[0][0][:]
-        self.assertIn('<document', cnxml)
+        cnxml = index_cnxmls[0][0]
+        if IS_PY2:
+            cnxml = cnxml[:]
+        else:
+            cnxml = cnxml.tobytes()
+        self.assertIn(b'<document', cnxml)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -1021,8 +709,12 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         # Test that we DID NOT generate an index.cnxml.html for new_module_ident
         self.assertEqual(len(index_htmls), 1)
         # Test that the index.cnxml.html contains the custom content.
-        html = index_htmls[0][0][:]
-        self.assertEqual(custom_content, html)
+        html = index_htmls[0][0]
+        if IS_PY2:
+            html = html[:]
+        else:
+            html = html.tobytes()
+        self.assertEqual(custom_content.encode('utf-8'), html)
 
     @testing.db_connect
     def test_tree_to_json(self, cursor):
@@ -1030,62 +722,62 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         This is used during a cnx-publishing publication.
         """
         expected_tree = {
-            u'id': u'col11406',
-            u'title': u'College Physics',
-            u'version': u'1.7',
-            u'contents': [
-                {u'id': u'm42955', u'title': u'Preface', u'version': u'1.7'},
-                {u'id': u'subcol',
-                 u'title': u'Introduction: The Nature of Science and Physics',
-                 u'version': None,
-                 u'contents': [
-                     {u'id': u'm42119',
-                      u'title': u'Introduction to Science and the Realm of '
-                                u'Physics, Physical Quantities, and Units',
-                      u'version': u'1.3'},
-                     {u'id': u'm42092',
-                      u'title': u'Physics: An Introduction',
-                      u'version': u'1.4'},
-                     {u'id': u'm42091',
-                      u'title': u'Physical Quantities and Units',
-                      u'version': u'1.6'},
-                     {u'id': u'm42120',
-                      u'title': u'Accuracy, Precision, and Significant '
-                                u'Figures',
-                      u'version': u'1.7'},
-                     {u'id': u'm42121',
-                      u'title': u'Approximation',
-                      u'version': u'1.5'}]},
-                {u'id': u'subcol',
-                 u'title': u"Further Applications of Newton's Laws: Friction,"
-                           u" Drag, and Elasticity",
-                 u'version': None,
-                 u'contents': [
-                     {u'id': u'm42138',
-                      u'title': u'Introduction: Further Applications of '
-                                u'Newton\u2019s Laws',
-                      u'version': u'1.2'},
-                     {u'id': u'm42139',
-                      u'title': u'Friction',
-                      u'version': u'1.5'},
-                     {u'id': u'm42080',
-                      u'title': u'Drag Forces',
-                      u'version': u'1.6'},
-                     {u'id': u'm42081',
-                      u'title': u'Elasticity: Stress and Strain',
-                      u'version': u'1.8'}]},
-                {u'id': u'm42699',
-                 u'title': u'Atomic Masses',
-                 u'version': u'1.3'},
-                {u'id': u'm42702',
-                 u'title': u'Selected Radioactive Isotopes',
-                 u'version': u'1.2'},
-                {u'id': u'm42720',
-                 u'title': u'Useful Inf\xf8rmation',
-                 u'version': u'1.5'},
-                {u'id': u'm42709',
-                 u'title': u'Glossary of Key Symbols and Notation',
-                 u'version': u'1.5'}]}
+            'id': 'col11406',
+            'title': 'College Physics',
+            'version': '1.7',
+            'contents': [
+                {'id': 'm42955', 'title': 'Preface', 'version': '1.7'},
+                {'id': 'subcol',
+                 'title': 'Introduction: The Nature of Science and Physics',
+                 'version': None,
+                 'contents': [
+                     {'id': 'm42119',
+                      'title': 'Introduction to Science and the Realm of '
+                               'Physics, Physical Quantities, and Units',
+                      'version': '1.3'},
+                     {'id': 'm42092',
+                      'title': 'Physics: An Introduction',
+                      'version': '1.4'},
+                     {'id': 'm42091',
+                      'title': 'Physical Quantities and Units',
+                      'version': '1.6'},
+                     {'id': 'm42120',
+                      'title': 'Accuracy, Precision, and Significant '
+                               'Figures',
+                      'version': '1.7'},
+                     {'id': 'm42121',
+                      'title': 'Approximation',
+                      'version': '1.5'}]},
+                {'id': 'subcol',
+                 'title': "Further Applications of Newton's Laws: Friction,"
+                          " Drag, and Elasticity",
+                 'version': None,
+                 'contents': [
+                     {'id': 'm42138',
+                      'title': 'Introduction: Further Applications of '
+                               'Newton\u2019s Laws',
+                      'version': '1.2'},
+                     {'id': 'm42139',
+                      'title': 'Friction',
+                      'version': '1.5'},
+                     {'id': 'm42080',
+                      'title': 'Drag Forces',
+                      'version': '1.6'},
+                     {'id': 'm42081',
+                      'title': 'Elasticity: Stress and Strain',
+                      'version': '1.8'}]},
+                {'id': 'm42699',
+                 'title': 'Atomic Masses',
+                 'version': '1.3'},
+                {'id': 'm42702',
+                 'title': 'Selected Radioactive Isotopes',
+                 'version': '1.2'},
+                {'id': 'm42720',
+                 'title': 'Useful Inf\xf8rmation',
+                 'version': '1.5'},
+                {'id': 'm42709',
+                 'title': 'Glossary of Key Symbols and Notation',
+                 'version': '1.5'}]}
         cursor.execute("""\
 SELECT tree_to_json_for_legacy(
     'e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1')::json

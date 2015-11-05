@@ -5,7 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-
+from __future__ import unicode_literals
 import os.path
 
 

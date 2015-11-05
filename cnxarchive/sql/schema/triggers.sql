@@ -80,43 +80,445 @@ CREATE TRIGGER delete_from_latest_version
 CREATE OR REPLACE FUNCTION republish_module ()
   RETURNS trigger
 AS $$
-  from cnxarchive.database import republish_module_trigger
-  return republish_module_trigger(plpy, TD)
+    """Postgres database trigger for republishing a module
+
+    When a module is republished, the versions of the collections that it is
+    part of will need to be updated (a minor update).
+
+
+    e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+    m1 is updated, we have a new row in the modules table with m1 v4
+
+    this trigger will create increment the minor version of c1, so we'll have
+    c1 v2.2
+
+    we need to create a collection tree for c1 v2.2 which is exactly the same
+    as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
+    """
+
+    def set_version(portal_type, legacy_version):
+        """Sets the major_version and minor_version if they are not set
+        """
+        major = TD['new']['major_version']
+        minor = TD['new']['minor_version']
+        modified = 'OK'
+        legacy_major, legacy_minor = legacy_version.split('.')
+
+        if portal_type == 'Collection':
+            # For collections, both major and minor needs to be set
+            modified = 'MODIFY'
+            TD['new']['major_version'] = int(legacy_minor)
+            if TD['new']['minor_version'] is None:
+                TD['new']['minor_version'] = 1
+
+        elif portal_type == 'Module':
+            # For modules, major should be set and minor should be None
+            # N.B. a very few older modules had major=2 and minor zero-based. Add one for those
+            modified = 'MODIFY'
+            TD['new']['major_version'] = int(legacy_minor) + (int(legacy_major) - 1)
+            TD['new']['minor_version'] = None
+
+        return modified
+
+    def get_current_module_ident(moduleid):
+        sql = '''SELECT module_ident FROM modules
+                 WHERE moduleid = $1 ORDER BY revised DESC'''
+        plan = plpy.prepare(sql, ('text',))
+        results = plpy.execute(plan, (moduleid,), 1)
+        if results:
+            return results[0]['module_ident']
+
+    def get_module_uuid(moduleid):
+        plan = plpy.prepare('SELECT uuid FROM modules WHERE moduleid = $1',
+                            ('text',))
+        result = plpy.execute(plan, (moduleid,), 1)
+        if result:
+            return result[0]['uuid']
+
+    def get_collections(module_ident):
+        """Get all the collections that the module is part of
+        """
+        sql = '''
+        WITH RECURSIVE t(node, parent, path, document) AS (
+            SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
+            FROM trees tr
+            WHERE tr.documentid = $1
+        UNION ALL
+            SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
+            FROM trees c JOIN t ON (c.nodeid = t.parent)
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT m.module_ident
+        FROM t JOIN latest_modules m ON (t.document = m.module_ident)
+        WHERE t.parent IS NULL
+        '''
+        plan = plpy.prepare(sql, ('integer',))
+        for i in plpy.execute(plan, (module_ident,)):
+            yield i['module_ident']
+
+    def next_version(module_ident):
+        minor = get_minor_version(module_ident)
+        return minor + 1
+
+    def get_minor_version(module_ident):
+        sql = '''SELECT minor_version
+                FROM modules
+                WHERE module_ident = $1
+                ORDER BY revised DESC'''
+        plan = plpy.prepare(sql, ('integer',))
+        results = plpy.execute(plan, (module_ident,), 1)
+        if results:
+            return results[0]['minor_version']
+
+    def republish_collection(next_minor_version, collection_ident,
+            revised=None):
+        """Insert a new row for collection_ident with a new version and return
+        the module_ident of the row inserted
+        """
+        sql = '''
+        INSERT INTO modules (portal_type, moduleid, uuid, version, name, created, revised,
+            abstractid,licenseid,doctype,submitter,submitlog,stateid,parent,language,
+            authors,maintainers,licensors,parentauthors,google_analytics,buylink,
+            major_version, minor_version)
+          SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created, {},
+            m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog, m.stateid, m.parent,
+            m.language, m.authors, m.maintainers, m.licensors, m.parentauthors,
+            m.google_analytics, m.buylink, m.major_version, $1
+          FROM modules m
+          WHERE m.module_ident = $2
+        RETURNING module_ident
+        '''
+        if revised is None:
+            sql = sql.format('CURRENT_TIMESTAMP')
+            plan = plpy.prepare(sql, ('integer', 'integer'))
+            params = (next_minor_version, collection_ident)
+        else:
+            sql = sql.format('$3')
+            plan = plpy.prepare(sql, ('integer', 'integer', 'timestamp'))
+            params = (next_minor_version, collection_ident, revised)
+
+        new_ident = plpy.execute(plan, params, 1)[0]['module_ident']
+        plan = plpy.prepare("""\
+            INSERT INTO modulekeywords (module_ident, keywordid)
+            SELECT $1, keywordid
+            FROM modulekeywords
+            WHERE module_ident = $2""", ('integer', 'integer'))
+        plpy.execute(plan, (new_ident, collection_ident,))
+
+        plan = plpy.prepare("""\
+            INSERT INTO moduletags (module_ident, tagid)
+            SELECT $1, tagid
+            FROM moduletags
+            WHERE module_ident = $2""", ('integer', 'integer'))
+        plpy.execute(plan, (new_ident, collection_ident,))
+        return new_ident
+
+    def rebuild_collection_tree(old_collection_ident, new_document_id_map):
+        """Create a new tree for the collection based on the old tree but with
+        new document ids
+        """
+        sql = '''
+        WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
+            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.documentid = $1
+        UNION ALL
+            SELECT c.*, path || ARRAY[c.nodeid]
+            FROM trees c JOIN t ON (c.parent_id = t.node)
+            WHERE not c.nodeid = ANY(t.path)
+        )
+        SELECT * FROM t
+        '''
+
+        def get_tree():
+            plan = plpy.prepare(sql, ('integer',))
+            for i in plpy.execute(plan, (old_collection_ident,)):
+                yield i
+
+        tree = {} # { old_nodeid: {'data': ...}, ...}
+        children = {} # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
+        for i in get_tree():
+            tree[i['node']] = {'data': i, 'new_nodeid': None}
+            children.setdefault(i['parent'], [])
+            children[i['parent']].append(i['node'])
+
+        sql = '''
+        INSERT INTO trees (nodeid, parent_id, documentid, title, childorder, latest)
+        VALUES (DEFAULT, $1, $2, $3, $4, $5)
+        RETURNING nodeid
+        '''
+        plan = plpy.prepare(sql, ('integer', 'integer', 'text', 'integer', 'boolean',))
+
+        def execute(fields):
+            return plpy.execute(plan, fields, 1)[0]['nodeid']
+
+        root_node = children[None][0]
+        def build_tree(node, parent):
+            data = tree[node]['data']
+            new_node = execute([parent, new_document_id_map.get(data['document'],
+                data['document']), data['title'], data['childorder'],
+                data['latest']])
+            for i in children.get(node, []):
+                build_tree(i, new_node)
+        build_tree(root_node, None)
+
+    def republish_module():
+        """When a module is republished, the versions of the collections that it is
+        part of will need to be updated (a minor update).
+
+
+        e.g. there is a collection c1 v2.1, which contains module m1 v3
+
+        m1 is updated, we have a new row in the modules table with m1 v4
+
+        this trigger will create increment the minor version of c1, so we'll have
+        c1 v2.2
+
+        we need to create a collection tree for c1 v2.2 which is exactly the same
+        as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
+        """
+        portal_type = TD['new']['portal_type']
+        modified = 'OK'
+        moduleid = TD['new']['moduleid']
+        legacy_version = TD['new']['version']
+
+        modified = set_version(portal_type, legacy_version)
+
+        current_module_ident = get_current_module_ident(moduleid)
+        if current_module_ident:
+            # need to overide autogen uuid to keep it constant per moduleid
+            uuid = get_module_uuid(moduleid)
+            TD['new']['uuid'] = uuid
+            modified = 'MODIFY'
+        else:
+            # nothing to do if the module/collection is new
+            return modified
+
+        if portal_type != 'Module':
+            # nothing else to do if something else is being published
+            return modified
+
+        new_module_ident = TD['new']['module_ident']
+        # Module is republished
+        for collection_id in get_collections(current_module_ident):
+            minor = next_version(collection_id)
+            new_ident = republish_collection(minor, collection_id)
+            rebuild_collection_tree(collection_id, {
+                collection_id: new_ident,
+                current_module_ident: new_module_ident,
+                })
+
+        return modified
+
+    # Is this an insert from legacy? Legacy always supplies the version.
+    is_legacy_publication = TD['new']['version'] is not None
+    if not is_legacy_publication:
+        # Bail out, because this trigger only applies to legacy publications.
+        return "OK"
+
+    plpy.log('Trigger fired on %s' % (TD['new']['moduleid'],))
+
+    modified = republish_module()
+    plpy.log('modified: {}'.format(modified))
+    plpy.log('insert values:\n{}\n'.format('\n'.join([
+        '{}: {}'.format(key, value)
+        for key, value in TD['new'].iteritems()])))
+
+    return modified
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION assign_moduleid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_moduleid_default_trigger
-  return assign_moduleid_default_trigger(plpy, TD)
+    """A compatibilty trigger to fill in legacy ``moduleid`` field when
+    defined while inserting publications.
+
+    This correctly assigns ``moduleid`` value to
+    cnx-publishing publications. This does NOT include
+    matching the ``moduleid`` to previous revision by way of ``uuid``.
+
+    This correctly updates the sequence values when a legacy publication
+    specifies the ``moduleid`` value. This is because legacy does not know
+    about nor use the sequence values when setting legacy ``moduleid``.
+
+    """
+    modified_state = "OK"
+    portal_type = TD['new']['portal_type']
+    uuid = TD['new']['uuid']
+    moduleid = TD['new']['moduleid']
+    version = TD['new']['version']
+    major_version = TD['new']['major_version']
+    minor_version = TD['new']['minor_version']
+
+    # Is this an insert from legacy? Legacy always supplies the version.
+    is_legacy_publication = version is not None
+
+    if moduleid is None:
+        # If the moduleid is not supplied, it is a new publication.
+        if portal_type == "Collection":
+            prefix, sequence_name = 'col', "collectionid_seq"
+        else:
+            prefix, sequence_name = 'm', "moduleid_seq"
+        plan = plpy.prepare("SELECT $1 || nextval($2)::text AS moduleid",
+                            ['text', 'text'])
+        row = plpy.execute(plan, (prefix, sequence_name,), 1)
+        moduleid = row[0]['moduleid']
+        modified_state = "MODIFY"
+        TD['new']['moduleid'] = moduleid
+    elif is_legacy_publication and moduleid is not None:
+        # Set the sequence value based on what legacy gave us.
+        plan = plpy.prepare("""\
+SELECT setval($1, max(substr(moduleid, $2)::int))
+FROM (
+  SELECT moduleid from modules where portal_type = $3
+  UNION ALL
+  SELECT $4) AS all_together""", ['text', 'int', 'text', 'text'])
+        args = []
+        if portal_type == 'Collection':
+            args.append('collectionid_seq')
+            args.append(4)
+        else:
+            args.append('moduleid_seq')
+            args.append(2)
+        args.extend([portal_type, moduleid])
+        plpy.execute(plan, args)
+
+    plpy.log("Fixed identifier and version for publication at '{}' " \
+             "with the following values: {} and {}" \
+             .format(uuid, moduleid, version))
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION assign_version_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_version_default_trigger
-  return assign_version_default_trigger(plpy, TD)
+    """A compatibilty trigger to fill in legacy data fields that are not
+    populated when inserting publications from cnx-publishing.
+
+    If this is not a legacy publication the ``version`` will be set
+    based on the ``major_version`` value.
+    """
+    modified_state = "OK"
+    portal_type = TD['new']['portal_type']
+    version = TD['new']['version']
+    minor_version = TD['new']['minor_version']
+
+    # Set the minor version on collections, because by default it is
+    # None/Null, which is the correct default for modules.
+    if portal_type == 'Collection' and minor_version is None:
+        modified_state = "MODIFY"
+        TD['new']['minor_version'] = 1
+
+    # Set the legacy version field based on the major version.
+    if version is None:
+        major_version = TD['new']['major_version']
+        version = "1.{}".format(major_version)
+        modified_state = "MODIFY"
+        TD['new']['version'] = version
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION assign_uuid_default ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import assign_document_controls_default_trigger
-  return assign_document_controls_default_trigger(plpy, TD)
+    """A compatibilty trigger to fill in ``uuid`` and ``licenseid`` columns
+    of the ``document_controls`` table that are not
+    populated when inserting publications from legacy.
+
+    This uuid default is not on ``modules.uuid`` column itself,
+    because the value needs to be loosely associated
+    with the ``document_controls`` entry
+    to prevent uuid collisions and bridge the pending publications gap.
+    """
+    modified_state = "OK"
+    uuid = TD['new']['uuid']
+
+    # Only do the procedure if this is a legacy publication.
+    if uuid is None:
+        modified_state = "MODIFY"
+        plan = plpy.prepare("""\
+INSERT INTO document_controls (uuid, licenseid) VALUES (DEFAULT, $1)
+RETURNING uuid""", ('integer',))
+        uuid_ = plpy.execute(plan, (TD['new']['licenseid'],))[0]['uuid']
+        TD['new']['uuid'] = uuid_
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION upsert_document_acl ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import upsert_document_acl_trigger
-  return upsert_document_acl_trigger(plpy, TD)
+    """A compatibility trigger to upsert authorization control entries (ACEs)
+    for legacy publications.
+    """
+    modified_state = "OK"
+    uuid_ = TD['new']['uuid']
+    authors = TD['new']['authors'] and TD['new']['authors'] or []
+    maintainers = TD['new']['maintainers'] and TD['new']['maintainers'] or []
+    is_legacy_publication = TD['new']['version'] is not None
+
+    if not is_legacy_publication:
+        return modified_state
+
+    # Upsert all authors and maintainers into the ACL
+    # to give them publish permission.
+    permissibles = []
+    permissibles.extend(authors)
+    permissibles.extend(maintainers)
+    permissibles = set([(uid, 'publish',) for uid in permissibles])
+
+    plan = plpy.prepare("""\
+SELECT user_id, permission FROM document_acl WHERE uuid = $1""",
+                        ['uuid'])
+    existing_permissibles = set([(r['user_id'], r['permission'],)
+                                 for r in plpy.execute(plan, (uuid_,))])
+
+    new_permissibles = permissibles.difference(existing_permissibles)
+
+    for uid, permission in new_permissibles:
+        plan = plpy.prepare("""\
+INSERT INTO document_acl (uuid, user_id, permission)
+VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
+        plpy.execute(plan, (uuid_, uid, permission,))
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION upsert_user_shadow ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import upsert_users_from_legacy_publication_trigger
-  return upsert_users_from_legacy_publication_trigger(plpy, TD)
+    """A compatibility trigger to upsert users from the legacy persons table.
+    """
+    modified_state = "OK"
+    uuid_ = TD['new']['uuid']
+    authors = TD['new']['authors'] and TD['new']['authors'] or []
+    maintainers = TD['new']['maintainers'] and TD['new']['maintainers'] or []
+    licensors = TD['new']['licensors'] and TD['new']['licensors'] or []
+    is_legacy_publication = TD['new']['version'] is not None
+
+    if not is_legacy_publication:
+        return modified_state
+
+    # Upsert all roles into the users table.
+    users = []
+    users.extend(authors)
+    users.extend(maintainers)
+    users.extend(licensors)
+    users = list(set(users))
+
+    plan = plpy.prepare("""\
+SELECT username FROM users WHERE username = any($1)""",
+                        ['text[]'])
+    existing_users = set([r['username'] for r in plpy.execute(plan, (users,))])
+
+    new_users = set(users).difference(existing_users)
+    for username in new_users:
+        plan = plpy.prepare("""\
+INSERT INTO users (username, first_name, last_name, full_name, title)
+SELECT personid, firstname, surname, fullname, honorific
+FROM persons where personid = $1""", ['text'])
+        plpy.execute(plan, (username,))
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER act_10_module_uuid_default
@@ -149,8 +551,28 @@ CREATE TRIGGER module_version_default
 CREATE OR REPLACE FUNCTION optional_roles_user_insert ()
   RETURNS TRIGGER
 AS $$
-  from cnxarchive.database import insert_users_for_optional_roles_trigger
-  return insert_users_for_optional_roles_trigger(plpy, TD)
+    """A compatibility trigger to insert users from moduleoptionalroles
+    records. This is primarily for legacy compatibility, but it is not
+    possible to tell whether the entry came from legacy or cnx-publishing.
+    Therefore, we only insert into users.
+    """
+    modified_state = "OK"
+    users = TD['new']['personids'] and TD['new']['personids'] or []
+
+    plan = plpy.prepare("""\
+SELECT username FROM users WHERE username = any($1)""",
+                        ['text[]'])
+    existing_users = set([r['username'] for r in plpy.execute(plan, (users,))])
+
+    new_users = set(users).difference(existing_users)
+    for username in new_users:
+        plan = plpy.prepare("""\
+INSERT INTO users (username, first_name, last_name, full_name, title)
+SELECT personid, firstname, surname, fullname, honorific
+FROM persons where personid = $1""", ['text'])
+        plpy.execute(plan, (username,))
+
+    return modified_state
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER optional_roles_user_insert
@@ -194,8 +616,117 @@ CREATE TRIGGER update_files_sha1
 CREATE OR REPLACE FUNCTION add_module_file ()
   RETURNS trigger
 AS $$
-  from cnxarchive.database import add_module_file
-  return add_module_file(plpy, TD)
+    """Postgres database trigger for adding a module file
+
+    When a legacy ``index.cnxml`` is added, this trigger
+    transforms it into html and stores it as ``index.cnxml.html``.
+    When a cnx-publishing ``index.cnxml.html`` is added, this trigger
+    checks if ``index.html.cnxml`` exists before
+    transforming it into cnxml and stores it as ``index.html.cnxml``.
+
+    Note, we do not use ``index.html`` over ``index.cnxml.html``, because
+    legacy allows users to name files ``index.html``.
+
+    """
+    from cnxmltransforms import (
+        produce_cnxml_for_module, produce_html_for_module,
+        transform_abstract_to_cnxml, transform_abstract_to_html,
+        )
+
+    def _transform_abstract(module_ident):
+        """Transforms an abstract using one of content columns
+        ('abstract' or 'html') to determine which direction the transform
+        will go (cnxml->html or html->cnxml).
+        A transform is done on either one of them to make
+        the other value. If no value is supplied, the trigger raises an error.
+        If both values are supplied, the trigger will skip.
+        """
+        plan = plpy.prepare("""\
+SELECT a.abstractid, a.abstract, a.html
+FROM modules AS m NATURAL JOIN abstracts AS a
+WHERE m.module_ident = $1""", ('integer',))
+        result = plpy.execute(plan, (module_ident,), 1)
+        abstractid = result[0]['abstractid']
+        cnxml = result[0]['abstract']
+        html = result[0]['html']
+        if cnxml is not None and html is not None:
+            return  # skip
+        # TODO Prevent blank abstracts (abstract = null & html = null).
+
+        msg = "produce {}->{} for abstractid={}"
+        if cnxml is None:
+            # Transform html->cnxml
+            msg = msg.format('html', 'cnxml', abstractid)
+            content = html
+            column = 'abstract'
+            transform_func = transform_abstract_to_cnxml
+        else:
+            # Transform cnxml->html
+            msg = msg.format('cnxml', 'html', abstractid)
+            content = cnxml
+            column = 'html'
+            transform_func = transform_abstract_to_html
+
+        content, messages = transform_func(content, module_ident,
+                                           plpy)
+        plan = plpy.prepare(
+            "UPDATE abstracts SET {} = $1 WHERE abstractid = $2" \
+            .format(column),
+            ('text', 'integer'))
+        plpy.execute(plan, (content, abstractid,))
+        return msg
+
+    module_ident = TD['new']['module_ident']
+    fileid = TD['new']['fileid']
+    filename = TD['new']['filename']
+    msg = "produce {}->{} for module_ident = {}"
+
+    def check_for(filenames, module_ident):
+        """Check for a file at ``filename`` associated with
+        module at ``module_ident``.
+        """
+        stmt = plpy.prepare("""\
+SELECT TRUE AS exists FROM module_files
+WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
+        any_exist = False
+        for filename in filenames:
+            result = plpy.execute(stmt, [filename, module_ident])
+            try:
+                exists = result[0]['exists']
+            except IndexError:
+                exists = False
+            any_exist = any_exist or exists
+        return any_exist
+
+    # Declare the content producer function variable,
+    #   because it is possible that it will not be assigned.
+    producer_func = None
+    if filename == 'index.cnxml':
+        new_filenames = ('index.cnxml.html',)
+        # Transform content to html.
+        other_exists = check_for(new_filenames, module_ident)
+        if not other_exists:
+            msg = msg.format('cnxml', 'html', module_ident)
+            producer_func = produce_html_for_module
+    elif filename == 'index.cnxml.html':
+        new_filenames = ('index.html.cnxml', 'index.cnxml',)
+        # Transform content to cnxml.
+        other_exists = check_for(new_filenames, module_ident)
+        if not other_exists:
+            msg = msg.format('html', 'cnxml', module_ident)
+            producer_func = produce_cnxml_for_module
+    else:
+        # Not one of the special named files.
+        return  # skip
+
+    plpy.info(msg)
+    if producer_func is not None:
+        producer_func(plpy,
+                      module_ident,
+                      source_filename=filename,
+                      destination_filenames=new_filenames)
+    _transform_abstract(module_ident)
+    return
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER module_file_added

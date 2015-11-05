@@ -6,7 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Memcached utilities"""
-
+from __future__ import unicode_literals
 import base64
 import copy
 
@@ -14,6 +14,7 @@ import memcache
 from pyramid.threadlocal import get_current_registry
 
 from .search import search as database_search
+from .utils import utf8
 
 
 def search(query, query_type, nocache=False):
@@ -36,11 +37,11 @@ def search(query, query_type, nocache=False):
 
     # search_key should look something like:
     # '"sort:pubDate" "text:college physics" "query_type:weakAND"'
-    search_key = ' '.join(['"{}"'.format(':'.join(param))
+    search_key = ' '.join(['"{}"'.format(':'.join(utf8(param)))
                            for param in search_params])
     # since search_key is not a valid memcached key, use base64
     # encoding to make it into a valid key
-    mc_search_key = base64.b64encode(search_key)
+    mc_search_key = base64.b64encode(search_key.encode('utf-8'))
 
     # look for search results in memcache first, unless nocache
     mc = memcache.Client(memcache_servers,
@@ -71,5 +72,6 @@ def search(query, query_type, nocache=False):
         mc.set(mc_search_key, search_results, time=cache_length,
                min_compress_len=1024*1024)  # compress when > 1MB
 
+    mc.disconnect_all()
     # return search results
     return search_results

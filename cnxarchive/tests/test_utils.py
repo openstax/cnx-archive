@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
 import os
 import uuid
 import unittest
@@ -192,11 +193,11 @@ class SlugifyTestCase(unittest.TestCase):
 
     def test_unicode(self):
         self.assertEqual(self.call_target('Radioactive (Die Verstoßenen)'),
-                         u'radioactive-die-verstoßenen')
+                         'radioactive-die-verstoßenen')
 
-        self.assertEqual(self.call_target(u'40文字でわかる！'
-                                          u'　知っておきたいビジネス理論'),
-                         u'40文字でわかる-知っておきたいビジネス理論')
+        self.assertEqual(self.call_target('40文字でわかる！'
+                                          '　知っておきたいビジネス理論'),
+                         '40文字でわかる-知っておきたいビジネス理論')
 
 
 class EscapeTestCase(unittest.TestCase):
@@ -228,22 +229,24 @@ class Utf8TestCase(unittest.TestCase):
         return utf8(*args, **kwargs)
 
     def test_str(self):
-        self.assertEqual(self.call_target('inførmation'), u'inførmation')
+        self.assertEqual(self.call_target(b'inf\xc3\xb8rmation'),
+                         'inførmation')
 
     def test_unicode(self):
-        self.assertEqual(self.call_target(u'inførmation'), u'inførmation')
+        self.assertEqual(self.call_target('inførmation'), 'inførmation')
 
     def test_not_str(self):
         self.assertEqual(self.call_target(1), 1)
 
     def test_list(self):
-        self.assertEqual([u'infør', u'mation'],
-                         self.call_target(['infør', 'mation']))
+        self.assertEqual(['infør', 'mation'],
+                         self.call_target([b'inf\xc3\xb8r', b'mation']))
 
     def test_tuple(self):
-        self.assertEqual((u'infør', u'mation',),
-                         self.call_target(('infør', 'mation',)))
+        self.assertEqual(('infør', 'mation',),
+                         self.call_target((b'inf\xc3\xb8r', b'mation',)))
 
     def test_dict(self):
-        self.assertEqual({u'inførmation': u'inførm'},
-                         self.call_target({'inførmation': 'inførm'}))
+        self.assertEqual({'inførmation': 'inførm'},
+                         self.call_target(
+                             {b'inf\xc3\xb8rmation': b'inf\xc3\xb8rm'}))

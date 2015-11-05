@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Database search utilties"""
+from __future__ import unicode_literals
 import os
 import json
 import re
@@ -328,7 +329,7 @@ class QueryResults(Sequence):
                 authors.add(hashabledict(author))
 
         authors = list(authors)
-        authors.sort(lambda x, y: cmp(y['id'], x['id']))
+        authors.sort(key=lambda a: a['id'], reverse=True)
         setattr(self, attr_name, authors)
         return getattr(self, attr_name)
 
@@ -348,18 +349,18 @@ class QueryResults(Sequence):
 
         if max_results:
             # limit the number of results we return
-            counts = counts.items()
+            counts = list(counts.items())
             # sort counts by the count with highest count first
-            counts.sort(lambda a, b: cmp(a[1], b[1]), reverse=True)
+            counts.sort(key=lambda a: (a[1], a[0].lower()), reverse=True)
             counts = counts[:max_results]
 
         if sorted:
             if isinstance(counts, dict):
-                counts = counts.items()
+                counts = list(counts.items())
             # Sort counts by the name alphabetically
-            counts.sort(lambda a, b: cmp(a[0].lower(), b[0].lower()))
+            counts.sort(key=lambda a: a[0].lower())
         else:
-            counts = counts.iteritems()
+            counts = list(counts.items())
 
         return counts
 
@@ -384,25 +385,21 @@ class QueryResults(Sequence):
                 counts[uid] += 1
                 uid_author.setdefault(uid, author)
         authors = []
-        for uid, count in counts.iteritems():
+        for uid, count in counts.items():
             author = uid_author[uid]
             authors.append(((uid, author,), count))
 
         if max_results:
             # limit the number of results we return
             # sort counts by the count with highest count first
-            authors.sort(lambda a, b: cmp(a[1], b[1]), reverse=True)
+            authors.sort(key=lambda a: a[1], reverse=True)
             authors = authors[:max_results]
 
-        def sort_name(a, b):
+        def sort_name_key(a):
             (uid_a, author_a), count_a = a
-            (uid_b, author_b), count_b = b
-            result = cmp(author_a['surname'], author_b['surname'])
-            if result == 0:
-                result = cmp(author_a['firstname'], author_b['firstname'])
-            return result
+            return (author_a['surname'] or '', author_a['firstname'] or '')
         # Sort authors by surname then first name
-        authors.sort(sort_name)
+        authors.sort(key=sort_name_key)
         authors = [(a[0][0], a[1],) for a in authors]
         return authors
 
@@ -414,12 +411,12 @@ class QueryResults(Sequence):
                 continue
             date = datetime(*strptime(date, "%Y-%m-%dT%H:%M:%SZ")[:6],
                             tzinfo=FixedOffsetTimezone())
-            year = unicode(date.astimezone(LOCAL_TZINFO).year)
+            year = str(date.astimezone(LOCAL_TZINFO).year)
             counts.setdefault(year, 0)
             counts[year] += 1
-        counts = counts.items()
+        counts = list(counts.items())
         # Sort pubYear in reverse chronological order
-        counts.sort(lambda a, b: cmp(a[0], b[0]), reverse=True)
+        counts.sort(key=lambda a: a[0], reverse=True)
         return counts
 
 
@@ -536,7 +533,7 @@ def _build_search(structured_query, weights):
     arguments = {}
 
     # Clone the weighted queries for popping.
-    query_weight_order = DEFAULT_SEARCH_WEIGHTS.keys()
+    query_weight_order = list(DEFAULT_SEARCH_WEIGHTS.keys())
 
     # Roll over the weight sequence.
     query_list = []
