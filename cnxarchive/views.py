@@ -138,12 +138,19 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
     get_type_info()
     request = get_current_request()
 
-    ## check status of file using celery queue
-
     for type_name, type_info in TYPE_INFO:
         try:
             (filename, mimetype, file_size, file_created, state, file_content
              ) = get_export_file(cursor, id, version, type_name, exports_dirs)
+            file_path = request.route_path(
+                    'export', ident_hash=join_ident_hash(id, version),
+                    type=type_name, ignore=u'/{}'.format(filename))
+
+            # check build status (if file exists or a url?)
+            build_status = False
+            if(os.path.isfile(file_path)):
+                build_status = True
+
             yield {
                 'format': type_info['user_friendly_name'],
                 'filename': filename,
@@ -151,10 +158,8 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                 'created': file_created and file_created.isoformat() or None,
                 'state': state,
                 'details': type_info['description'],
-                'path': request.route_path(
-                    'export', ident_hash=join_ident_hash(id, version),
-                    type=type_name, ignore=u'/{}'.format(filename)),
-                'build_status': False
+                'path': file_path,
+                'build_status': build_status
                 }
         except ExportError as e:
             # Some other problem, skip it
