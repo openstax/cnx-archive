@@ -42,6 +42,7 @@ SQL = {
     'get-resourceid-by-filename': _read_sql_file('get-resourceid-by-filename'),
     'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
     'get-module-versions': _read_sql_file('get-module-versions'),
+    'get-module-uuid': _read_sql_file('get-module-uuid'),
     'get-subject-list': _read_sql_file('get-subject-list'),
     'get-featured-links': _read_sql_file('get-featured-links'),
     'get-users-by-ids': _read_sql_file('get-users-by-ids'),
@@ -114,7 +115,8 @@ def initdb(settings):
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):
     """Returns the moduleid for a given ``ident_hash``."""
-    uuid, (mj_ver, mn_ver) = split_ident_hash(ident_hash, split_version=True)
+    uuid, (mj_ver, mn_ver) = split_ident_hash(
+        ident_hash, split_version=True)
     args = [uuid]
     stmt = "SELECT module_ident FROM {} WHERE uuid = %s"
     table_name = 'modules'

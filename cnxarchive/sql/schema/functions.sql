@@ -17,6 +17,9 @@ end;
 $$ language 'plpgsql' immutable;
 
 
+CREATE OR REPLACE FUNCTION short_id (u uuid) RETURNS text as $$
+select substring(replace(replace(replace(encode(uuid_send(u),'base64'),'+','-'),'/','_'),'=',''),1,8) $$
+IMMUTABLE STRICT LANGUAGE SQL;
 
 
 CREATE OR REPLACE FUNCTION req(text) RETURNS text AS $$
@@ -27,7 +30,7 @@ CREATE OR REPLACE FUNCTION array_position (ANYARRAY, ANYELEMENT)
 RETURNS INTEGER
 IMMUTABLE STRICT
 LANGUAGE PLPGSQL
-AS '
+AS $$
 BEGIN
   for i in array_lower($1,1) .. array_upper($1,1)
   LOOP
@@ -38,13 +41,13 @@ BEGIN
   END LOOP;
   RETURN NULL;
 END;
-';
+$$;
 
 CREATE OR REPLACE FUNCTION array_position (ANYARRAY, ANYARRAY)
 RETURNS INTEGER
 IMMUTABLE STRICT
 LANGUAGE PLPGSQL
-AS '
+AS $$
 BEGIN
   for i in array_lower($1,1) .. array_upper($1,1)
   LOOP
@@ -55,7 +58,7 @@ BEGIN
   END LOOP;
   RETURN NULL;
 END;
-';
+$$;
 
 
 

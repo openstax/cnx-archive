@@ -9,6 +9,7 @@
 SELECT row_to_json(combined_rows) AS module
 FROM (SELECT
   m.uuid AS id,
+  short_id(m.uuid) as short_id,
   concat_ws('.', m.major_version, m.minor_version) AS current_version,
   -- can't use "version" as we need it in GROUP BY clause and it causes a
   -- "column name is ambiguous" error
@@ -64,6 +65,7 @@ FROM (SELECT
   (SELECT row_to_json(parent_row)
    FROM (
      SELECT p.uuid AS id,
+            short_id(p.uuid) as short_id,
             concat_ws('.', p.major_version, p.minor_version) AS version,
             p.name AS title,
             ARRAY(SELECT row_to_json(user_rows)
