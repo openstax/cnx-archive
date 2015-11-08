@@ -9,7 +9,7 @@
 SELECT row_to_json(combined_rows) as module
 FROM (SELECT
   m.uuid AS id,
-  short_id(m.uuid) as short_id,
+  short_id(m.uuid) as "shortId",
 
   concat_ws('.', m.major_version, m.minor_version) AS current_version,
   -- can't use "version" as we need it in GROUP BY clause and it causes a
