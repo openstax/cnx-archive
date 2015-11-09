@@ -47,7 +47,7 @@ COLLECTION_METADATA = {
     u'created': u'2013-07-31T19:07:20Z',
     u'doctype': u'',
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-    u'short_id': u'55_943-0',
+    u'shortId': u'55_943-0',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -84,11 +84,11 @@ COLLECTION_METADATA = {
     u'parentTitle': None,
     u'parentVersion': '',
     u'parent': {
-        'authors': [],
-        'id': None,
-        'short_id': None,
-        'title': None,
-        'version': '',
+        u'authors': [],
+        u'id': None,
+        u'shortId': None,
+        u'title': None,
+        u'version': '',
         },
     u'revised': u'2013-08-31T19:07:20Z',
     u'stateid': None,
@@ -229,7 +229,7 @@ MODULE_METADATA = {
     u'created': u'2013-07-31T19:07:24Z',
     u'doctype': u'',
     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca',
-    u'short_id': u'VvHFwUAU',
+    u'shortId': u'VvHFwUAU',
     u'language': u'en',
     u'license': {
         u'code': u'by',
@@ -268,7 +268,7 @@ MODULE_METADATA = {
     u'parent': {
         u'authors': [],
         u'id': None,
-        'short_id': None,
+        u'shortId': None,
         u'title': None,
         u'version': '',
         },
