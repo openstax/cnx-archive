@@ -287,11 +287,16 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     except IdentHashSyntaxError:
         raise httpexceptions.HTTPNotFound()
 
+    page_ident_hash = routing_args.get('page_ident_hash', '')
+    if page_ident_hash:
+        try:
+            p_id, p_version, p_id_type = split_ident_hash(page_ident_hash, return_type=True)
+        except IdentHashSyntaxError:
+            raise httpexceptions.HTTPNotFound()
+
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version or id_type == CNXHash.SHORTID:
-                page_ident_hash = routing_args.get('page_ident_hash', '')
-
                 route_name = 'content'
                 route_args = {}
                 if page_ident_hash:
@@ -308,11 +313,18 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor)
 
-                page_ident_hash = routing_args.get('page_ident_hash')
                 if page_ident_hash:
+                    if p_id_type == CNXHash.SHORTID:
+                        cursor.execute(SQL['get-module-uuid'], {'id': p_id})
+                        try:
+                            p_id = cursor.fetchone()[0]
+                        except (TypeError, IndexError,):  # None returned
+                            logger.debug("Short ID for page was supplied and could not discover UUID.")
+                            raise httpexceptions.HTTPNotFound()
+
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
-                        if id == page_ident_hash or id_ == page_ident_hash:
+                        if id == p_id and (version == p_version or not p_version):
                             raise httpexceptions.HTTPFound(request.route_path(
                                 'content',
                                 ident_hash=join_ident_hash(id, version)))
