@@ -290,7 +290,8 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
         try:
-            p_id, p_version, p_id_type = split_ident_hash(page_ident_hash, return_type=True)
+            p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
+                                                          return_type=True)
         except IdentHashSyntaxError:
             raise httpexceptions.HTTPNotFound()
 
@@ -319,12 +320,14 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
                         try:
                             p_id = cursor.fetchone()[0]
                         except (TypeError, IndexError,):  # None returned
-                            logger.debug("Short ID for page was supplied and could not discover UUID.")
+                            logger.debug("Short ID for page was supplied"
+                                         " and could not discover UUID.")
                             raise httpexceptions.HTTPNotFound()
 
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
-                        if id == p_id and (version == p_version or not p_version):
+                        if id == p_id and (
+                           version == p_version or not p_version):
                             raise httpexceptions.HTTPFound(request.route_path(
                                 'content',
                                 ident_hash=join_ident_hash(id, version)))
