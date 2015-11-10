@@ -603,7 +603,7 @@ def in_book_search(request):
             for uuid, version, title, headline, rank in res:
                 results['results']['items'].append({
                     'rank': '{}'.format(rank),
-                    'id': '{}@{}'.format(uuid, version.split('.')[1]),
+                    'id': '{}@{}'.format(uuid, version),
                     'title': '{}'.format(title),
                     'headline': '{}'.format(headline),
                 })
