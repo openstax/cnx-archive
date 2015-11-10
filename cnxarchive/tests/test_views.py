@@ -555,11 +555,10 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_content_shortid_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
-        from uuid import UUID
-        import base64
-        u = UUID(uuid)
         version = 5
-        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
+        from ..utils import CNXHash
+        cnxhash = CNXHash(uuid)
+        short_id = cnxhash.get_shortid()
 
         # Build the request environment.
         self.request.matchdict = {
@@ -579,9 +578,9 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_content_shortid_no_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
-        from uuid import UUID
-        import base64
-        short_id = base64.urlsafe_b64encode(UUID(uuid).bytes)[:8]
+        from ..utils import CNXHash
+        cnxhash = CNXHash(uuid)
+        short_id = cnxhash.get_shortid()
 
         # Build the request environment.
         self.request.matchdict = {
@@ -675,6 +674,81 @@ class ViewsTestCase(unittest.TestCase):
 
         path = '/contents/{}@{}:{}.json'.format(
             book_uuid, book_version, page_uuid)
+        self.assertEqual(cm.exception.headers['Location'], quote(path))
+
+    def test_content_page_inside_book_version_mismatch_shortid(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+        from ..utils import CNXHash
+        book_shortid = CNXHash(book_uuid).get_shortid()
+        page_shortid = CNXHash(page_uuid).get_shortid()
+
+        # Build the request
+        self.request.matchdict = {
+                'ident_hash': '{}@{}'.format(book_shortid, book_version),
+                'page_ident_hash': '{}@0'.format(page_shortid),
+                }
+
+        # Call the view
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(
+            cm.exception.headers['Location'],
+            quote('/contents/{}@{}:{}@{}.json'.format(book_uuid, book_version, page_shortid, 0)))
+
+    def test_content_page_inside_book_w_version_shortid(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+        from ..utils import CNXHash
+        book_shortid = CNXHash(book_uuid).get_shortid()
+        page_shortid = CNXHash(page_uuid).get_shortid()
+
+        # Build the request
+        self.request.matchdict = {
+                'ident_hash': '{}@{}'.format(book_shortid, book_version),
+                'page_ident_hash': '{}@{}'.format(page_shortid, page_version),
+                }
+
+        # Call the view
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(
+            cm.exception.headers['Location'],
+            quote('/contents/{}@{}:{}@{}.json'.format(book_uuid, book_version,
+                                                      page_shortid, page_version)))
+
+    def test_content_page_inside_book_wo_version_shortid(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
+        page_version = '3'
+        from ..utils import CNXHash
+        book_shortid = CNXHash(book_uuid).get_shortid()
+        page_shortid = CNXHash(page_uuid).get_shortid()
+
+        # Build the request
+        self.request.matchdict = {
+            'ident_hash': book_shortid,
+            'page_ident_hash': page_shortid,
+            }
+
+        # Call the view
+        from ..views import get_content
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            get_content(self.request)
+
+        path = '/contents/{}@{}:{}.json'.format(
+            book_uuid, book_version, page_shortid)
         self.assertEqual(cm.exception.headers['Location'], quote(path))
 
     def test_legacy_id_redirect(self):
@@ -1226,11 +1300,11 @@ class ViewsTestCase(unittest.TestCase):
         # Request the extras for a document with a shortid and
         #   version. The expectation is that this will redirect to the
         #   fullid (uuid@version)
-        from uuid import UUID
-        import base64
 
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
+        from ..utils import CNXHash
+        cnxhash = CNXHash(id)
+        short_id = cnxhash.get_shortid()
         version = '7.1'
         expected_ident_hash = "{}@{}".format(id, version)
 
@@ -1251,12 +1325,12 @@ class ViewsTestCase(unittest.TestCase):
         # Request the extras for a document with a shortid and no
         #   version. The expectation is that this will redirect to the
         #   fullid (uuid@version)
-        from uuid import UUID
-        import base64
 
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        short_id = base64.urlsafe_b64encode(UUID(id).bytes)[:8]
         version = '7.1'
+        from ..utils import CNXHash
+        cnxhash = CNXHash(id)
+        short_id = cnxhash.get_shortid()
         expected_ident_hash = "{}@{}".format(id, version)
 
         # Build the request
