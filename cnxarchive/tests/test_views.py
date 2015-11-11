@@ -1499,7 +1499,7 @@ class ViewsTestCase(unittest.TestCase):
         collection_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         collection_version = '7.1'
         page_uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
-        page_version = '1.8'
+        page_version = '8'
 
         # build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(collection_uuid, collection_version),
@@ -1513,10 +1513,14 @@ class ViewsTestCase(unittest.TestCase):
         content_type = self.request.response.content_type
 
         title = results['results']['items'][0]['title']
+        id = results['results']['items'][0]['id']
+        content = results['results']['items'][0]['html']
 
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
-        self.assertEqual(title, "Elasticity: Stress and Strain")
+        self.assertEqual('Elasticity: Stress and Strain', title)
+        self.assertEqual('56f1c5c1-4014-450d-a477-2121e276beca@8', id)
+        self.assertEqual("<q-match>air</q-match>" in content, True)
 
     def test_search(self):
         # Build the request
