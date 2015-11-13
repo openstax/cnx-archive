@@ -40,7 +40,7 @@ from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
     portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash,
+    join_ident_hash, split_ident_hash, split_legacy_hash, utf8
     )
 
 
@@ -582,14 +582,14 @@ def in_book_search(request):
                 results['results']['items'].append({
                     'rank': '{}'.format(rank),
                     'id': '{}@{}'.format(uuid, version),
-                    'title': '{}'.format(title),
-                    'headline': '{}'.format(headline),
+                    'title': '{}'.format(utf8(title)),
+                    'headline': '{}'.format(utf8(headline)),
                 })
 
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
+    resp.text = utf8(json.dumps(results))
 
     return resp
 
@@ -652,7 +652,7 @@ def in_book_search_highlighted_results(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
+    resp.text = utf8(json.dumps(results))
 
     return resp
 
