@@ -7,6 +7,7 @@
 # ###
 import datetime
 import os
+import sys
 import time
 import unittest
 
@@ -53,6 +54,18 @@ class InitializeDBTestCase(unittest.TestCase):
             self.target(self.settings)
         self.assertEqual(caught_exception.exception.message,
                          'Database is already initialized.\n')
+
+    @testing.db_connect
+    def test_venv(self, cursor):
+        """Testing to veryify the venv schema is properly created and the correct
+        instance of python is used
+        """
+        cursor.execute("CREATE FUNCTION pypath() RETURNS text LANGUAGE "
+                       "plpythonu AS $$import sys;return sys.prefix$$")
+        cursor.execute("SELECT pypath()")
+        db_pypath = cursor.fetchone()[0]
+
+        self.assertEqual(True, os.path.samefile(db_pypath, sys.prefix))
 
 
 class MiscellaneousFunctionsTestCase(unittest.TestCase):
