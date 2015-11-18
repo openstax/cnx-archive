@@ -28,7 +28,7 @@ COALESCE(t.title, m.name),
 ts_headline(
 convert_from(f.file, 'utf8'),
 plainto_tsquery(%(search_term)s),
-'StartSel=<q-match>, StopSel=</q-match>, MaxFragments=1'
+E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=5'
 ),
 ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
