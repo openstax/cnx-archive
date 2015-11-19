@@ -15,7 +15,8 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:cnx="http://cnx.rice.edu/cnxml"
                 xmlns:m="http://www.w3.org/1998/Math/MathML"
-                xmlns:md="http://cnx.rice.edu/mdml/0.4"
+                xmlns:md4="http://cnx.rice.edu/mdml/0.4"
+                xmlns:md="http://cnx.rice.edu/mdml"
                 xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:bib="http://bibtexml.sf.net/"
                 >
@@ -27,6 +28,8 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
   </xsl:template>
 
   <xsl:template match="md:*"/>
+
+  <xsl:template match="md4:*"/>
 
 </xsl:stylesheet>
 $$ LANGUAGE xslt;
