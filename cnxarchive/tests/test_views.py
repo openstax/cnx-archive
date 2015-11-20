@@ -1552,7 +1552,7 @@ class ViewsTestCase(unittest.TestCase):
                     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
                     u'rank': u'2.59875e-05',
                     u'title': u'Elasticity: Stress and Strain'
-                    }                ]
+                    }]
             }
         }
 
