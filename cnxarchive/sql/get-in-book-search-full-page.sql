@@ -24,7 +24,10 @@ WHERE NOT nodeid = any (t.path)
 SELECT
 m.uuid,
 m.major_version as version,
-COALESCE(t.title, m.name),
+ts_headline(COALESCE(t.title, m.name),
+plainto_tsquery(%(search_term)s),
+E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=0, HighlightAll=TRUE'
+),
 ts_headline(
 convert_from(f.file, 'utf8'),
 plainto_tsquery(%(search_term)s),

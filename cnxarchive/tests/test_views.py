@@ -1466,38 +1466,15 @@ class ViewsTestCase(unittest.TestCase):
                 },
                 u'total': 3,
                 u'items': [{
-                    u'headline': u'move from consideration of forces that '
-                                 u'affect the motion of an object (such as '
-                                 u'friction and <span '
-                                 u'class="q-match">drag</span>) to those that '
-                                 u'affect an object&#8217;s shape. If a bulldozer '
-                                 u'pushes a car into a wall ... Ethanol \n                 '
-                                 u'\n                 \n                 '
-                                 u'0.9 \n                '
-                                 u'\n                 Glycerin \n                 '
-                                 u'\n                 \n                 4.5 \n   '
-                                 u'             \n                 Mercury \n      '
-                                 u'           \n                 \n                '
-                                 u' 25 \n                \n                 Water \n'
-                                 u'                 \n                 \n            '
-                                 u'     2.2 \n                  \n      \n        '
-                                 u'Young&#8217;s moduli are not listed for <span class="q-match">'
-                                 u'liquids</span> and gases in  [link]  because they '
-                                 u'cannot be stretched or compressed in only one direction. '
-                                 u'Note that there ... Modern structures were made possible '
-                                 u'by the use of steel and steel-reinforced concrete. '
-                                 u'Almost by definition, <span class="q-match">liquids</span> '
-                                 u'and gases have shear moduli near zero, because they flow '
-                                 u'in response to shearing forces. \n\n        '
-                                 u'Calculating Force ... link] . It is relatively '
-                                 u'easy to compress gases and extremely difficult '
-                                 u'to compress <span class="q-match">liquids</span> and '
-                                 u'solids. For example, <span class="q-match">air</span> '
-                                 u'in a wine bottle is compressed when it is corked. But '
-                                 u'if you try corking',
-                    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
-                    u'rank': u'2.59875e-05',
-                    u'title': u'Elasticity: Stress and Strain'
+                    u'headline': u'Newton&#8217;s laws of motion. We have in '
+                                 u'mind the forces of friction, '
+                                 u'<span class="q-match">air</span> or <span '
+                                 u'class="q-match">liquid</span> <span '
+                                 u'class="q-match">drag</span>, '
+                                 u'and deformation',
+                    u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
+                    u'rank': u'0.05',
+                    u'title': u'Introduction: Further Applications of Newton\u2019s Laws'
                     }, {
                     u'headline': u'object when it is moving in a fluid ('
                                  u'either a gas or a <span '
@@ -1541,19 +1518,41 @@ class ViewsTestCase(unittest.TestCase):
                                  u' the density',
                     u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
                     u'rank': u'0.00424134',
-                    u'title': u'Drag Forces'
+                    u'title': u'<span class="q-match">Drag</span> Forces'
                     }, {
-                    u'headline': u'Newton&#8217;s laws of motion. We have in '
-                                 u'mind the forces of friction, '
-                                 u'<span class="q-match">air</span> or <span '
-                                 u'class="q-match">liquid</span> <span '
-                                 u'class="q-match">drag</span>, '
-                                 u'and deformation',
-                    u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
-                    u'rank': u'0.05',
-                    u'title': u'Introduction: Further Applications of Newton\u2019s Laws'
-                }
-                ]
+                    u'headline': u'move from consideration of forces that '
+                                 u'affect the motion of an object (such as '
+                                 u'friction and <span '
+                                 u'class="q-match">drag</span>) to those that '
+                                 u'affect an object&#8217;s shape. If a bulldozer '
+                                 u'pushes a car into a wall ... Ethanol \n                 '
+                                 u'\n                 \n                 '
+                                 u'0.9 \n                '
+                                 u'\n                 Glycerin \n                 '
+                                 u'\n                 \n                 4.5 \n   '
+                                 u'             \n                 Mercury \n      '
+                                 u'           \n                 \n                '
+                                 u' 25 \n                \n                 Water \n'
+                                 u'                 \n                 \n            '
+                                 u'     2.2 \n                  \n      \n        '
+                                 u'Young&#8217;s moduli are not listed for <span class="q-match">'
+                                 u'liquids</span> and gases in  [link]  because they '
+                                 u'cannot be stretched or compressed in only one direction. '
+                                 u'Note that there ... Modern structures were made possible '
+                                 u'by the use of steel and steel-reinforced concrete. '
+                                 u'Almost by definition, <span class="q-match">liquids</span> '
+                                 u'and gases have shear moduli near zero, because they flow '
+                                 u'in response to shearing forces. \n\n        '
+                                 u'Calculating Force ... link] . It is relatively '
+                                 u'easy to compress gases and extremely difficult '
+                                 u'to compress <span class="q-match">liquids</span> and '
+                                 u'solids. For example, <span class="q-match">air</span> '
+                                 u'in a wine bottle is compressed when it is corked. But '
+                                 u'if you try corking',
+                    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
+                    u'rank': u'2.59875e-05',
+                    u'title': u'Elasticity: Stress and Strain'
+                    }]
             }
         }
 
