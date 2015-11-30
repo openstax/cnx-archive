@@ -91,7 +91,7 @@ class CNXHash(uuid.UUID):
     FULLUUID = 2
     _SHORT_HASH_LENGTH = 8
     _MAX_SHORT_HASH_LENGTH = 22
-    _HASH_PADDING_CHAR = ' = '
+    _HASH_PADDING_CHAR = '='
     _HASH_DUMMY_CHAR = '0'
 
     def __init__(self, uu=None, *args, **kwargs):
@@ -187,7 +187,7 @@ class CNXHash(uuid.UUID):
 
     @classmethod
     def identifiers_equal(cls, identifier1, identifier2):
-        """Compare to identifiers for equality, regardless of format."""
+        """Compare two identifiers for equality, regardless of format."""
         fulluuid1 = None
         fulluuid2 = None
         base64hash1 = None
