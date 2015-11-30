@@ -8,9 +8,43 @@
 import os
 import uuid
 import unittest
+import json
 
 from ..utils import CNXHash, IdentHashSyntaxError
 
+class test_json2colxml(unittest.TestCase):
+    def call_target(self, *args, **kwargs):
+        from ..utils import json2colxml
+        return json2colxml(*args, **kwargs)
+
+    def test_gen_colxml(self):
+        import ipdb; ipdb.set_trace();
+        from lxml import etree
+        json_path = os.path.join('cnxarchive/tests/data','example_col.json')
+        with open(json_path) as f:
+             test_json=json.loads(f.read())
+        returned_xml=self.call_target(test_json)
+#        returned_root_nsmap = returned_xml.getroot().nsmap
+        expected_root_nsmap = {'md': 'http://cnx.rice.edu/mdml', 
+                               'cc': 'http://web.resource.org/cc/', 
+                               'bib': 'http://bibtexml.sf.net/', 
+                               'm': 'http://www.w3.org/1998/Math/MathML', 
+                               'cnx': 'http://cnx.rice.edu/cnxml', 
+                               'q': 'http://cnx.rice.edu/qml/1.0', 
+                               'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 
+                               'cnxml': 'http://cnx.rice.edu/cnxml', 
+        #                       None: 'http://cnx.rice.edu/collxml', 
+                               'col': 'http://cnx.rice.edu/collxml', 
+                               'xhtml': 'http://www.w3.org/1999/xhtml', 
+                               'cnxorg': 'http://cnx.rice.edu/system-info'}        
+#        self.assertEqual(expected_root_nsmap,returned_root_nsmap)
+        print('\n')
+        print(etree.tostring(returned_xml, pretty_print=True))
+  
+#        self.assertEqual(returned_xml.getroot().tag,'{http://cnx.rice.edu/collxml}collection')
+#        self.assertEqual(returned_xml.getroot()[0].tag,'{http://cnx.rice.edu/collxml}metadata')
+#        self.assertEqual(returned_xml.getroot()[1].tag,'{http://cnx.rice.edu/collxml}parameters')
+#        self.assertEqual(returned_xml.getroot()[2].tag,'{http://cnx.rice.edu/collxml}content')
 
 class SplitIdentTestCase(unittest.TestCase):
 

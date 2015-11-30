@@ -9,3 +9,5 @@ from .date import *
 from .ident_hash import *
 from .mimetype import *
 from .text import *
+from .gen_epub import *
+
