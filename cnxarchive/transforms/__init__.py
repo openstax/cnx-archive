@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-from .converters import *
-from .resolvers import *
-from .producers import *
+"""Transforms for CNXML <-> HTML."""
+from .converters import *  # noqa
+from .resolvers import *  # noqa
+from .producers import *  # noqa

@@ -1,22 +1,21 @@
 # Based largely on  werkzeug.contrib.sitemap (PR)
-"""    ~~~~~~~~~~~~~~~~~~~~~~~~
+"""This module prvides a class called :class:`Sitemap` for web sitemaps.
 
-    This module provides a class called :class:`Sitemap` which can be used to
-    generate sitemap.xml in the sitemap XML format. For more information
-    please refer to http://sitemaps.org/protocol.html.
+This module provides a class called :class:`Sitemap` which can be used to
+generate sitemap.xml in the sitemap XML format. For more information
+please refer to http://sitemaps.org/protocol.html.
 
-    Example::
+Example::
 
-        def sitemap():
-            xml = Sitemap()
+    def sitemap():
+        xml = Sitemap()
 
-            for post in Post.query.limit(10).all():
-                xml.add_url(post.url, lastmod=post.last_update,
-                        changefreq='weekly', priority=0.8)
+        for post in Post.query.limit(10).all():
+            xml.add_url(post.url, lastmod=post.last_update,
+                    changefreq='weekly', priority=0.8)
 
-            return xml.get_response()
+        return xml.get_response()
 """
-from datetime import datetime
 
 from utils import escape
 
@@ -27,12 +26,15 @@ class Sitemap(object):
     """A helper class that creates sitemap.xml."""
 
     def __init__(self, urls=None):
+        """Build sitemap from urls."""
         self.urls = urls and list(urls) or []
 
     def add_url(self, *args, **kwargs):
-        """Add a new url to the sitemap. This function can either be called
-        with a :class:`UrlEntry` or some keyword and positional arguments that
-        are forwarded to the :class:`UrlEntry` constructor.
+        """Add a new url to the sitemap.
+
+        This function can either be called with a :class:`UrlEntry`
+        or some keyword and positional arguments that are forwarded to
+        the :class:`UrlEntry` constructor.
         """
         if len(args) == 1 and not kwargs and isinstance(args[0], UrlEntry):
             self.urls.append(args[0])
@@ -40,6 +42,7 @@ class Sitemap(object):
             self.urls.append(UrlEntry(*args, **kwargs))
 
     def __repr__(self):
+        """Simple string representation."""
         return '<%s (%d entrie(s))>' % (
             self.__class__.__name__,
             len(self.urls)
@@ -59,12 +62,15 @@ class Sitemap(object):
         return u''.join(self.generate())
 
     def __call__(self):
+        """Return the string."""
         return self.__str__()
 
     def __unicode__(self):
+        """Return the string."""
         return self.to_string()
 
     def __str__(self):
+        """Return the string."""
         return self.to_string().encode('utf-8')
 
 
@@ -86,6 +92,7 @@ class UrlEntry(object):
         'always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never']
 
     def __init__(self, loc=None, **kwargs):
+        """Create a URLEntry object for sitemap."""
         self.loc = loc
         self.lastmod = kwargs.get('lastmod')
         self.changefreq = kwargs.get('changefreq')
@@ -100,13 +107,14 @@ class UrlEntry(object):
             raise ValueError('location is required')
 
     def __repr__(self):
+        """Some useful info."""
         return '<%s %r>' % (
             self.__class__.__name__,
             self.loc
         )
 
     def generate(self):
-        """Yields pieces of XML."""
+        """Yield next XML fragment as a string."""
         yield u'<url>\n'
         yield u'<loc>%s</loc>\n' % escape(self.loc)
         if self.lastmod:
@@ -126,7 +134,9 @@ class UrlEntry(object):
         return u''.join(self.generate())
 
     def __unicode__(self):
+        """Return the string."""
         return self.to_string()
 
     def __str__(self):
+        """Return the string."""
         return self.to_string().encode('utf-8')

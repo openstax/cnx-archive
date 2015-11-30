@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Methods for handling mimetypes."""
+
 __all__ = (
     'COLLECTION_MIMETYPE',
     'FOLDER_MIMETYPE',
@@ -26,5 +28,5 @@ PORTALTYPE_TO_MIMETYPE_MAPPING = {
 
 
 def portaltype_to_mimetype(portal_type):
-    """Map the given ``portal_type`` to a mimetype"""
+    """Map the given ``portal_type`` to a mimetype."""
     return PORTALTYPE_TO_MIMETYPE_MAPPING[portal_type]

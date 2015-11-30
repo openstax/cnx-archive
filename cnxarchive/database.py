@@ -5,12 +5,10 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""Database models and utilities"""
-import datetime
+"""Database models and utilities."""
 import os
 import json
 import psycopg2
-import re
 import sys
 
 from . import config
@@ -20,11 +18,16 @@ from .transforms import (
     )
 from .utils import split_ident_hash
 
-
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
 SCHEMA_MANIFEST_FILENAME = 'manifest.json'
+
+
+class ContentNotFound(Exception):
+    """Used when database retrival fails."""
+
+    pass
 
 
 def _read_sql_file(name):
@@ -77,7 +80,8 @@ def _read_schema_manifest(manifest_filepath):
 
 
 def _compile_manifest(manifest, content_modifier=None):
-    """Compiles a given ``manifest`` into a sequence of schema items.
+    """Compile a given ``manifest`` into a sequence of schema items.
+
     Apply the optional ``content_modifier`` to each file's contents.
     """
     items = []
@@ -94,6 +98,7 @@ def _compile_manifest(manifest, content_modifier=None):
 
 
 def get_schema():
+    """Return the current schema."""
     manifest_filepath = os.path.join(DB_SCHEMA_DIRECTORY,
                                      SCHEMA_MANIFEST_FILENAME)
     schema_manifest = _read_schema_manifest(manifest_filepath)
@@ -166,7 +171,7 @@ $_$""".format(activate_path=activate_path)
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):
-    """Returns the moduleid for a given ``ident_hash``."""
+    """Return the moduleid for a given ``ident_hash``."""
     uuid, (mj_ver, mn_ver) = split_ident_hash(
         ident_hash, split_version=True)
     args = [uuid]
@@ -191,9 +196,7 @@ def get_module_ident_from_ident_hash(ident_hash, cursor):
 
 
 def get_tree(ident_hash, cursor):
-    """Given an ``ident_hash``, return a JSON representation
-    of the binder tree.
-    """
+    """Return a JSON representation of the binder tree for ``ident_hash``."""
     uuid, version = split_ident_hash(ident_hash)
     cursor.execute(SQL['get-tree-by-uuid-n-version'],
                    (uuid, version,))
@@ -209,6 +212,7 @@ def get_tree(ident_hash, cursor):
 
 
 def get_module_uuid(db_connection, moduleid):
+    """Retrieve page uuid from legacy moduleid."""
     with db_connection.cursor() as cursor:
         cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
                        (moduleid,))
@@ -220,6 +224,11 @@ def get_module_uuid(db_connection, moduleid):
 
 
 def get_current_module_ident(moduleid, cursor):
+    """Retrieve module_ident for a given moduleid.
+
+    Note that module_ident is used only for internal database relational
+    associations, and is equivalent to a uuid@version for a given document.
+    """
     sql = '''SELECT m.module_ident FROM modules m
         WHERE m.moduleid = %s ORDER BY revised DESC'''
     cursor.execute(sql, [moduleid])
@@ -229,6 +238,7 @@ def get_current_module_ident(moduleid, cursor):
 
 
 def get_minor_version(module_ident, cursor):
+    """Retrieve minor version only given module_ident."""
     sql = '''SELECT m.minor_version
             FROM modules m
             WHERE m.module_ident = %s
@@ -239,13 +249,16 @@ def get_minor_version(module_ident, cursor):
 
 
 def next_version(module_ident, cursor):
+    """Determine next minor version for a given module_ident.
+
+    Note potential race condition!
+    """
     minor = get_minor_version(module_ident, cursor)
     return minor + 1
 
 
 def get_collections(module_ident, cursor):
-    """Get all the collections that the module is part of
-    """
+    """Get all the collections that the module is part of."""
     sql = '''
     WITH RECURSIVE t(node, parent, path, document) AS (
         SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
@@ -266,8 +279,9 @@ def get_collections(module_ident, cursor):
 
 
 def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
-    """Create a new tree for the collection based on the old tree but with
-    new document ids
+    """Create a new tree for the collection based on the old tree.
+
+    This usesnew document ids, replacing old ones.
     """
     sql = '''
     WITH RECURSIVE t(node, parent, document, title, childorder, latest, path)
@@ -320,8 +334,9 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
 
 def republish_collection(next_minor_version, collection_ident, cursor,
                          revised=None):
-    """Insert a new row for collection_ident with a new version and return
-    the module_ident of the row inserted
+    """Insert a new row for collection_ident with a new version.
+
+    Returns the module_ident of the row inserted.
     """
     sql = '''
     INSERT INTO modules (portal_type, moduleid, uuid, version, name, created,
@@ -360,10 +375,7 @@ def republish_collection(next_minor_version, collection_ident, cursor,
 
 
 def set_version(portal_type, legacy_version, td):
-    """Sets the major_version and minor_version if they are not set
-    """
-    major = td['new']['major_version']
-    minor = td['new']['minor_version']
+    """Set the major_version and minor_version if they are not set."""
     modified = 'OK'
     legacy_major, legacy_minor = legacy_version.split('.')
 
@@ -386,8 +398,10 @@ def set_version(portal_type, legacy_version, td):
 
 
 def republish_module(td, cursor, db_connection):
-    """When a module is republished, the versions of the collections that it is
-    part of will need to be updated (a minor update).
+    """When a module is republished, create new minor versions of collections.
+
+    All collections that this module is contained in part of will need to be
+    updated (a minor update).
 
 
     e.g. there is a collection c1 v2.1, which contains module m1 v3
@@ -434,7 +448,7 @@ def republish_module(td, cursor, db_connection):
 
 
 def republish_module_trigger(plpy, td):
-    """Postgres database trigger for republishing a module
+    """Trigger called from postgres database when republishing a module.
 
     When a module is republished, the versions of the collections that it is
     part of will need to be updated (a minor update).
@@ -473,8 +487,7 @@ def republish_module_trigger(plpy, td):
 
 
 def assign_moduleid_default_trigger(plpy, td):
-    """A compatibilty trigger to fill in legacy ``moduleid`` field when
-    defined while inserting publications.
+    """Trigger to fill in legacy ``moduleid`` when publishing.
 
     This correctly assigns ``moduleid`` value to
     cnx-publishing publications. This does NOT include
@@ -490,8 +503,6 @@ def assign_moduleid_default_trigger(plpy, td):
     uuid = td['new']['uuid']
     moduleid = td['new']['moduleid']
     version = td['new']['version']
-    major_version = td['new']['major_version']
-    minor_version = td['new']['minor_version']
 
     # Is this an insert from legacy? Legacy always supplies the version.
     is_legacy_publication = version is not None
@@ -534,7 +545,9 @@ FROM (
 
 
 def assign_version_default_trigger(plpy, td):
-    """A compatibilty trigger to fill in legacy data fields that are not
+    """Trigger to fill in legacy data fields.
+
+    A compatibilty trigger to fill in legacy data fields that are not
     populated when inserting publications from cnx-publishing.
 
     If this is not a legacy publication the ``version`` will be set
@@ -562,7 +575,9 @@ def assign_version_default_trigger(plpy, td):
 
 
 def assign_document_controls_default_trigger(plpy, td):
-    """A compatibilty trigger to fill in ``uuid`` and ``licenseid`` columns
+    """Trigger to fill in document_controls when legacy publishes.
+
+    A compatibilty trigger to fill in ``uuid`` and ``licenseid`` columns
     of the ``document_controls`` table that are not
     populated when inserting publications from legacy.
 
@@ -587,7 +602,9 @@ RETURNING uuid""", ('integer',))
 
 
 def upsert_document_acl_trigger(plpy, td):
-    """A compatibility trigger to upsert authorization control entries (ACEs)
+    """Trigger for filling in acls when legacy publishes.
+
+    A compatibility trigger to upsert authorization control entries (ACEs)
     for legacy publications.
     """
     modified_state = "OK"
@@ -622,10 +639,8 @@ VALUES ($1, $2, $3)""", ['uuid', 'text', 'permission_type'])
 
 
 def upsert_users_from_legacy_publication_trigger(plpy, td):
-    """A compatibility trigger to upsert users from the legacy persons table.
-    """
+    """A compatibility trigger to upsert users from legacy persons table."""
     modified_state = "OK"
-    uuid_ = td['new']['uuid']
     authors = td['new']['authors'] and td['new']['authors'] or []
     maintainers = td['new']['maintainers'] and td['new']['maintainers'] or []
     licensors = td['new']['licensors'] and td['new']['licensors'] or []
@@ -658,7 +673,9 @@ FROM persons where personid = $1""", ['text'])
 
 
 def insert_users_for_optional_roles_trigger(plpy, td):
-    """A compatibility trigger to insert users from moduleoptionalroles
+    """Trigger to update users from optional roles entries.
+
+    A compatibility trigger to insert users from moduleoptionalroles
     records. This is primarily for legacy compatibility, but it is not
     possible to tell whether the entry came from legacy or cnx-publishing.
     Therefore, we only insert into users.
@@ -683,7 +700,7 @@ FROM persons where personid = $1""", ['text'])
 
 
 def add_module_file(plpy, td):
-    """Postgres database trigger for adding a module file
+    """Database trigger for adding a module file.
 
     When a legacy ``index.cnxml`` is added, this trigger
     transforms it into html and stores it as ``index.cnxml.html``.
@@ -698,12 +715,13 @@ def add_module_file(plpy, td):
     import plpydbapi
 
     module_ident = td['new']['module_ident']
-    fileid = td['new']['fileid']
     filename = td['new']['filename']
     msg = "produce {}->{} for module_ident = {}"
 
     def check_for(filenames, module_ident):
-        """Check for a file at ``filename`` associated with
+        """Find filenames associated with module_ident.
+
+        Check for a file at ``filename`` associated with
         module at ``module_ident``.
         """
         stmt = plpy.prepare("""\
@@ -756,7 +774,9 @@ WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
 
 
 def _transform_abstract(cursor, module_ident):
-    """Transforms an abstract using one of content columns
+    """Transform abstract, bi-directionally.
+
+    Transforms an abstract using one of content columns
     ('abstract' or 'html') to determine which direction the transform
     will go (cnxml->html or html->cnxml).
     A transform is done on either one of them to make
@@ -795,6 +815,7 @@ WHERE m.module_ident = %s""", (module_ident,))
 
 
 def get_collection_tree(collection_ident, cursor):
+    """Build and retrieve json tree representation of a book."""
     cursor.execute('''
     WITH RECURSIVE t(node, parent, document, path) AS (
         SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
@@ -813,6 +834,7 @@ def get_collection_tree(collection_ident, cursor):
 
 
 def get_module_can_publish(cursor, id):
+    """Return userids allowed to publish this book."""
     cursor.execute("""
 SELECT DISTINCT user_id
 FROM document_acl

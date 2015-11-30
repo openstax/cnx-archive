@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Date/time utility wrappers."""
 import datetime
 import tzlocal
 
@@ -13,4 +14,5 @@ __all__ = ('fromtimestamp',)
 
 
 def fromtimestamp(ts):
+    """Convert a timestamp to a datetime using local timezone."""
     return datetime.datetime.fromtimestamp(ts, tz=tzlocal.get_localzone())

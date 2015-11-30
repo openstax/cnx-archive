@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Text manipulation methods."""
 import re
 import unicodedata
 
@@ -13,8 +14,9 @@ __all__ = ('escape', 'slugify', 'utf8',)
 
 
 def slugify(string):
-    """Return a slug for the unicode_string (lowercase, only letters and
-    numbers, hyphens replace spaces)
+    """Return a slug for the unicode_string.
+
+    (lowercase, only letters and numbers, hyphens replace spaces)
     """
     filtered_string = []
     if isinstance(string, str):
@@ -31,7 +33,7 @@ def slugify(string):
 
 
 def escape(s):
-    """xml/html entity escaping of < > and &"""
+    """Perform xml/html entity escaping of < > and &."""
     s = s.replace('&', '&amp;')\
         .replace('<', '&lt;')\
         .replace('>', '&gt;')\
@@ -40,8 +42,7 @@ def escape(s):
 
 
 def utf8(item):
-    """Change all python2 str/bytes instances to unicode/python3 str
-    """
+    """Change all python2 str/bytes instances to unicode/python3 str."""
     if isinstance(item, list):
         return [utf8(i) for i in item]
     if isinstance(item, tuple):

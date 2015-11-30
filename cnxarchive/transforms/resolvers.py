@@ -5,12 +5,15 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Resolver methods for fixing up references in transformed documents."""
+
 import re
 import inspect
 import json
 
 from lxml import etree
 
+from ..utils import split_ident_hash
 
 __all__ = (
     'MODULE_REFERENCE', 'RESOURCE_REFERENCE',
@@ -127,9 +130,11 @@ class InvalidReference(BaseReferenceException):
 
 
 def parse_legacy_reference(ref):
-    """Parse the legacy reference to a reference type and type specific value.
+    """Parse legacy reference into parts. Returns a tuple.
+
+    Parse the legacy reference to a reference type and type specific value.
     A module-reference value contains the id, version and fragment.
-    A resource-reference value resource filename.
+    A resource-reference value contains resource filename.
     """
     match = LEGACY_PATH_REFERENCE_REGEX.match(ref)
     try:
@@ -165,7 +170,9 @@ def parse_legacy_reference(ref):
 
 
 def parse_html_reference(ref):
-    """Parse the html reference to a reference type and type specific value.
+    """Parse HTML cross reference.
+
+    Parse the html reference to a reference type and type specific value.
     A document-reference value contains the ident-hash.
     A binder-reference value contains the ident-hash and possibly a document
     ident-hash.
@@ -247,6 +254,7 @@ class BaseReferenceResolver:
 
     def _should_ignore_reference(self, ref):
         """Given an href string, determine if it should be ignored.
+
         For example, external links and mailto references should be ignored.
         """
         ref = ref.strip()
@@ -326,7 +334,8 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
 
     def get_page_ident_hash(self, page_uuid, page_version,
                             book_uuid, book_version, latest=None):
-        """Returns the uuid of the page and full ident_hash of the page
+        """Return the uuid of the page and full ident_hash of the page.
+
         which may or may not include the book uuid depending on whether
         the page is within the book.
         """
@@ -478,7 +487,8 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
         return module_id, version
 
     def fix_module_id(self):
-        """Assigns the module-id to the document element.
+        """Assign the module-id to the document element.
+
         This is something the transforms are unable to do because they lack
         this piece of information.
         """
@@ -558,8 +568,8 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
                 id, version, bound_document, url_frag = payload
                 mid, version = self.get_mid_n_version(id, version)
                 if mid is None:
-                    bound_ident_hash = split_ident_hash(bound_document)
-                    cid, cversion = self.get_mid_n_version(*bound_ident_hash)
+                    id, version, id_type = split_ident_hash(bound_document)
+                    cid, cversion = self.get_mid_n_version(id, version)
                     if cid is None:
                         # Binder ref doesn't exist, but Document does.
                         # Assign the document specific attributes.
