@@ -18,7 +18,7 @@ class test_json2colxml(unittest.TestCase):
         return json2colxml(*args, **kwargs)
 
     def test_gen_colxml(self):
-        import ipdb; ipdb.set_trace();
+#        import ipdb; ipdb.set_trace();
         from lxml import etree
         json_path = os.path.join('cnxarchive/tests/data','example_col.json')
         with open(json_path) as f:
