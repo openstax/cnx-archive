@@ -34,6 +34,12 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
 </xsl:stylesheet>
 $$ LANGUAGE xslt;
 
+CREATE OR REPLACE FUNCTION count_lexemes (myident int, mysearch text) RETURNS bigint as $$
+     select sum(array_length(positions,1))
+            from modulefti_lexemes,
+                 regexp_split_to_table(strip(to_tsvector(mysearch))::text,' ') s
+            where module_ident = myident and lexeme = s
+$$ LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION index_fulltext_trigger()
   RETURNS TRIGGER AS $$
@@ -93,3 +99,12 @@ CREATE TRIGGER index_fulltext_upsert
     FOR EACH row
       EXECUTE PROCEDURE index_fulltext_upsert_trigger();
 
+-- CREATE OR REPLACE FUNCTION index_fulltext_lexeme_trigger()
+--   RETURNS TRIGGER AS $$
+--   BEGIN
+--
+--     INSERT into modulefti_lexemes (module_ident, lexeme, positions)
+--         SELECT NEW.module_ident, substring(regex_split_to_table(NEW.module_idx::text, ' '),1,strpos(lexeme,':')-1)
+--   END;
+--   $$
+--   LANGUAGE plpgsql;

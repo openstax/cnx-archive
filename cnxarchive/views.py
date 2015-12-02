@@ -605,12 +605,14 @@ def in_book_search(request):
                 'id': ident_hash,
                 'search_term': args['search_term'],
             }
-            for uuid, version, title, headline, rank in res:
+            len(res)
+            for uuid, version, title, snippet, matches, rank in res:
                 results['results']['items'].append({
                     'rank': '{}'.format(rank),
                     'id': '{}@{}'.format(uuid, version),
                     'title': '{}'.format(title),
-                    'headline': '{}'.format(headline),
+                    'snippet': '{}'.format(snippet),
+                    'matches': '{}'.format(matches),
                 })
 
     resp = request.response

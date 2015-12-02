@@ -137,6 +137,13 @@ CREATE TABLE "modulefti" (
 	FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
 );
 
+CREATE TABLE "modulefti_lexemes" (
+	"module_ident" integer,
+	"lexeme" text,
+    "positions" int[],
+	FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
+);
+
 CREATE TABLE "keywords" (
 	"keywordid" serial PRIMARY KEY,
 	"word" text NOT NULL
