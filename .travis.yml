@@ -20,23 +20,21 @@ before_install:
   - cd plxslt && sudo make && sudo make install && cd ..
   # Install cnx-query-grammar
   - git clone https://github.com/Connexions/cnx-query-grammar.git
-  - cd cnx-query-grammar && sudo /usr/bin/python setup.py install && cd ..
+  - cd cnx-query-grammar && python setup.py install && cd ..
   # Install cnx-epub
   - git clone https://github.com/Connexions/cnx-epub.git
-  - cd cnx-epub && sudo /usr/bin/python setup.py install && cd ..
+  - cd cnx-epub && python setup.py install && cd ..
   # Install rhaptos.cnxmlutils
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
-  - cd rhaptos.cnxmlutils && sudo /usr/bin/python setup.py install && cd ..
+  - cd rhaptos.cnxmlutils && python setup.py install && cd ..
   # Install bug-fixes branch of plpydbapi
   - git clone -b bug-fixes https://github.com/Connexions/plpydbapi.git
-  - cd plpydbapi && sudo /usr/bin/python setup.py install && cd ..
-  # Install the coverage utility and coveralls reporting utility
-  - sudo apt-get install python-pip
+  - cd plpydbapi && python setup.py install && cd ..
   # Scripts get installed to /usr/local/bin
-  - sudo /usr/bin/pip install coverage
-  - sudo /usr/bin/pip install coveralls
+  - pip install coverage
+  - pip install coveralls
 install:
-  - sudo /usr/bin/python setup.py install
+  - python setup.py install
 before_script:
   # Set up postgres roles
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
@@ -46,11 +44,21 @@ before_script:
   - pep8 --exclude=tests *.py cnxarchive/
   - pep8 --max-line-length=200 cnxarchive/tests
 
+  # Steps to use virtualenv in postgres
+  # https://gist.github.com/mwharrison/384e8e64a6454b0e67ec
+  - git clone https://github.com/reedstrm/session_exec
+  - cd session_exec
+  - make USE_PGXS=1 -e
+  - sudo make USE_PGXS=1 -e install
+  - cd ..
+  - sudo -u postgres psql -d postgres -c "ALTER DATABASE \"cnxarchive-testing\" SET session_preload_libraries = 'session_exec';"
+  - sudo -u postgres psql -d postgres -c "ALTER DATABASE \"cnxarchive-testing\" SET session_exec.login_name = 'activate_venv';"
+
 script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.
-  - sudo /usr/local/bin/coverage run --source=cnxarchive setup.py test
+  - coverage run --source=cnxarchive setup.py test
 after_success:
   # Report test coverage to coveralls.io
-  - /usr/local/bin/coveralls
+  - coveralls
 notifications:
   email: false
