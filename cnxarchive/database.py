@@ -149,7 +149,7 @@ RETURNS void LANGUAGE plpythonu AS $_$
 import sys
 import os
 import site
-old_os_path = os.environ['PATH']
+old_os_path = os.environ.get('PATH','')
 os.environ['PATH'] = os.path.dirname(os.path.abspath('{activate_path}')) \
 + os.pathsep + old_os_path
 base = os.path.dirname(os.path.dirname(os.path.abspath('{activate_path}')))
