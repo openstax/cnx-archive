@@ -1458,6 +1458,7 @@ class ViewsTestCase(unittest.TestCase):
         status = self.request.response.status
         content_type = self.request.response.content_type
 
+        # matches need to be updated when triggers are completed
         IN_BOOK_SEARCH_RESULT = {
             u'results': {
                 u'query': {
@@ -1466,17 +1467,23 @@ class ViewsTestCase(unittest.TestCase):
             },
             u'total': 3, u'items':
             [{
-                u'headline': u'Newton&#8217;s laws of motion. We have in mind the forces of friction, <span class="q-match">air</span> or <span class="q-match">liquid</span> <span class="q-match">drag</span>, and deformation',  # noqa
+                u'snippet': u'Newton&#8217;s laws of motion. We have in mind '
+                           u'the forces of friction, <span class="q-match">air</span> or <span class="q-match">liquid</span> <span class="q-match">drag</span>, and deformation',  # noqa
+                u'matches': u'None',
                 u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
                 u'rank': u'0.05',
                 u'title': u'Introduction: Further Applications of Newton\u2019s Laws'
             }, {
-                u'headline': u'drop would achieve falling from 5.00 km (a) in the absence of <span class="q-match">air</span> <span class="q-match">drag</span> (b) with <span class="q-match">air</span> <span class="q-match">drag</span>. Take the size across of the drop to be 4 mm, the density',  # noqa
+                u'snippet': u'drop would achieve falling from 5.00 km (a) in '
+                           u'the absence of <span class="q-match">air</span> <span class="q-match">drag</span> (b) with <span class="q-match">air</span> <span class="q-match">drag</span>. Take the size across of the drop to be 4 mm, the density',  # noqa
+                u'matches': u'None',
                 u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
                 u'rank': u'0.00424134',
                 u'title': u'<span class="q-match">Drag</span> Forces'
             }, {
-                u'headline': u'link] . It is relatively easy to compress gases and extremely difficult to compress <span class="q-match">liquids</span> and solids. For example, <span class="q-match">air</span> in a wine bottle is compressed when it is corked. But if you try corking',  # noqa
+                u'snippet': u'link] . It is relatively easy to compress gases '
+                          u'and extremely difficult to compress <span class="q-match">liquids</span> and solids. For example, <span class="q-match">air</span> in a wine bottle is compressed when it is corked. But if you try corking',  # noqa
+                u'matches': u'None',
                 u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
                 u'rank': u'2.59875e-05',
                 u'title': u'Elasticity: Stress and Strain'
