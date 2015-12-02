@@ -138,7 +138,7 @@ CREATE TABLE "modulefti" (
 );
 
 CREATE TABLE "modulefti_lexemes" (
-	"module_ident" integer UNIQUE,
+	"module_ident",
 	"lexeme" text,
     "positions" int[],
 	FOREIGN KEY (module_ident) REFERENCES modules ON DELETE CASCADE
