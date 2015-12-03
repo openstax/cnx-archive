@@ -1460,35 +1460,40 @@ class ViewsTestCase(unittest.TestCase):
 
         IN_BOOK_SEARCH_RESULT = {
             u'results': {
-                u'query': {
-                    u'search_term': u'air or liquid drag',
-                    u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
-            },
-            u'total': 3, u'items':
-            [{
-                u'snippet': u'Newton&#8217;s laws of motion. We have in mind '
-                           u'the forces of friction, <span class="q-match">air</span> or <span class="q-match">liquid</span> <span class="q-match">drag</span>, and deformation',  # noqa
-                u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
-                u'matches': u'3',
-                u'rank': u'0.05',
-                u'title': u'Introduction: Further Applications of Newton\u2019s Laws'
-            }, {
-                u'snippet': u'drop would achieve falling from 5.00 km (a) in '
-                           u'the absence of <span class="q-match">air</span> <span class="q-match">drag</span> (b) with <span class="q-match">air</span> <span class="q-match">drag</span>. Take the size across of the drop to be 4 mm, the density',  # noqa
-                u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
-                u'matches': u'77',
-                u'rank': u'0.00424134',
-                u'title': u'<span class="q-match">Drag</span> Forces'
-            }, {
-                u'snippet': u'link] . It is relatively easy to compress gases '
-                          u'and extremely difficult to compress <span class="q-match">liquids</span> and solids. For example, <span class="q-match">air</span> in a wine bottle is compressed when it is corked. But if you try corking',  # noqa
-                u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
-                u'matches': u'13',
-                u'rank': u'2.59875e-05',
-                u'title': u'Elasticity: Stress and Strain'
-            }]
-            }
-        }
+                u'items': [{
+                    u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
+                    u'matches': u'3',
+                    u'rank': u'0.05',
+                    u'snippet': u'have in mind the forces of friction, '
+                                u'<span class="q-match">air</span> or '
+                                u'<span class="q-match">liquid</span> '
+                                u'<span class="q-match">drag</span>, '
+                                u'and deformation',
+                    u'title': u'Introduction: Further Applications of '
+                              u'Newton\u2019s Laws'}, {
+                    u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
+                    u'matches': u'77',
+                    u'rank': u'0.00424134',
+                    u'snippet': u'absence of <span '
+                                u'class="q-match">air</span> <span '
+                                u'class="q-match">drag</span> (b) with '
+                                u'<span class="q-match">air</span> <span '
+                                u'class="q-match">drag</span>. Take the '
+                                u'size across of the drop',
+                    u'title': u'<span class="q-match">Drag</span> Forces'}, {
+                    u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
+                    u'matches': u'13',
+                    u'rank': u'2.59875e-05',
+                    u'snippet': u'compress gases and extremely difficult '
+                                u'to compress <span '
+                                u'class="q-match">liquids</span> and '
+                                u'solids. For example, <span '
+                                u'class="q-match">air</span> in a wine '
+                                u'bottle is compressed when',
+                    u'title': u'Elasticity: Stress and Strain'}],
+                u'query': {u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+                           u'search_term': u'air or liquid drag'},
+                u'total': 3}}
 
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
