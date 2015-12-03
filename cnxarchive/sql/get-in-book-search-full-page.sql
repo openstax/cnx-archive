@@ -31,7 +31,7 @@ E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=0, Highli
 ts_headline(
 convert_from(f.file, 'utf8'),
 plainto_tsquery(%(search_term)s),
-E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=0, HighlightAll=TRUE'
+E'StartSel="<mtext class=""q-match"">", StopSel="</mtext>", MaxFragments=0, HighlightAll=TRUE'
 ),
 ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
