@@ -31,7 +31,7 @@ E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=0, Highli
 ts_headline(
 convert_from(f.file, 'utf8'),
 plainto_tsquery(%(search_term)s),
-E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=1'
+E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=1, MaxWords=20, MinWords=15,'
 ) as snippet,
 count_lexemes(mft.module_ident, %(search_term)s) as matches,
 ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
