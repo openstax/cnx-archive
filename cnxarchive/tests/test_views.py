@@ -1524,7 +1524,8 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
         self.assertEqual('Elasticity: Stress and Strain', title)
         self.assertEqual('56f1c5c1-4014-450d-a477-2121e276beca@8', id)
-        self.assertEqual("<span class=\"q-match\">air</span>" in content, True)
+        self.assertEqual("<mtext class=\"q-match\">air</mtext>" in content,
+                         True)
 
     def test_search(self):
         # Build the request
