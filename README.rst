@@ -82,6 +82,24 @@ On a Debian based system, the installation is as follows::
     make && make install
     cd ..
 
+Installing the PostgresSQL session_exec extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is optional, but required if you choose to install the python packages
+into a virtualenv.
+
+::
+
+    git clone https://github.com/okbob/session_exec
+    cd session_exec
+    make USE_PGXS=1 && make USE_PGXS=1 install
+
+If you are using PostgreSQL 9.3 rather than >= 9.4, clone `reedstrm/session_exec <https://github.com/reedstrm/session_exec>`_ instead.
+
+This Postgres Extension is used to activate the virtualenv site-packages on
+any successful connection to the database, which then allows for importing
+packages that are only installed in the virtualenv.
+
 Set up the database and user
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -122,24 +140,6 @@ memcached servers in development.ini::
 
 Installing the application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Note**: cnx-archive requires the packages in this section to be installed
-with the system python. Specifically it needs to be installed to the python
-that postgresql uses for python triggers.
-
-**OSX Development Note:** (Use at your own risk!) Instead of installing system python packages (so Postgres has access to them) you can link your virtualenv site-packages directory to your Home sitepackages dir::
-
-    # Create the virtualenv dirs
-    virtualenv .
-    # Note: replace `getusersitepackages` with `getsitepackages[-1]` if postgres is not running as you
-    USER_SITEPACKAGES=$(python -c 'import site;print(site.getusersitepackages())')
-    # Make sure the user/system site-packages dir exists.
-    mkdir -p ${USER_SITEPACKAGES}
-    # Link the virtualenv site-packages to the user/system
-    ln -s ./lib/python2.7/site-packages ${USER_SITEPACKAGES}
-    # Start up the virtualenv
-    source bin/activate
-    # Follow the steps below
 
 Before installing cnx-archive, you need to first install the
 dependencies that have not been released to the public package repositories::
