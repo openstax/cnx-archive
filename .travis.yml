@@ -44,15 +44,10 @@ before_script:
   - pep8 --exclude=tests *.py cnxarchive/
   - pep8 --max-line-length=200 cnxarchive/tests
 
-  # Steps to use virtualenv in postgres
-  # https://gist.github.com/mwharrison/384e8e64a6454b0e67ec
-  - git clone https://github.com/reedstrm/session_exec
+  - git clone https://github.com/okbob/session_exec
   - cd session_exec
-  - make USE_PGXS=1 -e
-  - sudo make USE_PGXS=1 -e install
+  - make USE_PGXS=1 -e && sudo make USE_PGXS=1 -e install
   - cd ..
-  - sudo -u postgres psql -d postgres -c "ALTER DATABASE \"cnxarchive-testing\" SET session_preload_libraries = 'session_exec';"
-  - sudo -u postgres psql -d postgres -c "ALTER DATABASE \"cnxarchive-testing\" SET session_exec.login_name = 'activate_venv';"
 
 script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.
