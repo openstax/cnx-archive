@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION xml_to_baretext(xml) RETURNS text AS $$
 
   <xsl:template match="md4:*"/>
 
-  <xsl:template match="xhtml://cnx-pi"/>
+  <xsl:template match="//xhtml:cnx-pi"/>
 
 </xsl:stylesheet>
 $$ LANGUAGE xslt;
