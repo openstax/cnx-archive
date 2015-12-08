@@ -155,7 +155,7 @@ def initdb(settings):
                                                "to set "
                                                "'local_preload_libraries "
                                                "= session_exec' in "
-                                               "postgresql.conf and restart db")
+                                               "postgresql.conf and restart")
                             else:
                                 raise
 
