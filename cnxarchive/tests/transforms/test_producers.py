@@ -258,9 +258,11 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute('INSERT INTO files (file) '
-                       '(SELECT file FROM files WHERE fileid = 1) '
-                       'RETURNING fileid')
+        cursor.execute("INSERT INTO files (file) "
+                       "SELECT file FROM files natural join module_files "
+                       "WHERE filename = 'index.cnxml.html' "
+                       "AND module_ident != 2 LIMIT 1 "
+                       "RETURNING fileid")
         fileid = cursor.fetchone()[0]
         cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.cnxml.html', 'text/html')", (fileid,))
@@ -298,9 +300,11 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute('INSERT INTO files (file) '
-                       'SELECT file FROM files WHERE fileid = 1 '
-                       'RETURNING fileid')
+        cursor.execute("INSERT INTO files (file) "
+                       "SELECT file FROM files natural join module_files "
+                       "WHERE filename = 'index.cnxml.html' "
+                       "AND module_ident != 2 LIMIT 1 "
+                       "RETURNING fileid")
         fileid = cursor.fetchone()[0]
         cursor.execute('INSERT INTO module_files VALUES (2, '
                        "%s, 'index.cnxml.html', 'text/html')", (fileid,))
