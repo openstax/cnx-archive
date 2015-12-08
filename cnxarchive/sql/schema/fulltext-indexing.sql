@@ -141,7 +141,7 @@ CREATE OR REPLACE FUNCTION index_fulltext_lexeme_update_trigger()
 
 
 DROP TRIGGER IF EXISTS index_fulltext_lexeme_update ON modulefti;
-CREATE TRIGGER index_fulltext_lexeme
+CREATE TRIGGER index_fulltext_lexeme_update
   BEFORE UPDATE ON modulefti
     FOR EACH row
       EXECUTE PROCEDURE index_fulltext_lexeme_update_trigger();
