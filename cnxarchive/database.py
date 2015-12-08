@@ -10,6 +10,7 @@ import os
 import json
 import psycopg2
 import sys
+import logging
 
 from . import config
 from .transforms import (
@@ -22,6 +23,8 @@ here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
 DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
 SCHEMA_MANIFEST_FILENAME = 'manifest.json'
+
+logger = logging.getLogger('cnxarchive')
 
 
 class ContentNotFound(Exception):
@@ -137,9 +140,25 @@ def initdb(settings):
 
                     if not schema_exists:
                         cursor.execute("CREATE SCHEMA venv")
-                        cursor.execute("ALTER DATABASE \"{}\" SET "
-                                       "session_preload_libraries ="
-                                       "'session_exec'".format(db_name))
+                        try:
+                            cursor.execute("SAVEPOINT session_preload")
+                            cursor.execute("ALTER DATABASE \"{}\" SET "
+                                           "session_preload_libraries ="
+                                           "'session_exec'".format(db_name))
+                        except psycopg2.ProgrammingError, e:
+                            if e.message.startswith(
+                                    'unrecognized configuration parameter'):
+
+                                cursor.execute("ROLLBACK TO SAVEPOINT "
+                                               "session_preload")
+                                logger.warning("Postgresql < 9.4: make sure "
+                                               "to set "
+                                               "'local_preload_libraries "
+                                               "= session_exec' in "
+                                               "postgresql.conf and restart db")
+                            else:
+                                raise
+
                         cursor.execute("ALTER DATABASE \"{}\" SET "
                                        "session_exec.login_name = "
                                        "'venv.activate_venv'"
