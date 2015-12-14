@@ -41,7 +41,7 @@ CREATE OR REPLACE FUNCTION count_lexemes (myident int, mysearch text) RETURNS bi
      select sum(array_length(positions,1))
             from modulefti_lexemes,
                  regexp_split_to_table(strip(to_tsvector(mysearch))::text,' ') s
-            where module_ident = myident and lexeme = s
+            where module_ident = myident and lexeme = substr(s,2,length(s)-2)
 $$ LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION index_fulltext_trigger()
@@ -107,10 +107,11 @@ CREATE OR REPLACE FUNCTION index_fulltext_lexeme_trigger()
   BEGIN
 
     INSERT into modulefti_lexemes (module_ident, lexeme, positions)
-        (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, ' ') as t )
+        (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, E' \'') as t )
         SELECT NEW.module_ident,
-               substring(t,1,strpos(t,':')-1),
-               ('{'||substring(t,strpos(t,':')+1)||'}')::int[] from lex) ;
+               substring(t,1,strpos(t,E'\':')-1),
+               ('{'||substring(t,strpos(t,E'\':')+2)||'}')::int[] from lex) ;
+
   RETURN NEW;
   END;
   $$
@@ -130,10 +131,11 @@ CREATE OR REPLACE FUNCTION index_fulltext_lexeme_update_trigger()
     DELETE from modulefti_lexemes where module_ident = NEW.module_ident;
 
     INSERT into modulefti_lexemes (module_ident, lexeme, positions)
-        (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, ' ') as t )
-        SELECT NEW.module_ident,
-               substring(t,1,strpos(t,':')-1),
-               ('{'||substring(t,strpos(t,':')+1)||'}')::int[] from lex) ;
+       (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, E' \'') as t )
+       SELECT NEW.module_ident,
+              substring(t,1,strpos(t,E'\':')-1),
+              ('{'||substring(t,strpos(t,E'\':')+2)||'}')::int[] from lex) ;
+
   RETURN NEW;
   END;
   $$
