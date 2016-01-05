@@ -347,6 +347,35 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
+        cursor.execute("""\
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 uuid)
+  RETURNS BOOLEAN
+AS $$
+  from cnxarchive.utils import CNXHash
+  return CNXHash.identifiers_equal(identifier1,identifier2)
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 text, identifier2 uuid)
+  RETURNS BOOLEAN
+AS $$
+  from cnxarchive.utils import CNXHash
+  return CNXHash.identifiers_equal(identifier1,identifier2)
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 text)
+  RETURNS BOOLEAN
+AS $$
+  from cnxarchive.utils import CNXHash
+  return CNXHash.identifiers_equal(identifier1,identifier2)
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 text, identifier2 text)
+  RETURNS BOOLEAN
+AS $$
+  from cnxarchive.utils import CNXHash
+  return CNXHash.identifiers_equal(identifier1,identifier2)
+$$ LANGUAGE plpythonu;""")
+
         import uuid
         cursor.execute(
             "select identifiers_equal(uuid_generate_v4(),uuid_generate_v4())")
