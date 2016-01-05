@@ -347,12 +347,20 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
+        import inspect
+
+        from .test_utils import identifiers_equal
+
         cursor.execute("""\
 CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 text, identifier2 text)
   RETURNS BOOLEAN
 AS $$
-  from cnxarchive.utils import CNXHash
-  return CNXHash.identifiers_equal(identifier1, identifier2)
+import uuid
+from cnxarchive.utils import CNXHash, IdentHashSyntaxError
+
+{}
+
+return identifiers_equal(identifier1, identifier2)
 $$ LANGUAGE plpythonu;
 
 CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 uuid)
@@ -372,7 +380,7 @@ CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 text
 AS $$
   SELECT identifiers_equal(identifier1::text, identifier2)
 $$ LANGUAGE sql;
-""")
+""".format(inspect.getsource(identifiers_equal)))
 
         import uuid
         cursor.execute(
