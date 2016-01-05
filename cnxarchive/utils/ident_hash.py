@@ -135,51 +135,6 @@ class CNXHash(uuid.UUID):
         return identifier
 
     @classmethod
-    def identifiers_similar(cls, identifier1, identifier2):
-        shortid1 = None
-        shortid2 = None
-
-        try:
-            type1 = cls.validate(identifier1)
-        except IdentHashSyntaxError:
-            return False
-
-        try:
-            type2 = cls.validate(identifier2)
-        except IdentHashSyntaxError:
-            return False
-
-        if isinstance(identifier1, cls):
-            shortid1 = identifier1.get_shortid()
-        elif type1 == cls.FULLUUID:
-            shortid1 = cls.uuid2base64(identifier1)[:cls._SHORT_HASH_LENGTH]
-        elif type1 == cls.BASE64HASH:
-            shortid1 = identifier1[cls.SHORT_HASH_LENGTH]
-        elif type1 == cls.SHORTID:
-            shortid1 = identifier1
-        else:
-            return False
-
-        if isinstance(identifier2, cls):
-            shortid2 = identifier2.get_shortid()
-        elif type2 == cls.FULLUUID:
-            shortid2 = cls.uuid2base64(identifier2)[:cls._SHORT_HASH_LENGTH]
-        elif type2 == cls.BASE64HASH:
-            shortid2 = identifier2[cls.SHORT_HASH_LENGTH]
-        elif type2 == cls.SHORTID:
-            shortid2 = identifier2
-        else:
-            return False
-
-        return shortid1 == shortid2
-
-    def similar(self, identifier):
-        """Test id ``identifier`` could be equal to this uuid."""
-        identifier1 = self.__str__()
-        identifier2 = identifier
-        return self.identifiers_similar(identifier1, identifier2)
-
-    @classmethod
     def validate(cls, hash_id):
         """Determine if ``hash_id`` is or could be a valid UUID."""
         if isinstance(hash_id, uuid.UUID) or isinstance(hash_id, cls):

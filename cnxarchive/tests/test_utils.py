@@ -309,6 +309,45 @@ def identifiers_equal(identifier1, identifier2):
         return False
 
 
+def identifiers_similar(identifier1, identifier2):
+    shortid1 = None
+    shortid2 = None
+
+    try:
+        type1 = CNXHash.validate(identifier1)
+    except IdentHashSyntaxError:
+        return False
+
+    try:
+        type2 = CNXHash.validate(identifier2)
+    except IdentHashSyntaxError:
+        return False
+
+    if isinstance(identifier1, CNXHash):
+        shortid1 = identifier1.get_shortid()
+    elif type1 == CNXHash.FULLUUID:
+        shortid1 = CNXHash.uuid2base64(identifier1)[:CNXHash._SHORT_HASH_LENGTH]
+    elif type1 == CNXHash.BASE64HASH:
+        shortid1 = identifier1[CNXHash.SHORT_HASH_LENGTH]
+    elif type1 == CNXHash.SHORTID:
+        shortid1 = identifier1
+    else:
+        return False
+
+    if isinstance(identifier2, CNXHash):
+        shortid2 = identifier2.get_shortid()
+    elif type2 == CNXHash.FULLUUID:
+        shortid2 = CNXHash.uuid2base64(identifier2)[:CNXHash._SHORT_HASH_LENGTH]
+    elif type2 == CNXHash.BASE64HASH:
+        shortid2 = identifier2[CNXHash.SHORT_HASH_LENGTH]
+    elif type2 == CNXHash.SHORTID:
+        shortid2 = identifier2
+    else:
+        return False
+
+    return shortid1 == shortid2
+
+
 class TestCNXHash(unittest.TestCase):
 
     @classmethod
@@ -376,10 +415,18 @@ class TestCNXHash(unittest.TestCase):
             CNXHash.validate(1)
 
     def test_similarity(self):
-        self.assertTrue(self.cnxhash.similar(self.cnxhash.get_shortid()))
-        self.assertFalse(self.cnxhash.similar(uuid.uuid4()))
-        self.assertFalse(self.cnxhash.similar([]))
-        self.assertTrue(self.cnxhash.similar(self.uuid))
+        self.assertFalse(
+            identifiers_similar(self.cnxhash, uuid.uuid4()))
+        self.assertFalse(
+            identifiers_similar(self.cnxhash, []))
+        self.assertTrue(
+            identifiers_similar(self.cnxhash, self.uuid))
+        self.assertTrue(
+            identifiers_similar(self.cnxhash, self.cnxhash.get_shortid()))
+        self.assertTrue(
+            identifiers_similar(self.cnxhash.get_shortid(), self.cnxhash))
+        self.assertTrue(
+            identifiers_similar(self.cnxhash.get_shortid(), self.uuid))
 
     def test_equality(self):
         self.assertTrue(
