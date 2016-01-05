@@ -35,6 +35,5 @@
         "file": "constants",
         "description": "Contains table inserts for static/constant data."
     },
-    "base642uuid.sql",
     "uuid2base64.sql"
 ]

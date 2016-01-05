@@ -336,16 +336,6 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertEqual(expected_identifier, returned_identifier)
 
     @testing.db_connect
-    def test_base642uuid_function(self, cursor):
-        import uuid
-        from cnxarchive.utils import CNXHash
-        expected_identifier = str(uuid.uuid4())
-        identifier = CNXHash.uuid2base64(expected_identifier)
-        cursor.execute("select base642uuid('{}')".format(str(identifier)))
-        returned_identifier = cursor.fetchone()[0]
-        self.assertEqual(expected_identifier, returned_identifier)
-
-    @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
         import inspect
 
