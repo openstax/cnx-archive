@@ -318,35 +318,49 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertIn("<document", cursor.fetchone()[0])
 
     @testing.db_connect
-    def test_uuid2base64_function(self, cursor):
-        import uuid
-        from cnxarchive.utils import CNXHash
-
-        identifier = uuid.uuid4()
-        expected_identifier = CNXHash.uuid2base64(identifier)
-        cursor.execute("select uuid2base64('{}')".format(str(identifier)))
-        returned_identifier = cursor.fetchone()[0]
-        self.assertEqual(expected_identifier, returned_identifier)
-
-        identifier = uuid.uuid4()
-        expected_identifier = CNXHash.uuid2base64(identifier)
-        cursor.execute(
-            "select uuid2base64(CAST ('{}' as uuid))".format(str(identifier)))
-        returned_identifier = cursor.fetchone()[0]
-        self.assertEqual(expected_identifier, returned_identifier)
-
-    @testing.db_connect
-    def test_base642uuid_function(self, cursor):
-        import uuid
-        from cnxarchive.utils import CNXHash
-        expected_identifier = str(uuid.uuid4())
-        identifier = CNXHash.uuid2base64(expected_identifier)
-        cursor.execute("select base642uuid('{}')".format(str(identifier)))
-        returned_identifier = cursor.fetchone()[0]
-        self.assertEqual(expected_identifier, returned_identifier)
-
-    @testing.db_connect
     def test_identifiers_equal_function(self, cursor):
+        import inspect
+
+        from .test_utils import identifiers_equal
+
+        cursor.execute("""\
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 text, identifier2 text)
+  RETURNS BOOLEAN
+AS $$
+import uuid
+from cnxarchive.utils import CNXHash, IdentHashSyntaxError
+
+{}
+
+return identifiers_equal(identifier1, identifier2)
+$$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 uuid)
+  RETURNS BOOLEAN
+AS $$
+  SELECT identifiers_equal(identifier1::text, identifier2::text)
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 text, identifier2 uuid)
+  RETURNS BOOLEAN
+AS $$
+  SELECT identifiers_equal(identifier1, identifier2::text)
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION identifiers_equal (identifier1 uuid, identifier2 text)
+  RETURNS BOOLEAN
+AS $$
+  SELECT identifiers_equal(identifier1::text, identifier2)
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION uuid2base64 (identifier uuid)
+  RETURNS character(24)
+AS $$
+  from cnxarchive.utils import CNXHash
+  return CNXHash.uuid2base64(identifier)
+$$ LANGUAGE plpythonu;
+""".format(inspect.getsource(identifiers_equal)))
+
         import uuid
         cursor.execute(
             "select identifiers_equal(uuid_generate_v4(),uuid_generate_v4())")
