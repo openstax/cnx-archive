@@ -13,7 +13,7 @@ The CNX URL structure is
 
 **Book metadata and Table of Contents as json**
 
-  >GET http://archive.cnx.org/contents/[book_id].json
+  >`GET http://archive.cnx.org/contents/[book_id].json`
 
 Examples (long UUID and short id with version number)
 
@@ -24,7 +24,7 @@ Short ids work as well. The short id is the one displayed in the browser
 
 **Page metadata and HML content as json**
 
-  >GET http://archive.cnx.org/contents/[page_id].json
+  >`GET http://archive.cnx.org/contents/[page_id].json`
 
 Examples (long UUID and short id with version number)
 
@@ -33,7 +33,7 @@ Examples (long UUID and short id with version number)
 
 **Page HTML without styling**
 
-  >GET http://archive.cnx.org/contents/[page_id].html
+  >`GET http://archive.cnx.org/contents/[page_id].html`
 
 Examples (long UUID and short id with version number)
 NOTE: leaving off ".html" will still result in HTML being returned
