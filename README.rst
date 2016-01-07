@@ -212,8 +212,8 @@ This uses example data found in the ``cxarchive/tests/data`` directory.
 
 Usage
 -----
- * `Content API <./content_api_doc.md>`_
- * `Search API <./search_api_doc.rst>`_
+ * `Content API <./docs/content_api_doc.md>`_
+ * `Search API <./docs/search_api_doc.rst>`_
 
 License
 -------
