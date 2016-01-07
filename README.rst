@@ -62,7 +62,7 @@ assuming you have both `PostgresApp` and
 `homebrew <http://brew.sh/>`_ installed.
 
 
-Make sure that ``pkg-config`` is properly install by typing ``pkg-config --version``.  If it isn't installed type ``brew install pkg-config`` to install it. 
+Make sure that ``pkg-config`` is properly install by typing ``pkg-config --version``.  If it isn't installed type ``brew install pkg-config`` to install it.
 ::
 
     brew install libxml2 libxslt
@@ -127,7 +127,7 @@ the default cluster, as defined above)
 
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
     createdb -U postgres -O cnxarchive cnxarchive
-    psql cnxarchive #to confirm the the table has been created. 
+    psql cnxarchive #to confirm the the table has been created.
 
 
 Install memcached (optional)
@@ -165,7 +165,7 @@ To install the application itself::
     python setup.py install
 
 **OSX Note** Make sure that XCode command line tools is installed by typing in::
-    
+
     xcode-select --install
 
 This will install the package and a few application specific
@@ -209,6 +209,11 @@ Then, use either of the following to invoke the test suite::
     $ python setup.py test
 
 This uses example data found in the ``cxarchive/tests/data`` directory.
+
+Usage
+-----
+ * [Content API](/docs/content_api_doc.rm)
+ * [Search API](/docs/search_api_doc.rst)
 
 License
 -------
