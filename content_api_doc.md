@@ -24,3 +24,9 @@ Example
 Example
 
   >http://archive.cnx.org/contents/e12329e4-8d6c-49cf-aa45-6a05b26ebcba.html
+
+Notes
+=====
+
+1. Short IDs do not work for retrieving from archive. The full UUID for a Book and the current Page can be found in the More Information tab at the bottom of any content
+2. All CNX content has a version numbers which is displayed as @[version#]. Removing the version will always give you the latest version of the content
