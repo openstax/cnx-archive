@@ -5,15 +5,15 @@ Content API
 
 The CNX URL structure is
 
-cnx.org/[book id][@version#]:[page id][@version #]/title
+`cnx.org/[book_id][@version#]:[page_id][@version #]/[title]`
 
  * All version numbers are optional. The lack of a version number will always return the latest version.
  * In the browser, a short id is displayed for books and pages. There is also a longer UUID for books and pages. Either id will work in the API. The full UUID for a Book and the current Page can be found in the More Information tab at the bottom of any content.
- * The title should not be included in the content API. request.
+ * The title should **not** be included in the content API request.
 
 **Book metadata and Table of Contents as json**
 
-  >GET http://archive.cnx.org/contents/[book ID].json
+  >GET http://archive.cnx.org/contents/[book_id].json
 
 Examples (long UUID and short id with version number)
 
@@ -24,7 +24,7 @@ Short ids work as well. The short id is the one displayed in the browser
 
 **Page metadata and HML content as json**
 
-  >GET http://archive.cnx.org/contents/[page ID].json
+  >GET http://archive.cnx.org/contents/[page_id].json
 
 Examples (long UUID and short id with version number)
 
@@ -33,7 +33,7 @@ Examples (long UUID and short id with version number)
 
 **Page HTML without styling**
 
-  >GET http://archive.cnx.org/contents/[page ID].html
+  >GET http://archive.cnx.org/contents/[page_id].html
 
 Examples (long UUID and short id with version number)
 NOTE: leaving off ".html" will still result in HTML being returned
