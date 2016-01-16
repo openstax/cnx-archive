@@ -58,7 +58,8 @@ class ExportError(Exception):
 # #################### #
 
 def redirect_to_canonical(cursor, id, version, id_type,
-                          route_name='content', route_args=None):
+                          route_name='content', route_args=None,
+                          params=None):
     """Redirect to latest version of a module / collection.
 
     Looks up path associated with the provided router.
@@ -88,8 +89,10 @@ def redirect_to_canonical(cursor, id, version, id_type,
         route_args = {}
     request = get_current_request()
     route_args['ident_hash'] = join_ident_hash(full_id, version)
+    if not params:
+        params = {}
     raise httpexceptions.HTTPFound(request.route_path(
-        route_name, **route_args))
+        route_name, _query=params, **route_args))
 
 
 def get_content_metadata(id, version, cursor):
@@ -570,14 +573,14 @@ def in_book_search(request):
 
     args = request.matchdict
     ident_hash = args['ident_hash']
-    args['uuid'] = args['ident_hash'].split('@')[0]
 
     try:
         args['search_term'] = request.params.get('q', '')
     except (TypeError, ValueError, IndexError):
         args['search_term'] = None
 
-    id, version = split_ident_hash(ident_hash)
+    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    args['uuid'] = id
     args['version'] = version
 
     settings = get_current_registry().settings
@@ -586,8 +589,10 @@ def in_book_search(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, 'in-book-search',
-                                   route_args=request.params.copy())
+                redirect_to_canonical(cursor, id, version, id_type,
+                                      route_name='in-book-search',
+                                      route_args=request.matchdict,
+                                      params=request.params.copy())
 
             cursor.execute(statement, args)
             res = cursor.fetchall()
