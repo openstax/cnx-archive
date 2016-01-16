@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """All the views."""
+import functools
 import os
 import json
 import logging
@@ -290,18 +291,12 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    try:
-        id, version, id_type = split_ident_hash(ident_hash, return_type=True)
-    except IdentHashSyntaxError:
-        raise httpexceptions.HTTPNotFound()
+    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
 
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
-        try:
-            p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
-                                                          return_type=True)
-        except IdentHashSyntaxError:
-            raise httpexceptions.HTTPNotFound()
+        p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
+                                                      return_type=True)
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
@@ -375,6 +370,16 @@ def notblocked(page):
         if rx.match(page):
             return False
     return True
+
+
+# ################### #
+#   Exception Views   #
+# ################### #
+
+
+@view_config(context=IdentHashSyntaxError)
+def ident_hash_syntax_error(exc, request):
+    return httpexceptions.HTTPNotFound()
 
 
 # ######### #
