@@ -1517,6 +1517,28 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(content_type, 'application/json')
         self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
 
+    def test_in_book_search_highlighted_results_wo_version(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        page_version = '8'
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': book_uuid,
+                                  'page_ident_hash': page_uuid}
+        self.request.params = {'q': 'air or liquid drag'}
+
+        # Call the view.
+        from ..views import in_book_search_highlighted_results
+
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            in_book_search_highlighted_results(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        path = quote('/search/{}@{}:{}'.format(book_uuid, book_version, page_uuid))
+        self.assertEqual(cm.exception.headers['Location'],
+                         '{}?q=air+or+liquid+drag'.format(path))
+
     def test_in_book_search_highlighted_results(self):
         collection_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         collection_version = '7.1'

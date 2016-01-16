@@ -5,7 +5,7 @@
 -- See LICENCE.txt for details.
 -- ###
 
--- arguments: uuid:string, version:string, search_term:string, page_hash: string
+-- arguments: uuid:string, version:string, search_term:string, page_uuid: string
 WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
 SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
 FROM 
@@ -39,7 +39,7 @@ FROM
 WHERE
  mft.module_idx @@ plainto_tsquery(%(search_term)s)
  and mf.filename = 'index.cnxml.html'
- and m.uuid = (%(page_ident_hash)s)
+ and m.uuid = (%(page_uuid)s)
 ORDER BY
  rank,
  path
