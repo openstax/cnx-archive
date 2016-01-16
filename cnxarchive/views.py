@@ -578,13 +578,7 @@ def in_book_search(request):
         args['search_term'] = None
 
     id, version = split_ident_hash(ident_hash)
-    if version:
-        if '.' in version:
-            args['major_version'], \
-                args['minor_version'] = [int(v) for v in version.split('.')]
-        else:
-            args['major_version'] = int(version)
-            args['minor_version'] = None
+    args['version'] = version
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
@@ -642,13 +636,7 @@ def in_book_search_highlighted_results(request):
 
     # Get version from URL params
     id, version = split_ident_hash(ident_hash)
-    if version:
-        if '.' in version:
-            args['major_version'], \
-                args['minor_version'] = [int(v) for v in version.split('.')]
-        else:
-            args['major_version'] = int(version)
-            args['minor_version'] = None
+    args['version'] = version
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
