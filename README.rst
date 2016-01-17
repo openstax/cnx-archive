@@ -197,6 +197,9 @@ Running tests
 .. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master
    :target: https://travis-ci.org/Connexions/cnx-archive
 
+.. image:: https://coveralls.io/repos/Connexions/cnx-archive/badge.svg?branch=master&service=github
+   :target: https://coveralls.io/github/Connexions/cnx-archive?branch=master
+
 The tests use the standard library ``unittest`` package and can therefore
 be run with minimal effort. Make a testing config, such as testing.ini,
 and set the environment variable ``TESTING_CONFIG`` to the name of that file::
