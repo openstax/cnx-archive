@@ -5,7 +5,7 @@
 -- See LICENCE.txt for details.
 -- ###
 
--- arguments: uuid:string, major_version:string, minor_version:string, search_term:string, page_hash: string
+-- arguments: uuid:string, version:string, search_term:string, page_uuid: string
 WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
 SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
 FROM 
@@ -13,7 +13,7 @@ FROM
   modules m
 WHERE 
   m.uuid::text = %(uuid)s AND
-  m.major_version = %(major_version)s AND  m.minor_version = %(minor_version)s AND
+  concat_ws('.', m.major_version, m.minor_version) = %(version)s AND
   tr.documentid = m.module_ident AND
   tr.parent_id IS NULL
 UNION ALL
@@ -39,7 +39,7 @@ FROM
 WHERE
  mft.module_idx @@ plainto_tsquery(%(search_term)s)
  and mf.filename = 'index.cnxml.html'
- and m.uuid = (%(page_ident_hash)s)
+ and m.uuid = (%(page_uuid)s)
 ORDER BY
  rank,
  path

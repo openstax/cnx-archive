@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """All the views."""
+import functools
 import os
 import json
 import logging
@@ -58,7 +59,8 @@ class ExportError(Exception):
 # #################### #
 
 def redirect_to_canonical(cursor, id, version, id_type,
-                          route_name='content', route_args=None):
+                          route_name='content', route_args=None,
+                          params=None):
     """Redirect to latest version of a module / collection.
 
     Looks up path associated with the provided router.
@@ -88,8 +90,10 @@ def redirect_to_canonical(cursor, id, version, id_type,
         route_args = {}
     request = get_current_request()
     route_args['ident_hash'] = join_ident_hash(full_id, version)
+    if not params:
+        params = {}
     raise httpexceptions.HTTPFound(request.route_path(
-        route_name, **route_args))
+        route_name, _query=params, **route_args))
 
 
 def get_content_metadata(id, version, cursor):
@@ -287,18 +291,12 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
     settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    try:
-        id, version, id_type = split_ident_hash(ident_hash, return_type=True)
-    except IdentHashSyntaxError:
-        raise httpexceptions.HTTPNotFound()
+    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
 
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
-        try:
-            p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
-                                                          return_type=True)
-        except IdentHashSyntaxError:
-            raise httpexceptions.HTTPNotFound()
+        p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
+                                                      return_type=True)
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
@@ -372,6 +370,16 @@ def notblocked(page):
         if rx.match(page):
             return False
     return True
+
+
+# ################### #
+#   Exception Views   #
+# ################### #
+
+
+@view_config(context=IdentHashSyntaxError)
+def ident_hash_syntax_error(exc, request):
+    return httpexceptions.HTTPNotFound()
 
 
 # ######### #
@@ -570,21 +578,15 @@ def in_book_search(request):
 
     args = request.matchdict
     ident_hash = args['ident_hash']
-    args['uuid'] = args['ident_hash'].split('@')[0]
 
     try:
         args['search_term'] = request.params.get('q', '')
     except (TypeError, ValueError, IndexError):
         args['search_term'] = None
 
-    id, version = split_ident_hash(ident_hash)
-    if version:
-        if '.' in version:
-            args['major_version'], \
-                args['minor_version'] = [int(v) for v in version.split('.')]
-        else:
-            args['major_version'] = int(version)
-            args['minor_version'] = None
+    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    args['uuid'] = id
+    args['version'] = version
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
@@ -592,8 +594,10 @@ def in_book_search(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id, 'in-book-search',
-                                   route_args=request.params.copy())
+                redirect_to_canonical(cursor, id, version, id_type,
+                                      route_name='in-book-search',
+                                      route_args=request.matchdict,
+                                      params=request.params.copy())
 
             cursor.execute(statement, args)
             res = cursor.fetchall()
@@ -630,10 +634,10 @@ def in_book_search_highlighted_results(request):
 
     args = request.matchdict
     ident_hash = args['ident_hash']
-    args['uuid'] = args['ident_hash'].split('@')[0]
 
     page_ident_hash = args['page_ident_hash']
-    args['page_ident_hash'] = args['page_ident_hash'].split('@')[0]
+    page_uuid, _ = split_ident_hash(page_ident_hash)
+    args['page_uuid'] = page_uuid
 
     try:
         args['search_term'] = request.params.get('q', '')
@@ -641,14 +645,9 @@ def in_book_search_highlighted_results(request):
         args['search_term'] = None
 
     # Get version from URL params
-    id, version = split_ident_hash(ident_hash)
-    if version:
-        if '.' in version:
-            args['major_version'], \
-                args['minor_version'] = [int(v) for v in version.split('.')]
-        else:
-            args['major_version'] = int(version)
-            args['minor_version'] = None
+    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    args['uuid'] = id
+    args['version'] = version
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
@@ -656,9 +655,10 @@ def in_book_search_highlighted_results(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_latest(cursor, id,
-                                   'in-book-search-page',
-                                   route_args=request.params.copy())
+                redirect_to_canonical(cursor, id, version, id_type,
+                                      route_name='in-book-search-page',
+                                      route_args=request.matchdict,
+                                      params=request.params.copy())
 
             cursor.execute(statement, args)
             res = cursor.fetchall()
