@@ -386,6 +386,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -409,6 +411,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -442,6 +446,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment
         self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -495,6 +501,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment
         self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -524,6 +532,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {
             'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -540,6 +550,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         from ..views import get_content
 
@@ -565,6 +577,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': uuid,
             }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -588,6 +602,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': "{}@{}".format(short_id, version)
         }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -610,6 +626,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': short_id
         }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ..views import get_content
@@ -625,6 +643,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_content_not_found(self):
         # Build the request environment
         self.request.matchdict = {'ident_hash': '98c44aed-056b-450a-81b0-61af87ee75af'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -634,6 +654,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_content_not_found_w_invalid_uuid(self):
         # Build the request environment
         self.request.matchdict = {'ident_hash': 'notfound@1'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -650,7 +672,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@0'.format(page_uuid),
+                'separator': ':',
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -667,7 +692,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+                'separator': ':',
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -689,7 +717,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': book_uuid,
             'page_ident_hash': page_uuid,
+            'separator': ':',
             }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -713,7 +744,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_shortid, book_version),
                 'page_ident_hash': '{}@0'.format(page_shortid),
+                'separator': ':',
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -738,7 +772,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_shortid, book_version),
                 'page_ident_hash': '{}@{}'.format(page_shortid, page_version),
+                'separator': ':',
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -764,7 +801,10 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': book_shortid,
             'page_ident_hash': page_shortid,
+            'separator': ':',
             }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
@@ -781,6 +821,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'objid': objid}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -799,6 +841,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'objid': objid, 'objver': '1.5'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -817,6 +861,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'objid': objid, 'objver': '1.4'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -834,6 +880,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'objid': objid}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -853,6 +901,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'objid': objid, 'objver': '1.4'}
         self.request.params = {'collection': '{}/latest'.format(colid)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -873,6 +923,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'objid': objid, 'objver': '1.4'}
         self.request.params = {'collection': 'col45555/latest'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -896,6 +948,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'objid': objid,
                                   'objver': objver,
                                   'filename': filename}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -918,6 +972,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'objid': objid,
                                   'objver': objver,
                                   'filename': filename}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
         from ..views import redirect_legacy_content
@@ -953,6 +1009,8 @@ class ViewsTestCase(unittest.TestCase):
         def get_content(version):
             # Build the request environment
             self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+            self.request.matched_route = mock.Mock()
+            self.request.matched_route.name = 'content'
 
             # Call the view
             from ..views import get_content
@@ -991,6 +1049,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
             }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-html'
 
         # Call the view
         from ..views import get_content_html
@@ -1006,6 +1066,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-html'
 
         # Call the view.
         from ..views import get_content_html
@@ -1020,6 +1082,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request.
         self.request.matchdict = {'hash': hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'resource'
 
         # Call the view.
         from ..views import get_resource
@@ -1037,6 +1101,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'hash': hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'resource'
 
         # Call the view
         from ..views import get_resource
@@ -1055,6 +1121,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'ident_hash': ident_hash,
                                   'type': type,
                                   }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'export'
 
         from ..views import get_export
         export = get_export(self.request).body
@@ -1093,6 +1161,8 @@ class ViewsTestCase(unittest.TestCase):
                 'ident_hash': '56f1c5c1-4014-450d-a477-2121e276beca@8',
                 'type': 'txt'
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'export'
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
@@ -1104,6 +1174,8 @@ class ViewsTestCase(unittest.TestCase):
                 'ident_hash': '24184288-14b9-11e3-86ac-207c8f4fa432@0',
                 'type': 'pdf'
                 }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'export'
 
         from ..views import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
@@ -1114,6 +1186,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': id, 'type': 'pdf'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'export'
 
         from ..views import get_export
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -1129,6 +1203,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         from ..views import get_extra
         output = get_extra(self.request).json_body
@@ -1175,6 +1251,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         from ..views import get_extra
         output = get_extra(self.request).json_body
@@ -1232,6 +1310,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': requested_ident_hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         # Call the target
         from ..views import get_extra
@@ -1277,6 +1357,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         from ..views import get_extra
         output = get_extra(self.request).json_body
@@ -1310,6 +1392,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': requested_ident_hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         # Call the target
         from ..views import get_extra
@@ -1335,6 +1419,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.matchdict = {
             'ident_hash': "{}@{}".format(short_id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         # Call the target
         from ..views import get_extra
@@ -1359,6 +1445,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': short_id}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         # Call the target
         from ..views import get_extra
@@ -1376,6 +1464,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': ident_hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         # Call the target
         from ..views import get_extra
@@ -1426,6 +1516,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
 
         from ..views import get_extra
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
@@ -1448,6 +1540,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': id}
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
         from ..views import in_book_search
@@ -1470,6 +1564,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'ident_hash':
                                   '{}@{}'.format(short_id, version)}
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
         from ..views import in_book_search
@@ -1491,6 +1587,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request environment.
         self.request.matchdict = {'ident_hash': short_id}
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
         from ..views import in_book_search
@@ -1510,6 +1608,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
         # search query param
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
 
         from ..views import in_book_search
         results = in_book_search(self.request).json_body
@@ -1567,6 +1667,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {'ident_hash': book_uuid,
                                   'page_ident_hash': page_uuid}
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search-page'
 
         # Call the view.
         from ..views import in_book_search_highlighted_results
@@ -1590,6 +1692,8 @@ class ViewsTestCase(unittest.TestCase):
                                   'page_ident_hash': '{}@{}'.format(page_uuid, page_version)}
         # search query param
         self.request.params = {'q': 'air or liquid drag'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search-page'
 
         from ..views import in_book_search_highlighted_results
         results = in_book_search_highlighted_results(self.request).json_body
@@ -1610,6 +1714,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_search(self):
         # Build the request
         self.request.params = {'q': '"college physics" sort:version'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1626,6 +1732,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_search_filter_by_authorID(self):
         # Build the request
         self.request.params = {'q': '"college physics" authorID:cnxcap'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1659,6 +1767,8 @@ class ViewsTestCase(unittest.TestCase):
         auth2 = 'authorID:DrBunsenHoneydew'
         fields = [sub, auth0, auth1, auth2]
         self.request.params = {'q': string.join(fields, ' ')}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1705,6 +1815,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.params = {'q': 'subject:"Science and Technology"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1724,6 +1836,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_search_with_subject(self):
         # Build the request
         self.request.params = {'q': 'title:"college physics" subject:"Science and Technology"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1746,6 +1860,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_search_highlight_abstract(self):
         # Build the request
         self.request.params = {'q': '"college physics"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1810,6 +1926,9 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
 
     def test_search_no_params(self):
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
         from ..views import search
         results = search(self.request).json_body
         status = self.request.response.status
@@ -1833,6 +1952,8 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_whitespace(self):
         self.request.params = {'q': ' '}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).body
@@ -1857,6 +1978,8 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_utf8(self):
         self.request.params = {'q': '"你好"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1901,6 +2024,8 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_punctuations(self):
         self.request.params = {'q': r":\.+'?"}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1945,6 +2070,8 @@ class ViewsTestCase(unittest.TestCase):
 
     def test_search_unbalanced_quotes(self):
         self.request.params = {'q': r'"a phrase" "something else sort:pubDate author:"first last"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -1996,6 +2123,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.params = {'q': 'title:"college physics" type:page'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2035,6 +2164,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request
         self.request.params = {'q': 'title:physics type:book'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2079,6 +2210,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         def call_search_view():
             with pyramid_testing.testConfig(**config_kwargs):
@@ -2133,6 +2266,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2228,6 +2363,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2269,6 +2406,8 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2313,6 +2452,8 @@ class ViewsTestCase(unittest.TestCase):
     def test_search_w_normal_cache(self):
         # Build the request
         self.request.params = {'q': '"college physics"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2343,6 +2484,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Build the request for subject search
         self.request.params = {'q': 'subject:"Science and Technology"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
 
         from ..views import search
         results = search(self.request).json_body
@@ -2385,6 +2528,9 @@ VALUES
    CURRENT_TIMESTAMP - INTERVAL '2 hours',
    1, 'should not show up in the results.')""")
         cursor.connection.commit()
+
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'extras'
 
         # Call the view
         from ..views import extras
@@ -2506,6 +2652,9 @@ application problems.</div>""",
         self.assertEqual(expected_messages, _remove_timestamps(messages))
 
     def test_sitemap(self):
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'sitemap'
+
         # Call the view
         from ..views import sitemap
         sitemap = sitemap(self.request).body
@@ -2514,6 +2663,9 @@ application problems.</div>""",
             self.assertMultiLineEqual(sitemap, file.read())
 
     def test_robots(self):
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'robots'
+
         # Call the view
         mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
         with mock.patch('cnxarchive.views.datetime') as mock_datetime:

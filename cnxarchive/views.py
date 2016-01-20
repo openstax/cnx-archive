@@ -82,12 +82,13 @@ def get_latest_version(uuid_):
 
 
 def redirect_to_canonical(cursor, id, version, id_type,
-                          route_name='content', route_args=None,
+                          route_name='', route_args=None,
                           params=None):
     """Redirect to latest version of a module / collection.
 
     Looks up path associated with the provided router.
     """
+    request = get_current_request()
     if id_type == CNXHash.SHORTID:
         full_id = get_uuid(id)
     elif id_type == CNXHash.FULLUUID:
@@ -101,6 +102,8 @@ def redirect_to_canonical(cursor, id, version, id_type,
 
     if route_args is None:
         route_args = {}
+    if not route_name:
+        route_name = request.matched_route.name
     request = get_current_request()
     route_args['ident_hash'] = join_ident_hash(full_id, version)
     if not params:
@@ -203,7 +206,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     if not version:
         id, _, id_type = split_ident_hash(id, return_type=True)
         redirect_to_canonical(cursor, id, version, id_type,
-                              route_name='export', route_args={'type': type})
+                              route_args={'type': type})
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -530,8 +533,7 @@ def get_extra(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='content-extras')
+                redirect_to_canonical(cursor, id, version, id_type)
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
@@ -594,7 +596,6 @@ def in_book_search(request):
         with db_connection.cursor() as cursor:
             if not version or id_type == CNXHash.SHORTID:
                 redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='in-book-search',
                                       route_args=request.matchdict,
                                       params=request.params.copy())
 
@@ -655,7 +656,6 @@ def in_book_search_highlighted_results(request):
         with db_connection.cursor() as cursor:
             if not version:
                 redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='in-book-search-page',
                                       route_args=request.matchdict,
                                       params=request.params.copy())
 
