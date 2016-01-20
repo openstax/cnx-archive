@@ -57,6 +57,30 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
+def get_uuid(shortid):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-uuid'], {'id': shortid})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                logger.debug("Short ID was supplied and could not discover "
+                             "UUID.")
+                raise httpexceptions.HTTPNotFound()
+
+
+def get_latest_version(uuid_):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-versions'], {'id': uuid_})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                raise httpexceptions.HTTPNotFound()
+
+
 def redirect_to_canonical(cursor, id, version, id_type,
                           route_name='content', route_args=None,
                           params=None):
@@ -65,12 +89,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
     Looks up path associated with the provided router.
     """
     if id_type == CNXHash.SHORTID:
-        cursor.execute(SQL['get-module-uuid'], {'id': id})
-        try:
-            full_id = cursor.fetchone()[0]
-        except (TypeError, IndexError,):  # None returned
-            logger.debug("Short ID was supplied and could not discover UUID.")
-            raise httpexceptions.HTTPNotFound()
+        full_id = get_uuid(id)
     elif id_type == CNXHash.FULLUUID:
         full_id = id
     else:
@@ -78,12 +97,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
         raise httpexceptions.HTTPNotFound()
 
     if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': full_id})
-        try:
-            version = cursor.fetchone()[0]  # Get latest (implied)
-        except (TypeError, IndexError,):  # None returned
-            logger.debug("version was not supplied and not be discovered.")
-            raise httpexceptions.HTTPNotFound()
+        version = get_latest_version(full_id)
 
     if route_args is None:
         route_args = {}
@@ -187,17 +201,9 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         raise ExportError("invalid type '{}' requested.".format(type))
 
     if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
-        try:
-            latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,):  # None returned
-            raise ExportError("version was not supplied and could not be "
-                              "discovered.")
-        request = get_current_request()
-        raise httpexceptions.HTTPFound(
-            request.route_path('export',
-                               ident_hash=join_ident_hash(id, latest_version),
-                               type=type))
+        id, _, id_type = split_ident_hash(id, return_type=True)
+        redirect_to_canonical(cursor, id, version, id_type,
+                              route_name='export', route_args={'type': type})
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -318,13 +324,7 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
 
                 if page_ident_hash:
                     if p_id_type == CNXHash.SHORTID:
-                        cursor.execute(SQL['get-module-uuid'], {'id': p_id})
-                        try:
-                            p_id = cursor.fetchone()[0]
-                        except (TypeError, IndexError,):  # None returned
-                            logger.debug("Short ID for page was supplied"
-                                         " and could not discover UUID.")
-                            raise httpexceptions.HTTPNotFound()
+                        p_id = get_uuid(p_id)
 
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
