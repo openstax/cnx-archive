@@ -89,6 +89,7 @@ def redirect_to_canonical(cursor, id, version, id_type,
     Looks up path associated with the provided router.
     """
     request = get_current_request()
+
     if id_type == CNXHash.SHORTID:
         full_id = get_uuid(id)
     elif id_type == CNXHash.FULLUUID:
@@ -101,13 +102,13 @@ def redirect_to_canonical(cursor, id, version, id_type,
         version = get_latest_version(full_id)
 
     if route_args is None:
-        route_args = {}
+        route_args = request.matchdict.copy()
     if not route_name:
         route_name = request.matched_route.name
     request = get_current_request()
     route_args['ident_hash'] = join_ident_hash(full_id, version)
     if not params:
-        params = {}
+        params = request.params
     raise httpexceptions.HTTPFound(request.route_path(
         route_name, _query=params, **route_args))
 
@@ -205,8 +206,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
 
     if not version:
         id, _, id_type = split_ident_hash(id, return_type=True)
-        redirect_to_canonical(cursor, id, version, id_type,
-                              route_args={'type': type})
+        redirect_to_canonical(cursor, id, version, id_type)
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -310,15 +310,10 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
         with db_connection.cursor() as cursor:
             if not version or id_type == CNXHash.SHORTID:
                 route_name = 'content'
-                route_args = {}
-                if page_ident_hash:
-                    route_args['separator'] = ':'
-                    route_args['page_ident_hash'] = page_ident_hash
                 if reqtype:
                     route_name = 'content-{}'.format(reqtype)
                 redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name=route_name,
-                                      route_args=route_args)
+                                      route_name=route_name)
 
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
@@ -595,9 +590,7 @@ def in_book_search(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_args=request.matchdict,
-                                      params=request.params.copy())
+                redirect_to_canonical(cursor, id, version, id_type)
 
             cursor.execute(statement, args)
             res = cursor.fetchall()
@@ -655,9 +648,7 @@ def in_book_search_highlighted_results(request):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             if not version:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_args=request.matchdict,
-                                      params=request.params.copy())
+                redirect_to_canonical(cursor, id, version, id_type)
 
             cursor.execute(statement, args)
             res = cursor.fetchall()
