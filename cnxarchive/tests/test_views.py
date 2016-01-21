@@ -972,23 +972,23 @@ class ViewsTestCase(unittest.TestCase):
 
         expected = u"""<html xmlns="http://www.w3.org/1999/xhtml">
   <body>\
-<ul><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a>\
-<ul><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li>\
+<ol><li><a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597%407.1.html">College Physics</a>\
+<ol data-depth="1"><li><a href="/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e%407.html">Preface</a></li>\
 <li><a>Introduction: The Nature of Science and Physics</a>\
-<ul><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9%403.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li>\
+<ol data-depth="2"><li><a href="/contents/f3c9ab70-a916-4d8c-9256-42953287b4e9%403.html">Introduction to Science and the Realm of Physics, Physical Quantities, and Units</a></li>\
 <li><a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce%404.html">Physics: An Introduction</a></li>\
 <li><a href="/contents/c8bdbabc-62b1-4a5f-b291-982ab25756d7%406.html">Physical Quantities and Units</a></li>\
 <li><a href="/contents/5152cea8-829a-4aaf-bcc5-c58a416ecb66%407.html">Accuracy, Precision, and Significant Figures</a></li>\
-<li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3%405.html">Approximation</a></li></ul></li>\
+<li><a href="/contents/5838b105-41cd-4c3d-a957-3ac004a48af3%405.html">Approximation</a></li></ol></li>\
 <li><a>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</a>\
-<ul><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d%402.html">Introduction: Further Applications of Newton’s Laws</a></li>\
+<ol data-depth="2"><li><a href="/contents/24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d%402.html">Introduction: Further Applications of Newton’s Laws</a></li>\
 <li><a href="/contents/ea271306-f7f2-46ac-b2ec-1d80ff186a59%405.html">Friction</a></li>\
 <li><a href="/contents/26346a42-84b9-48ad-9f6a-62303c16ad41%406.html">Drag Forces</a></li>\
 <li><a href="/contents/56f1c5c1-4014-450d-a477-2121e276beca%408.html">Elasticity: Stress and Strain</a></li>\
-</ul></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881%403.html">Atomic Masses</a></li>\
+</ol></li><li><a href="/contents/f6024d8a-1868-44c7-ab65-45419ef54881%403.html">Atomic Masses</a></li>\
 <li><a href="/contents/7250386b-14a7-41a2-b8bf-9e9ab872f0dc%402.html">Selected Radioactive Isotopes</a></li>\
 <li><a href="/contents/c0a76659-c311-405f-9a99-15c71af39325%405.html">Useful Inførmation</a></li>\
-<li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3%405.html">Glossary of Key Symbols and Notation</a></li></ul></li></ul></body>\n</html>\n"""
+<li><a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3%405.html">Glossary of Key Symbols and Notation</a></li></ol></li></ol></body>\n</html>\n"""
 
         # Build the environment
         self.request.matchdict = {
