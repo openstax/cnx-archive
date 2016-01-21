@@ -523,26 +523,6 @@ class ViewsTestCase(unittest.TestCase):
                 },
             }])
 
-    def test_truncated_hash(self):
-        # Test for retreiving a module.
-        from ..utils import CNXHash
-        cnxhash = CNXHash('56f1c5c1-4014-450d-a477-2121e276beca')
-        version = '8'
-
-        # Build the request environment.
-        self.request.matchdict = {
-            'ident_hash': "{}@{}".format(cnxhash.get_shortid(), version)}
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content'
-
-        # Call the view.
-        from ..views import get_content
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
-            get_content(self.request)
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format(cnxhash, version)))
-
     def test_module_content(self):
         # Test for retreiving a module.
         uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
