@@ -14,6 +14,8 @@ VERSION_CHAR = '.'
 
 __all__ = (
     'IdentHashSyntaxError',
+    'IdentHashShortId',
+    'IdentHashMissingVersion',
     'join_ident_hash',
     'split_ident_hash',
     'split_legacy_hash',
@@ -23,6 +25,19 @@ __all__ = (
 
 class IdentHashSyntaxError(Exception):
     """Raised when the ident-hash syntax is incorrect."""
+
+
+class IdentHashShortId(Exception):
+    """Raised when the ident-hash id is not a uuid"""
+    def __init__(self, id, version):
+        self.id = id
+        self.version = version
+
+
+class IdentHashMissingVersion(Exception):
+    """Raised when the ident-hash does not have a version"""
+    def __init__(self, id):
+        self.id = id
 
 
 def split_legacy_hash(legacy_hash):
@@ -52,17 +67,17 @@ def split_ident_hash(ident_hash, split_version=False, return_type=False):
 
     id_type = CNXHash.validate(id)
 
-    # None'ify the version on empty string.
-    version = version and version or None
+    if id_type == CNXHash.SHORTID:
+        raise IdentHashShortId(id, version)
+
+    if not version:
+        raise IdentHashMissingVersion(id)
 
     if split_version:
-        if version is None:
-            version = (None, None,)
-        else:
-            split_version = version.split(VERSION_CHAR)
-            if len(split_version) == 1:
-                split_version.append(None)
-            version = tuple(split_version)
+        split_version = version.split(VERSION_CHAR)
+        if len(split_version) == 1:
+            split_version.append(None)
+        version = tuple(split_version)
     if return_type:
         return id, version, id_type
     else:

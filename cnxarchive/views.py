@@ -33,6 +33,7 @@ from .sitemap import Sitemap
 from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
+    IdentHashShortId, IdentHashMissingVersion,
     portaltype_to_mimetype, slugify, fromtimestamp,
     join_ident_hash, split_ident_hash, split_legacy_hash, CNXHash
     )
@@ -79,38 +80,6 @@ def get_latest_version(uuid_):
                 return cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned
                 raise httpexceptions.HTTPNotFound()
-
-
-def redirect_to_canonical(cursor, id, version, id_type,
-                          route_name='', route_args=None,
-                          params=None):
-    """Redirect to latest version of a module / collection.
-
-    Looks up path associated with the provided router.
-    """
-    request = get_current_request()
-
-    if id_type == CNXHash.SHORTID:
-        full_id = get_uuid(id)
-    elif id_type == CNXHash.FULLUUID:
-        full_id = id
-    else:
-        logger.debug("Neither short_id nor full UUID: not implemented.")
-        raise httpexceptions.HTTPNotFound()
-
-    if not version:
-        version = get_latest_version(full_id)
-
-    if route_args is None:
-        route_args = request.matchdict.copy()
-    if not route_name:
-        route_name = request.matched_route.name
-    request = get_current_request()
-    route_args['ident_hash'] = join_ident_hash(full_id, version)
-    if not params:
-        params = request.params
-    raise httpexceptions.HTTPFound(request.route_path(
-        route_name, _query=params, **route_args))
 
 
 def get_content_metadata(id, version, cursor):
@@ -198,10 +167,6 @@ def get_export_file(cursor, id, version, type, exports_dirs):
 
     if type not in type_info:
         raise ExportError("invalid type '{}' requested.".format(type))
-
-    if not version:
-        id, _, id_type = split_ident_hash(id, return_type=True)
-        redirect_to_canonical(cursor, id, version, id_type)
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -305,8 +270,9 @@ def _convert_legacy_id(objid, objver=None):
                 return (None, None)
 
 
-def _get_content_json(request=None, ident_hash=None, reqtype=None):
+def _get_content_json(ident_hash=None):
     """Return a content as a dict from its ident-hash (uuid@version)."""
+    request = get_current_request()
     routing_args = request and request.matchdict or {}
     settings = get_current_registry().settings
     if not ident_hash:
@@ -315,33 +281,30 @@ def _get_content_json(request=None, ident_hash=None, reqtype=None):
 
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
-        p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
-                                                      return_type=True)
+        try:
+            p_id, p_version = split_ident_hash(page_ident_hash)
+        except IdentHashShortId as e:
+            p_id = get_uuid(e.id)
+            p_version = e.version
+        except IdentHashMissingVersion as e:
+            # page ident hash doesn't need a version
+            p_id = e.id
+            p_version = None
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                route_name = 'content'
-                if reqtype:
-                    route_name = 'content-{}'.format(reqtype)
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name=route_name)
-
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor)
 
                 if page_ident_hash:
-                    if p_id_type == CNXHash.SHORTID:
-                        p_id = get_uuid(p_id)
-
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
                         if id == p_id and (
                            version == p_version or not p_version):
                             raise httpexceptions.HTTPFound(request.route_path(
-                                'content',
+                                request.matched_route.name,
                                 ident_hash=join_ident_hash(id, version)))
                     raise httpexceptions.HTTPNotFound()
             else:
@@ -434,6 +397,35 @@ def ident_hash_syntax_error(exc, request):
     return httpexceptions.HTTPNotFound()
 
 
+@view_config(context=IdentHashShortId)
+def ident_hash_short_id(exc, request):
+    try:
+        uuid_ = get_uuid(exc.id)
+    except httpexceptions.HTTPNotFound as e:
+        return e
+    if not exc.version:
+        return ident_hash_missing_version(
+            IdentHashMissingVersion(uuid_), request)
+    route_name = request.matched_route.name
+    route_args = request.matchdict.copy()
+    route_args['ident_hash'] = join_ident_hash(uuid_, exc.version)
+    return httpexceptions.HTTPFound(request.route_path(
+        route_name, _query=request.params, **route_args))
+
+
+@view_config(context=IdentHashMissingVersion)
+def ident_hash_missing_version(exc, request):
+    try:
+        version = get_latest_version(exc.id)
+    except httpexceptions.HTTPNotFound as e:
+        return e
+    route_name = request.matched_route.name
+    route_args = request.matchdict.copy()
+    route_args['ident_hash'] = join_ident_hash(exc.id, version)
+    return httpexceptions.HTTPFound(request.route_path(
+        route_name, _query=request.params, **route_args))
+
+
 # ######### #
 #   Views   #
 # ######### #
@@ -442,7 +434,7 @@ def ident_hash_syntax_error(exc, request):
 @view_config(route_name='content-json', request_method='GET')
 def get_content_json(request):
     """Retrieve content as JSON using the ident-hash (uuid@version)."""
-    result = _get_content_json(request=request, reqtype='json')
+    result = _get_content_json()
 
     result = json.dumps(result)
     resp = request.response
@@ -455,7 +447,7 @@ def get_content_json(request):
 @view_config(route_name='content-html', request_method='GET')
 def get_content_html(request):
     """Retrieve content as HTML using the ident-hash (uuid@version)."""
-    result = _get_content_json(request=request, reqtype='html')
+    result = _get_content_json()
 
     media_type = result['mediaType']
     if media_type == MODULE_MIMETYPE:
@@ -565,8 +557,6 @@ def get_extra(request):
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type)
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
@@ -597,6 +587,9 @@ def get_export(request):
                 logger.debug(str(e))
                 raise httpexceptions.HTTPNotFound()
 
+    if state == 'missing':
+        raise httpexceptions.HTTPNotFound()
+
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = mimetype
@@ -624,9 +617,6 @@ def in_book_search(request):
     statement = SQL['get-in-book-search']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type)
-
             cursor.execute(statement, args)
             res = cursor.fetchall()
 
@@ -663,7 +653,12 @@ def in_book_search_highlighted_results(request):
     ident_hash = args['ident_hash']
 
     page_ident_hash = args['page_ident_hash']
-    page_uuid, _ = split_ident_hash(page_ident_hash)
+    try:
+        page_uuid, _ = split_ident_hash(page_ident_hash)
+    except IdentHashShortId as e:
+        page_uuid = get_uuid(e.id)
+    except IdentHashMissingVersion as e:
+        page_uuid = e.id
     args['page_uuid'] = page_uuid
 
     args['search_term'] = request.params.get('q', '')
@@ -678,9 +673,6 @@ def in_book_search_highlighted_results(request):
     statement = SQL['get-in-book-search-full-page']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
-                redirect_to_canonical(cursor, id, version, id_type)
-
             cursor.execute(statement, args)
             res = cursor.fetchall()
 

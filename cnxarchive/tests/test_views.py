@@ -25,6 +25,7 @@ except ImportError:
 from pyramid import httpexceptions
 from pyramid import testing as pyramid_testing
 
+from ..utils import IdentHashShortId, IdentHashMissingVersion
 from . import testing
 
 
@@ -564,12 +565,8 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import get_content
 
         # Check that the view redirects to the latest version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashMissingVersion) as cm:
             get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@5.json'.format(uuid)))
 
     def test_content_shortid_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -589,12 +586,8 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import get_content
 
         # Check that the view redirects to the latest version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@{}.json'.format(uuid, version)))
 
     def test_content_shortid_no_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -613,12 +606,8 @@ class ViewsTestCase(unittest.TestCase):
         from ..views import get_content
 
         # Check that the view redirects to the latest version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         quote('/contents/{}@5.json'.format(uuid)))
 
     def test_content_not_found(self):
         # Build the request environment
@@ -628,7 +617,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view
         from ..views import get_content
-        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+        self.assertRaises(IdentHashMissingVersion, get_content,
                           self.request)
 
     def test_content_not_found_w_invalid_uuid(self):
@@ -639,7 +628,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view
         from ..views import get_content
-        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+        self.assertRaises(IdentHashShortId, get_content,
                           self.request)
 
     def test_content_page_inside_book_version_mismatch(self):
@@ -704,12 +693,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view
         from ..views import get_content
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashMissingVersion) as cm:
             get_content(self.request)
-
-        path = '/contents/{}@{}:{}.json'.format(
-            book_uuid, book_version, page_uuid)
-        self.assertEqual(cm.exception.headers['Location'], quote(path))
 
     def test_content_page_inside_book_version_mismatch_shortid(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -724,20 +709,14 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_shortid, book_version),
                 'page_ident_hash': '{}@0'.format(page_shortid),
-                'separator': ':',
                 }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(
-            cm.exception.headers['Location'],
-            quote('/contents/{}@{}:{}@{}.json'.format(book_uuid, book_version, page_shortid, 0)))
 
     def test_content_page_inside_book_w_version_shortid(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -752,21 +731,14 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_shortid, book_version),
                 'page_ident_hash': '{}@{}'.format(page_shortid, page_version),
-                'separator': ':',
                 }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(
-            cm.exception.headers['Location'],
-            quote('/contents/{}@{}:{}@{}.json'.format(book_uuid, book_version,
-                                                      page_shortid, page_version)))
 
     def test_content_page_inside_book_wo_version_shortid(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -781,19 +753,14 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matchdict = {
             'ident_hash': book_shortid,
             'page_ident_hash': page_shortid,
-            'separator': ':',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
         # Call the view
         from ..views import get_content
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
-
-        path = '/contents/{}@{}:{}.json'.format(
-            book_uuid, book_version, page_shortid)
-        self.assertEqual(cm.exception.headers['Location'], quote(path))
 
     def test_legacy_id_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
@@ -1170,12 +1137,8 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'export'
 
         from ..views import get_export
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashMissingVersion) as cm:
             get_export(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        self.assertEqual(cm.exception.headers['Location'],
-                         quote('/exports/{}@5.pdf'.format(id)))
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1377,12 +1340,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the target
         from ..views import get_extra
-        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+        with self.assertRaises(IdentHashMissingVersion) as raiser:
             get_extra(self.request)
-        exception = raiser.exception
-        expected_location = "/extras/{}".format(expected_ident_hash)
-        self.assertEqual(exception.headers['Location'],
-                         quote(expected_location))
 
     def test_extra_shortid(self):
         # Request the extras for a document with a shortid and
@@ -1404,12 +1363,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the target
         from ..views import get_extra
-        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+        with self.assertRaises(IdentHashShortId) as raiser:
             get_extra(self.request)
-        exception = raiser.exception
-        expected_location = "/extras/{}".format(expected_ident_hash)
-        self.assertEqual(exception.headers['Location'],
-                         quote(expected_location))
 
     def test_extra_shortid_wo_version(self):
         # Request the extras for a document with a shortid and no
@@ -1430,12 +1385,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the target
         from ..views import get_extra
-        with self.assertRaises(httpexceptions.HTTPFound) as raiser:
+        with self.assertRaises(IdentHashShortId) as raiser:
             get_extra(self.request)
-        exception = raiser.exception
-        expected_location = "/extras/{}".format(expected_ident_hash)
-        self.assertEqual(exception.headers['Location'],
-                         quote(expected_location))
 
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
@@ -1525,13 +1476,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view.
         from ..views import in_book_search
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashMissingVersion) as cm:
             in_book_search(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        path = quote('/search/{}@{}'.format(id, version))
-        self.assertEqual(cm.exception.headers['Location'],
-                         '{}?q=air+or+liquid+drag'.format(path))
 
     def test_in_book_search_shortid(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1549,13 +1495,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view.
         from ..views import in_book_search
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             in_book_search(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        path = quote('/search/{}@{}'.format(id, version))
-        self.assertEqual(cm.exception.headers['Location'],
-                         '{}?q=air+or+liquid+drag'.format(path))
 
     def test_in_book_search_short_id_wo_version(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1572,13 +1513,8 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view.
         from ..views import in_book_search
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashShortId) as cm:
             in_book_search(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        path = quote('/search/{}@{}'.format(id, version))
-        self.assertEqual(cm.exception.headers['Location'],
-                         '{}?q=air+or+liquid+drag'.format(path))
 
     def test_in_book_search(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1653,13 +1589,8 @@ class ViewsTestCase(unittest.TestCase):
         # Call the view.
         from ..views import in_book_search_highlighted_results
 
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(IdentHashMissingVersion) as cm:
             in_book_search_highlighted_results(self.request)
-
-        self.assertEqual(cm.exception.status, '302 Found')
-        path = quote('/search/{}@{}:{}'.format(book_uuid, book_version, page_uuid))
-        self.assertEqual(cm.exception.headers['Location'],
-                         '{}?q=air+or+liquid+drag'.format(path))
 
     def test_in_book_search_highlighted_results(self):
         collection_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'

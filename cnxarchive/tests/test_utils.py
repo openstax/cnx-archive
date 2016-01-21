@@ -9,7 +9,8 @@ import os
 import uuid
 import unittest
 
-from ..utils import CNXHash, IdentHashSyntaxError
+from ..utils import (CNXHash, IdentHashSyntaxError, IdentHashShortId,
+                     IdentHashMissingVersion)
 
 
 class SplitIdentTestCase(unittest.TestCase):
@@ -43,15 +44,14 @@ class SplitIdentTestCase(unittest.TestCase):
         # Case where the UUID has been the only value supplied in the
         # ident-hash.
         # This is mostly testing that the version value returns None.
-        expected_id, expected_version = (
-            '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2', '',
-            )
-        ident_hash = "{}@{}".format(expected_id, expected_version)
+        expected_id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        ident_hash = "{}@".format(expected_id)
 
-        id, version, id_type = self.call_target(ident_hash, return_type=True)
+        with self.assertRaises(IdentHashMissingVersion) as cm:
+            self.call_target(ident_hash, return_type=True)
 
-        self.assertEqual(id, expected_id)
-        self.assertEqual(version, None)
+        exc = cm.exception
+        self.assertEqual(exc.id, expected_id)
 
     def test_invalid_id(self):
         # Case for testing for an invalid identifier.
@@ -98,17 +98,34 @@ class SplitIdentTestCase(unittest.TestCase):
         self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_w_split_version_no_version(self):
-        expected_id, expected_version = (
-            '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2',
-            (None, None, )
-        )
+        expected_id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
         ident_hash = expected_id
 
-        id, version, id_type = self.call_target(ident_hash, True, True)
+        with self.assertRaises(IdentHashMissingVersion) as cm:
+            self.call_target(ident_hash, True, True)
 
-        self.assertEqual(id, expected_id)
-        self.assertEqual(version, expected_version)
-        self.assertEqual(id_type, CNXHash.FULLUUID)
+        exc = cm.exception
+        self.assertEqual(exc.id, expected_id)
+
+    def test_short_id_wo_version(self):
+        ident_hash = 'abcdefgh'
+
+        with self.assertRaises(IdentHashShortId) as cm:
+            self.call_target(ident_hash)
+
+        exc = cm.exception
+        self.assertEqual(exc.id, 'abcdefgh')
+        self.assertEqual(exc.version, '')
+
+    def test_short_id_w_version(self):
+        ident_hash = 'abcdefgh@10'
+
+        with self.assertRaises(IdentHashShortId) as cm:
+            self.call_target(ident_hash)
+
+        exc = cm.exception
+        self.assertEqual(exc.id, 'abcdefgh')
+        self.assertEqual(exc.version, '10')
 
 
 class JoinIdentTestCase(unittest.TestCase):
