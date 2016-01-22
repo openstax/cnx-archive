@@ -572,7 +572,7 @@ def get_export(request):
 
 @view_config(route_name='in-book-search', request_method='GET')
 def in_book_search(request):
-    """ Full text, in-book search """
+    """Full text, in-book search."""
     results = {}
 
     args = request.matchdict
@@ -592,7 +592,7 @@ def in_book_search(request):
     statement = SQL['get-in-book-search']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
+            if not version or id_type == CNXHash.SHORTID:
                 redirect_to_canonical(cursor, id, version, id_type,
                                       route_name='in-book-search',
                                       route_args=request.matchdict,
@@ -628,7 +628,7 @@ def in_book_search(request):
 
 @view_config(route_name='in-book-search-page', request_method='GET')
 def in_book_search_highlighted_results(request):
-    """ in-book search - returns a highlighted version of the HTML """
+    """In-book search - returns a highlighted version of the HTML."""
     results = {}
 
     args = request.matchdict

@@ -1459,6 +1459,49 @@ class ViewsTestCase(unittest.TestCase):
         self.assertEqual(cm.exception.headers['Location'],
                          '{}?q=air+or+liquid+drag'.format(path))
 
+    def test_in_book_search_shortid(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+        from ..utils import CNXHash
+        cnxhash = CNXHash(id)
+        short_id = cnxhash.get_shortid()
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash':
+                                  '{}@{}'.format(short_id, version)}
+        self.request.params = {'q': 'air or liquid drag'}
+
+        # Call the view.
+        from ..views import in_book_search
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            in_book_search(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        path = quote('/search/{}@{}'.format(id, version))
+        self.assertEqual(cm.exception.headers['Location'],
+                         '{}?q=air+or+liquid+drag'.format(path))
+
+    def test_in_book_search_short_id_wo_version(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+        from ..utils import CNXHash
+        cnxhash = CNXHash(id)
+        short_id = cnxhash.get_shortid()
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': short_id}
+        self.request.params = {'q': 'air or liquid drag'}
+
+        # Call the view.
+        from ..views import in_book_search
+        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+            in_book_search(self.request)
+
+        self.assertEqual(cm.exception.status, '302 Found')
+        path = quote('/search/{}@{}'.format(id, version))
+        self.assertEqual(cm.exception.headers['Location'],
+                         '{}?q=air+or+liquid+drag'.format(path))
+
     def test_in_book_search(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
