@@ -277,7 +277,7 @@ def _get_content_json(ident_hash=None):
     settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
 
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
@@ -551,8 +551,7 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    id, version, id_type = split_ident_hash(
-        args['ident_hash'], return_type=True)
+    id, version = split_ident_hash(args['ident_hash'])
     results = {}
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
@@ -608,7 +607,7 @@ def in_book_search(request):
 
     args['search_term'] = request.params.get('q', '')
 
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
     args['version'] = version
 
@@ -664,7 +663,7 @@ def in_book_search_highlighted_results(request):
     args['search_term'] = request.params.get('q', '')
 
     # Get version from URL params
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
     args['version'] = version
 

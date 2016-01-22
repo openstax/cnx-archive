@@ -96,19 +96,15 @@ def main(argv=None):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
-                id, version, id_type = split_ident_hash(
-                    ident_hash, return_type=True)
-                if id_type == CNXHash.FULLUUID:
-                    cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
-                                   (id, version))
-                    module_ident = cursor.fetchone()
-                    payload = (module_ident, start_timestamp, end_timestamp,
-                               hit_count,)
-                    cursor.execute("INSERT INTO document_hits "
-                                   "  VALUES (%s, %s, %s, %s);",
-                                   payload)
-                else:
-                    raise NotImplemented
+                id, version = split_ident_hash(ident_hash)
+                cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
+                               (id, version))
+                module_ident = cursor.fetchone()
+                payload = (module_ident, start_timestamp, end_timestamp,
+                           hit_count,)
+                cursor.execute("INSERT INTO document_hits "
+                               "  VALUES (%s, %s, %s, %s);",
+                               payload)
             cursor.execute("SELECT update_hit_ranks();")
     return 0
 

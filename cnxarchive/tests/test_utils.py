@@ -34,11 +34,10 @@ class SplitIdentTestCase(unittest.TestCase):
             )
         ident_hash = "{}@{}".format(expected_id, expected_version)
 
-        id, version, id_type = self.call_target(ident_hash, return_type=True)
+        id, version = self.call_target(ident_hash)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
-        self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_uuid_only(self):
         # Case where the UUID has been the only value supplied in the
@@ -48,7 +47,7 @@ class SplitIdentTestCase(unittest.TestCase):
         ident_hash = "{}@".format(expected_id)
 
         with self.assertRaises(IdentHashMissingVersion) as cm:
-            self.call_target(ident_hash, return_type=True)
+            self.call_target(ident_hash)
 
         exc = cm.exception
         self.assertEqual(exc.id, expected_id)
@@ -76,12 +75,10 @@ class SplitIdentTestCase(unittest.TestCase):
         )
         ident_hash = "{}@{}".format(expected_id, '.'.join(expected_version))
 
-        id, version, id_type = self.call_target(
-            ident_hash, split_version=True, return_type=True)
+        id, version = self.call_target(ident_hash, split_version=True)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
-        self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_w_split_version_on_major_version(self):
         expected_id, expected_version = (
@@ -90,19 +87,17 @@ class SplitIdentTestCase(unittest.TestCase):
         )
         ident_hash = "{}@{}".format(expected_id, expected_version[0])
 
-        id, version, id_type = self.call_target(
-            ident_hash, split_version=True, return_type=True)
+        id, version = self.call_target(ident_hash, split_version=True)
 
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
-        self.assertEqual(id_type, CNXHash.FULLUUID)
 
     def test_w_split_version_no_version(self):
         expected_id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
         ident_hash = expected_id
 
         with self.assertRaises(IdentHashMissingVersion) as cm:
-            self.call_target(ident_hash, True, True)
+            self.call_target(ident_hash, True)
 
         exc = cm.exception
         self.assertEqual(exc.id, expected_id)
