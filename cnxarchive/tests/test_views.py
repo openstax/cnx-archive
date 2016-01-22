@@ -22,11 +22,8 @@ try:
 except ImportError:
     import mock
 
-import psycopg2
 from pyramid import httpexceptions
 from pyramid import testing as pyramid_testing
-from pyramid.request import Request
-from pyramid.threadlocal import get_current_registry
 
 from . import testing
 

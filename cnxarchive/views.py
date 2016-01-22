@@ -6,7 +6,6 @@
 # See LICENCE.txt for details.
 # ###
 """All the views."""
-import functools
 import os
 import json
 import logging
