@@ -64,7 +64,19 @@ BEGIN
   DELETE FROM  latest_modules
     WHERE module_ident=OLD.module_ident;
   IF FOUND THEN
-    INSERT into latest_modules select * from current_modules where moduleid=OLD.moduleid;
+    INSERT into latest_modules (
+         module_ident, portal_type, moduleid, uuid, version, name,
+         created, revised, abstractid, licenseid, doctype, submitter,
+         submitlog, stateid, parent, language, authors, maintainers,
+         licensors, parentauthors, google_analytics, buylink,
+         major_version, minor_version, print_style )
+    select
+         module_ident, portal_type, moduleid, uuid, version, name,
+         created, revised, abstractid, licenseid, doctype, submitter,
+         submitlog, stateid, parent, language, authors, maintainers,
+         licensors, parentauthors, google_analytics, buylink,
+         major_version, minor_version, print_style
+    from current_modules where moduleid=OLD.moduleid;
   END IF;
   RETURN OLD;
 END;
