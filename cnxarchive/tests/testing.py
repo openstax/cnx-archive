@@ -7,10 +7,12 @@
 # ###
 import os
 import pytz
+import re
 import functools
 from datetime import datetime
 
 import psycopg2
+import psycopg2.extras
 from pyramid.paster import get_appsettings
 
 from .. import config
@@ -23,6 +25,7 @@ __all__ = (
     'db_connect', 'db_connection_factory',
     'integration_test_settings',
     'data_fixture', 'schema_fixture',
+    'fake_plpy',
     )
 
 
@@ -141,3 +144,40 @@ data_fixture = DataFixture()
 # right timezone (America/Whitehorse is -07 in summer and -08 in winter)
 os.environ['PGTZ'] = 'America/Whitehorse'
 os.environ['TZ'] = 'America/Whitehorse'
+
+
+class FakePlpy(object):
+    @staticmethod
+    def prepare(stmt, param_types):
+        return FakePlpyPlan(stmt)
+
+    @staticmethod
+    def execute(plan, args, rows=None):
+        return plan.execute(args, rows=rows)
+
+
+fake_plpy = FakePlpy()
+
+
+class FakePlpyPlan(object):
+    def __init__(self, stmt):
+        self.stmt = re.sub(
+            '\$([0-9]+)', lambda m: '%(param_{})s'.format(m.group(1)), stmt)
+
+    def execute(self, args, rows=None):
+        connect = db_connection_factory()
+        with connect() as db_conn:
+            with db_conn.cursor(
+                    cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                params = {}
+                for i, value in enumerate(args):
+                    params['param_{}'.format(i + 1)] = value
+                cursor.execute(self.stmt, params)
+                try:
+                    results = cursor.fetchall()
+                    if rows is not None:
+                        results = results[:rows]
+                    return results
+                except psycopg2.ProgrammingError as e:
+                    if e.message != 'no results to fetch':
+                        raise

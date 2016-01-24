@@ -243,59 +243,56 @@ def get_tree(ident_hash, cursor):
         return tree
 
 
-def get_module_uuid(db_connection, moduleid):
+def get_module_uuid(plpy, moduleid):
     """Retrieve page uuid from legacy moduleid."""
-    with db_connection.cursor() as cursor:
-        cursor.execute("SELECT uuid FROM modules WHERE moduleid = %s;",
-                       (moduleid,))
-        uuid = None
-        result = cursor.fetchone()
-        if result:
-            uuid = result[0]
-    return uuid
+    plan = plpy.prepare("SELECT uuid FROM modules WHERE moduleid = $1;",
+                        ('text',))
+    result = plpy.execute(plan, (moduleid,), 1)
+    if result:
+        return result[0]['uuid']
 
 
-def get_current_module_ident(moduleid, cursor):
+def get_current_module_ident(moduleid, plpy):
     """Retrieve module_ident for a given moduleid.
 
     Note that module_ident is used only for internal database relational
     associations, and is equivalent to a uuid@version for a given document.
     """
-    sql = '''SELECT m.module_ident FROM modules m
-        WHERE m.moduleid = %s ORDER BY revised DESC'''
-    cursor.execute(sql, [moduleid])
-    results = cursor.fetchone()
+    plan = plpy.prepare('''\
+        SELECT m.module_ident FROM modules m
+        WHERE m.moduleid = $1 ORDER BY revised DESC''', ('text',))
+    results = plpy.execute(plan, (moduleid,), 1)
     if results:
-        return results[0]
+        return results[0]['module_ident']
 
 
-def get_minor_version(module_ident, cursor):
+def get_minor_version(module_ident, plpy):
     """Retrieve minor version only given module_ident."""
-    sql = '''SELECT m.minor_version
+    plan = plpy.prepare('''\
+        SELECT m.minor_version
             FROM modules m
-            WHERE m.module_ident = %s
-            ORDER BY m.revised DESC'''
-    cursor.execute(sql, [module_ident])
-    results = cursor.fetchone()[0]
-    return results
+            WHERE m.module_ident = $1
+            ORDER BY m.revised DESC''', ('integer',))
+    results = plpy.execute(plan, (module_ident,), 1)
+    return results[0]['minor_version']
 
 
-def next_version(module_ident, cursor):
+def next_version(module_ident, plpy):
     """Determine next minor version for a given module_ident.
 
     Note potential race condition!
     """
-    minor = get_minor_version(module_ident, cursor)
+    minor = get_minor_version(module_ident, plpy)
     return minor + 1
 
 
-def get_collections(module_ident, cursor):
+def get_collections(module_ident, plpy):
     """Get all the collections that the module is part of."""
-    sql = '''
+    plan = plpy.prepare('''
     WITH RECURSIVE t(node, parent, path, document) AS (
         SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
         FROM trees tr
-        WHERE tr.documentid = %s
+        WHERE tr.documentid = $1
     UNION ALL
         SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
         FROM trees c JOIN t ON (c.nodeid = t.parent)
@@ -304,34 +301,30 @@ def get_collections(module_ident, cursor):
     SELECT m.module_ident
     FROM t JOIN latest_modules m ON (t.document = m.module_ident)
     WHERE t.parent IS NULL
-    '''
-    cursor.execute(sql, [module_ident])
-    for i in cursor.fetchall():
-        yield i[0]
+    ''', ('integer',))
+    for i in plpy.execute(plan, (module_ident,)):
+        yield i['module_ident']
 
 
-def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
+def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     """Create a new tree for the collection based on the old tree.
 
     This usesnew document ids, replacing old ones.
     """
-    sql = '''
+    get_tree = plpy.prepare('''
     WITH RECURSIVE t(node, parent, document, title, childorder, latest, path)
         AS (SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr
-            WHERE tr.documentid = %s
+            WHERE tr.documentid = $1
     UNION ALL
         SELECT c.*, path || ARRAY[c.nodeid]
         FROM trees c JOIN t ON (c.parent_id = t.node)
         WHERE not c.nodeid = ANY(t.path)
     )
     SELECT * FROM t
-    '''
+    ''', ('integer',))
 
     def get_old_tree():
-        cursor.execute(sql, [old_collection_ident])
-        for i in cursor.fetchall():
-            yield dict(zip(('node', 'parent', 'document', 'title',
-                            'childorder', 'latest', 'path'), i))
+        return plpy.execute(get_tree, (old_collection_ident,))
 
     tree = {}  # { old_nodeid: {'data': ...}, ...}
     children = {}  # { nodeid: [child_nodeid, ...], child_nodeid: [...]}
@@ -340,17 +333,16 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
         children.setdefault(i['parent'], [])
         children[i['parent']].append(i['node'])
 
-    sql = '''
+    insert_tree = plpy.prepare('''
     INSERT INTO trees (nodeid, parent_id, documentid,
         title, childorder, latest)
-    VALUES (DEFAULT, %s, %s, %s, %s, %s)
+    VALUES (DEFAULT, $1, $2, $3, $4, $5)
     RETURNING nodeid
-    '''
+    ''', ('integer', 'integer', 'text', 'integer', 'boolean'))
 
     def execute(fields):
-        cursor.execute(sql, fields)
-        results = cursor.fetchone()[0]
-        return results
+        results = plpy.execute(insert_tree, fields, 1)
+        return results[0]['nodeid']
 
     root_node = children[None][0]
 
@@ -364,7 +356,7 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, cursor):
     build_tree(root_node, None)
 
 
-def republish_collection(next_minor_version, collection_ident, cursor,
+def republish_collection(next_minor_version, collection_ident, plpy,
                          revised=None):
     """Insert a new row for collection_ident with a new version.
 
@@ -380,31 +372,35 @@ def republish_collection(next_minor_version, collection_ident, cursor,
         {}, m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog,
         m.stateid, m.parent, m.language, m.authors, m.maintainers, m.licensors,
         m.parentauthors, m.google_analytics, m.buylink, m.print_style,
-        m.major_version, %s
+        m.major_version, $1
       FROM modules m
-      WHERE m.module_ident = %s
+      WHERE m.module_ident = $2
     RETURNING module_ident
     '''
     if revised is None:
         sql = sql.format('CURRENT_TIMESTAMP')
-        params = [next_minor_version, collection_ident]
+        types = ('integer', 'integer')
+        params = (next_minor_version, collection_ident)
     else:
-        sql = sql.format('%s')
-        params = [revised, next_minor_version, collection_ident]
-    cursor.execute(sql, params)
-    new_ident = cursor.fetchone()[0]
-    cursor.execute("""\
+        sql = sql.format('$3')
+        types = ('integer', 'integer', 'timestamp')
+        params = (next_minor_version, collection_ident, revised)
+    plan = plpy.prepare(sql, types)
+    new_ident = plpy.execute(plan, params, 1)[0]['module_ident']
+
+    plan = plpy.prepare("""\
         INSERT INTO modulekeywords (module_ident, keywordid)
-        SELECT %s, keywordid
+        SELECT $1, keywordid
         FROM modulekeywords
-        WHERE module_ident = %s""",
-                   (new_ident, collection_ident,))
-    cursor.execute("""\
+        WHERE module_ident = $2""", ('integer', 'integer'))
+    plpy.execute(plan, (new_ident, collection_ident,))
+
+    plan = plpy.prepare("""\
         INSERT INTO moduletags (module_ident, tagid)
-        SELECT %s, tagid
+        SELECT $1, tagid
         FROM moduletags
-        WHERE module_ident = %s""",
-                   (new_ident, collection_ident,))
+        WHERE module_ident = $2""", ('integer', 'integer'))
+    plpy.execute(plan, (new_ident, collection_ident,))
     return new_ident
 
 
@@ -431,7 +427,7 @@ def set_version(portal_type, legacy_version, td):
     return modified
 
 
-def republish_module(td, cursor, db_connection):
+def republish_module(td, plpy):
     """When a module is republished, create new minor versions of collections.
 
     All collections that this module is contained in part of will need to be
@@ -455,10 +451,10 @@ def republish_module(td, cursor, db_connection):
 
     modified = set_version(portal_type, legacy_version, td)
 
-    current_module_ident = get_current_module_ident(moduleid, cursor)
+    current_module_ident = get_current_module_ident(moduleid, plpy)
     if current_module_ident:
         # need to overide autogen uuid to keep it constant per moduleid
-        uuid = get_module_uuid(db_connection, moduleid)
+        uuid = get_module_uuid(plpy, moduleid)
         td['new']['uuid'] = uuid
         modified = 'MODIFY'
     else:
@@ -470,13 +466,13 @@ def republish_module(td, cursor, db_connection):
         return modified
 
     # Module is republished
-    for collection_id in get_collections(current_module_ident, cursor):
-        minor = next_version(collection_id, cursor)
-        new_ident = republish_collection(minor, collection_id, cursor)
+    for collection_id in get_collections(current_module_ident, plpy):
+        minor = next_version(collection_id, plpy)
+        new_ident = republish_collection(minor, collection_id, plpy)
         rebuild_collection_tree(collection_id, {
             collection_id: new_ident,
             current_module_ident: td['new']['module_ident'],
-            }, cursor)
+            }, plpy)
 
     return modified
 
@@ -498,8 +494,6 @@ def republish_module_trigger(plpy, td):
     we need to create a collection tree for c1 v2.2 which is exactly the same
     as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
     """
-    import plpydbapi
-
     # Is this an insert from legacy? Legacy always supplies the version.
     is_legacy_publication = td['new']['version'] is not None
     if not is_legacy_publication:
@@ -508,14 +502,11 @@ def republish_module_trigger(plpy, td):
 
     plpy.log('Trigger fired on %s' % (td['new']['moduleid'],))
 
-    with plpydbapi.connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            modified = republish_module(td, cursor, db_connection)
-            plpy.log('modified: {}'.format(modified))
-            plpy.log('insert values:\n{}\n'.format('\n'.join([
-                '{}: {}'.format(key, value)
-                for key, value in td['new'].iteritems()])))
-        db_connection.commit()
+    modified = republish_module(td, plpy)
+    plpy.log('modified: {}'.format(modified))
+    plpy.log('insert values:\n{}\n'.format('\n'.join([
+        '{}: {}'.format(key, value)
+        for key, value in td['new'].iteritems()])))
 
     return modified
 
