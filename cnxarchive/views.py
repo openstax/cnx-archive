@@ -288,6 +288,23 @@ def _get_page_in_book(page_uuid, page_version, book_uuid,
     return page_uuid, page_ident_hash
 
 
+def _convert_legacy_id(objid, objver=None):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            if objver:
+                args = dict(objid=objid, objver=objver)
+                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
+            else:
+                cursor.execute(SQL['get-content-from-legacy-id'],
+                               dict(objid=objid))
+            try:
+                id, version = cursor.fetchone()
+                return (id, version)
+            except TypeError:  # None returned
+                return (None, None)
+
+
 def _get_content_json(request=None, ident_hash=None, reqtype=None):
     """Return a content as a dict from its ident-hash (uuid@version)."""
     routing_args = request and request.matchdict or {}
@@ -362,6 +379,49 @@ def notblocked(page):
         if rx.match(page):
             return False
     return True
+
+
+def _get_subject_list(cursor):
+    """Return all subjects (tags) in the database except "internal" scheme."""
+    subject = None
+    last_tagid = None
+    cursor.execute(SQL['get-subject-list'])
+    for s in cursor.fetchall():
+        tagid, tagname, portal_type, count = s
+
+        if tagid != last_tagid:
+            # It's a new subject, create a new dict and initialize count
+            if subject:
+                yield subject
+            subject = {'id': tagid,
+                       'name': tagname,
+                       'count': {'module': 0, 'collection': 0}, }
+            last_tagid = tagid
+
+        if tagid == last_tagid and portal_type:
+            # Just need to update the count
+            subject['count'][portal_type.lower()] = count
+
+    if subject:
+        yield subject
+
+
+def _get_featured_links(cursor):
+    """Return featured books for the front page."""
+    cursor.execute(SQL['get-featured-links'])
+    return [i[0] for i in cursor.fetchall()]
+
+
+def _get_service_state_messages(cursor):
+    """Return a list of service messages."""
+    cursor.execute(SQL['get-service-state-messages'])
+    return [i[0] for i in cursor.fetchall()]
+
+
+def _get_licenses(cursor):
+    """Return a list of license info."""
+    cursor.execute(SQL['get-license-info-as-json'])
+    return [json_row[0] for json_row in cursor.fetchall()]
 
 
 # ################### #
@@ -468,23 +528,6 @@ def redirect_legacy_content(request):
 
     raise httpexceptions.HTTPFound(
         request.route_path('content', ident_hash=ident_hash))
-
-
-def _convert_legacy_id(objid, objver=None):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            if objver:
-                args = dict(objid=objid, objver=objver)
-                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
-            else:
-                cursor.execute(SQL['get-content-from-legacy-id'],
-                               dict(objid=objid))
-            try:
-                id, version = cursor.fetchone()
-                return (id, version)
-            except TypeError:  # None returned
-                return (None, None)
 
 
 @view_config(route_name='resource', request_method='GET')
@@ -810,49 +853,6 @@ def search(request):
     resp.body = json.dumps(results)
 
     return resp
-
-
-def _get_subject_list(cursor):
-    """Return all subjects (tags) in the database except "internal" scheme."""
-    subject = None
-    last_tagid = None
-    cursor.execute(SQL['get-subject-list'])
-    for s in cursor.fetchall():
-        tagid, tagname, portal_type, count = s
-
-        if tagid != last_tagid:
-            # It's a new subject, create a new dict and initialize count
-            if subject:
-                yield subject
-            subject = {'id': tagid,
-                       'name': tagname,
-                       'count': {'module': 0, 'collection': 0}, }
-            last_tagid = tagid
-
-        if tagid == last_tagid and portal_type:
-            # Just need to update the count
-            subject['count'][portal_type.lower()] = count
-
-    if subject:
-        yield subject
-
-
-def _get_featured_links(cursor):
-    """Return featured books for the front page."""
-    cursor.execute(SQL['get-featured-links'])
-    return [i[0] for i in cursor.fetchall()]
-
-
-def _get_service_state_messages(cursor):
-    """Return a list of service messages."""
-    cursor.execute(SQL['get-service-state-messages'])
-    return [i[0] for i in cursor.fetchall()]
-
-
-def _get_licenses(cursor):
-    """Return a list of license info."""
-    cursor.execute(SQL['get-license-info-as-json'])
-    return [json_row[0] for json_row in cursor.fetchall()]
 
 
 @view_config(route_name='extras', request_method='GET')
