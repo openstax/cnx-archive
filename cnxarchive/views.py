@@ -613,10 +613,7 @@ def in_book_search(request):
     args = request.matchdict
     ident_hash = args['ident_hash']
 
-    try:
-        args['search_term'] = request.params.get('q', '')
-    except (TypeError, ValueError, IndexError):
-        args['search_term'] = None
+    args['search_term'] = request.params.get('q', '')
 
     id, version, id_type = split_ident_hash(ident_hash, return_type=True)
     args['uuid'] = id
@@ -670,10 +667,7 @@ def in_book_search_highlighted_results(request):
     page_uuid, _ = split_ident_hash(page_ident_hash)
     args['page_uuid'] = page_uuid
 
-    try:
-        args['search_term'] = request.params.get('q', '')
-    except (TypeError, ValueError, IndexError):
-        args['search_term'] = None
+    args['search_term'] = request.params.get('q', '')
 
     # Get version from URL params
     id, version, id_type = split_ident_hash(ident_hash, return_type=True)
@@ -734,11 +728,7 @@ def search(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json'
-    try:
-        search_terms = params.get('q', '')
-    except IndexError:
-        resp.body = empty_response
-        return resp
+    search_terms = params.get('q', '')
     query_type = params.get('t', None)
     if query_type is None or query_type not in QUERY_TYPES:
         query_type = DEFAULT_QUERY_TYPE
