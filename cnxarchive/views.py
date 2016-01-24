@@ -138,14 +138,9 @@ def get_content_metadata(id, version, cursor):
         raise httpexceptions.HTTPNotFound()
 
 
-def is_latest(cursor, id, version):
+def is_latest(id, version):
     """Determine if this is the latest version of this content."""
-    cursor.execute(SQL['get-module-versions'], {'id': id})
-    try:
-        latest_version = cursor.fetchone()[0]
-        return latest_version == version
-    except (TypeError, IndexError,):  # None returned
-        raise httpexceptions.HTTPNotFound()
+    return get_latest_version(id) == version
 
 
 TYPE_INFO = []
@@ -532,7 +527,7 @@ def get_extra(request):
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
-            results['isLatest'] = is_latest(cursor, id, version)
+            results['isLatest'] = is_latest(id, version)
             results['canPublish'] = database.get_module_can_publish(cursor, id)
 
     resp = request.response
