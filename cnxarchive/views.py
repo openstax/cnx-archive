@@ -637,7 +637,6 @@ def in_book_search(request):
                 'id': ident_hash,
                 'search_term': args['search_term'],
             }
-            len(res)
             for uuid, version, title, snippet, matches, rank in res:
                 results['results']['items'].append({
                     'rank': '{}'.format(rank),
