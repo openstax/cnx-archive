@@ -23,18 +23,22 @@ __all__ = (
     )
 
 
-class IdentHashSyntaxError(Exception):
+class IdentHashError(Exception):
+    """Base exception class for all ident hash exceptions."""
+
+
+class IdentHashSyntaxError(IdentHashError):
     """Raised when the ident-hash syntax is incorrect."""
 
 
-class IdentHashShortId(Exception):
+class IdentHashShortId(IdentHashError):
     """Raised when the ident-hash id is not a uuid"""
     def __init__(self, id, version):
         self.id = id
         self.version = version
 
 
-class IdentHashMissingVersion(Exception):
+class IdentHashMissingVersion(IdentHashError):
     """Raised when the ident-hash does not have a version"""
     def __init__(self, id):
         self.id = id
