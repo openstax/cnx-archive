@@ -71,15 +71,15 @@ class IndexFileExistsError(Exception):
         super(IndexFileExistsError, self).__init__(message)
 
 
-def produce_html_for_abstract(db_connection, cursor, document_ident):
+def produce_html_for_abstract(plpy, document_ident):
     """Produce html for the abstract by the given ``document_ident``."""
-    cursor.execute("SELECT abstractid, abstract "
-                   "FROM modules NATURAL LEFT JOIN abstracts "
-                   "WHERE module_ident = %s;",
-                   (document_ident,))
+    plan = plpy.prepare("SELECT abstractid, abstract "
+                        "FROM modules NATURAL LEFT JOIN abstracts "
+                        "WHERE module_ident = $1;", ('integer',))
     try:
-        abstractid, abstract = cursor.fetchone()
-    except TypeError:  # None returned
+        result = plpy.execute(plan, (document_ident,), 1)[0]
+        abstractid, abstract = result['abstractid'], result['abstract']
+    except (IndexError, KeyError):
         # This means the document doesn't exist.
         raise ValueError("No document at ident: {}".format(document_ident))
     if abstractid is None:
@@ -89,27 +89,27 @@ def produce_html_for_abstract(db_connection, cursor, document_ident):
     # Transform the abstract.
     if abstract:
         html, warning_messages = transform_abstract_to_html(
-            abstract, document_ident, db_connection)
+            abstract, document_ident, plpy)
     else:
         html = None
 
     # Update the abstract.
     if html:
-        cursor.execute("UPDATE abstracts SET (html) = (%s) "
-                       "WHERE abstractid = %s;",
-                       (html, abstractid,))
+        plan = plpy.prepare("UPDATE abstracts SET (html) = ($1) "
+                            "WHERE abstractid = $2;", ('text', 'integer'))
+        plpy.execute(plan, (html, abstractid,))
     return warning_messages
 
 
-def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
+def produce_cnxml_for_abstract(plpy, document_ident):
     """Produce cnxml for the abstract by the given ``document_ident``."""
-    cursor.execute("SELECT abstractid, html "
-                   "FROM modules NATURAL LEFT JOIN abstracts "
-                   "WHERE module_ident = %s;",
-                   (document_ident,))
+    plan = plpy.prepare("SELECT abstractid, html "
+                        "FROM modules NATURAL LEFT JOIN abstracts "
+                        "WHERE module_ident = $1;", ('integer',))
+    result = plpy.execute(plan, (document_ident,), 1)
     try:
-        abstractid, abstract = cursor.fetchone()
-    except TypeError:  # None returned
+        abstractid, abstract = result[0]['abstractid'], result[0]['html']
+    except (IndexError, KeyError):  # None returned
         # This means the document doesn't exist.
         raise ValueError("No document at ident: {}".format(document_ident))
     if abstractid is None:
@@ -119,19 +119,20 @@ def produce_cnxml_for_abstract(db_connection, cursor, document_ident):
     # Transform the abstract.
     if abstract:
         cnxml, warning_messages = transform_abstract_to_cnxml(
-            abstract, document_ident, db_connection)
+            abstract, document_ident, plpy)
     else:
         cnxml = None
 
     # Update the abstract.
     if cnxml:
-        cursor.execute("UPDATE abstracts SET (abstract) = (%s) "
-                       "WHERE abstractid = %s;",
-                       (cnxml, abstractid,))
+        plan = plpy.prepare("UPDATE abstracts SET (abstract) = ($1) "
+                            "WHERE abstractid = $2;",
+                            ('text', 'integer'))
+        plpy.execute(plan, (cnxml, abstractid,))
     return warning_messages
 
 
-def transform_abstract_to_html(abstract, document_ident, db_connection):
+def transform_abstract_to_html(abstract, document_ident, plpy):
     """Convert abstract to html."""
     warning_messages = None
     abstract = '<document xmlns="http://cnx.rice.edu/cnxml" '\
@@ -154,7 +155,7 @@ def transform_abstract_to_html(abstract, document_ident, db_connection):
 
     # Then fix up content references in the abstract.
     fixed_html, bad_refs = resolve_cnxml_urls(BytesIO(abstract_html),
-                                              db_connection,
+                                              plpy,
                                               document_ident)
     if bad_refs:
         warning_messages = 'Invalid References (Abstract): {}' \
@@ -163,7 +164,7 @@ def transform_abstract_to_html(abstract, document_ident, db_connection):
     return fixed_html, warning_messages
 
 
-def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
+def transform_abstract_to_cnxml(abstract, document_ident, plpy):
     """Transform an html abstract to cnxml."""
     warning_messages = None
     cnxml = None
@@ -179,7 +180,7 @@ def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
     # Then fix up content references in the abstract.
     if cnxml:
         cnxml, bad_refs = resolve_html_urls(BytesIO(cnxml),
-                                            db_connection, document_ident)
+                                            plpy, document_ident)
         if bad_refs:
             warning_messages = 'Invalid References (Abstract): {}' \
                 .format('; '.join(bad_refs))
@@ -194,7 +195,7 @@ def transform_abstract_to_cnxml(abstract, document_ident, db_connection):
     return cnxml, warning_messages
 
 
-def produce_html_for_module(db_connection, cursor, ident,
+def produce_html_for_module(plpy, ident,
                             source_filename='index.cnxml',
                             destination_filenames=('index.cnxml.html',),
                             overwrite_html=False):
@@ -212,13 +213,13 @@ def produce_html_for_module(db_connection, cursor, ident,
 
     """
     # BBB 14-Jan-2015 renamed - overwrite_html has been renamed overwrite
-    return produce_transformed_file(cursor, ident, 'cnxml2html',
+    return produce_transformed_file(plpy, ident, 'cnxml2html',
                                     source_filename,
                                     destination_filenames,
                                     overwrite=overwrite_html)
 
 
-def produce_cnxml_for_module(db_connection, cursor, ident,
+def produce_cnxml_for_module(plpy, ident,
                              source_filename='index.cnxml.html',
                              destination_filenames=('index.html.cnxml',
                                                     'index.cnxml',),
@@ -236,12 +237,12 @@ def produce_cnxml_for_module(db_connection, cursor, ident,
     of it.
 
     """
-    return produce_transformed_file(cursor, ident, 'html2cnxml',
+    return produce_transformed_file(plpy, ident, 'html2cnxml',
                                     source_filename, destination_filenames,
                                     overwrite=overwrite)
 
 
-def produce_transformed_file(cursor, ident, transform_type,
+def produce_transformed_file(plpy, ident, transform_type,
                              source_filename, destination_filenames,
                              overwrite=False):
     """Produce a file from a given module source file with a specifc transform.
@@ -257,30 +258,32 @@ def produce_transformed_file(cursor, ident, transform_type,
     """
     transform_info = TRANSFORM_TYPES[transform_type]
     transformer, reference_resolver, media_type = transform_info
-    cursor.execute("SELECT convert_from(file, 'utf-8') "
-                   "FROM module_files "
-                   "     NATURAL LEFT JOIN files "
-                   "WHERE module_ident = %s "
-                   "      AND filename = %s;",
-                   (ident, source_filename,))
+    plan = plpy.prepare("SELECT convert_from(file, 'utf-8') "
+                        "FROM module_files "
+                        "     NATURAL LEFT JOIN files "
+                        "WHERE module_ident = $1 "
+                        "      AND filename = $2;", ('integer', 'text'))
+    result = plpy.execute(plan, (ident, source_filename,))
     try:
-        content = cursor.fetchone()[0][:]  # returns: (<bufferish ...>,)
-    except TypeError:  # None returned
+        content = result[0]['convert_from'][:]  # returns: (<bufferish ...>,)
+    except (IndexError, KeyError):  # None returned
         raise MissingDocumentOrSource(ident, source_filename)
 
     # Remove destination if overwrite is True and if it exists
-    cursor.execute('SELECT fileid FROM module_files '
-                   'WHERE module_ident = %s '
-                   '      AND filename = ANY(%s)',
-                   (ident, list(destination_filenames),))
-    file_id_rows = cursor.fetchall()
+    plan = plpy.prepare('SELECT fileid FROM module_files '
+                        'WHERE module_ident = $1 '
+                        '      AND filename = ANY($2)',
+                        ('integer', 'text[]'))
+    file_id_rows = plpy.execute(plan, (ident, list(destination_filenames),))
     for row in file_id_rows:
-        file_id = row[0]
+        file_id = row['fileid']
         if overwrite:
-            cursor.execute('DELETE FROM module_files WHERE fileid = %s',
-                           (file_id,))
-            cursor.execute('DELETE FROM files WHERE fileid = %s',
-                           (file_id,))
+            delete_module_files = plpy.prepare(
+                'DELETE FROM module_files WHERE fileid = $1', ('integer',))
+            plpy.execute(delete_module_files, (file_id,))
+            delete_files = plpy.prepare(
+                'DELETE FROM files WHERE fileid = $1', ('integer',))
+            plpy.execute(delete_files, (file_id,))
         else:
             raise IndexFileExistsError(ident, destination_filenames)
 
@@ -288,7 +291,7 @@ def produce_transformed_file(cursor, ident, transform_type,
 
     # Fix up content references to cnx-archive specific urls.
     new_content, bad_refs = reference_resolver(BytesIO(new_content),
-                                               cursor.connection, ident)
+                                               plpy, ident)
 
     warning_messages = None
     if bad_refs:
@@ -297,24 +300,29 @@ def produce_transformed_file(cursor, ident, transform_type,
 
     # Find existing file in database before attempting to insert a new one.
     sha1 = hashlib.new('sha1', new_content).hexdigest()
-    cursor.execute("SELECT fileid FROM files WHERE sha1 = %s", (sha1,))
+    plan = plpy.prepare("SELECT fileid FROM files WHERE sha1 = $1;",
+                        ('text',))
     try:
-        destination_file_id = cursor.fetchone()[0]
-    except TypeError:
+        destination_file_id = plpy.execute(plan, (sha1,))[0]['fileid']
+    except IndexError:
         # Insert the cnxml into the database.
-        payload = (memoryview(new_content), media_type,)
-        cursor.execute("INSERT INTO files (file, media_type) VALUES (%s, %s) "
-                       "RETURNING fileid;", payload)
-        destination_file_id = cursor.fetchone()[0]
+        payload = (new_content, media_type,)
+        plan = plpy.prepare("INSERT INTO files (file, media_type) "
+                            "VALUES ($1, $2) "
+                            "RETURNING fileid;", ('bytea', 'text'))
+        destination_file_id = plpy.execute(plan, payload)[0]['fileid']
     for filename in destination_filenames:
-        cursor.execute("INSERT INTO module_files "
-                       "  (module_ident, fileid, filename) "
-                       "  VALUES (%s, %s, %s);",
-                       (ident, destination_file_id, filename,))
+        insert_module_files = plpy.prepare(
+            "INSERT INTO module_files "
+            "  (module_ident, fileid, filename) "
+            "  VALUES ($1, $2, $3);",
+            ('integer', 'integer', 'text'))
+        plpy.execute(insert_module_files,
+                     (ident, destination_file_id, filename))
     return warning_messages
 
 
-def transform_module_content(content, transform_type, db_connection,
+def transform_module_content(content, transform_type, plpy,
                              ident=None):
     """Transform content from a module."""
     transformer, reference_resolver, _ = TRANSFORM_TYPES[transform_type]
@@ -323,7 +331,7 @@ def transform_module_content(content, transform_type, db_connection,
 
     # Fix up content references to cnx-archive specific urls.
     new_content, bad_refs = reference_resolver(BytesIO(new_content),
-                                               db_connection, ident)
+                                               plpy, ident)
 
     warning_messages = None
     if bad_refs:

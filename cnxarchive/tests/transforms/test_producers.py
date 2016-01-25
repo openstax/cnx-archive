@@ -34,7 +34,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
         connection parameters.
         """
         from ...transforms.producers import produce_html_for_abstract
-        return produce_html_for_abstract(cursor.connection, cursor,
+        return produce_html_for_abstract(testing.fake_plpy,
                                          *args, **kwargs)
 
     @testing.db_connect
@@ -189,7 +189,7 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         connection parameters.
         """
         from ...transforms.producers import produce_html_for_module
-        return produce_html_for_module(cursor.connection, cursor,
+        return produce_html_for_module(testing.fake_plpy,
                                        *args, **kwargs)
 
     @testing.db_connect
@@ -397,7 +397,7 @@ class AbstractToCnxmlTestCase(unittest.TestCase):
         connection parameters.
         """
         from ...transforms.producers import produce_cnxml_for_abstract
-        return produce_cnxml_for_abstract(cursor.connection, cursor,
+        return produce_cnxml_for_abstract(testing.fake_plpy,
                                           *args, **kwargs)
 
     @testing.db_connect
@@ -509,7 +509,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         connection parameters.
         """
         from ...transforms.producers import produce_cnxml_for_module
-        return produce_cnxml_for_module(cursor.connection, cursor,
+        return produce_cnxml_for_module(testing.fake_plpy,
                                         *args, **kwargs)
 
     @testing.db_connect

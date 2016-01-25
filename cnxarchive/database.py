@@ -737,8 +737,6 @@ def add_module_file(plpy, td):
     legacy allows users to name files ``index.html``.
 
     """
-    import plpydbapi
-
     module_ident = td['new']['module_ident']
     filename = td['new']['filename']
     msg = "produce {}->{} for module_ident = {}"
@@ -783,22 +781,17 @@ WHERE filename = $1 AND module_ident = $2""", ['text', 'integer'])
         # Not one of the special named files.
         return  # skip
 
-    with plpydbapi.connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            plpy.info(msg)
-            if producer_func is not None:
-                producer_func(cursor.connection, cursor,
-                              module_ident,
-                              source_filename=filename,
-                              destination_filenames=new_filenames)
-            _transform_abstract(cursor, module_ident)
-        # For whatever reason, the plpydbapi context manager
-        #   does not call commit on close.
-        db_connection.commit()
+    plpy.info(msg)
+    if producer_func is not None:
+        producer_func(plpy,
+                      module_ident,
+                      source_filename=filename,
+                      destination_filenames=new_filenames)
+    _transform_abstract(plpy, module_ident)
     return
 
 
-def _transform_abstract(cursor, module_ident):
+def _transform_abstract(plpy, module_ident):
     """Transform abstract, bi-directionally.
 
     Transforms an abstract using one of content columns
@@ -808,11 +801,13 @@ def _transform_abstract(cursor, module_ident):
     the other value. If no value is supplied, the trigger raises an error.
     If both values are supplied, the trigger will skip.
     """
-    cursor.execute("""\
+    plan = plpy.prepare("""\
 SELECT a.abstractid, a.abstract, a.html
 FROM modules AS m NATURAL JOIN abstracts AS a
-WHERE m.module_ident = %s""", (module_ident,))
-    abstractid, cnxml, html = cursor.fetchone()
+WHERE m.module_ident = $1""", ('integer',))
+    result = plpy.execute(plan, (module_ident,), 1)[0]
+    abstractid, cnxml, html = (
+        result['abstractid'], result['abstract'], result['html'])
     if cnxml is not None and html is not None:
         return  # skip
     # TODO Prevent blank abstracts (abstract = null & html = null).
@@ -831,11 +826,11 @@ WHERE m.module_ident = %s""", (module_ident,))
         column = 'html'
         transform_func = transform_abstract_to_html
 
-    content, messages = transform_func(content, module_ident,
-                                       cursor.connection)
-    cursor.execute(
-        "UPDATE abstracts SET {} = %s WHERE abstractid = %s"
-        .format(column), (content, abstractid,))
+    content, messages = transform_func(content, module_ident, plpy)
+    plan = plpy.prepare(
+        "UPDATE abstracts SET {} = $1 WHERE abstractid = $2".format(column),
+        ('text', 'integer'))
+    plpy.execute(plan, (content, abstractid,))
     return msg
 
 
