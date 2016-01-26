@@ -124,16 +124,16 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
         self.assertMultiLineEqual(html, '''\
 <html xmlns="http://www.w3.org/1999/xhtml">
     <body>
-        <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#xn">
+        <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce#xn">
             <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
         <a href="/contents/ae3e18de-638d-4738-b804-dc69cd4db3a3@4">
             <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>
         </a>
-        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:d395b566-5fe3-4428-bcb2-19016e3aa3ce@4#figure">
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597:d395b566-5fe3-4428-bcb2-19016e3aa3ce#figure">
             Module link with collection
         </a>
-        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:209deb1f-1a46-4369-9e0d-18674cf58a3e@7">
+        <a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1:209deb1f-1a46-4369-9e0d-18674cf58a3e">
             Module link with collection and version
         </a>
         <img src="/resources/d47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9/Figure_01_00_01.jpg"/>

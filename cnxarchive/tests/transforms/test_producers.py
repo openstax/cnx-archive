@@ -61,7 +61,7 @@ class AbstractToHtmlTestCase(unittest.TestCase):
                        "  WHERE abstractid = %s;",
                        (abstractid,))
         html = cursor.fetchone()[0]
-        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4"'
+        expected = 'href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce"'
         self.assertIn(expected, html)
 
     @testing.db_connect

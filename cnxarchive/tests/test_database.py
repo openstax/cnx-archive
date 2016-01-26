@@ -147,7 +147,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         html_abstract3 = cursor.fetchone()[0]
         html_abstract3 = html_abstract3[html_abstract3.index('>') + 1:]  # strip the div tag
         self.assertEqual(html_abstract3,
-                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4">interal document</a>.</div>')
+                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce">interal document</a>.</div>')
         html_abstract4 = cursor.fetchone()[0]
         html_abstract4 = html_abstract4[html_abstract4.index('>') + 1:]  # strip the div tag
         self.assertTrue(html_abstract4,
@@ -177,7 +177,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         html_abstract = cursor.fetchone()[0]
         html_abstract = html_abstract[html_abstract.index('>') + 1:]  # strip the div tag
         self.assertEqual(html_abstract,
-                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce@4">interal document</a>.</div>')
+                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce">interal document</a>.</div>')
 
     @testing.db_connect
     def test_cnxml_abstract(self, cursor):
