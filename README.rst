@@ -154,12 +154,6 @@ dependencies that have not been released to the public package repositories::
     python setup.py install
     cd ..
 
-    # Install bug-fixes branch of plpydbapi
-    git clone -b bug-fixes https://github.com/Connexions/plpydbapi.git
-    cd plpydbapi
-    python setup.py install
-    cd ..
-
 To install the application itself::
 
     python setup.py install
