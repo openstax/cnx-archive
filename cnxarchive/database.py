@@ -361,11 +361,13 @@ def republish_collection(next_minor_version, collection_ident, cursor,
     INSERT INTO modules (portal_type, moduleid, uuid, version, name, created,
         revised, abstractid, licenseid, doctype, submitter, submitlog,
         stateid, parent, language, authors, maintainers, licensors,
-        parentauthors, google_analytics, buylink, major_version, minor_version)
+        parentauthors, google_analytics, buylink, print_style,
+        major_version, minor_version)
       SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created,
         {}, m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog,
         m.stateid, m.parent, m.language, m.authors, m.maintainers, m.licensors,
-        m.parentauthors, m.google_analytics, m.buylink, m.major_version, %s
+        m.parentauthors, m.google_analytics, m.buylink, m.print_style,
+        m.major_version, %s
       FROM modules m
       WHERE m.module_ident = %s
     RETURNING module_ident
