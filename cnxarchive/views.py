@@ -249,7 +249,7 @@ HTML_WRAPPER = """\
 """
 
 
-def html_listify(tree, root_ul_element):
+def html_listify(tree, root_ul_element, data_depth=1):
     """Recursively construct HTML nested list version of book tree."""
     request = get_current_request()
     for node in tree:
@@ -260,15 +260,16 @@ def html_listify(tree, root_ul_element):
             a_elm.set('href', request.route_path(
                 'content-html', ident_hash=node['id']))
         if 'contents' in node:
-            elm = etree.SubElement(li_elm, 'ul')
-            html_listify(node['contents'], elm)
+            elm = etree.SubElement(li_elm, 'ol',
+                                   attrib={'data-depth': str(data_depth)})
+            html_listify(node['contents'], elm, data_depth + 1)
 
 
 def tree_to_html(tree):
     """Return html list version of book tree."""
-    ul = etree.Element('ul')
-    html_listify([tree], ul)
-    return HTML_WRAPPER.format(etree.tostring(ul))
+    ol = etree.Element('ol')
+    html_listify([tree], ol)
+    return HTML_WRAPPER.format(etree.tostring(ol))
 
 
 def _get_page_in_book(page_uuid, page_version, book_uuid,
