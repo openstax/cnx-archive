@@ -33,6 +33,7 @@ from .sitemap import Sitemap
 from .robots import Robots
 from .utils import (
     MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
+    IdentHashShortId, IdentHashMissingVersion,
     portaltype_to_mimetype, slugify, fromtimestamp,
     join_ident_hash, split_ident_hash, split_legacy_hash, CNXHash
     )
@@ -57,42 +58,28 @@ class ExportError(Exception):
 #   Helper functions   #
 # #################### #
 
-def redirect_to_canonical(cursor, id, version, id_type,
-                          route_name='content', route_args=None,
-                          params=None):
-    """Redirect to latest version of a module / collection.
+def get_uuid(shortid):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-uuid'], {'id': shortid})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                logger.debug("Short ID was supplied and could not discover "
+                             "UUID.")
+                raise httpexceptions.HTTPNotFound()
 
-    Looks up path associated with the provided router.
-    """
-    if id_type == CNXHash.SHORTID:
-        cursor.execute(SQL['get-module-uuid'], {'id': id})
-        try:
-            full_id = cursor.fetchone()[0]
-        except (TypeError, IndexError,):  # None returned
-            logger.debug("Short ID was supplied and could not discover UUID.")
-            raise httpexceptions.HTTPNotFound()
-    elif id_type == CNXHash.FULLUUID:
-        full_id = id
-    else:
-        logger.debug("Neither short_id nor full UUID: not implemented.")
-        raise httpexceptions.HTTPNotFound()
 
-    if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': full_id})
-        try:
-            version = cursor.fetchone()[0]  # Get latest (implied)
-        except (TypeError, IndexError,):  # None returned
-            logger.debug("version was not supplied and not be discovered.")
-            raise httpexceptions.HTTPNotFound()
-
-    if route_args is None:
-        route_args = {}
-    request = get_current_request()
-    route_args['ident_hash'] = join_ident_hash(full_id, version)
-    if not params:
-        params = {}
-    raise httpexceptions.HTTPFound(request.route_path(
-        route_name, _query=params, **route_args))
+def get_latest_version(uuid_):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-versions'], {'id': uuid_})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                raise httpexceptions.HTTPNotFound()
 
 
 def get_content_metadata(id, version, cursor):
@@ -120,14 +107,9 @@ def get_content_metadata(id, version, cursor):
         raise httpexceptions.HTTPNotFound()
 
 
-def is_latest(cursor, id, version):
+def is_latest(id, version):
     """Determine if this is the latest version of this content."""
-    cursor.execute(SQL['get-module-versions'], {'id': id})
-    try:
-        latest_version = cursor.fetchone()[0]
-        return latest_version == version
-    except (TypeError, IndexError,):  # None returned
-        raise httpexceptions.HTTPNotFound()
+    return get_latest_version(id) == version
 
 
 TYPE_INFO = []
@@ -185,19 +167,6 @@ def get_export_file(cursor, id, version, type, exports_dirs):
 
     if type not in type_info:
         raise ExportError("invalid type '{}' requested.".format(type))
-
-    if not version:
-        cursor.execute(SQL['get-module-versions'], {'id': id})
-        try:
-            latest_version = cursor.fetchone()[0]
-        except (TypeError, IndexError,):  # None returned
-            raise ExportError("version was not supplied and could not be "
-                              "discovered.")
-        request = get_current_request()
-        raise httpexceptions.HTTPFound(
-            request.route_path('export',
-                               ident_hash=join_ident_hash(id, latest_version),
-                               type=type))
 
     metadata = get_content_metadata(id, version, cursor)
     file_extension = type_info[type]['file_extension']
@@ -284,54 +253,58 @@ def _get_page_in_book(page_uuid, page_version, book_uuid,
     return page_uuid, page_ident_hash
 
 
-def _get_content_json(request=None, ident_hash=None, reqtype=None):
+def _convert_legacy_id(objid, objver=None):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            if objver:
+                args = dict(objid=objid, objver=objver)
+                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
+            else:
+                cursor.execute(SQL['get-content-from-legacy-id'],
+                               dict(objid=objid))
+            try:
+                id, version = cursor.fetchone()
+                return (id, version)
+            except TypeError:  # None returned
+                return (None, None)
+
+
+def _get_content_json(ident_hash=None):
     """Return a content as a dict from its ident-hash (uuid@version)."""
+    request = get_current_request()
     routing_args = request and request.matchdict or {}
     settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
 
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
-        p_id, p_version, p_id_type = split_ident_hash(page_ident_hash,
-                                                      return_type=True)
+        try:
+            p_id, p_version = split_ident_hash(page_ident_hash)
+        except IdentHashShortId as e:
+            p_id = get_uuid(e.id)
+            p_version = e.version
+        except IdentHashMissingVersion as e:
+            # page ident hash doesn't need a version
+            p_id = e.id
+            p_version = None
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                route_name = 'content'
-                route_args = {}
-                if page_ident_hash:
-                    route_args['separator'] = ':'
-                    route_args['page_ident_hash'] = page_ident_hash
-                if reqtype:
-                    route_name = 'content-{}'.format(reqtype)
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name=route_name,
-                                      route_args=route_args)
-
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor)
 
                 if page_ident_hash:
-                    if p_id_type == CNXHash.SHORTID:
-                        cursor.execute(SQL['get-module-uuid'], {'id': p_id})
-                        try:
-                            p_id = cursor.fetchone()[0]
-                        except (TypeError, IndexError,):  # None returned
-                            logger.debug("Short ID for page was supplied"
-                                         " and could not discover UUID.")
-                            raise httpexceptions.HTTPNotFound()
-
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
                         if id == p_id and (
                            version == p_version or not p_version):
                             raise httpexceptions.HTTPFound(request.route_path(
-                                'content',
+                                request.matched_route.name,
                                 ident_hash=join_ident_hash(id, version)))
                     raise httpexceptions.HTTPNotFound()
             else:
@@ -371,6 +344,49 @@ def notblocked(page):
     return True
 
 
+def _get_subject_list(cursor):
+    """Return all subjects (tags) in the database except "internal" scheme."""
+    subject = None
+    last_tagid = None
+    cursor.execute(SQL['get-subject-list'])
+    for s in cursor.fetchall():
+        tagid, tagname, portal_type, count = s
+
+        if tagid != last_tagid:
+            # It's a new subject, create a new dict and initialize count
+            if subject:
+                yield subject
+            subject = {'id': tagid,
+                       'name': tagname,
+                       'count': {'module': 0, 'collection': 0}, }
+            last_tagid = tagid
+
+        if tagid == last_tagid and portal_type:
+            # Just need to update the count
+            subject['count'][portal_type.lower()] = count
+
+    if subject:
+        yield subject
+
+
+def _get_featured_links(cursor):
+    """Return featured books for the front page."""
+    cursor.execute(SQL['get-featured-links'])
+    return [i[0] for i in cursor.fetchall()]
+
+
+def _get_service_state_messages(cursor):
+    """Return a list of service messages."""
+    cursor.execute(SQL['get-service-state-messages'])
+    return [i[0] for i in cursor.fetchall()]
+
+
+def _get_licenses(cursor):
+    """Return a list of license info."""
+    cursor.execute(SQL['get-license-info-as-json'])
+    return [json_row[0] for json_row in cursor.fetchall()]
+
+
 # ################### #
 #   Exception Views   #
 # ################### #
@@ -381,6 +397,35 @@ def ident_hash_syntax_error(exc, request):
     return httpexceptions.HTTPNotFound()
 
 
+@view_config(context=IdentHashShortId)
+def ident_hash_short_id(exc, request):
+    try:
+        uuid_ = get_uuid(exc.id)
+    except httpexceptions.HTTPNotFound as e:
+        return e
+    if not exc.version:
+        return ident_hash_missing_version(
+            IdentHashMissingVersion(uuid_), request)
+    route_name = request.matched_route.name
+    route_args = request.matchdict.copy()
+    route_args['ident_hash'] = join_ident_hash(uuid_, exc.version)
+    return httpexceptions.HTTPFound(request.route_path(
+        route_name, _query=request.params, **route_args))
+
+
+@view_config(context=IdentHashMissingVersion)
+def ident_hash_missing_version(exc, request):
+    try:
+        version = get_latest_version(exc.id)
+    except httpexceptions.HTTPNotFound as e:
+        return e
+    route_name = request.matched_route.name
+    route_args = request.matchdict.copy()
+    route_args['ident_hash'] = join_ident_hash(exc.id, version)
+    return httpexceptions.HTTPFound(request.route_path(
+        route_name, _query=request.params, **route_args))
+
+
 # ######### #
 #   Views   #
 # ######### #
@@ -389,7 +434,7 @@ def ident_hash_syntax_error(exc, request):
 @view_config(route_name='content-json', request_method='GET')
 def get_content_json(request):
     """Retrieve content as JSON using the ident-hash (uuid@version)."""
-    result = _get_content_json(request=request, reqtype='json')
+    result = _get_content_json()
 
     result = json.dumps(result)
     resp = request.response
@@ -402,7 +447,7 @@ def get_content_json(request):
 @view_config(route_name='content-html', request_method='GET')
 def get_content_html(request):
     """Retrieve content as HTML using the ident-hash (uuid@version)."""
-    result = _get_content_json(request=request, reqtype='html')
+    result = _get_content_json()
 
     media_type = result['mediaType']
     if media_type == MODULE_MIMETYPE:
@@ -477,23 +522,6 @@ def redirect_legacy_content(request):
         request.route_path('content', ident_hash=ident_hash))
 
 
-def _convert_legacy_id(objid, objver=None):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            if objver:
-                args = dict(objid=objid, objver=objver)
-                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
-            else:
-                cursor.execute(SQL['get-content-from-legacy-id'],
-                               dict(objid=objid))
-            try:
-                id, version = cursor.fetchone()
-                return (id, version)
-            except TypeError:  # None returned
-                return (None, None)
-
-
 @view_config(route_name='resource', request_method='GET')
 def get_resource(request):
     """Retrieve a file's data."""
@@ -523,19 +551,15 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    id, version, id_type = split_ident_hash(
-        args['ident_hash'], return_type=True)
+    id, version = split_ident_hash(args['ident_hash'])
     results = {}
 
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='content-extras')
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
-            results['isLatest'] = is_latest(cursor, id, version)
+            results['isLatest'] = is_latest(id, version)
             results['canPublish'] = database.get_module_can_publish(cursor, id)
 
     resp = request.response
@@ -562,6 +586,9 @@ def get_export(request):
                 logger.debug(str(e))
                 raise httpexceptions.HTTPNotFound()
 
+    if state == 'missing':
+        raise httpexceptions.HTTPNotFound()
+
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = mimetype
@@ -578,12 +605,9 @@ def in_book_search(request):
     args = request.matchdict
     ident_hash = args['ident_hash']
 
-    try:
-        args['search_term'] = request.params.get('q', '')
-    except (TypeError, ValueError, IndexError):
-        args['search_term'] = None
+    args['search_term'] = request.params.get('q', '')
 
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
     args['version'] = version
 
@@ -592,12 +616,6 @@ def in_book_search(request):
     statement = SQL['get-in-book-search']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version or id_type == CNXHash.SHORTID:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='in-book-search',
-                                      route_args=request.matchdict,
-                                      params=request.params.copy())
-
             cursor.execute(statement, args)
             res = cursor.fetchall()
 
@@ -608,7 +626,6 @@ def in_book_search(request):
                 'id': ident_hash,
                 'search_term': args['search_term'],
             }
-            len(res)
             for uuid, version, title, snippet, matches, rank in res:
                 results['results']['items'].append({
                     'rank': '{}'.format(rank),
@@ -635,16 +652,18 @@ def in_book_search_highlighted_results(request):
     ident_hash = args['ident_hash']
 
     page_ident_hash = args['page_ident_hash']
-    page_uuid, _ = split_ident_hash(page_ident_hash)
+    try:
+        page_uuid, _ = split_ident_hash(page_ident_hash)
+    except IdentHashShortId as e:
+        page_uuid = get_uuid(e.id)
+    except IdentHashMissingVersion as e:
+        page_uuid = e.id
     args['page_uuid'] = page_uuid
 
-    try:
-        args['search_term'] = request.params.get('q', '')
-    except (TypeError, ValueError, IndexError):
-        args['search_term'] = None
+    args['search_term'] = request.params.get('q', '')
 
     # Get version from URL params
-    id, version, id_type = split_ident_hash(ident_hash, return_type=True)
+    id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
     args['version'] = version
 
@@ -653,12 +672,6 @@ def in_book_search_highlighted_results(request):
     statement = SQL['get-in-book-search-full-page']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
-            if not version:
-                redirect_to_canonical(cursor, id, version, id_type,
-                                      route_name='in-book-search-page',
-                                      route_args=request.matchdict,
-                                      params=request.params.copy())
-
             cursor.execute(statement, args)
             res = cursor.fetchall()
 
@@ -705,11 +718,7 @@ def search(request):
     resp = request.response
     resp.status = '200 OK'
     resp.content_type = 'application/json'
-    try:
-        search_terms = params.get('q', '')
-    except IndexError:
-        resp.body = empty_response
-        return resp
+    search_terms = params.get('q', '')
     query_type = params.get('t', None)
     if query_type is None or query_type not in QUERY_TYPES:
         query_type = DEFAULT_QUERY_TYPE
@@ -824,49 +833,6 @@ def search(request):
     resp.body = json.dumps(results)
 
     return resp
-
-
-def _get_subject_list(cursor):
-    """Return all subjects (tags) in the database except "internal" scheme."""
-    subject = None
-    last_tagid = None
-    cursor.execute(SQL['get-subject-list'])
-    for s in cursor.fetchall():
-        tagid, tagname, portal_type, count = s
-
-        if tagid != last_tagid:
-            # It's a new subject, create a new dict and initialize count
-            if subject:
-                yield subject
-            subject = {'id': tagid,
-                       'name': tagname,
-                       'count': {'module': 0, 'collection': 0}, }
-            last_tagid = tagid
-
-        if tagid == last_tagid and portal_type:
-            # Just need to update the count
-            subject['count'][portal_type.lower()] = count
-
-    if subject:
-        yield subject
-
-
-def _get_featured_links(cursor):
-    """Return featured books for the front page."""
-    cursor.execute(SQL['get-featured-links'])
-    return [i[0] for i in cursor.fetchall()]
-
-
-def _get_service_state_messages(cursor):
-    """Return a list of service messages."""
-    cursor.execute(SQL['get-service-state-messages'])
-    return [i[0] for i in cursor.fetchall()]
-
-
-def _get_licenses(cursor):
-    """Return a list of license info."""
-    cursor.execute(SQL['get-license-info-as-json'])
-    return [json_row[0] for json_row in cursor.fetchall()]
 
 
 @view_config(route_name='extras', request_method='GET')

@@ -17,7 +17,7 @@ from .transforms import (
     produce_cnxml_for_module, produce_html_for_module,
     transform_abstract_to_cnxml, transform_abstract_to_html,
     )
-from .utils import split_ident_hash
+from .utils import split_ident_hash, IdentHashMissingVersion
 
 here = os.path.abspath(os.path.dirname(__file__))
 SQL_DIRECTORY = os.path.join(here, 'sql')
@@ -191,8 +191,11 @@ $_$""".format(activate_path=activate_path)
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):
     """Return the moduleid for a given ``ident_hash``."""
-    uuid, (mj_ver, mn_ver) = split_ident_hash(
-        ident_hash, split_version=True)
+    try:
+        uuid, (mj_ver, mn_ver) = split_ident_hash(
+            ident_hash, split_version=True)
+    except IdentHashMissingVersion as e:
+        uuid, mj_ver, mn_ver = e.id, None, None
     args = [uuid]
     stmt = "SELECT module_ident FROM {} WHERE uuid = %s"
     table_name = 'modules'

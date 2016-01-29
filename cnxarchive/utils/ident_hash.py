@@ -14,6 +14,8 @@ VERSION_CHAR = '.'
 
 __all__ = (
     'IdentHashSyntaxError',
+    'IdentHashShortId',
+    'IdentHashMissingVersion',
     'join_ident_hash',
     'split_ident_hash',
     'split_legacy_hash',
@@ -21,8 +23,25 @@ __all__ = (
     )
 
 
-class IdentHashSyntaxError(Exception):
+class IdentHashError(Exception):
+    """Base exception class for all ident hash exceptions."""
+
+
+class IdentHashSyntaxError(IdentHashError):
     """Raised when the ident-hash syntax is incorrect."""
+
+
+class IdentHashShortId(IdentHashError):
+    """Raised when the ident-hash id is not a uuid"""
+    def __init__(self, id, version):
+        self.id = id
+        self.version = version
+
+
+class IdentHashMissingVersion(IdentHashError):
+    """Raised when the ident-hash does not have a version"""
+    def __init__(self, id):
+        self.id = id
 
 
 def split_legacy_hash(legacy_hash):
@@ -35,7 +54,7 @@ def split_legacy_hash(legacy_hash):
     return id, version
 
 
-def split_ident_hash(ident_hash, split_version=False, return_type=False):
+def split_ident_hash(ident_hash, split_version=False):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
     if HASH_CHAR not in ident_hash:
         ident_hash = '{}@'.format(ident_hash)
@@ -52,21 +71,18 @@ def split_ident_hash(ident_hash, split_version=False, return_type=False):
 
     id_type = CNXHash.validate(id)
 
-    # None'ify the version on empty string.
-    version = version and version or None
+    if id_type == CNXHash.SHORTID:
+        raise IdentHashShortId(id, version)
+
+    if not version:
+        raise IdentHashMissingVersion(id)
 
     if split_version:
-        if version is None:
-            version = (None, None,)
-        else:
-            split_version = version.split(VERSION_CHAR)
-            if len(split_version) == 1:
-                split_version.append(None)
-            version = tuple(split_version)
-    if return_type:
-        return id, version, id_type
-    else:
-        return id, version
+        split_version = version.split(VERSION_CHAR)
+        if len(split_version) == 1:
+            split_version.append(None)
+        version = tuple(split_version)
+    return id, version
 
 
 def join_ident_hash(id, version):
