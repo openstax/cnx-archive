@@ -160,14 +160,14 @@ CREATE TABLE files (
     fileid serial PRIMARY KEY,
     md5 text,
     sha1 text,
-    file bytea
+    file bytea,
+    media_type text
 );
 
 CREATE TABLE module_files (
     module_ident integer references modules,
     fileid integer references files,
-    filename text,
-    mimetype text
+    filename text
 );
 
 CREATE TABLE modulecounts (
