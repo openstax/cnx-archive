@@ -102,10 +102,10 @@ FROM (SELECT
   ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords,
   ARRAY(
     SELECT row_to_json(module_file_row) FROM (
-      SELECT mf.filename AS filename, mf.mimetype as mimetype, f.sha1 AS id
+      SELECT mf.filename AS filename, f.media_type AS media_type, f.sha1 AS id
       FROM module_files AS mf NATURAL JOIN files AS f
       WHERE mf.module_ident = m.module_ident
-      ORDER BY f.sha1, mf.mimetype, mf.filename
+      ORDER BY f.sha1, f.media_type, mf.filename
     ) AS module_file_row) AS resources,
   m.print_style AS "printStyle"
 FROM modules m
