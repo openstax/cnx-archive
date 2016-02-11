@@ -11,9 +11,11 @@ import sys
 
 import psycopg2
 
-from .. import config
-from ..database import initdb
-from ._utils import create_parser, get_app_settings_from_arguments
+from cnxarchive import config
+from cnxarchive.database import initdb
+from cnxarchive.scripts._utils import (
+    create_parser, get_app_settings_from_arguments,
+    )
 
 
 EXAMPLE_DATA_FILEPATHS = (
