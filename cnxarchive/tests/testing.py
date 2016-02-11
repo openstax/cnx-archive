@@ -27,7 +27,14 @@ __all__ = (
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-config_uri = None
+
+
+def config_uri():
+    """Return the file path of the testing config uri"""
+    config_uri = os.environ.get('TESTING_CONFIG', None)
+    if config_uri is None:
+        config_uri = os.path.join(here, 'testing.ini')
+    return config_uri
 
 
 def mocked_fromtimestamp(timestamp):
@@ -37,12 +44,7 @@ def mocked_fromtimestamp(timestamp):
 
 def integration_test_settings():
     """Integration settings initializer"""
-    global config_uri
-    if config_uri is None:
-        config_uri = os.environ.get('TESTING_CONFIG', None)
-        if config_uri is None:
-            config_uri = os.path.join(here, 'testing.ini')
-    settings = get_appsettings(config_uri, name='main')
+    settings = get_appsettings(config_uri(), name='main')
     return settings
 
 
