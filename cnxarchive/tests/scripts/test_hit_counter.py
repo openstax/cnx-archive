@@ -9,8 +9,8 @@ import os
 import unittest
 
 import psycopg2
-from . import testing
-from .test_database import SQL_FOR_HIT_DOCUMENTS
+from .. import testing
+from ..test_database import SQL_FOR_HIT_DOCUMENTS
 
 
 TEST_VARNISH_LOG = os.path.join(testing.DATA_DIRECTORY, 'varnish.log')
@@ -45,9 +45,9 @@ class HitsCounterTestCase(unittest.TestCase):
     @testing.db_connect
     def test_insertion(self, cursor):
         # Call the command line script.
-        args = ['--log-format', 'plain', testing.config_uri,
+        args = ['--log-format', 'plain', testing.config_uri(),
                 TEST_VARNISH_LOG]
-        from ..scripts.hits_counter import main
+        from cnxarchive.scripts.hits_counter import main
         return_code = main(args)
         self.assertEqual(return_code, 0)
 
@@ -63,9 +63,9 @@ class HitsCounterTestCase(unittest.TestCase):
     def test_updates_optimization_tables(self, cursor):
         self.override_recent_date()
         # Call the command line script.
-        args = ['--log-format', 'plain', testing.config_uri,
+        args = ['--log-format', 'plain', testing.config_uri(),
                 TEST_VARNISH_LOG]
-        from ..scripts.hits_counter import main
+        from cnxarchive.scripts.hits_counter import main
         main(args)
 
         # Check the optimization tables for content.

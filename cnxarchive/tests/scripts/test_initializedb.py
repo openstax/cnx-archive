@@ -14,7 +14,7 @@ except ImportError:
 
 import psycopg2
 
-from . import testing
+from .. import testing
 
 
 class InitializeDBTestCase(unittest.TestCase):
@@ -29,13 +29,13 @@ class InitializeDBTestCase(unittest.TestCase):
 
     @property
     def target(self):
-        from ..scripts.initializedb import main
+        from cnxarchive.scripts.initializedb import main
         return main
 
     @testing.db_connect
     def test_initialized(self, cursor):
         # Call the command line script.
-        args = [testing.config_uri]
+        args = [testing.config_uri()]
         return_code = self.target(args)
         self.assertEqual(return_code, 0)
 
@@ -46,7 +46,7 @@ class InitializeDBTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_initialized_with_example_data(self, cursor):
-        args = [testing.config_uri, '--with-example-data']
+        args = [testing.config_uri(), '--with-example-data']
         return_code = self.target(args)
         self.assertEqual(return_code, 0)
 
@@ -62,7 +62,7 @@ class InitializeDBTestCase(unittest.TestCase):
         # Load the schema to trigger an error.
         self.fixture.setUp()
 
-        args = [testing.config_uri]
+        args = [testing.config_uri()]
         return_code = self.target(args)
         self.assertNotEqual(return_code, 0)
 
