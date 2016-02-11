@@ -12,6 +12,8 @@ import psycopg2
 import sys
 import logging
 
+from pyramid.threadlocal import get_current_registry
+
 from . import config
 from .transforms import (
     produce_cnxml_for_module, produce_html_for_module,
@@ -98,6 +100,14 @@ def _compile_manifest(manifest, content_modifier=None):
                 content = content_modifier(item, content)
             items.append(content)
     return items
+
+
+def db_connect(connection_string=None):
+    """Function to supply a database connection object."""
+    if connection_string is None:
+        settings = get_current_registry().settings
+        connection_string = settings[config.CONNECTION_STRING]
+    return psycopg2.connect(connection_string)
 
 
 def get_schema():

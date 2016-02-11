@@ -46,6 +46,7 @@ setup(
     [console_scripts]
     cnx-archive-initdb = cnxarchive.scripts.initializedb:main
     cnx-archive-hits_counter = cnxarchive.scripts.hits_counter:main
+    cnx-archive-inject_resource = cnxarchive.scripts.inject_resource:main
     [dbmigrator]
     migrations_directory = cnxarchive:find_migrations_directory
     """,
