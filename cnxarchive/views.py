@@ -394,6 +394,15 @@ def _get_licenses(cursor):
 
 @view_config(context=IdentHashSyntaxError)
 def ident_hash_syntax_error(exc, request):
+    if exc.ident_hash.endswith('@'):
+        try:
+            split_ident_hash(exc.ident_hash[:-1])
+        except IdentHashShortId as e:
+            return ident_hash_short_id(e, request)
+        except IdentHashMissingVersion as e:
+            return ident_hash_missing_version(e, request)
+        except IdentHashSyntaxError:
+            pass
     return httpexceptions.HTTPNotFound()
 
 

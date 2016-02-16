@@ -23,7 +23,7 @@ class SplitIdentTestCase(unittest.TestCase):
         # Case of supplying the utility function with an empty indent-hash.
         ident_hash = ''
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IdentHashSyntaxError):
             self.call_target(ident_hash)
 
     def test_complete_data(self):
@@ -39,12 +39,19 @@ class SplitIdentTestCase(unittest.TestCase):
         self.assertEqual(id, expected_id)
         self.assertEqual(version, expected_version)
 
+    def test_uuid_only_w_at_sign(self):
+        expected_id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
+        ident_hash = "{}@".format(expected_id)
+
+        with self.assertRaises(IdentHashSyntaxError) as cm:
+            self.call_target(ident_hash)
+
     def test_uuid_only(self):
         # Case where the UUID has been the only value supplied in the
         # ident-hash.
         # This is mostly testing that the version value returns None.
         expected_id = '85e57f79-02b3-47d2-8eed-c1bbb1e1d5c2'
-        ident_hash = "{}@".format(expected_id)
+        ident_hash = expected_id
 
         with self.assertRaises(IdentHashMissingVersion) as cm:
             self.call_target(ident_hash)
