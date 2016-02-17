@@ -25,12 +25,15 @@ __all__ = (
 
 class IdentHashError(Exception):
     """Base exception class for all ident hash exceptions."""
+    def __str__(self):
+        return self.msg
 
 
 class IdentHashSyntaxError(IdentHashError):
     """Raised when the ident-hash syntax is incorrect."""
     def __init__(self, ident_hash):
         self.ident_hash = ident_hash
+        self.msg = 'ident_hash={}'.format(ident_hash)
 
 
 class IdentHashShortId(IdentHashError):
@@ -38,12 +41,14 @@ class IdentHashShortId(IdentHashError):
     def __init__(self, id, version):
         self.id = id
         self.version = version
+        self.msg = 'id={} version={}'.format(id, version)
 
 
 class IdentHashMissingVersion(IdentHashError):
     """Raised when the ident-hash does not have a version"""
     def __init__(self, id):
         self.id = id
+        self.msg = 'id={}'.format(id)
 
 
 def split_legacy_hash(legacy_hash):
