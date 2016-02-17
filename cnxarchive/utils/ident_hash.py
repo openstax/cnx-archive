@@ -25,10 +25,15 @@ __all__ = (
 
 class IdentHashError(Exception):
     """Base exception class for all ident hash exceptions."""
+    def __str__(self):
+        return self.msg
 
 
 class IdentHashSyntaxError(IdentHashError):
     """Raised when the ident-hash syntax is incorrect."""
+    def __init__(self, ident_hash):
+        self.ident_hash = ident_hash
+        self.msg = 'ident_hash={}'.format(ident_hash)
 
 
 class IdentHashShortId(IdentHashError):
@@ -36,12 +41,14 @@ class IdentHashShortId(IdentHashError):
     def __init__(self, id, version):
         self.id = id
         self.version = version
+        self.msg = 'id={} version={}'.format(id, version)
 
 
 class IdentHashMissingVersion(IdentHashError):
     """Raised when the ident-hash does not have a version"""
     def __init__(self, id):
         self.id = id
+        self.msg = 'id={}'.format(id)
 
 
 def split_legacy_hash(legacy_hash):
@@ -56,19 +63,17 @@ def split_legacy_hash(legacy_hash):
 
 def split_ident_hash(ident_hash, split_version=False):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
-    if HASH_CHAR not in ident_hash:
-        ident_hash = '{}@'.format(ident_hash)
     split_value = ident_hash.split(HASH_CHAR)
-    if split_value[0] == '':
-        raise ValueError("Missing values")
 
-    try:
-        id, version = split_value
-    except ValueError:
+    if len(split_value) > 2 or '' in split_value:
         raise IdentHashSyntaxError(ident_hash)
 
-    # Validate the id.
+    if len(split_value) == 1:
+        id, version = split_value[0], ''
+    else:
+        id, version = split_value
 
+    # Validate the id.
     id_type = CNXHash.validate(id)
 
     if id_type == CNXHash.SHORTID:
@@ -76,6 +81,8 @@ def split_ident_hash(ident_hash, split_version=False):
 
     if not version:
         raise IdentHashMissingVersion(id)
+
+    version = split_value[1]
 
     if split_version:
         split_version = version.split(VERSION_CHAR)
@@ -164,18 +171,18 @@ class CNXHash(uuid.UUID):
                          cls._SHORT_HASH_LENGTH)
                     cls.base642uuid(hash_id)
                 except (TypeError, ValueError):
-                    raise IdentHashSyntaxError
+                    raise IdentHashSyntaxError(hash_id)
                 return cls.SHORTID
             elif len(hash_id) == cls._MAX_SHORT_HASH_LENGTH:
                 try:
                     cls.base642uuid(hash_id)
                 except (TypeError, ValueError):
-                    raise IdentHashSyntaxError
+                    raise IdentHashSyntaxError(hash_id)
                 return cls.BASE64HASH
             else:  # See if it's a string repr of a uuid
                 try:
                     cls.uuid2base64(hash_id)
                 except (TypeError, ValueError):
-                    raise IdentHashSyntaxError
+                    raise IdentHashSyntaxError(hash_id)
                 return cls.FULLUUID
-        raise IdentHashSyntaxError
+        raise IdentHashSyntaxError(hash_id)

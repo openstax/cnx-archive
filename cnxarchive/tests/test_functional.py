@@ -37,6 +37,14 @@ class FunctionalTestCase(unittest.TestCase):
 
 
 class IdentHashSyntaxErrorTestCase(FunctionalTestCase):
+    fixture = testing.data_fixture
+
+    def setUp(self):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
     def test_get_export_invalid_id(self):
         self.testapp.get('/exports/abcd.pdf', status=404)
 
@@ -50,6 +58,29 @@ class IdentHashSyntaxErrorTestCase(FunctionalTestCase):
     def test_in_book_search_highlighted_results_invalid_id(self):
         self.testapp.get('/search/abcd:efgh?q=air+or+liquid+drag',
                          status=404)
+
+    def test_contents_uuid_only_w_at_sign(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        resp = self.testapp.get('/contents/{}@'.format(uuid))
+        self.assertEqual(resp.status, '302 Found')
+        self.assertEqual(
+            unquote(resp.location),
+            'http://localhost/contents/{}@8'.format(uuid))
+
+    def test_contents_short_id_only_w_at_sign(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        short_id = CNXHash(uuid).get_shortid()
+        resp = self.testapp.get('/contents/{}@'.format(short_id))
+        self.assertEqual(resp.status, '302 Found')
+        self.assertEqual(
+            unquote(resp.location),
+            'http://localhost/contents/{}@8'.format(uuid))
+
+    def test_contents_invalid_id_w_at_sign(self):
+        self.testapp.get('/contents/a@', status=404)
+
+    def test_contents_w_only_at_sign(self):
+        self.testapp.get('/contents/@', status=404)
 
 
 class IdentHashShortIdTestCase(FunctionalTestCase):
