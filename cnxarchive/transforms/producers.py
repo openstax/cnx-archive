@@ -255,7 +255,8 @@ def produce_transformed_file(cursor, ident, transform_type,
     does not effect the content, but may affect the user experience
     of it.
     """
-    transformer, reference_resolver, mimetype = TRANSFORM_TYPES[transform_type]
+    transform_info = TRANSFORM_TYPES[transform_type]
+    transformer, reference_resolver, media_type = transform_info
     cursor.execute("SELECT convert_from(file, 'utf-8') "
                    "FROM module_files "
                    "     NATURAL LEFT JOIN files "
@@ -295,16 +296,15 @@ def produce_transformed_file(cursor, ident, transform_type,
             .format('; '.join(bad_refs))
 
     # Insert the cnxml into the database.
-    payload = (memoryview(new_content),)
-    cursor.execute("INSERT INTO files (file) VALUES (%s) "
+    payload = (memoryview(new_content), media_type,)
+    cursor.execute("INSERT INTO files (file, media_type) VALUES (%s, %s) "
                    "RETURNING fileid;", payload)
     destination_file_id = cursor.fetchone()[0]
     for filename in destination_filenames:
         cursor.execute("INSERT INTO module_files "
-                       "  (module_ident, fileid, filename, mimetype) "
-                       "  VALUES (%s, %s, %s, %s);",
-                       (ident, destination_file_id,
-                        filename, mimetype,))
+                       "  (module_ident, fileid, filename) "
+                       "  VALUES (%s, %s, %s);",
+                       (ident, destination_file_id, filename,))
     return warning_messages
 
 

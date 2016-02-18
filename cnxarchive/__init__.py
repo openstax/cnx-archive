@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Document and collection archive web application."""
+import os
 from pyramid.config import Configurator
 
 
@@ -22,6 +23,14 @@ DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
     'cache-control',
     'content-type',
     ]
+
+
+def find_migrations_directory():
+    """Finds and returns the location of the database migrations directory.
+    This function is used from a setuptools entry-point for db-migrator.
+    """
+    here = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(here, 'sql/migrations')
 
 
 def declare_api_routes(config):

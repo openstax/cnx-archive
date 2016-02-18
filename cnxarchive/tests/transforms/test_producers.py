@@ -156,8 +156,8 @@ VALUES
 
         # Insert the resource file
         cursor.execute("""\
-INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-  SELECT %s, fileid, filename, mimetype FROM module_files
+INSERT INTO module_files (module_ident, fileid, filename)
+  SELECT %s, fileid, filename FROM module_files
   WHERE module_ident = 3 AND fileid = 6""", (document_ident,))
 
         # In the typical execution path, the target function
@@ -258,14 +258,16 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute("INSERT INTO files (file) "
-                       "SELECT file FROM files natural join module_files "
+        cursor.execute("INSERT INTO files (file, media_type) "
+                       "SELECT file, media_type "
+                       "FROM files natural join module_files "
                        "WHERE filename = 'index.cnxml.html' "
                        "AND module_ident != 2 LIMIT 1 "
                        "RETURNING fileid")
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, '
-                       "%s, 'index.cnxml.html', 'text/html')", (fileid,))
+        cursor.execute("INSERT INTO module_files "
+                       "(module_ident, fileid, filename) "
+                       "VALUES (2, %s, 'index.cnxml.html')", (fileid,))
         cursor.connection.commit()
 
         msg = self.call_target(2, overwrite_html=True)
@@ -300,14 +302,16 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute("INSERT INTO files (file) "
-                       "SELECT file FROM files natural join module_files "
+        cursor.execute("INSERT INTO files (file, media_type) "
+                       "SELECT file, media_type "
+                       "FROM files natural join module_files "
                        "WHERE filename = 'index.cnxml.html' "
                        "AND module_ident != 2 LIMIT 1 "
                        "RETURNING fileid")
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, '
-                       "%s, 'index.cnxml.html', 'text/html')", (fileid,))
+        cursor.execute("INSERT INTO module_files "
+                       "(module_ident, fileid, filename) "
+                       "VALUES (2, %s, 'index.cnxml.html')", (fileid,))
         cursor.connection.commit()
 
         from ...transforms.producers import IndexFileExistsError
@@ -576,12 +580,13 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file) '
-                       '(SELECT file FROM files WHERE fileid = 1) '
+        cursor.execute('INSERT INTO files (file, media_type) '
+                       '(SELECT file, media_type FROM files WHERE fileid = 1) '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, '
-                       "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
+        cursor.execute("INSERT INTO module_files "
+                       "(module_ident, fileid, filename) "
+                       "VALUES (2, %s, 'index.html.cnxml')", (fileid,))
         cursor.connection.commit()
 
         msg = self.call_target(2, overwrite=True)
@@ -616,12 +621,14 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file) '
-                       'SELECT file FROM files WHERE fileid = 1 '
+        cursor.execute('INSERT INTO files (file, media_type) '
+                       'SELECT file, media_type '
+                       'FROM files WHERE fileid = 1 '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, '
-                       "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
+        cursor.execute("INSERT INTO module_files "
+                       "(module_ident, fileid, filename) "
+                       "VALUES (2, %s, 'index.html.cnxml')", (fileid,))
         cursor.connection.commit()
 
         from ...transforms.producers import IndexFileExistsError
@@ -654,12 +661,14 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file) '
-                       'SELECT file FROM files WHERE fileid = 1 '
+        cursor.execute('INSERT INTO files (file, media_type) '
+                       'SELECT file, media_type '
+                       'FROM files WHERE fileid = 1 '
                        'RETURNING fileid')
         fileid = cursor.fetchone()[0]
-        cursor.execute('INSERT INTO module_files VALUES (2, '
-                       "%s, 'index.html.cnxml', 'text/xml')", (fileid,))
+        cursor.execute("INSERT INTO module_files "
+                       "(module_ident, fileid, filename) "
+                       "VALUES (2, %s, 'index.html.cnxml')", (fileid,))
         cursor.connection.commit()
 
         from ...transforms.producers import IndexFileExistsError

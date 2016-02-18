@@ -6,9 +6,6 @@
 -- ###
 
 -- arguments: hash:string
-SELECT mf.mimetype, f.file
-FROM module_files as mf
-LEFT JOIN files f on mf.fileid = f.fileid
-WHERE f.sha1 = %(hash)s
-OR f.md5 = %(hash)s
-;
+SELECT f.media_type, f.file
+FROM files AS f
+WHERE f.sha1 = %(hash)s OR f.md5 = %(hash)s;

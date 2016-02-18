@@ -227,12 +227,12 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                                       'm42033-1.3.cnxml')
         with open(cnxml_filepath, 'r') as f:
             cursor.execute('''\
-            INSERT INTO files (file) VALUES
-            (%s) RETURNING fileid''', [memoryview(f.read())])
+            INSERT INTO files (file, media_type) VALUES
+            (%s, 'text/xml') RETURNING fileid''', [memoryview(f.read())])
             fileid = cursor.fetchone()[0]
         cursor.execute('''\
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
-        (4, %s, 'index.cnxml', 'text/xml');''', [fileid])
+        INSERT INTO module_files (module_ident, fileid, filename) VALUES
+        (4, %s, 'index.cnxml');''', [fileid])
 
         # check that cnxml content can be transformed
         cursor.execute('''\
@@ -265,12 +265,12 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                                       'm42033-1.3.cnxml')
         with open(cnxml_filepath, 'r') as f:
             cursor.execute('''\
-            INSERT INTO files (file) VALUES
-            (%s) RETURNING fileid''', [memoryview(f.read())])
+            INSERT INTO files (file, media_type) VALUES
+            (%s, 'text/xml') RETURNING fileid''', [memoryview(f.read())])
             fileid = cursor.fetchone()[0]
         cursor.execute('''\
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
-        (4, %s, 'index.cnxml', 'text/xml');''', [fileid])
+        INSERT INTO module_files (module_ident, fileid, filename) VALUES
+        (4, %s, 'index.cnxml');''', [fileid])
 
         # check that cnxml content can be transformed
         html_filepath = os.path.join(testing.DATA_DIRECTORY,
@@ -302,12 +302,12 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         filepath = os.path.join(testing.DATA_DIRECTORY, 'm42033-1.3.html')
         with open(filepath, 'r') as f:
             cursor.execute('''\
-            INSERT INTO files (file) VALUES
-            (%s) RETURNING fileid''', [memoryview(f.read())])
+            INSERT INTO files (file, media_type) VALUES
+            (%s, 'text/xml') RETURNING fileid''', [memoryview(f.read())])
             fileid = cursor.fetchone()[0]
         cursor.execute('''\
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype) VALUES
-        (4, %s, 'index.cnxml.html', 'text/xml');''', [fileid])
+        INSERT INTO module_files (module_ident, fileid, filename) VALUES
+        (4, %s, 'index.cnxml.html');''', [fileid])
 
         # check that cnxml content can be transformed
         filepath = os.path.join(testing.DATA_DIRECTORY,
@@ -921,33 +921,34 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         # Copy files for m42119 except *.html and index.cnxml
         cursor.execute('''\
-        SELECT f.file, m.filename, m.mimetype
+        SELECT f.file, m.filename, f.media_type
         FROM module_files m JOIN files f ON m.fileid = f.fileid
         WHERE m.module_ident = 3 AND m.filename NOT LIKE '%.html'
         AND m.filename != 'index.cnxml'
         ''')
 
-        for data, filename, mimetype in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file) VALUES (%s)
-            RETURNING fileid''', (data,))
+        for data, filename, media_type in cursor.fetchall():
+            cursor.execute('''INSERT INTO files (file, media_type)
+            VALUES (%s, %s)
+            RETURNING fileid''', (data, media_type,))
             fileid = cursor.fetchone()[0]
             cursor.execute('''\
-            INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            VALUES (%s, %s, %s, %s)''',
-                           (new_module_ident, fileid, filename, mimetype))
+            INSERT INTO module_files (module_ident, fileid, filename)
+            VALUES (%s, %s, %s)''',
+                           (new_module_ident, fileid, filename,))
 
         # Insert index.cnxml only after adding all the other files
         cursor.execute('''\
-        INSERT INTO files (file)
-            SELECT f.file
+        INSERT INTO files (file, media_type)
+            SELECT f.file, f.media_type
             FROM module_files m JOIN files f ON m.fileid = f.fileid
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml'
         RETURNING fileid
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''\
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            SELECT %s, %s, m.filename, m.mimetype
+        INSERT INTO module_files (module_ident, fileid, filename)
+            SELECT %s, %s, m.filename
             FROM module_files m
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml' ''',
                        (new_module_ident, fileid,))
@@ -1002,33 +1003,32 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         # Copy files for m42119 except *.html and *.cnxml
         cursor.execute('''
-        SELECT f.file, m.filename, m.mimetype
+        SELECT f.file, m.filename, f.media_type
         FROM module_files m JOIN files f ON m.fileid = f.fileid
         WHERE m.module_ident = 3 AND m.filename NOT LIKE '%.html'
         AND m.filename NOT LIKE '%.cnxml'
         ''')
 
-        for data, filename, mimetype in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file) VALUES (%s)
-            RETURNING fileid''', (data,))
+        for data, filename, media_type in cursor.fetchall():
+            cursor.execute('''INSERT INTO files (file, media_type)
+            VALUES (%s, %s) RETURNING fileid''', (data, media_type,))
             fileid = cursor.fetchone()[0]
             cursor.execute('''
-            INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            VALUES (%s, %s, %s, %s)''', (new_module_ident, fileid, filename,
-                           mimetype))
+            INSERT INTO module_files (module_ident, fileid, filename)
+            VALUES (%s, %s, %s)''', (new_module_ident, fileid, filename,))
 
         # Insert index.cnxml.html only after adding all the other files
         cursor.execute('''
-        INSERT INTO files (file)
-            SELECT f.file
+        INSERT INTO files (file, media_type)
+            SELECT f.file, f.media_type
             FROM module_files m JOIN files f ON m.fileid = f.fileid
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml.html'
         RETURNING fileid
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            SELECT %s, %s, m.filename, m.mimetype
+        INSERT INTO module_files (module_ident, fileid, filename)
+            SELECT %s, %s, m.filename
             FROM module_files m
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml.html' ''',
                        (new_module_ident, fileid,))
@@ -1081,44 +1081,46 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         # NOT overwrite it
         cursor.execute('ALTER TABLE module_files DISABLE TRIGGER ALL')
         custom_content = 'abcd'
-        cursor.execute('INSERT INTO files (file) VALUES (%s) RETURNING fileid',
+        cursor.execute('''
+            INSERT INTO files (file, media_type)
+            VALUES (%s, 'text/html') RETURNING fileid''',
                        [custom_content])
         fileid = cursor.fetchone()[0]
         cursor.execute('''INSERT INTO module_files
-            (module_ident, fileid, filename, mimetype)
-            VALUES (%s, %s, 'index.cnxml.html', 'text/html')''',
+            (module_ident, fileid, filename)
+            VALUES (%s, %s, 'index.cnxml.html')''',
                        [new_module_ident, fileid])
         cursor.execute('ALTER TABLE module_files ENABLE TRIGGER ALL')
 
         # Copy files for m42119 except *.html and index.cnxml
         cursor.execute('''
-        SELECT f.file, m.filename, m.mimetype
+        SELECT f.file, m.filename, f.media_type
         FROM module_files m JOIN files f ON m.fileid = f.fileid
         WHERE m.module_ident = 3 AND m.filename NOT LIKE '%.html'
         AND m.filename != 'index.cnxml'
         ''')
 
-        for data, filename, mimetype in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file) VALUES (%s)
-            RETURNING fileid''', (data,))
+        for data, filename, media_type in cursor.fetchall():
+            cursor.execute('''INSERT INTO files (file, media_type)
+            VALUES (%s, %s)
+            RETURNING fileid''', (data, media_type))
             fileid = cursor.fetchone()[0]
             cursor.execute('''
-            INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            VALUES (%s, %s, %s, %s)''', (new_module_ident, fileid, filename,
-                           mimetype))
+            INSERT INTO module_files (module_ident, fileid, filename)
+            VALUES (%s, %s, %s)''', (new_module_ident, fileid, filename))
 
         # Insert index.cnxml only after adding all the other files
         cursor.execute('''
-        INSERT INTO files (file)
-            SELECT f.file
+        INSERT INTO files (file, media_type)
+            SELECT f.file, f.media_type
             FROM module_files m JOIN files f ON m.fileid = f.fileid
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml'
         RETURNING fileid
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''
-        INSERT INTO module_files (module_ident, fileid, filename, mimetype)
-            SELECT %s, %s, m.filename, m.mimetype
+        INSERT INTO module_files (module_ident, fileid, filename)
+            SELECT %s, %s, m.filename
             FROM module_files m JOIN files f ON m.fileid = f.fileid
             WHERE m.module_ident = 3 AND m.filename = 'index.cnxml' ''',
                        (new_module_ident, fileid,))
