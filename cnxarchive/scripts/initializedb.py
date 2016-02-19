@@ -11,9 +11,11 @@ import sys
 
 import psycopg2
 
-from .. import config
-from ..database import initdb
-from ._utils import create_parser, get_app_settings_from_arguments
+from cnxarchive import config
+from cnxarchive.database import initdb
+from cnxarchive.scripts._utils import (
+    create_parser, get_app_settings_from_arguments,
+    )
 
 
 EXAMPLE_DATA_FILEPATHS = (
@@ -21,16 +23,15 @@ EXAMPLE_DATA_FILEPATHS = (
     )
 
 
-parser = create_parser('initdb', description=__doc__)
-parser.add_argument('--with-example-data', action='store_true',
-                    help="Initializes the database with example data.")
-parser.add_argument('--superuser', action='store', help="NOT IMPLEMENTED")
-parser.add_argument(
-    '--super-password', action='store', help="NOT IMPLEMENTED")
-
-
 def main(argv=None):
     """Initialize the database."""
+    parser = create_parser('initdb', description=__doc__)
+    parser.add_argument('--with-example-data', action='store_true',
+                        help="Initializes the database with example data.")
+    parser.add_argument('--superuser', action='store',
+                        help="NOT IMPLEMENTED")
+    parser.add_argument('--super-password', action='store',
+                        help="NOT IMPLEMENTED")
     args = parser.parse_args(argv)
 
     settings = get_app_settings_from_arguments(args)

@@ -8,27 +8,27 @@
 import os
 import unittest
 
-from . import testing
+from .. import testing
 
 
 class ParserTestCase(unittest.TestCase):
 
     @property
     def target(self):
-        from ..scripts._utils import create_parser
+        from cnxarchive.scripts._utils import create_parser
         return create_parser
 
     def test_positional_arguments(self):
         parser = self.target('moo')
-        args = parser.parse_args(['testing.ini'])
-        self.assertEqual(args.config_uri, 'testing.ini')
+        args = parser.parse_args([testing.config_uri()])
+        self.assertEqual(args.config_uri, testing.config_uri())
         self.assertEqual(args.config_name, 'main')
 
     def test_optional_arguments(self):
         parser = self.target('oik')
-        args = parser.parse_args(['testing.ini',
+        args = parser.parse_args([testing.config_uri(),
                                   '--config-name', 'NEW_NAME'])
-        self.assertEqual(args.config_uri, 'testing.ini')
+        self.assertEqual(args.config_uri, testing.config_uri())
         self.assertEqual(args.config_name, 'NEW_NAME')
 
     def test_help(self):
@@ -45,15 +45,13 @@ class ParserTestCase(unittest.TestCase):
 class SettingsTestCase(unittest.TestCase):
 
     def call_target(self, *args, **kwargs):
-        from ..scripts._utils import create_parser
-        from ..scripts._utils import get_app_settings_from_arguments
+        from cnxarchive.scripts._utils import create_parser
+        from cnxarchive.scripts._utils import get_app_settings_from_arguments
         parser = create_parser('settings-test', 'just a test')
         arguments = parser.parse_args(*args, **kwargs)
         return get_app_settings_from_arguments(arguments)
 
     def test_default_config(self):
         expected = testing.integration_test_settings()
-        here = os.path.abspath(os.path.dirname(__file__))
-        config_uri = os.path.join(here, 'testing.ini')
-        result = self.call_target([config_uri])
+        result = self.call_target([testing.config_uri()])
         self.assertEqual(expected, result)

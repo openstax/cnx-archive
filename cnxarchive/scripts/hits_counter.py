@@ -16,9 +16,11 @@ import re
 import gzip
 
 import psycopg2
-from .. import config
-from ..utils import split_ident_hash, CNXHash
-from ._utils import create_parser, get_app_settings_from_arguments
+from cnxarchive import config
+from cnxarchive.utils import split_ident_hash, CNXHash
+from cnxarchive.scripts._utils import (
+    create_parser, get_app_settings_from_arguments,
+    )
 
 
 LOG_FORMAT_PLAIN = 'plain'
