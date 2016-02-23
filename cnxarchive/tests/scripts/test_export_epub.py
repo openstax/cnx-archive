@@ -220,3 +220,41 @@ class ContentGetterTestCase(BaseTestCase):
             pass
         else:
             self.fail("should not have found content")
+
+
+class FileInfoGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_file_info
+        return get_file_info
+
+    def test_get(self):
+        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
+        filename = 'PhET_Icon.png'
+        media_type = 'image/png'
+
+        fn, mt = self.target(hash)
+        self.assertEqual(fn, filename)
+        self.assertEqual(mt, media_type)
+
+    def test_with_context(self):
+        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
+        ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
+        filename = 'PhET_Icon.png'
+        media_type = 'image/png'
+
+        fn, mt = self.target(hash, context=ident_hash)
+        self.assertEqual(fn, filename)
+        self.assertEqual(mt, media_type)
+
+    def test_not_found(self):
+        hash = 'c7097b2e80ca7314a7f3ef58a09817f9da005570'
+
+        from cnxarchive.scripts.export_epub import FileNotFound
+        try:
+            self.target(hash)
+        except FileNotFound:
+            pass
+        else:
+            self.fail("should not have found a file")

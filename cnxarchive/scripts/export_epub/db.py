@@ -115,8 +115,33 @@ def get_content(ident_hash, context=None):
     return content[:]
 
 
+def get_file_info(hash, context=None):
+    """Returns information about the file, identified by ``hash``.
+    If the `context` (an ident-hash) is supplied,
+    the information returned will be specific to that context.
+
+    """
+    if context is None:
+        stmt = _get_sql('get-file-info.sql')
+        args = dict(hash=hash)
+    else:
+        stmt = _get_sql('get-file-info-in-context.sql')
+        id, version = get_id_n_version(context)
+        args = dict(hash=hash, id=id, version=version)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            try:
+                filename, media_type = cursor.fetchone()
+            except TypeError:
+                raise FileNotFound(hash)
+    return filename, media_type
+
+
 __all__ = (
     'get_content',
-    'get_metadata',
+    'get_file_info',
     'get_id_n_version',
+    'get_metadata',
     )

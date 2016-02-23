@@ -18,7 +18,12 @@ class ContentNotFound(Exception):
     """
 
 
+class FileNotFound(Exception):
+    """Raised when a file cannot be found."""
+
+
 __all__ = (
     'ContentNotFound',
+    'FileNotFound',
     'NotFound',
     )
