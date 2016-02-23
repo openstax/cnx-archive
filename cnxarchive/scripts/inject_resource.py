@@ -44,22 +44,22 @@ def get_file_sha1(file):
     return h
 
 
-def lookup_module_ident(id, (mjr_ver, mnr_ver)):
+def lookup_module_ident(id, version):
     """Return the ``module_ident`` for the given ``id`` &
     major and minor version as a tuple.
 
     """
     with db_connect() as db_conn:
         with db_conn.cursor() as cursor:
-            cursor.execute("SELECT module_ident FROM modules "
-                           "WHERE uuid = %s "
-                           "AND major_version = %s "
-                           "AND minor_version = %s",
-                           (id, mjr_ver, mnr_ver,))
+            cursor.execute(
+                "SELECT module_ident FROM modules "
+                "WHERE uuid = %s "
+                "AND CONCAT_WS('.', major_version, minor_version) = %s",
+                (id, version))
             try:
                 mident = cursor.fetchone()[0]
             except (IndexError, TypeError):
-                ident_hash = join_ident_hash(id, (mjr_ver, mnr_ver))
+                ident_hash = join_ident_hash(id, version)
                 raise RuntimeError("Content at {} does not exist."
                                    .format(ident_hash))
     return mident
@@ -116,7 +116,7 @@ def inject_resource(ident_hash, file, filename, media_type):
     resource_hash = get_file_sha1(file)
     with db_connect() as db_conn:
         with db_conn.cursor() as cursor:
-            s_ident_hash = split_ident_hash(ident_hash, split_version=True)
+            s_ident_hash = split_ident_hash(ident_hash)
             module_ident = lookup_module_ident(*s_ident_hash)
             fileid, resource_hash = upsert_file(file, media_type)
             upsert_module_file(module_ident, fileid, filename)

@@ -34,7 +34,8 @@ class InjectResourceTestCase(unittest.TestCase):
         from cnxarchive.scripts.inject_resource import main
         return main
 
-    ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+    collection_ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+    module_ident_hash = 'c0a76659-c311-405f-9a99-15c71af39325@5'
     data_filename = "e3d625fe.png"
     media_type = 'image/png'
 
@@ -53,9 +54,32 @@ class InjectResourceTestCase(unittest.TestCase):
 
     @mock.patch('sys.stderr')
     @mock.patch('sys.stdout')
-    def test_success_output(self, stdout, stderr):
+    def test_success_output_for_collection(self, stdout, stderr):
         # Call the command line script.
-        args = (testing.config_uri(), self.ident_hash, self.data_filepath,)
+        args = (testing.config_uri(), self.collection_ident_hash,
+                self.data_filepath,)
+        return_code = self.target(args)
+        self.assertEqual(return_code, 0)
+
+        # Ensure output to standard error and out contain expected output.
+        expected_stderr_lines = [
+            "  filename: {}".format(self.data_filename),
+            "  media_type: {}".format(self.media_type),
+            ]
+        expected_stdout_lines = [
+            "/resources/{}".format(self.data_sha1),
+            ]
+        for line in expected_stderr_lines:
+            stderr.write.assert_any_call(line)
+        for line in expected_stdout_lines:
+            stdout.write.assert_any_call(line)
+
+    @mock.patch('sys.stderr')
+    @mock.patch('sys.stdout')
+    def test_success_output_for_module(self, stdout, stderr):
+        # Call the command line script.
+        args = (testing.config_uri(), self.module_ident_hash,
+                self.data_filepath,)
         return_code = self.target(args)
         self.assertEqual(return_code, 0)
 
@@ -75,7 +99,8 @@ class InjectResourceTestCase(unittest.TestCase):
     @testing.db_connect
     def test_artifacts_of_injection(self, cursor):
         # Call the command line script.
-        args = (testing.config_uri(), self.ident_hash, self.data_filepath,)
+        args = (testing.config_uri(), self.collection_ident_hash,
+                self.data_filepath,)
         return_code = self.target(args)
         self.assertEqual(return_code, 0)
 
@@ -99,7 +124,8 @@ class InjectResourceTestCase(unittest.TestCase):
     def test_media_type_override(self, cursor, stderr):
         # Call the command line script.
         media_type_override = 'image/tiff'
-        args = (testing.config_uri(), self.ident_hash, self.data_filepath,
+        args = (testing.config_uri(), self.collection_ident_hash,
+                self.data_filepath,
                 '--media-type', media_type_override,
                 )
         return_code = self.target(args)
@@ -119,7 +145,8 @@ class InjectResourceTestCase(unittest.TestCase):
     def test_filename_override(self, cursor, stderr):
         # Call the command line script.
         filename_override = 'real-alternatives.png'
-        args = (testing.config_uri(), self.ident_hash, self.data_filepath,
+        args = (testing.config_uri(), self.collection_ident_hash,
+                self.data_filepath,
                 '--resource-filename', filename_override,
                 )
         return_code = self.target(args)
