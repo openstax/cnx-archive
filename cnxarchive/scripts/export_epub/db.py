@@ -139,8 +139,24 @@ def get_file_info(hash, context=None):
     return filename, media_type
 
 
+def get_file(hash):
+    """Return the contents of the file as a ``memoryview``."""
+    stmt = _get_sql('get-file.sql')
+    args = dict(hash=hash)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            try:
+                file, _ = cursor.fetchone()
+            except TypeError:
+                raise FileNotFound(hash)
+    return memoryview(file[:])
+
+
 __all__ = (
     'get_content',
+    'get_file',
     'get_file_info',
     'get_id_n_version',
     'get_metadata',

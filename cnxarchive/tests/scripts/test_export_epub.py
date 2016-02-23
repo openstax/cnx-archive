@@ -258,3 +258,28 @@ class FileInfoGetterTestCase(BaseTestCase):
             pass
         else:
             self.fail("should not have found a file")
+
+
+class FileGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_file
+        return get_file
+
+    def test_get(self):
+        hash = 'b7a943d679932431e674a174776397b824edc000'
+
+        file = self.target(hash)
+        self.assertEqual(file[400:414].tobytes(), 'name="license"')
+
+    def test_not_found(self):
+        hash = 'c7097b2e80ca7314a7f3ef58a09817f9da005570'
+
+        from cnxarchive.scripts.export_epub import FileNotFound
+        try:
+            self.target(hash)
+        except FileNotFound:
+            pass
+        else:
+            self.fail("should not have found a file")
