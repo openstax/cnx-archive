@@ -154,10 +154,36 @@ def get_file(hash):
     return memoryview(file[:])
 
 
+def get_registered_files(ident_hash):
+    """Returns a list SHA1 hashes for registered file entries
+    identified by the given module ``ident_hash``.
+
+    Note, it's possible for a module to reference a file without having
+    a registered file entry for it.
+
+    Note, all files are included, including the raw form of the content.
+
+    """
+    id, version = get_id_n_version(ident_hash)
+
+    stmt = _get_sql('get-registered-files-info.sql')
+    args = dict(id=id, version=version)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            rows = cursor.fetchall()
+    if rows is None:
+        rows = []
+    hashes = list(set([sha1 for sha1, _, __ in rows]))
+    return hashes
+
+
 __all__ = (
     'get_content',
     'get_file',
     'get_file_info',
     'get_id_n_version',
     'get_metadata',
+    'get_registered_files',
     )

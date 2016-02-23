@@ -283,3 +283,46 @@ class FileGetterTestCase(BaseTestCase):
             pass
         else:
             self.fail("should not have found a file")
+
+
+class RegisteredFilesGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_registered_files
+        return get_registered_files
+
+    def test_get(self):
+        ident_hash = 'f3c9ab70-a916-4d8c-9256-42953287b4e9@3'
+
+        expected_registered_files = [
+            '1b293f3e37e08896d958d25df2d69e83f2ad22b8',
+            '4c13aed36dc1cb7b2c7117d896204efc70b1c0b1',
+            'd47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9',
+            'ee41b1074ce0abd970fcc15bbf1b6a962db1a389',
+            ]
+
+        registered_files = self.target(ident_hash)
+        self.assertEqual(sorted(registered_files), expected_registered_files)
+
+    def test_not_found(self):
+        ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd@4'
+
+        from cnxarchive.scripts.export_epub import NotFound
+        try:
+            registered_files = self.target(ident_hash)
+        except NotFound:
+            pass
+        else:
+            self.fail("should not have found content")
+
+    def test_not_found_without_version(self):
+        ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
+
+        from cnxarchive.scripts.export_epub import NotFound
+        try:
+            registered_files = self.target(ident_hash)
+        except NotFound:
+            pass
+        else:
+            self.fail("should not have found content")
