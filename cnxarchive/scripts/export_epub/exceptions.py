@@ -11,6 +11,14 @@ class NotFound(Exception):
     """Raised when identified content cannot be found in the database."""
 
 
+class ContentNotFound(Exception):
+    """Raised when file content's of the identified content cannot be found
+    in the database.
+
+    """
+
+
 __all__ = (
+    'ContentNotFound',
     'NotFound',
     )

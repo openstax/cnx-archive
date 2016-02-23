@@ -195,3 +195,28 @@ class MetadataGetterTestCase(BaseTestCase):
         self.assertEqual(metadata['print_style'], None)
         self.assertEqual(metadata['derived_from_uri'], None)
         self.assertEqual(metadata['derived_from_title'], None)
+
+
+class ContentGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_content
+        return get_content
+
+    def test_get(self):
+        ident_hash = 'f6024d8a-1868-44c7-ab65-45419ef54881@3'
+        content = self.target(ident_hash)
+        self.assertIn('<span class="title">Atomic Masses</span>', content)
+
+    def test_not_found(self):
+        # Use a collection's id to fake this.
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+
+        from cnxarchive.scripts.export_epub import ContentNotFound
+        try:
+            self.target(ident_hash)
+        except ContentNotFound:
+            pass
+        else:
+            self.fail("should not have found content")

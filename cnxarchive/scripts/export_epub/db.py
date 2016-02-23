@@ -90,7 +90,33 @@ def get_metadata(ident_hash):
     return metadata
 
 
+def get_content(ident_hash, context=None):
+    """Returns the content for the given ``ident_hash``.
+    ``context`` is optionally ident-hash used to find the content
+    within the context of a Collection.
+
+    """
+    id, version = get_id_n_version(ident_hash)
+    filename = 'index.cnxml.html'
+
+    if context is not None:
+        raise NotImplementedError('cooking has not yet been implemented')
+
+    stmt = _get_sql('get-content.sql')
+    args = dict(id=id, version=version, filename=filename)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            try:
+                content, _ = cursor.fetchone()
+            except TypeError:
+                raise ContentNotFound(ident_hash, context, filename)
+    return content[:]
+
+
 __all__ = (
+    'get_content',
     'get_metadata',
     'get_id_n_version',
     )
