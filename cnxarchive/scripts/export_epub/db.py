@@ -67,6 +67,30 @@ def get_id_n_version(ident_hash):
     return id, version
 
 
+def get_metadata(ident_hash):
+    """Return the dictionary of metadata from the database.
+    This data is keyed using the cnx-epub data structure.
+
+    """
+    id, version = get_id_n_version(ident_hash)
+
+    stmt = _get_sql('get-metadata.sql')
+    args = dict(id=id, version=version)
+
+    # FIXME The license_url and license_text metadata attributes need to
+    # change to a License structure similar to what is used in cnx-authoring.
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            try:
+                metadata = cursor.fetchone()[0]
+            except TypeError:
+                raise NotFound(ident_hash)
+    return metadata
+
+
 __all__ = (
+    'get_metadata',
     'get_id_n_version',
     )

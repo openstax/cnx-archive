@@ -90,3 +90,108 @@ class IdAndVersionGetterTestCase(BaseTestCase):
             pass
         else:
             self.fail("should have not found any content")
+
+
+class MetadataGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_metadata
+        return get_metadata
+
+    def assert_contains(self, l1, l2):
+        """Check that ``l1`` contains ``l2``"""
+        not_in = [i for i in l2 if i not in l1]
+        if not_in:
+            self.fail("Could not find {} in:\n {}"
+                      .format(not_in, l1))
+
+    def test_not_found(self):
+        ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
+        from cnxarchive.scripts.export_epub import NotFound
+        try:
+            doc = self.target(ident_hash)
+        except NotFound:
+            pass
+        else:
+            self.fail("this should not have found an entry")
+
+    def test_get(self):
+        id, version = ('f6024d8a-1868-44c7-ab65-45419ef54881', '3')
+        ident_hash = '{}@{}'.format(id, version)
+        metadata = self.target(ident_hash)
+
+        metadata_keys = [
+            'id', 'version',
+            'title', 'language', 'created', 'revised',
+            'license_url', 'license_text',
+            'summary', 'subjects', 'keywords',
+            'cnx-archive-uri',
+            # People keys
+            'authors', 'editors', 'illustrators', 'publishers',
+            'copyright_holders',
+            # Print style
+            'print_style',
+            # Derivation keys
+            'derived_from_uri', 'derived_from_title',
+            ]
+        required_keys = metadata_keys[:16]
+        self.assert_contains(metadata, required_keys)
+
+        self.assertEqual(metadata['id'], id)
+        self.assertEqual(metadata['version'], version)
+
+        self.assertEqual(metadata['title'], u"Atomic Masses")
+        self.assertEqual(metadata['language'], u'en')
+        self.assertEqual(metadata['created'], u'2013-07-31T19:07:25Z')
+        self.assertEqual(metadata['revised'], u'2013-07-31T19:07:25Z')
+        self.assertEqual(metadata['license_url'],
+                         u'http://creativecommons.org/licenses/by/4.0/')
+        self.assertEqual(metadata['license_text'],
+                         u'Creative Commons Attribution License')
+        self.assertEqual(metadata['summary'], None)  # FIXME Bad data
+        self.assertEqual(metadata['subjects'], [u'Science and Technology'])
+        self.assertEqual(metadata['keywords'], [])
+        self.assertEqual(metadata['cnx-archive-uri'],
+                         u'f6024d8a-1868-44c7-ab65-45419ef54881@3')
+
+        roles = [
+            {u'firstname': u'OpenStax College',
+             u'name': u'OpenStax College',
+             u'id': u'OpenStaxCollege',
+             u'type': 'cnx-id',
+             u'suffix': None,
+             u'surname': None,
+             u'title': None},
+            {u'firstname': u'Rice',
+             u'name': u'Rice University',
+             u'id': u'OSCRiceUniversity',
+             u'type': 'cnx-id',
+             u'suffix': None,
+             u'surname': u'University',
+             u'title': None},
+            {u'firstname': u'OpenStax College',
+             u'name': u'OpenStax College',
+             u'id': u'OpenStaxCollege',
+             u'type': 'cnx-id',
+             u'suffix': None,
+             u'surname': None,
+             u'title': None},
+            {u'firstname': u'College',
+             u'name': u'OSC Physics Maintainer',
+             u'id': u'cnxcap',
+             u'type': 'cnx-id',
+             u'suffix': None,
+             u'surname': u'Physics',
+             u'title': None},
+            ]
+        self.assertEqual(metadata['authors'], [roles[0]])
+        self.assertEqual(metadata['editors'], [])
+        self.assertEqual(metadata['illustrators'], [])
+        self.assertEqual(metadata['translators'], [])
+        self.assertEqual(metadata['publishers'], roles[2:])
+        self.assertEqual(metadata['copyright_holders'], [roles[1]])
+
+        self.assertEqual(metadata['print_style'], None)
+        self.assertEqual(metadata['derived_from_uri'], None)
+        self.assertEqual(metadata['derived_from_title'], None)
