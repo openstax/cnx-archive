@@ -326,3 +326,78 @@ class RegisteredFilesGetterTestCase(BaseTestCase):
             pass
         else:
             self.fail("should not have found content")
+
+
+class ResourceFactoryTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import resource_factory
+        return resource_factory
+
+    def test_get(self):
+        hash = 'ceb4a4476591cc245e6be735399a309a224c9b67'
+        ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
+        filename = 'index.cnxml'
+        media_type = 'text/xml'
+
+        resource = self.target(hash, context=ident_hash)
+
+        self.assertEqual(resource.filename, filename)
+        self.assertEqual(resource.media_type, media_type)
+        with resource.open() as f:
+            contents = f.read()
+        self.assertIn('<?xml version="1.0"?>', contents)
+
+
+class DocumentFactoryTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import document_factory
+        return document_factory
+
+    def test_not_found(self):
+        ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd@4'
+        from cnxarchive.scripts.export_epub import NotFound
+        try:
+            doc = self.target(ident_hash)
+        except NotFound:
+            pass
+        else:
+            self.fail("this should not have created a document")
+
+    def test_assembly(self):
+        ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
+        doc = self.target(ident_hash)
+
+        self.assertTrue(isinstance(doc, cnxepub.Document))
+
+        # Briefly check for the existence of metadata.
+        self.assertEqual(doc.metadata['title'], u'Physics: An Introduction')
+
+        # Check for specific content.
+        self.assertIn('<h1 class="title">Applications of Physics</h1>',
+                      doc.content)
+
+        # Check for resources
+        expected_resource_filenames = [
+            'Figure_01_01_01_aa.jpg', 'Figure_01_01_02_aa.jpg',
+            'Figure_01_01_03_aa.jpg', 'Figure_01_01_04_aa.jpg',
+            'Figure_01_01_05_aa.jpg', 'Figure_01_01_06_aa.jpg',
+            'Figure_01_01_07_aa.jpg', 'Figure_01_01_08_aa.jpg',
+            'Figure_01_01_09_aa.jpg', 'Figure_01_01_10_aa.jpg',
+            'Figure_01_01_11_aa.jpg', 'Figure_01_01_12_aa.jpg',
+            'Figure_01_01_13_aa.jpg', 'PhET_Icon.png',
+            'equation-grapher_en.jar', 'index.cnxml', 'index.cnxml.html',
+            'index_auto_generated.cnxml',
+            ]
+        self.assertEqual(len(doc.resources), 18)
+        self.assertEqual(sorted([r.filename for r in doc.resources]),
+                         expected_resource_filenames)
+
+        refs = [r for r in doc.references if r.uri.startswith('/resources/')]
+        # Simple check incase the data changes, otherwise not a needed test.
+        self.assertEqual(len(refs), 15)
+        # Check reference binding
+        self.assertEqual(set([ref.is_bound for ref in refs]), set([True]))
