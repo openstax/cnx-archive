@@ -5,7 +5,13 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import tempfile
 import unittest
+import zipfile
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import cnxepub
 from pyramid import testing as pyramid_testing
@@ -31,6 +37,13 @@ class BaseTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.fixture.tearDown()
+
+    def assert_contains(self, l1, l2):
+        """Check that ``l1`` contains ``l2``"""
+        not_in = [i for i in l2 if i not in l1]
+        if not_in:
+            self.fail("Could not find {} in:\n {}"
+                      .format(not_in, l1))
 
 
 class IdAndVersionGetterTestCase(BaseTestCase):
@@ -113,13 +126,6 @@ class MetadataGetterTestCase(BaseTestCase):
     def target(self):
         from cnxarchive.scripts.export_epub import get_metadata
         return get_metadata
-
-    def assert_contains(self, l1, l2):
-        """Check that ``l1`` contains ``l2``"""
-        not_in = [i for i in l2 if i not in l1]
-        if not_in:
-            self.fail("Could not find {} in:\n {}"
-                      .format(not_in, l1))
 
     def test_not_found(self):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
@@ -583,3 +589,54 @@ class FactoryFactoryTestCase(BaseTestCase):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
         model = self.target(ident_hash)
         self.assertTrue(isinstance(model, cnxepub.Binder))
+
+
+class MainTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub.main import main
+        return main
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    collection_ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+    module_ident_hash = 'c0a76659-c311-405f-9a99-15c71af39325@5'
+
+    def test_success_output_for_collection(self):
+        _, filepath = tempfile.mkstemp('.epub')
+        # Call the command line script.
+        args = (testing.config_uri(), self.collection_ident_hash, filepath)
+        return_code = self.target(args)
+        self.assertEqual(return_code, 0)
+
+        with zipfile.ZipFile(filepath, 'r') as zf:
+            # Check for select files
+            expected_to_contain = [
+                'contents/e79ffde3-7fb4-4af3-9ec8-df648b391597.xhtml',
+                'contents/56f1c5c1-4014-450d-a477-2121e276beca@8.xhtml',
+                'e79ffde3-7fb4-4af3-9ec8-df648b391597.opf',
+                'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
+                ]
+            self.assert_contains(zf.namelist(), expected_to_contain)
+
+    def test_success_output_for_module(self):
+        _, filepath = tempfile.mkstemp('.epub')
+        # Call the command line script.
+        args = (testing.config_uri(), self.module_ident_hash, filepath)
+        return_code = self.target(args)
+        self.assertEqual(return_code, 0)
+
+        with zipfile.ZipFile(filepath, 'r') as zf:
+            # Check for select files
+            expected_to_contain = [
+                'contents/c0a76659-c311-405f-9a99-15c71af39325@5.xhtml',
+                'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
+                'resources/37624518e1c26bf0a1abd05610da4efb86dafc99',
+                'resources/4bfac6b2934befce939cb70321bba1fb414543b5',
+                ]
+            self.assert_contains(zf.namelist(), expected_to_contain)
