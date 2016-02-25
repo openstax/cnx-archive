@@ -21,6 +21,7 @@ from cnxarchive.scripts.export_epub.db import (
     get_metadata,
     get_registered_files,
     get_tree,
+    get_type,
     )
 
 
@@ -94,9 +95,25 @@ def binder_factory(ident_hash):
     return binder
 
 
+def _type_to_factory(type):
+    try:
+        factory = {'Module': document_factory,
+                   'Collection': binder_factory,
+                   }[type]
+    except KeyError:  # pragma: no cover
+        raise RuntimeError("unknown type: {}".format(type))
+    return factory
+
+
+def factory(ident_hash):
+    factory_callable = _type_to_factory(get_type(ident_hash))
+    return factory_callable(ident_hash)
+
+
 __all__ = (
     'binder_factory',
     'document_factory',
+    'factory',
     'resource_factory',
     'tree_to_nodes',
     )

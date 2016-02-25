@@ -566,3 +566,20 @@ class BinderFactoryTestCase(BaseTestCase):
                 ],
             }
         self.assertEqual(cnxepub.model_to_tree(binder), expected_tree)
+
+
+class FactoryFactoryTestCase(BaseTestCase):
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import factory
+        return factory
+
+    def test_document(self):
+        ident_hash = 'c0a76659-c311-405f-9a99-15c71af39325@5'
+        model = self.target(ident_hash)
+        self.assertTrue(isinstance(model, cnxepub.Document))
+
+    def test_binder(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+        model = self.target(ident_hash)
+        self.assertTrue(isinstance(model, cnxepub.Binder))
