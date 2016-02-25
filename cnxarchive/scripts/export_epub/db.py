@@ -179,6 +179,23 @@ def get_registered_files(ident_hash):
     return hashes
 
 
+def get_tree(ident_hash):
+    """Return a tree structure of the Collection"""
+    id, version = get_id_n_version(ident_hash)
+
+    stmt = _get_sql('get-tree.sql')
+    args = dict(id=id, version=version)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            try:
+                tree = cursor.fetchone()[0]
+            except TypeError:
+                raise NotFound(ident_hash)
+    return tree
+
+
 __all__ = (
     'get_content',
     'get_file',
@@ -186,4 +203,5 @@ __all__ = (
     'get_id_n_version',
     'get_metadata',
     'get_registered_files',
+    'get_tree',
     )

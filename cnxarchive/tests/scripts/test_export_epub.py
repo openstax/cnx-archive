@@ -328,6 +328,51 @@ class RegisteredFilesGetterTestCase(BaseTestCase):
             self.fail("should not have found content")
 
 
+class TreeGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_tree
+        return get_tree
+
+    def test_get(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+
+        tree = self.target(ident_hash)
+
+        expected_flattened_tree = [
+            u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+            u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+            u'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
+            u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
+            u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@6',
+            u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@7',
+            u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
+            u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
+            u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
+            u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
+            u'56f1c5c1-4014-450d-a477-2121e276beca@8',
+            u'f6024d8a-1868-44c7-ab65-45419ef54881@3',
+            u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
+            u'c0a76659-c311-405f-9a99-15c71af39325@5',
+            u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
+            ]
+        self.assertEqual(
+            [x for x in cnxepub.flatten_tree_to_ident_hashes(tree)],
+            expected_flattened_tree)
+
+    def test_not_found(self):
+        ident_hash = 'f0e62639-54fc-414b-b86b-0a27d1e5de5b@4'
+
+        from cnxarchive.scripts.export_epub import NotFound
+        try:
+            self.target(ident_hash)
+        except NotFound:
+            pass
+        else:
+            self.fail("should not have found a tree")
+
+
 class ResourceFactoryTestCase(BaseTestCase):
 
     @property
