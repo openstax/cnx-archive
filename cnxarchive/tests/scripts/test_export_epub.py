@@ -92,6 +92,21 @@ class IdAndVersionGetterTestCase(BaseTestCase):
             self.fail("should have not found any content")
 
 
+class TypeGetterTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import get_type
+        return get_type
+
+    def test_get(self):
+        _id, _version = ('f6024d8a-1868-44c7-ab65-45419ef54881', '3')
+        ident_hash = '{}@{}'.format(_id, _version)
+
+        type = self.target(ident_hash)
+        self.assertEqual(type, 'Module')
+
+
 class MetadataGetterTestCase(BaseTestCase):
 
     @property

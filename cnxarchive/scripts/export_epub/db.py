@@ -67,6 +67,23 @@ def get_id_n_version(ident_hash):
     return id, version
 
 
+def get_type(ident_hash):
+    """Return the database type for the given ``ident_hash``
+    As of now, this could either be a 'Module' or 'Collection'.
+
+    """
+    id, version = get_id_n_version(ident_hash)
+
+    stmt = _get_sql('get-type.sql')
+    args = dict(id=id, version=version)
+
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(stmt, args)
+            type = cursor.fetchone()[0]
+    return type
+
+
 def get_metadata(ident_hash):
     """Return the dictionary of metadata from the database.
     This data is keyed using the cnx-epub data structure.
@@ -204,4 +221,5 @@ __all__ = (
     'get_metadata',
     'get_registered_files',
     'get_tree',
+    'get_type',
     )
