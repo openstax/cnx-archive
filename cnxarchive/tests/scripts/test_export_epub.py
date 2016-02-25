@@ -575,6 +575,7 @@ class BinderFactoryTestCase(BaseTestCase):
 
 
 class FactoryFactoryTestCase(BaseTestCase):
+
     @property
     def target(self):
         from cnxarchive.scripts.export_epub import factory
@@ -589,6 +590,51 @@ class FactoryFactoryTestCase(BaseTestCase):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
         model = self.target(ident_hash)
         self.assertTrue(isinstance(model, cnxepub.Binder))
+
+
+class EpubCreationTestCase(BaseTestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.export_epub import create_epub
+        return create_epub
+
+    @property
+    def filepath(self):
+        filepath = getattr(self, '_filepath', None)
+        if filepath is None:
+            _, filepath = tempfile.mkstemp('.epub')
+            self._filepath = filepath
+            self.addCleanup(delattr, self, '_filepath')
+        return filepath
+
+    def test_document(self):
+        ident_hash = 'c0a76659-c311-405f-9a99-15c71af39325@5'
+        model = self.target(ident_hash, self.filepath)
+
+        with zipfile.ZipFile(self.filepath, 'r') as zf:
+            # Check for select files
+            expected_to_contain = [
+                'contents/c0a76659-c311-405f-9a99-15c71af39325@5.xhtml',
+                'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
+                'resources/37624518e1c26bf0a1abd05610da4efb86dafc99',
+                'resources/4bfac6b2934befce939cb70321bba1fb414543b5',
+                ]
+            self.assert_contains(zf.namelist(), expected_to_contain)
+
+    def test_binder(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+        model = self.target(ident_hash, self.filepath)
+
+        with zipfile.ZipFile(self.filepath, 'r') as zf:
+            # Check for select files
+            expected_to_contain = [
+                'contents/e79ffde3-7fb4-4af3-9ec8-df648b391597.xhtml',
+                'contents/56f1c5c1-4014-450d-a477-2121e276beca@8.xhtml',
+                'e79ffde3-7fb4-4af3-9ec8-df648b391597.opf',
+                'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
+                ]
+            self.assert_contains(zf.namelist(), expected_to_contain)
 
 
 class MainTestCase(BaseTestCase):

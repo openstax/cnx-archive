@@ -110,7 +110,20 @@ def factory(ident_hash):
     return factory_callable(ident_hash)
 
 
+def create_epub(ident_hash, file):
+    """Creates an epub from an ``ident_hash``, which is output to the given
+    ``file`` (a file-like object).
+    Returns None, writes to the given ``file``.
+
+    """
+    model = factory(ident_hash)
+    if isinstance(model, cnxepub.Document):
+        model = cnxepub.TranslucentBinder(nodes=[model])
+    cnxepub.make_epub(model, file)
+
+
 __all__ = (
+    'create_epub',
     'binder_factory',
     'document_factory',
     'factory',

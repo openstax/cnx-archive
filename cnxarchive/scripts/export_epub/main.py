@@ -13,11 +13,10 @@ import os
 import sys
 import argparse
 
-import cnxepub
 from pyramid.paster import bootstrap
 
 from cnxarchive.scripts._utils import create_parser
-from cnxarchive.scripts.export_epub import factory
+from cnxarchive.scripts.export_epub import create_epub
 
 
 def main(argv=None):
@@ -29,11 +28,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     env = bootstrap(args.config_uri)
-    file = args.file
 
-    model = factory(args.ident_hash)
-    if isinstance(model, cnxepub.Document):
-        model = cnxepub.TranslucentBinder(nodes=[model])
-    cnxepub.make_epub(model, file)
+    create_epub(args.ident_hash, args.file)
 
     return 0
