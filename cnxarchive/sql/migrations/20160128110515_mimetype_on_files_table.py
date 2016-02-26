@@ -23,13 +23,13 @@ def up(cursor):
 
     # Put triggers back
     cursor.execute("CREATE TRIGGER update_file_md5 "
-                   "BEFORE INSERT OR UPDATE OF file ON files"
-                   "FOR EACH ROW"
+                   "BEFORE INSERT OR UPDATE OF file ON files "
+                   "FOR EACH ROW "
                    "EXECUTE PROCEDURE update_md5()")
 
-    cursor.execute("CREATE TRIGGER update_files_sha1"
-                   "BEFORE INSERT OR UPDATE OF file ON files"
-                   "FOR EACH ROW"
+    cursor.execute("CREATE TRIGGER update_files_sha1 "
+                   "BEFORE INSERT OR UPDATE OF file ON files "
+                   "FOR EACH ROW "
                    "EXECUTE PROCEDURE update_sha1()")
 
     # Warn about missing mimetype.
@@ -53,11 +53,11 @@ def down(cursor):
 
     # Put triggers back
     cursor.execute("CREATE TRIGGER update_file_md5 "
-                   "BEFORE INSERT OR UPDATE ON files"
-                   "FOR EACH ROW"
+                   "BEFORE INSERT OR UPDATE ON files "
+                   "FOR EACH ROW "
                    "EXECUTE PROCEDURE update_md5()")
 
-    cursor.execute("CREATE TRIGGER update_files_sha1"
-                   "BEFORE INSERT OR UPDATE ON files"
-                   "FOR EACH ROW"
+    cursor.execute("CREATE TRIGGER update_files_sha1 "
+                   "BEFORE INSERT OR UPDATE ON files "
+                   "FOR EACH ROW "
                    "EXECUTE PROCEDURE update_sha1()")
