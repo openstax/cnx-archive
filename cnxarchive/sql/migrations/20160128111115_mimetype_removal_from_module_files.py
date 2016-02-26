@@ -12,7 +12,7 @@ def up(cursor):
     # Move the mimetype value from ``module_files`` to ``files``.
     cursor.execute("UPDATE files AS f SET media_type = mf.mimetype "
                    "FROM module_files AS mf "
-                   "WHERE mf.fileid = f.fileid")
+                   "WHERE mf.fileid = f.fileid AND f.media_type IS NULL")
 
     # Warn about missing mimetype.
     cursor.execute("SELECT fileid, sha1 "

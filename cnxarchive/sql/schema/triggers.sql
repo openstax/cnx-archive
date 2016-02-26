@@ -182,7 +182,7 @@ $$
     LANGUAGE plpgsql;
 
 CREATE TRIGGER update_file_md5
-    BEFORE INSERT OR UPDATE ON files
+    BEFORE INSERT OR UPDATE OF file ON files
     FOR EACH ROW
     EXECUTE PROCEDURE update_md5();
 
@@ -196,7 +196,7 @@ AS $$
 $$ LANGUAGE plpythonu;
 
 CREATE TRIGGER update_files_sha1
-    BEFORE INSERT OR UPDATE ON files
+    BEFORE INSERT OR UPDATE OF file ON files
     FOR EACH ROW
     EXECUTE PROCEDURE update_sha1();
 
