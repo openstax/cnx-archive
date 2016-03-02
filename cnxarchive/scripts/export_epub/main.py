@@ -24,9 +24,12 @@ def main(argv=None):
     parser.add_argument('ident_hash',
                         help="ident-hash of the content ")
     parser.add_argument('file', type=argparse.FileType('wb'),
-                        help="output file (use '-' for stdout)")
+                        help="output file")
     args = parser.parse_args(argv)
 
+    if args.file is sys.stdout:
+        raise RuntimeError("Can't stream a zipfile to stdout "
+                           "because it will have issues closing")
     env = bootstrap(args.config_uri)
 
     create_epub(args.ident_hash, args.file)
