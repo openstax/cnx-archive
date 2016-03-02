@@ -686,3 +686,12 @@ class MainTestCase(BaseTestCase):
                 'resources/4bfac6b2934befce939cb70321bba1fb414543b5',
                 ]
             self.assert_contains(zf.namelist(), expected_to_contain)
+
+    def test_failure_using_stdout(self):
+        args = (testing.config_uri(), self.module_ident_hash, '-')
+        try:
+            self.target(args)
+        except RuntimeError as exc:
+            self.assertIn('stdout', exc.args[0])
+        else:
+            self.fail("should have failed to use stdout")
