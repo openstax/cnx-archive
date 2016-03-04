@@ -89,7 +89,7 @@ COLLECTION_METADATA = {
         u'version': '',
         },
     u'revised': u'2013-08-31T19:07:20Z',
-    u'stateid': None,
+    u'stateid': 1,
     u'submitlog': u'New version 1.7',
     u'submitter': {
         u'surname': None,
@@ -303,7 +303,7 @@ MODULE_METADATA = {
         u'version': '',
         },
     u'revised': u'2013-07-31T19:07:24Z',
-    u'stateid': None,
+    u'stateid': 1,
     u'submitlog': u'Added more examples',
     u'submitter': {
         u'surname': None,
