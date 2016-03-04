@@ -930,27 +930,3 @@ def robots(request):
     resp.expires = html_date(exp_time)
     resp.body = robots_dot_txt.to_string()
     return resp
-
-
-@view_config(route_name='epub', request_method='GET')
-def get_epub(request):
-    """Returns an epub for the requested content"""
-    ident_hash = request.matchdict['ident_hash']
-    page_ident_hash = request.matchdict.get('page_ident_hash', None)
-    if page_ident_hash:
-        return httpexceptions.HTTPNotFound()
-
-    from cnxarchive.scripts.export_epub import get_type
-    type = get_type(ident_hash)
-    if type == 'Module':
-        return httpexceptions.HTTPNotFound()
-
-    outfile = io.BytesIO()
-    from cnxarchive.scripts.export_epub import create_epub
-    create_epub(ident_hash, outfile)
-    outfile.seek(0)
-
-    resp = request.response
-    resp.content_type = 'application/epub+zip'
-    resp.app_iter = FileIter(outfile, _BLOCK_SIZE)
-    return resp
