@@ -89,7 +89,7 @@ COLLECTION_METADATA = {
         u'version': '',
         },
     u'revised': u'2013-08-31T19:07:20Z',
-    u'stateid': None,
+    u'stateid': 1,
     u'submitlog': u'New version 1.7',
     u'submitter': {
         u'surname': None,
@@ -303,7 +303,7 @@ MODULE_METADATA = {
         u'version': '',
         },
     u'revised': u'2013-07-31T19:07:24Z',
-    u'stateid': None,
+    u'stateid': 1,
     u'submitlog': u'Added more examples',
     u'submitter': {
         u'surname': None,
@@ -1866,7 +1866,8 @@ class ViewsTestCase(unittest.TestCase):
             'questions, links to labs and simulations, and ample practice '
             'opportunities to solve traditional <b>physics</b> application '
             'problems. ')
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'],
+                         ' A number list:   one  two  three   ')
 
         # Test for no highlighting on specific field queries.
         self.request.params = {'q': 'title:"college physics"'}
@@ -1898,7 +1899,8 @@ class ViewsTestCase(unittest.TestCase):
             'and simulations, and ample practice opportunities to solve '
             'traditional')
 
-        self.assertEqual(results['results']['items'][2]['summarySnippet'], None)
+        self.assertEqual(results['results']['items'][2]['summarySnippet'],
+                         ' A number list:   one  two  three   ')
 
     def test_search_no_params(self):
         self.request.matched_route = mock.Mock()
