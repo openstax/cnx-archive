@@ -6,4 +6,4 @@
 -- ###
 
 -- arguments[positional]: id:string; version:string;
-SELECT tree_to_json(%s, %s)::json;
+SELECT tree_to_json(%s, %s, FALSE)::json;

@@ -7,4 +7,4 @@
 
 -- #! args:: id:str, version:str
 
-SELECT tree_to_json(%(id)s, %(version)s)::json;
+SELECT tree_to_json(%(id)s, %(version)s, FALSE)::json;

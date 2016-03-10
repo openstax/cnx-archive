@@ -20,9 +20,10 @@ CREATE TABLE trees (
     title text, -- override title
     childorder integer, -- position within parent node
     latest boolean, -- is this node supposed to track upstream changes
+    is_collated boolean DEFAULT FALSE,
     PRIMARY KEY (nodeid),
     FOREIGN KEY (parent_id) REFERENCES trees (nodeid) ON DELETE CASCADE
 );
 
 -- the unique index insures only one top-level tree per document metadata
-CREATE UNIQUE INDEX trees_unique_doc_idx on trees(documentid) where parent_id is null;
+CREATE UNIQUE INDEX trees_unique_doc_idx on trees(documentid, is_collated) where parent_id is null;

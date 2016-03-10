@@ -5,21 +5,23 @@
 -- See LICENCE.txt for details.
 -- ###
 
-CREATE OR REPLACE FUNCTION tree_to_json(TEXT, TEXT) RETURNS TEXT as $$
+CREATE OR REPLACE FUNCTION tree_to_json(uuid TEXT, version TEXT, as_collated BOOLEAN DEFAULT TRUE) RETURNS TEXT as $$
 select string_agg(toc,'
 '
 ) from (
-WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
-    SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
+WITH RECURSIVE t(node, title, path,value, depth, corder, is_collated) AS (
+    SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder],
+           is_collated
     FROM trees tr, modules m
     WHERE m.uuid::text = $1 AND
           concat_ws('.',  m.major_version, m.minor_version) = $2 AND
       tr.documentid = m.module_ident AND
-      tr.parent_id IS NULL
+      tr.parent_id IS NULL AND
+      tr.is_collated = $3
 UNION ALL
-    SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder] /* Recursion */
+    SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder], c1.is_collated /* Recursion */
     FROM trees c1 JOIN t ON (c1.parent_id = t.node)
-    WHERE not nodeid = any (t.path)
+    WHERE not nodeid = any (t.path) AND t.is_collated = c1.is_collated
 )
 SELECT
     REPEAT('    ', depth - 1) || 
@@ -37,6 +39,7 @@ SELECT
 FROM t left join  modules m on t.value = m.module_ident
     WINDOW w as (ORDER BY corder) order by corder ) tree ;
 $$ LANGUAGE SQL;
+
 
 
 
