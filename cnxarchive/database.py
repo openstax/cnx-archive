@@ -313,10 +313,13 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     """
     get_tree = plpy.prepare('''
     WITH RECURSIVE t(node, parent, document, title, childorder, latest, path)
-        AS (SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr
+        AS (SELECT tr.nodeid, tr.parent_id, tr.documentid, tr.title,
+                   tr.childorder, tr.latest, ARRAY[tr.nodeid]
+            FROM trees tr
             WHERE tr.documentid = $1
     UNION ALL
-        SELECT c.*, path || ARRAY[c.nodeid]
+        SELECT c.nodeid, c.parent_id, c.documentid, c.title,
+               c.childorder, c.latest, path || ARRAY[c.nodeid]
         FROM trees c JOIN t ON (c.parent_id = t.node)
         WHERE not c.nodeid = ANY(t.path)
     )

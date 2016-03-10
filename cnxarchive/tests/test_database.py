@@ -867,9 +867,13 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         sql = '''
         WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
-            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.nodeid = %(nodeid)s
+            SELECT tr.nodeid, tr.parent_id, tr.documentid, tr.title,
+                   tr.childorder, tr.latest, ARRAY[tr.nodeid]
+            FROM trees tr
+            WHERE tr.nodeid = %(nodeid)s
         UNION ALL
-            SELECT c.*, path || ARRAY[c.nodeid]
+            SELECT c.nodeid, c.parent_id, c.documentid, c.title,
+                   c.childorder, c.latest, path || ARRAY[c.nodeid]
             FROM trees c JOIN t ON c.parent_id = t.node
             WHERE not c.nodeid = ANY(t.path)
         )
