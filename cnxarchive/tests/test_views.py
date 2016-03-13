@@ -160,9 +160,10 @@ COLLECTION_METADATA = {
          u'id': u'6214e8dcdf2824dbf830b4a0d77a3fa2f53608d2',
          u'media_type': u'image/png',
          },
+        # FIXME This file probably shouldn't exist?
         {u'filename': u'collection.html',
          u'id': u'921dcf515d41c5a5cbe3c2163ed0f5db02ab3c83',
-         u'media_type': u'text/html',
+         u'media_type': u'text/xml',
          },
         {u'filename': u'collection.xml',
          u'id': u'921dcf515d41c5a5cbe3c2163ed0f5db02ab3c83',
