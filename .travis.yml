@@ -8,6 +8,10 @@ addons:
 services:
   - memcached
 before_install:
+  - pip install pep8
+  - pep8 --exclude=tests *.py cnxarchive/
+  - pep8 --max-line-length=200 cnxarchive/tests
+
   - sudo apt-get update
   # Remove python-zope.interface, not compatible with the pyramid version we're
   # using
@@ -40,10 +44,6 @@ before_script:
   - sudo -u postgres psql -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
   # Set up the database
   - sudo -u postgres createdb -O cnxarchive cnxarchive-testing
-  - pip install pep8
-  - pep8 --exclude=tests *.py cnxarchive/
-  - pep8 --max-line-length=200 cnxarchive/tests
-
   - git clone https://github.com/okbob/session_exec
   - cd session_exec
   - make USE_PGXS=1 -e && sudo make USE_PGXS=1 -e install
