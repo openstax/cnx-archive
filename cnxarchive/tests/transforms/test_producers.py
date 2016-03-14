@@ -258,12 +258,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute("INSERT INTO files (file, media_type) "
-                       "SELECT file, media_type "
-                       "FROM files natural join module_files "
+        cursor.execute("SELECT fileid "
+                       "FROM module_files "
                        "WHERE filename = 'index.cnxml.html' "
-                       "AND module_ident != 2 LIMIT 1 "
-                       "RETURNING fileid")
+                       "AND module_ident != 2 LIMIT 1")
         fileid = cursor.fetchone()[0]
         cursor.execute("INSERT INTO module_files "
                        "(module_ident, fileid, filename) "
@@ -302,12 +300,10 @@ class ModuleToHtmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename = 'index.cnxml.html'")
 
-        cursor.execute("INSERT INTO files (file, media_type) "
-                       "SELECT file, media_type "
-                       "FROM files natural join module_files "
+        cursor.execute("SELECT fileid "
+                       "FROM module_files "
                        "WHERE filename = 'index.cnxml.html' "
-                       "AND module_ident != 2 LIMIT 1 "
-                       "RETURNING fileid")
+                       "AND module_ident != 2 LIMIT 1")
         fileid = cursor.fetchone()[0]
         cursor.execute("INSERT INTO module_files "
                        "(module_ident, fileid, filename) "
@@ -580,10 +576,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file, media_type) '
-                       '(SELECT file, media_type FROM files WHERE fileid = 1) '
-                       'RETURNING fileid')
-        fileid = cursor.fetchone()[0]
+        fileid = 1
         cursor.execute("INSERT INTO module_files "
                        "(module_ident, fileid, filename) "
                        "VALUES (2, %s, 'index.html.cnxml')", (fileid,))
@@ -621,11 +614,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file, media_type) '
-                       'SELECT file, media_type '
-                       'FROM files WHERE fileid = 1 '
-                       'RETURNING fileid')
-        fileid = cursor.fetchone()[0]
+        fileid = 1
         cursor.execute("INSERT INTO module_files "
                        "(module_ident, fileid, filename) "
                        "VALUES (2, %s, 'index.html.cnxml')", (fileid,))
@@ -661,11 +650,7 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         cursor.execute("DELETE FROM module_files WHERE module_ident = 2 "
                        "AND filename LIKE %s", ('%.cnxml',))
 
-        cursor.execute('INSERT INTO files (file, media_type) '
-                       'SELECT file, media_type '
-                       'FROM files WHERE fileid = 1 '
-                       'RETURNING fileid')
-        fileid = cursor.fetchone()[0]
+        fileid = 1
         cursor.execute("INSERT INTO module_files "
                        "(module_ident, fileid, filename) "
                        "VALUES (2, %s, 'index.html.cnxml')", (fileid,))

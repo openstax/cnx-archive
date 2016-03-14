@@ -159,7 +159,7 @@ CREATE TABLE "modulekeywords" (
 CREATE TABLE files (
     fileid serial PRIMARY KEY,
     md5 text,
-    sha1 text,
+    sha1 text UNIQUE,
     file bytea,
     media_type text
 );

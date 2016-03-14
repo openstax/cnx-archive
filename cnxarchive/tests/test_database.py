@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 import datetime
+import hashlib
 import os
 import sys
 import time
@@ -928,10 +929,16 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         ''')
 
         for data, filename, media_type in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file, media_type)
-            VALUES (%s, %s)
-            RETURNING fileid''', (data, media_type,))
-            fileid = cursor.fetchone()[0]
+            sha1 = hashlib.new('sha1', data[:]).hexdigest()
+            cursor.execute("SELECT fileid from files where sha1 = %s",
+                           (sha1,))
+            try:
+                fileid = cursor.fetchone()[0]
+            except TypeError:
+                cursor.execute('''INSERT INTO files (file, media_type)
+                VALUES (%s, %s)
+                RETURNING fileid''', (data, media_type,))
+                fileid = cursor.fetchone()[0]
             cursor.execute('''\
             INSERT INTO module_files (module_ident, fileid, filename)
             VALUES (%s, %s, %s)''',
@@ -939,11 +946,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         # Insert index.cnxml only after adding all the other files
         cursor.execute('''\
-        INSERT INTO files (file, media_type)
-            SELECT f.file, f.media_type
-            FROM module_files m JOIN files f ON m.fileid = f.fileid
-            WHERE m.module_ident = 3 AND m.filename = 'index.cnxml'
-        RETURNING fileid
+        SELECT fileid
+        FROM module_files
+        WHERE module_ident = 3 AND filename = 'index.cnxml'
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''\
@@ -1010,20 +1015,25 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         ''')
 
         for data, filename, media_type in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file, media_type)
-            VALUES (%s, %s) RETURNING fileid''', (data, media_type,))
-            fileid = cursor.fetchone()[0]
+            sha1 = hashlib.new('sha1', data[:]).hexdigest()
+            cursor.execute("SELECT fileid from files where sha1 = %s",
+                           (sha1,))
+            try:
+                fileid = cursor.fetchone()[0]
+            except TypeError:
+                cursor.execute('''INSERT INTO files (file, media_type)
+                VALUES (%s, %s)
+                RETURNING fileid''', (data, media_type,))
+                fileid = cursor.fetchone()[0]
             cursor.execute('''
             INSERT INTO module_files (module_ident, fileid, filename)
             VALUES (%s, %s, %s)''', (new_module_ident, fileid, filename,))
 
         # Insert index.cnxml.html only after adding all the other files
         cursor.execute('''
-        INSERT INTO files (file, media_type)
-            SELECT f.file, f.media_type
-            FROM module_files m JOIN files f ON m.fileid = f.fileid
-            WHERE m.module_ident = 3 AND m.filename = 'index.cnxml.html'
-        RETURNING fileid
+        SELECT fileid
+        FROM module_files
+        WHERE module_ident = 3 AND filename = 'index.cnxml.html'
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''
@@ -1101,21 +1111,25 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         ''')
 
         for data, filename, media_type in cursor.fetchall():
-            cursor.execute('''INSERT INTO files (file, media_type)
-            VALUES (%s, %s)
-            RETURNING fileid''', (data, media_type))
-            fileid = cursor.fetchone()[0]
+            sha1 = hashlib.new('sha1', data[:]).hexdigest()
+            cursor.execute("SELECT fileid from files where sha1 = %s",
+                           (sha1,))
+            try:
+                fileid = cursor.fetchone()[0]
+            except TypeError:
+                cursor.execute('''INSERT INTO files (file, media_type)
+                VALUES (%s, %s)
+                RETURNING fileid''', (data, media_type,))
+                fileid = cursor.fetchone()[0]
             cursor.execute('''
             INSERT INTO module_files (module_ident, fileid, filename)
             VALUES (%s, %s, %s)''', (new_module_ident, fileid, filename))
 
         # Insert index.cnxml only after adding all the other files
         cursor.execute('''
-        INSERT INTO files (file, media_type)
-            SELECT f.file, f.media_type
-            FROM module_files m JOIN files f ON m.fileid = f.fileid
-            WHERE m.module_ident = 3 AND m.filename = 'index.cnxml'
-        RETURNING fileid
+        SELECT fileid
+        FROM module_files
+        WHERE module_ident = 3 AND filename = 'index.cnxml'
         ''')
         fileid = cursor.fetchone()[0]
         cursor.execute('''
