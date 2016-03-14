@@ -6,7 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Producer functions that wrap basic transforms to create complete docs."""
-
+import hashlib
 from io import BytesIO
 
 from lxml import etree
@@ -295,11 +295,17 @@ def produce_transformed_file(cursor, ident, transform_type,
         warning_messages = 'Invalid References: {}' \
             .format('; '.join(bad_refs))
 
-    # Insert the cnxml into the database.
-    payload = (memoryview(new_content), media_type,)
-    cursor.execute("INSERT INTO files (file, media_type) VALUES (%s, %s) "
-                   "RETURNING fileid;", payload)
-    destination_file_id = cursor.fetchone()[0]
+    # Find existing file in database before attempting to insert a new one.
+    sha1 = hashlib.new('sha1', new_content).hexdigest()
+    cursor.execute("SELECT fileid FROM files WHERE sha1 = %s", (sha1,))
+    try:
+        destination_file_id = cursor.fetchone()[0]
+    except TypeError:
+        # Insert the cnxml into the database.
+        payload = (memoryview(new_content), media_type,)
+        cursor.execute("INSERT INTO files (file, media_type) VALUES (%s, %s) "
+                       "RETURNING fileid;", payload)
+        destination_file_id = cursor.fetchone()[0]
     for filename in destination_filenames:
         cursor.execute("INSERT INTO module_files "
                        "  (module_ident, fileid, filename) "
