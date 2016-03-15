@@ -447,10 +447,11 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
 
-        module_ident = cursor.fetchone()[0]
+        expected_module_ident = cursor.fetchone()[0]
+        cursor.connection.commit()
+        module_ident = get_current_module_ident('m1', testing.fake_plpy)
 
-        self.assertEqual(get_current_module_ident('m1', cursor=cursor),
-                         module_ident)
+        self.assertEqual(module_ident, expected_module_ident)
 
     @testing.db_connect
     def test_next_version(self, cursor):
@@ -464,8 +465,9 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
         module_ident = cursor.fetchone()[0]
+        cursor.connection.commit()
 
-        self.assertEqual(next_version(module_ident, cursor=cursor), 2)
+        self.assertEqual(next_version(module_ident, testing.fake_plpy), 2)
 
     @testing.db_connect
     def test_get_collections(self, cursor):
@@ -510,8 +512,11 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO trees VALUES (
         DEFAULT, %s, %s, 'title', 1, NULL)''', [nodeid, module_ident])
 
-        self.assertEqual(list(get_collections(module_ident, cursor=cursor)),
-                         [collection_ident, collection2_ident])
+        cursor.connection.commit()
+
+        self.assertEqual(
+            list(get_collections(module_ident, testing.fake_plpy)),
+            [collection_ident, collection2_ident])
 
     @testing.db_connect
     def test_rebuild_collection_tree(self, cursor):
@@ -564,13 +569,14 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 3, 1) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
+        cursor.connection.commit()
 
         new_document_id_map = {
             collection_ident: new_collection_ident,
             module_ident: new_module_ident
             }
         rebuild_collection_tree(collection_ident, new_document_id_map,
-                                cursor=cursor)
+                                testing.fake_plpy)
 
         cursor.execute('''\
         WITH RECURSIVE t(node, parent, document, path) AS (
@@ -602,8 +608,10 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
         ) RETURNING module_ident''')
         collection_ident = cursor.fetchone()[0]
+        cursor.connection.commit()
 
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+        new_ident = republish_collection(
+            3, collection_ident, testing.fake_plpy)
 
         cursor.execute('''SELECT * FROM modules WHERE
         module_ident = %s''', [new_ident])
@@ -663,7 +671,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+        new_ident = republish_collection(
+            3, collection_ident, testing.fake_plpy)
 
         cursor.execute("""\
         SELECT word
@@ -701,7 +710,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(3, collection_ident, cursor=cursor)
+        new_ident = republish_collection(
+            3, collection_ident, testing.fake_plpy)
 
         cursor.execute("""\
         SELECT tag

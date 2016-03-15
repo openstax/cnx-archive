@@ -58,52 +58,58 @@ RESOURCE_REFERENCE = 'resource-reference'
 DOCUMENT_REFERENCE = 'document-reference'
 BINDER_REFERENCE = 'binder-reference'
 
-SQL_MODULE_ID_TO_MODULE_IDENT = """\
+SQL_MODULE_ID_TO_MODULE_IDENT = ("""\
 SELECT module_ident FROM modules
-  WHERE module_id = %s AND version = %s;
-"""
-SQL_RESOURCE_INFO_STATEMENT = """\
+  WHERE module_id = $1 AND version = $2;
+""", ('text', 'text'))
+
+SQL_RESOURCE_INFO_STATEMENT = ("""\
 SELECT row_to_json(row) FROM (
   SELECT fileid as id, sha1 as hash FROM files
     WHERE fileid = (SELECT fileid FROM module_files
-                      WHERE module_ident = %s AND filename = %s )
+                      WHERE module_ident = $1 AND filename = $2 )
 ) row;
-"""
-SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = """\
+""", ('integer', 'text'))
+
+SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = ("""\
 SELECT uuid, concat_ws('.', major_version, minor_version) FROM latest_modules
-WHERE moduleid = %s
-"""
-SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT = """\
+WHERE moduleid = $1
+""", ('text',))
+
+SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT = ("""\
 SELECT uuid, concat_ws('.', major_version, minor_version) FROM modules
-WHERE moduleid = %s and version = %s
-"""
+WHERE moduleid = $1 and version = $2
+""", ('text', 'text'))
 
-SQL_LATEST_DOCUMENT_IDENT_BY_ID = """\
+SQL_LATEST_DOCUMENT_IDENT_BY_ID = ("""\
 SELECT module_ident FROM latest_modules
-WHERE moduleid = %s
-"""
+WHERE moduleid = $1
+""", ('text',))
 
-SQL_DOCUMENT_IDENT_BY_ID_N_VERSION = """\
+SQL_DOCUMENT_IDENT_BY_ID_N_VERSION = ("""\
 SELECT module_ident FROM modules
-WHERE moduleid = %s and version = %s
-"""
+WHERE moduleid = $1 and version = $2
+""", ('text', 'text'))
 
-SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT = """\
+SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT = ("""\
 SELECT moduleid, version FROM latest_modules
-WHERE uuid = %s::uuid
-"""
-SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT = """\
+WHERE uuid = $1
+""", ('uuid',))
+
+SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT = ("""\
 SELECT moduleid, version FROM modules
-WHERE uuid = %s::uuid and concat_ws('.', major_version, minor_version) = %s
-"""
-SQL_FILENAME_BY_SHA1_STATMENT = """\
+WHERE uuid = $1 and concat_ws('.', major_version, minor_version) = $2
+""", ('uuid', 'text'))
+
+SQL_FILENAME_BY_SHA1_STATMENT = ("""\
 SELECT mf.filename FROM module_files AS mf NATURAL JOIN files AS f
-WHERE f.sha1 = %s
-"""
-SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT = """\
+WHERE f.sha1 = $1
+""", ('text',))
+
+SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT = ("""\
 SELECT mf.filename FROM module_files AS mf NATURAL JOIN files AS f
-WHERE f.sha1 = %s AND module_ident = %s
-"""
+WHERE f.sha1 = $1 AND module_ident = $2
+""", ('text', 'integer'))
 
 
 class BaseReferenceException(Exception):
@@ -218,9 +224,9 @@ class BaseReferenceResolver:
     default_namespace_name = None
     default_namespace = None
 
-    def __init__(self, content, db_connection=None, document_ident=None):
+    def __init__(self, content, plpy=None, document_ident=None):
         self.content = etree.parse(content).getroot()
-        self.db_connection = db_connection
+        self.plpy = plpy
         self.document_ident = document_ident
         self.namespaces = self.content.nsmap.copy()
         if None in self.namespaces:
@@ -275,62 +281,63 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
     default_namespace = 'http://www.w3.org/1999/xhtml'
 
     def get_uuid_n_version(self, module_id, version=None):
-        with self.db_connection.cursor() as cursor:
-            if version:
-                cursor.execute(
-                    SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT,
-                    (module_id, version))
-            else:
-                cursor.execute(SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT,
-                               (module_id,))
-            try:
-                uuid, version = cursor.fetchone()
-            except (TypeError, ValueError):  # None or unpack problem
-                uuid, version = (None, None,)
+        if version:
+            plan = self.plpy.prepare(
+                *SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT)
+            args = (module_id, version)
+        else:
+            plan = self.plpy.prepare(
+                *SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT)
+            args = (module_id,)
+        try:
+            result = self.plpy.execute(plan, args, 1)[0]
+            uuid, version = result['uuid'], result['concat_ws']
+        except (IndexError, KeyError):
+            uuid, version = (None, None,)
         return uuid, version
 
     def get_resource_info(self, filename, document_id=None, version=None):
         document_ident = self.document_ident
-        with self.db_connection.cursor() as cursor:
-            if document_id:
-                if version:
-                    cursor.execute(
-                        SQL_DOCUMENT_IDENT_BY_ID_N_VERSION,
-                        [document_id, version])
-                    try:
-                        document_ident = cursor.fetchone()[0]
-                    except TypeError:
-                        raise ReferenceNotFound(
-                            "Missing resource with filename '{}', "
-                            "moduleid {} version {}."
-                            .format(filename, document_id, version),
-                            document_ident, filename)
-                else:
-                    cursor.execute(
-                        SQL_LATEST_DOCUMENT_IDENT_BY_ID, [document_id])
-                    try:
-                        document_ident = cursor.fetchone()[0]
-                    except TypeError:
-                        raise ReferenceNotFound(
-                            "Missing resource with filename '{}', "
-                            "moduleid {} version {}."
-                            .format(filename, document_id, version),
-                            document_ident, filename)
-
-            cursor.execute(SQL_RESOURCE_INFO_STATEMENT,
-                           (document_ident, filename,))
-            try:
-                info = cursor.fetchone()[0]
-            except TypeError:
-                raise ReferenceNotFound(
-                    "Missing resource with filename '{}', "
-                    "moduleid {} version {}."
-                    .format(filename, document_id, version),
-                    document_ident, filename)
+        if document_id:
+            if version:
+                plan = self.plpy.prepare(
+                    *SQL_DOCUMENT_IDENT_BY_ID_N_VERSION)
+                try:
+                    result = self.plpy.execute(plan, (document_id, version), 1)
+                    document_ident = result[0]['module_ident']
+                except (IndexError, KeyError):
+                    raise ReferenceNotFound(
+                        "Missing resource with filename '{}', "
+                        "moduleid {} version {}."
+                        .format(filename, document_id, version),
+                        document_ident, filename)
             else:
-                if isinstance(info, basestring):
-                    info = json.loads(info)
-                return info
+                plan = self.plpy.prepare(
+                    *SQL_LATEST_DOCUMENT_IDENT_BY_ID)
+                result = self.plpy.execute(plan, (document_id,), 1)
+                try:
+                    document_ident = result[0]['module_ident']
+                except (IndexError, KeyError):
+                    raise ReferenceNotFound(
+                        "Missing resource with filename '{}', "
+                        "moduleid {} version {}."
+                        .format(filename, document_id, version),
+                        document_ident, filename)
+
+        plan = self.plpy.prepare(*SQL_RESOURCE_INFO_STATEMENT)
+        result = self.plpy.execute(plan, (document_ident, filename,), 1)
+        try:
+            info = result[0]['row_to_json']
+        except (IndexError, KeyError):
+            raise ReferenceNotFound(
+                "Missing resource with filename '{}', "
+                "moduleid {} version {}."
+                .format(filename, document_id, version),
+                document_ident, filename)
+        else:
+            if isinstance(info, basestring):
+                info = json.loads(info)
+            return info
 
     def get_page_ident_hash(self, page_uuid, page_version,
                             book_uuid, book_version, latest=None):
@@ -341,19 +348,21 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         """
         from cnxepub import flatten_tree_to_ident_hashes  # XXX
         from ..utils import join_ident_hash  # XXX
-        from ..database import get_tree  # XXX
+        plan = self.plpy.prepare(
+            'SELECT tree_to_json($1, $2)::json', ('uuid', 'text'))
+        tree = self.plpy.execute(
+            plan, (book_uuid, book_version))[0]['tree_to_json']
+        pages = list(flatten_tree_to_ident_hashes(tree))
         book_ident_hash = join_ident_hash(book_uuid, book_version)
         page_ident_hash = join_ident_hash(page_uuid, page_version)
-        with self.db_connection.cursor() as cursor:
-            tree = get_tree(book_ident_hash, cursor)
-            for p_ident_hash in flatten_tree_to_ident_hashes(tree):
-                p_id, p_version = split_ident_hash(p_ident_hash)
-                if (p_id == page_uuid and
-                        (page_version is None or
-                         page_version == p_version)):
-                    return book_uuid, '{}:{}'.format(
-                        latest and book_uuid or book_ident_hash,
-                        page_ident_hash)
+        for p_ident_hash in flatten_tree_to_ident_hashes(tree):
+            p_id, p_version = split_ident_hash(p_ident_hash)
+            if (p_id == page_uuid and
+                    (page_version is None or
+                     page_version == p_version)):
+                return book_uuid, '{}:{}'.format(
+                    latest and book_uuid or book_ident_hash,
+                    page_ident_hash)
         # The page isn't in the given book, so only return the page.
         return page_uuid, page_ident_hash
 
@@ -464,34 +473,33 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
     default_namespace = 'http://cnx.rice.edu/cnxml'
 
     def get_resource_filename(self, hash):
-        with self.db_connection.cursor() as cursor:
-            if self.document_ident is None:
-                cursor.execute(SQL_FILENAME_BY_SHA1_STATMENT, (hash,))
-            else:
-                cursor.execute(SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT,
-                               (hash, self.document_ident,))
-            try:
-                filename = cursor.fetchone()[0]
-            except TypeError:
-                raise ReferenceNotFound(
-                    "Missing resource with hash: {}".format(hash),
-                    self.document_ident, None)
+        if self.document_ident is None:
+            plan = self.plpy.prepare(*SQL_FILENAME_BY_SHA1_STATMENT)
+            result = self.plpy.execute(plan, (hash,), 1)
+        else:
+            plan = self.plpy.prepare(*SQL_FILENAME_BY_SHA1_N_IDENT_STATMENT)
+            result = self.plpy.execute(plan, (hash, self.document_ident,), 1)
+        try:
+            filename = result[0]['filename']
+        except (IndexError, KeyError):
+            raise ReferenceNotFound(
+                "Missing resource with hash: {}".format(hash),
+                self.document_ident, None)
         return filename
 
     def get_mid_n_version(self, id, version):
-        with self.db_connection.cursor() as cursor:
-            if version:
-                cursor.execute(
-                    SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT,
-                    (id, version))
-            else:
-                cursor.execute(
-                    SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT,
-                    (id,))
-            try:
-                module_id, version = cursor.fetchone()
-            except (TypeError, ValueError):  # None or unpack problem
-                module_id, version = (None, None,)
+        if version:
+            plan = self.plpy.prepare(
+                *SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT)
+            result = self.plpy.execute(plan, (id, version), 1)
+        else:
+            plan = self.plpy.prepare(
+                *SQL_MODULE_ID_N_VERSION_BY_UUID_STATEMENT)
+            result = self.plpy.execute(plan, (id,), 1)
+        try:
+            module_id, version = result[0]['moduleid'], result[0]['version']
+        except (IndexError, KeyError):  # None or unpack problem
+            module_id, version = (None, None,)
         return module_id, version
 
     def fix_module_id(self):
@@ -508,14 +516,13 @@ class HtmlToCnxmlReferenceResolver(BaseReferenceResolver):
             # It is likely an abstract.
             return []
         if self.document_ident is not None:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute("SELECT moduleid FROM modules "
-                               "WHERE module_ident = %s",
-                               (self.document_ident,))
-                try:
-                    module_id = cursor.fetchone()[0]
-                except TypeError:  # NoneType
-                    had_a_problem = True
+            plan = self.plpy.prepare("SELECT moduleid FROM modules "
+                                     "WHERE module_ident = $1", ('integer',))
+            result = self.plpy.execute(plan, (self.document_ident,), 1)
+            try:
+                module_id = result[0]['moduleid']
+            except (IndexError, KeyError):  # NoneType
+                had_a_problem = True
         else:
             had_a_problem = True
 
