@@ -75,7 +75,11 @@ def tree_to_nodes(tree, context=None):
         if 'contents' in item:
             sub_nodes = tree_to_nodes(item, context=context)
             titles = _title_overrides_from_tree(item)
+            metadata = {}
+            if item.get('title'):
+                metadata['title'] = item['title']
             tbinder = cnxepub.TranslucentBinder(sub_nodes,
+                                                metadata=metadata,
                                                 title_overrides=titles)
             nodes.append(tbinder)
         else:

@@ -573,6 +573,15 @@ class BinderFactoryTestCase(BaseTestCase):
             }
         self.assertEqual(cnxepub.model_to_tree(binder), expected_tree)
 
+        # Check translucent binder metadata
+        translucent_binder = binder[1]
+        self.assertTrue(
+            isinstance(translucent_binder, cnxepub.TranslucentBinder))
+        expected_metadata = {
+            'title': 'Introduction: The Nature of Science and Physics',
+            }
+        self.assertEqual(expected_metadata, translucent_binder.metadata)
+
 
 class FactoryFactoryTestCase(BaseTestCase):
 
