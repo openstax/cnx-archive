@@ -227,11 +227,11 @@ def get_module_ident_from_ident_hash(ident_hash, cursor):
     return module_ident
 
 
-def get_tree(ident_hash, cursor):
+def get_tree(ident_hash, cursor, as_collated=False):
     """Return a JSON representation of the binder tree for ``ident_hash``."""
     uuid, version = split_ident_hash(ident_hash)
     cursor.execute(SQL['get-tree-by-uuid-n-version'],
-                   (uuid, version,))
+                   (uuid, version, as_collated,))
     try:
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
