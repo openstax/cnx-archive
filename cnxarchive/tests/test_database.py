@@ -917,7 +917,6 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         cursor.execute('SELECT COUNT(*) FROM modules')
         old_n_modules = cursor.fetchone()[0]
-        self.assertEqual(old_n_modules, 19)
 
         # Insert a new version of an existing module
         cursor.execute('''\
