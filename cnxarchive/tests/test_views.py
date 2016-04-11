@@ -754,6 +754,48 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertRaises(IdentHashShortId, get_content,
                           self.request)
 
+    def test_content_collated_page_inside_book(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '6.1'
+        page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        # Build the request.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+            'separator': ':',
+            }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        content = get_content(self.request).json_body
+
+        self.assertEqual(
+            '<html><body>Page content after collation</body></html>\n',
+            content['content'])
+
+    def test_content_uncollated_page(self):
+        page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        # Build the request.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(page_uuid, page_version),
+            }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        content = get_content(self.request).json_body
+
+        self.assertNotEqual(
+            '<html><body>Page content after collation</body></html>\n',
+            content['content'])
+
     def test_content_page_inside_book_version_mismatch(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         book_version = '7.1'

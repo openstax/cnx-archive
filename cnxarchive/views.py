@@ -26,7 +26,7 @@ from . import config
 from . import cache
 # FIXME double import
 from . import database
-from .database import SQL, get_tree
+from .database import SQL, get_tree, get_collated_content
 from .search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
@@ -310,6 +310,13 @@ def _get_content_json(ident_hash=None):
                         id, version = split_ident_hash(id_)
                         if id == p_id and (
                            version == p_version or not p_version):
+                            content = get_collated_content(
+                                id_, ident_hash, cursor)
+                            if content:
+                                result = get_content_metadata(
+                                    id, version, cursor)
+                                result['content'] = content[:]
+                                return result
                             raise httpexceptions.HTTPFound(request.route_path(
                                 request.matched_route.name,
                                 ident_hash=join_ident_hash(id, version)))
