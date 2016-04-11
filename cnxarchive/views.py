@@ -299,7 +299,11 @@ def _get_content_json(ident_hash=None):
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
-                result['tree'] = get_tree(ident_hash, cursor)
+                result['tree'] = get_tree(ident_hash, cursor, as_collated=True)
+                if not result['tree']:
+                    # If collated tree is not available, get the uncollated
+                    # tree.
+                    result['tree'] = get_tree(ident_hash, cursor)
 
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
