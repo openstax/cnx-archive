@@ -494,12 +494,46 @@ class ViewsTestCase(unittest.TestCase):
             self.assertEqual(content['parent'][key],
                              COLLECTION_DERIVED_METADATA['parent'][key])
 
+    def test_content_collated_collection(self):
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '6.1'
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        content = get_content(self.request).json_body
+
+        # Check the tree.
+        self.assertEqual({
+            u'id': u'{}@{}'.format(uuid, version),
+            u'shortId': u'55_943-0@6.1',
+            u'title': u'College Physics',
+            u'contents': [
+                {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                 u'shortId': u'IJ3rHxpG@7',
+                 u'title': u'Preface'},
+                {u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
+                 u'shortId': u'F0xAaSdD@1',
+                 u'title': u'Collated page'},
+                ],
+            }, content['tree'])
+
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
-        cursor.execute("INSERT INTO trees VALUES (9100, 53, NULL, 'Empty Subcollections', 1)")
-        cursor.execute("INSERT INTO trees VALUES (9200, 9100, NULL, 'empty 1', 1)")
-        cursor.execute("INSERT INTO trees VALUES (9300, 9100, NULL, 'empty 2', 2)")
-        cursor.execute("INSERT INTO trees VALUES (9400, 53, NULL, 'Empty Subcollection', 3)")
+        cursor.execute("""\
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
+    VALUES (9100, 91, 'Empty Subcollections', 1, true);
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
+    VALUES (9200, 9100, 'empty 1', 1, true);
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
+    VALUES (9300, 9100, 'empty 2', 2, true);
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
+    VALUES (9400, 91, 'Empty Subcollection', 4, true);
+""")
 
     def test_empty_subcollection_content(self):
         self._create_empty_subcollections()
@@ -550,6 +584,11 @@ class ViewsTestCase(unittest.TestCase):
                     u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                     u'shortId': u'IJ3rHxpG@7',
                     u'title': u'Preface',
+                    },
+                {
+                    u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
+                    u'shortId': u'F0xAaSdD@1',
+                    u'title': u'Collated page',
                     },
                 {
                     u'id': u'subcol',
