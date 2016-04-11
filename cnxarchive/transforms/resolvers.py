@@ -349,7 +349,7 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         from cnxepub import flatten_tree_to_ident_hashes  # XXX
         from ..utils import join_ident_hash  # XXX
         plan = self.plpy.prepare(
-            'SELECT tree_to_json($1, $2)::json', ('uuid', 'text'))
+            'SELECT tree_to_json($1, $2, FALSE)::json', ('uuid', 'text'))
         tree = self.plpy.execute(
             plan, (book_uuid, book_version))[0]['tree_to_json']
         pages = list(flatten_tree_to_ident_hashes(tree))

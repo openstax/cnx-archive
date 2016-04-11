@@ -7,6 +7,7 @@
 # ###
 import datetime
 import hashlib
+import json
 import os
 import sys
 import time
@@ -416,6 +417,111 @@ $$ LANGUAGE plpythonu;
         cursor.execute("select identifiers_equal(uuid2base64('{}'), uuid2base64('{}'))".format(
             identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
+
+
+class TreeToJsonTestCase(unittest.TestCase):
+    fixture = testing.data_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.fixture.setUp()
+        cls._insert_collated_tree()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.fixture.tearDown()
+
+    @classmethod
+    def _insert_collated_tree(cls):
+        connect = testing.db_connection_factory()
+        nodes = [
+            # nodeid, parent_id, documentid, title, childorder
+            (936, None, 1, None, 0,),
+            (937, 936, 2, 'Preface', 2,),
+            (938, 936, None, 'Introduction: The Nature of Science and Physics', 3,),
+            (944, 936, None, "Further Applications of Newton's Laws: Friction, Drag, and Elasticity", 4,),
+            (949, 936, 12, None, 5,),
+            (950, 936, 13, None, 6,),
+            (951, 936, 14, None, 7,),
+            (952, 936, 15, None, 8,),
+            # subcol of 938, clone of nodeid=38
+            (939, 938, 3, None, 2,),
+            (940, 938, 4, None, 3,),
+            (941, 938, 5, None, 4,),
+            (942, 938, 6, None, 5,),
+            (943, 938, 7, None, 6,),
+            # subcol of 944, clone of nodeid=44
+            (945, 944, 8, None, 2,),
+            (946, 944, 9, None, 3,),
+            (947, 944, 10, None, 4,),
+            (948, 944, 11, None, 5,),
+            # collated bits that have been added...
+            (991, 936, None, "Collated Added Sub-collection", 9,),
+            # (992, 991, ???, None, 2,),  # where m.portal_type='CompositeModule'
+            ]
+
+        def insert_tree_node(cursor, entry):
+            cursor.execute("INSERT INTO trees"
+                           "  (nodeid, parent_id, documentid, title, childorder,"
+                           "   latest, is_collated) "
+                           "VALUES (%s, %s, %s, %s, %s, TRUE, TRUE)", entry)
+
+        # Useful if you need to make changes...
+        # This will help you check the clone is valid (identity check).
+        # ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        # version = '7.1'
+        # with connect() as db_conn:
+        #    with db_conn.cursor() as cursor:
+        #        for node_entry in nodes[:17]:
+        #            insert_tree_node(cursor, node_entry)
+        #        cursor.execute("SELECT tree_to_json(%(i)s, %(v)s), tree_to_json(%(i)s, %(v)s, FALSE)",
+        #                       dict(i=ident_hash, v=version))
+        #        orig_tree, collated_tree = cursor.fetchone()
+        #        try:
+        #            assert orig_tree == collated_tree
+        #        except AssertionError:
+        #            print(orig_tree)
+        #            print('+'*10)
+        #            print(collated_tree)
+        #            raise
+        #        else:
+        #            cursor.execute("DELETE FROM trees WHERE nodeid >= 900")
+
+        with connect() as db_conn:
+            with db_conn.cursor() as cursor:
+                for node_entry in nodes:
+                    insert_tree_node(cursor, node_entry)
+
+    @property
+    def target(self):
+        connect = testing.db_connection_factory()
+
+        def get_tree(consume_raw=False):
+            args = ['e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1']
+            stmt = "select tree_to_json(%s, %s)"
+            if consume_raw:
+                stmt = "select tree_to_json(%s, %s, FALSE)"
+            with connect() as db_connection:
+                with db_connection.cursor() as cursor:
+                    cursor.execute(stmt, args)
+                    tree = cursor.fetchone()[0]
+            return json.loads(tree)
+
+        return get_tree
+
+    def test_get_tree(self):
+        tree = self.target()
+        # Check for the collated tree values.
+        self.assertEqual(
+            tree['contents'][-1]['title'],
+            "Collated Added Sub-collection")
+
+    def test_get_raw_tree(self):
+        tree = self.target(consume_raw=True)
+        # Check for the *absence* of the collated tree values.
+        self.assertNotEqual(
+            tree['contents'][-1]['title'],
+            "Collated Added Sub-collection")
 
 
 class ModulePublishTriggerTestCase(unittest.TestCase):
@@ -867,9 +973,13 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         sql = '''
         WITH RECURSIVE t(node, parent, document, title, childorder, latest, path) AS (
-            SELECT tr.*, ARRAY[tr.nodeid] FROM trees tr WHERE tr.nodeid = %(nodeid)s
+            SELECT tr.nodeid, tr.parent_id, tr.documentid, tr.title,
+                   tr.childorder, tr.latest, ARRAY[tr.nodeid]
+            FROM trees tr
+            WHERE tr.nodeid = %(nodeid)s
         UNION ALL
-            SELECT c.*, path || ARRAY[c.nodeid]
+            SELECT c.nodeid, c.parent_id, c.documentid, c.title,
+                   c.childorder, c.latest, path || ARRAY[c.nodeid]
             FROM trees c JOIN t ON c.parent_id = t.node
             WHERE not c.nodeid = ANY(t.path)
         )

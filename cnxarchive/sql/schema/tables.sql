@@ -245,3 +245,14 @@ CREATE TABLE service_state_messages (
   message TEXT DEFAULT NULL,
   FOREIGN KEY (service_state_id) REFERENCES service_states (id)
 );
+
+CREATE TABLE collated_file_associations (
+  context INTEGER,
+  item INTEGER,
+  fileid INTEGER,
+  FOREIGN KEY (fileid) REFERENCES files (fileid),
+  FOREIGN KEY (context) REFERENCES modules (module_ident),
+  FOREIGN KEY (item) REFERENCES modules (module_ident),
+  -- primary key allows for a single collection and module association
+  PRIMARY KEY (context, item)
+);
