@@ -616,6 +616,25 @@ class ViewsTestCase(unittest.TestCase):
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
+    def test_content_composite_module(self):
+        # Test for retrieving a a composite module.
+        uuid = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        version = '1'
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        from ..views import get_content
+
+        content = get_content(self.request).json_body
+
+        # Check the content.
+        self.assertEqual(
+            '<html><body>test collated content</body></html>',
+            content['content'])
+
     def test_content_without_version(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
 
