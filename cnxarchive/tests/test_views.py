@@ -496,10 +496,10 @@ class ViewsTestCase(unittest.TestCase):
 
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
-        cursor.execute("INSERT INTO trees VALUES (91, 53, NULL, 'Empty Subcollections', 1)")
-        cursor.execute("INSERT INTO trees VALUES (92, 91, NULL, 'empty 1', 1)")
-        cursor.execute("INSERT INTO trees VALUES (93, 91, NULL, 'empty 2', 2)")
-        cursor.execute("INSERT INTO trees VALUES (94, 53, NULL, 'Empty Subcollection', 3)")
+        cursor.execute("INSERT INTO trees VALUES (9100, 53, NULL, 'Empty Subcollections', 1)")
+        cursor.execute("INSERT INTO trees VALUES (9200, 9100, NULL, 'empty 1', 1)")
+        cursor.execute("INSERT INTO trees VALUES (9300, 9100, NULL, 'empty 2', 2)")
+        cursor.execute("INSERT INTO trees VALUES (9400, 53, NULL, 'Empty Subcollection', 3)")
 
     def test_empty_subcollection_content(self):
         self._create_empty_subcollections()

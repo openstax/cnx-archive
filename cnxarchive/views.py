@@ -886,6 +886,7 @@ def sitemap(request):
                             '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
                         revised
                     FROM latest_modules
+                    WHERE portal_type != 'CompositeModule'
                     ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
