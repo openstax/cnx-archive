@@ -7,7 +7,7 @@ services:
   - memcached
 before_install:
   - pip install pep8
-  - pep8 --exclude=tests *.py cnxarchive/
+  - pep8 --exclude=tests,migrations *.py cnxarchive/
   - pep8 --max-line-length=200 cnxarchive/tests
 
   - sudo apt-get update
