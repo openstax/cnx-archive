@@ -669,6 +669,11 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         content = get_content(self.request).json_body
 
+        # Check the media type.
+        self.assertEqual(
+            'application/vnd.org.cnx.composite-module',
+            content['mediaType'])
+
         # Check the content.
         self.assertEqual(
             '<html><body>test collated content</body></html>',
