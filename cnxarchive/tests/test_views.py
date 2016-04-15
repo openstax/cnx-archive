@@ -655,13 +655,56 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
 
-    def test_content_composite_module(self):
+    def test_content_composite_page_wo_book(self):
         # Test for retrieving a a composite module.
         uuid = '174c4069-2743-42e9-adfe-4c7084f81fc5'
         version = '1'
 
         # Build the request environment.
         self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        from ..views import get_content
+
+        # Composite modules cannot be retrieved outside of a collection
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+                          self.request)
+
+    def test_content_composite_page_in_wrong_book(self):
+        # Test for retrieving a a composite module.
+        uuid = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        version = '1'
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(uuid, version),
+            'separator': ':',
+            }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        from ..views import get_content
+
+        self.assertRaises(httpexceptions.HTTPNotFound, get_content,
+                          self.request)
+
+    def test_content_composite_page_in_book(self):
+        # Test for retrieving a a composite module.
+        uuid = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        version = '1'
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '6.1'
+
+        # Build the request environment.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(uuid, version),
+            'separator': ':',
+            }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
