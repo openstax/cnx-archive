@@ -12,17 +12,20 @@ __all__ = (
     'FOLDER_MIMETYPE',
     'MIMETYPES',
     'MODULE_MIMETYPE',
+    'COMPOSITE_MODULE_MIMETYPE',
     'PORTALTYPE_TO_MIMETYPE_MAPPING',
     'portaltype_to_mimetype',
     )
 
 
 MODULE_MIMETYPE = 'application/vnd.org.cnx.module'
+COMPOSITE_MODULE_MIMETYPE = 'application/vnd.org.cnx.composite-module'
 COLLECTION_MIMETYPE = 'application/vnd.org.cnx.collection'
 FOLDER_MIMETYPE = 'application/vnd.org.cnx.folder'
 MIMETYPES = (MODULE_MIMETYPE, COLLECTION_MIMETYPE, FOLDER_MIMETYPE,)
 PORTALTYPE_TO_MIMETYPE_MAPPING = {
     'Module': MODULE_MIMETYPE,
+    'CompositeModule': COMPOSITE_MODULE_MIMETYPE,
     'Collection': COLLECTION_MIMETYPE,
     }
 

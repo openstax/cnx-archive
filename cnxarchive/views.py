@@ -26,7 +26,7 @@ from . import config
 from . import cache
 # FIXME double import
 from . import database
-from .database import SQL, get_tree
+from .database import SQL, get_tree, get_collated_content
 from .search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
@@ -299,13 +299,24 @@ def _get_content_json(ident_hash=None):
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
-                result['tree'] = get_tree(ident_hash, cursor)
+                result['tree'] = get_tree(ident_hash, cursor, as_collated=True)
+                if not result['tree']:
+                    # If collated tree is not available, get the uncollated
+                    # tree.
+                    result['tree'] = get_tree(ident_hash, cursor)
 
                 if page_ident_hash:
                     for id_ in flatten_tree_to_ident_hashes(result['tree']):
                         id, version = split_ident_hash(id_)
                         if id == p_id and (
                            version == p_version or not p_version):
+                            content = get_collated_content(
+                                id_, ident_hash, cursor)
+                            if content:
+                                result = get_content_metadata(
+                                    id, version, cursor)
+                                result['content'] = content[:]
+                                return result
                             raise httpexceptions.HTTPFound(request.route_path(
                                 request.matched_route.name,
                                 ident_hash=join_ident_hash(id, version)))
@@ -886,6 +897,7 @@ def sitemap(request):
                             '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
                         revised
                     FROM latest_modules
+                    WHERE portal_type != 'CompositeModule'
                     ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:

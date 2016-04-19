@@ -60,6 +60,7 @@ SQL = {
     'get-in-book-search': _read_sql_file('get-in-book-search'),
     'get-in-book-search-full-page': _read_sql_file(
         'get-in-book-search-full-page'),
+    'get-collated-content': _read_sql_file('get-collated-content'),
     }
 
 
@@ -227,11 +228,11 @@ def get_module_ident_from_ident_hash(ident_hash, cursor):
     return module_ident
 
 
-def get_tree(ident_hash, cursor):
+def get_tree(ident_hash, cursor, as_collated=False):
     """Return a JSON representation of the binder tree for ``ident_hash``."""
     uuid, version = split_ident_hash(ident_hash)
     cursor.execute(SQL['get-tree-by-uuid-n-version'],
-                   (uuid, version,))
+                   (uuid, version, as_collated,))
     try:
         tree = cursor.fetchone()[0]
     except TypeError:  # NoneType
@@ -241,6 +242,16 @@ def get_tree(ident_hash, cursor):
         return json.loads(tree)
     else:
         return tree
+
+
+def get_collated_content(ident_hash, context_ident_hash, cursor):
+    """Return collated content for ``ident_hash``."""
+    cursor.execute(SQL['get-collated-content'],
+                   (ident_hash, context_ident_hash,))
+    try:
+        return cursor.fetchone()[0]
+    except TypeError:  # NoneType
+        return
 
 
 def get_module_uuid(plpy, moduleid):
