@@ -14,16 +14,6 @@ def up(cursor):
                    "FROM module_files AS mf "
                    "WHERE mf.fileid = f.fileid AND f.media_type IS NULL")
 
-    # Warn about missing mimetype.
-    cursor.execute("SELECT fileid, sha1 "
-                   "FROM files AS f "
-                   "WHERE f.fileid NOT IN (SELECT fileid FROM module_files)")
-    rows = '\n'.join(['{}, {}'.format(fid, sha1)
-                      for fid, sha1 in cursor.fetchall()])
-    print("These files (fileid, sha1) do not have a corresponding "
-          "module_files entry:\n{}\n".format(rows),
-          file=sys.stderr)
-
     # Remove the ``mimetype`` column from the ``module_files`` table.
     cursor.execute("ALTER TABLE module_files DROP COLUMN mimetype")
 
