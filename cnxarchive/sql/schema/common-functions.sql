@@ -20,3 +20,38 @@ $$
   WHERE $1[i] = $2
   LIMIT 1;
 $$ LANGUAGE SQL IMMUTABLE;
+
+-- Returns the Python `sys.path`
+--   Example usage, `SELECT unnest(pypath())`
+CREATE OR REPLACE FUNCTION pypath()
+  RETURNS TEXT[]
+  AS $$
+import sys
+return sys.path
+$$ LANGUAGE plpythonu;
+
+-- Returns module location for the given module
+--   Example usage, `SELECT * FROM pyimport('cnxarchive.database');`
+CREATE TYPE pyimport_value AS (
+  import TEXT,
+  directory TEXT,
+  file_path TEXT
+);
+CREATE OR REPLACE FUNCTION pyimport(pymodule TEXT)
+  RETURNS SETOF pyimport_value
+  AS $$
+import os
+import importlib
+try:
+    module = importlib.import_module(pymodule)
+except ImportError:
+    return []
+file_path = os.path.abspath(module.__file__)
+directory = os.path.dirname(file_path)
+info = {
+    'import': pymodule,
+    'directory': directory,
+    'file_path': file_path,
+}
+return [info]
+$$ LANGUAGE plpythonu;

@@ -93,6 +93,42 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
                                   "%Y-%m-%dT%H:%M:%SZ")[:6], tzinfo=FixedOffsetTimezone())
         self.assertEqual(current, value)
 
+    @unittest.skipIf(not testing.is_venv(),
+                     "Not within a virtualenv")
+    @testing.db_connect
+    def test_pypath(self, cursor):
+        site_packages = testing.getsitepackages()
+        # Examine the results of the pypath SQL function.
+        cursor.execute("SELECT unnest(pypath())")
+        paths = [row[0] for row in cursor.fetchall()]
+
+        for site_pkg in site_packages:
+            self.assertIn(os.path.abspath(site_pkg), paths)
+
+    @testing.db_connect
+    def test_pyimport(self, cursor):
+        target_name = 'cnxarchive.database'
+        import cnxarchive.database as target
+        # Check the results of calling pyimport on cnxarchive.
+        cursor.execute("SELECT import, directory, file_path "
+                       "FROM pyimport(%s)", (target_name,))
+        import_, directory, file_path = cursor.fetchone()
+
+        self.assertEqual(import_, target_name)
+        expected_directory = os.path.abspath(os.path.dirname(target.__file__))
+        self.assertEqual(directory, expected_directory)
+        self.assertEqual(file_path, target.__file__)
+
+    @testing.db_connect
+    def test_pyimport_with_importerror(self, cursor):
+        target_name = 'hubris'
+        # Check the results of calling pyimport on cnxarchive.
+        cursor.execute("SELECT import, directory, file_path "
+                       "FROM pyimport(%s)", (target_name,))
+        row = cursor.fetchone()
+
+        self.assertEqual(row, None)
+
     @testing.db_connect
     def test_module_ident_from_ident_hash(self, cursor):
         uuid = 'c395b566-5fe3-4428-bcb2-19016e3aa3ce'
