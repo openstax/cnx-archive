@@ -5,12 +5,12 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
-import pytz
-import re
 import functools
+import os
+import re
 from datetime import datetime
 
+import pytz
 import psycopg2
 import psycopg2.extras
 from pyramid.paster import get_appsettings
@@ -18,15 +18,6 @@ from pyramid.paster import get_appsettings
 from .. import config
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
-
-
-__all__ = (
-    'DATA_DIRECTORY', 'DATA_SQL_FILE',
-    'db_connect', 'db_connection_factory',
-    'integration_test_settings',
-    'data_fixture', 'schema_fixture',
-    'fake_plpy',
-    )
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -181,3 +172,16 @@ class FakePlpyPlan(object):
                 except psycopg2.ProgrammingError as e:
                     if e.message != 'no results to fetch':
                         raise
+
+
+__all__ = (
+    'config_uri',
+    'DATA_DIRECTORY',
+    'data_fixture',
+    'db_connect',
+    'db_connection_factory',
+    'fake_plpy',
+    'integration_test_settings',
+    'mocked_fromtimestamp',
+    'schema_fixture',
+    )
