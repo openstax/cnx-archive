@@ -170,6 +170,7 @@ COLLECTION_METADATA = {
          u'media_type': u'text/xml',
          },
         ],
+    u'collated': False,
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
