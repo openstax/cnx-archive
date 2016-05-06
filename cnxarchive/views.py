@@ -489,10 +489,10 @@ def get_content_html(request):
     result = _get_content_json()
 
     media_type = result['mediaType']
-    if media_type == MODULE_MIMETYPE:
-        content = result['content']
-    elif media_type == COLLECTION_MIMETYPE:
+    if media_type == COLLECTION_MIMETYPE:
         content = tree_to_html(result['tree'])
+    else:
+        content = result['content']
 
     resp = request.response
     resp.status = "200 OK"
