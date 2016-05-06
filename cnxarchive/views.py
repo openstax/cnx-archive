@@ -221,19 +221,33 @@ HTML_WRAPPER = """\
 """
 
 
-def html_listify(tree, root_ul_element):
-    """Recursively construct HTML nested list version of book tree."""
+def html_listify(tree, root_ul_element, parent_id=None):
+    """Recursively construct HTML nested list version of book tree.
+    The original caller should not call this function with the
+    `parent_id` defined.
+
+    """
     request = get_current_request()
+    is_first_node = parent_id is None
+    if is_first_node:
+        parent_id = tree[0]['id']
     for node in tree:
         li_elm = etree.SubElement(root_ul_element, 'li')
         a_elm = etree.SubElement(li_elm, 'a')
         a_elm.text = node['title']
         if node['id'] != 'subcol':
-            a_elm.set('href', request.route_path(
-                'content-html', ident_hash=node['id']))
+            if is_first_node:
+                a_elm.set('href', request.route_path(
+                    'content-html', ident_hash=node['id']))
+            else:
+                a_elm.set('href', request.route_path(
+                    'content-html',
+                    separator=':',
+                    ident_hash=parent_id,
+                    page_ident_hash=node['id']))
         if 'contents' in node:
             elm = etree.SubElement(li_elm, 'ul')
-            html_listify(node['contents'], elm)
+            html_listify(node['contents'], elm, parent_id)
 
 
 def tree_to_html(tree):
@@ -475,10 +489,10 @@ def get_content_html(request):
     result = _get_content_json()
 
     media_type = result['mediaType']
-    if media_type == MODULE_MIMETYPE:
-        content = result['content']
-    elif media_type == COLLECTION_MIMETYPE:
+    if media_type == COLLECTION_MIMETYPE:
         content = tree_to_html(result['tree'])
+    else:
+        content = result['content']
 
     resp = request.response
     resp.status = "200 OK"
