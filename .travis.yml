@@ -8,7 +8,7 @@ services:
 before_install:
   - pip install pep8
   - pep8 --exclude=tests,migrations *.py cnxarchive/
-  - pep8 --max-line-length=200 cnxarchive/tests
+  - pep8 --max-line-length=300 cnxarchive/tests
 
   - sudo apt-get update
   # Remove python-zope.interface, not compatible with the pyramid version we're
