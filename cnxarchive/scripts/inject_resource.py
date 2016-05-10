@@ -65,7 +65,7 @@ def lookup_module_ident(id, version):
     return mident
 
 
-def upsert_file(file, media_type):
+def insert_file(file, media_type):
     """Upsert the ``file`` and ``media_type`` into the files table.
     Returns the ``fileid`` and ``sha1`` of the upserted file.
 
@@ -95,9 +95,8 @@ def upsert_module_file(module_ident, fileid, filename):
         with db_conn.cursor() as cursor:
             cursor.execute("SELECT true FROM module_files "
                            "WHERE module_ident = %s "
-                           "AND fileid = %s "
                            "AND filename = %s",
-                           (module_ident, fileid, filename,))
+                           (module_ident, filename,))
             try:
                 cursor.fetchone()[0]
             except (IndexError, TypeError):
@@ -105,6 +104,11 @@ def upsert_module_file(module_ident, fileid, filename):
                                "(module_ident, fileid, filename) "
                                "VALUES (%s, %s, %s)",
                                (module_ident, fileid, filename,))
+            else:
+                cursor.execute("UPDATE module_files "
+                               "SET (fileid) = (%s) "
+                               "WHERE module_ident = %s AND filename = %s",
+                               (fileid, module_ident, filename,))
 
 
 def inject_resource(ident_hash, file, filename, media_type):
@@ -118,7 +122,7 @@ def inject_resource(ident_hash, file, filename, media_type):
         with db_conn.cursor() as cursor:
             s_ident_hash = split_ident_hash(ident_hash)
             module_ident = lookup_module_ident(*s_ident_hash)
-            fileid, resource_hash = upsert_file(file, media_type)
+            fileid, resource_hash = insert_file(file, media_type)
             upsert_module_file(module_ident, fileid, filename)
     return resource_hash
 
