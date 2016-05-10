@@ -5,12 +5,13 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
-import pytz
-import re
 import functools
+import os
+import re
+import sys
 from datetime import datetime
 
+import pytz
 import psycopg2
 import psycopg2.extras
 from pyramid.paster import get_appsettings
@@ -18,15 +19,6 @@ from pyramid.paster import get_appsettings
 from .. import config
 from ..config import TEST_DATA_DIRECTORY as DATA_DIRECTORY
 from ..config import TEST_DATA_SQL_FILE as DATA_SQL_FILE
-
-
-__all__ = (
-    'DATA_DIRECTORY', 'DATA_SQL_FILE',
-    'db_connect', 'db_connection_factory',
-    'integration_test_settings',
-    'data_fixture', 'schema_fixture',
-    'fake_plpy',
-    )
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -81,6 +73,57 @@ def db_connect(method):
             with db_connection.cursor() as cursor:
                 return method(self, cursor, *args, **kwargs)
     return wrapped
+
+
+def is_venv():
+    """Returns a boolean telling whether the application is running
+    within a virtualenv (aka venv).
+
+    """
+    return hasattr(sys, 'real_prefix')
+
+
+if not is_venv:
+    # BBB (22-Apr-2016) https://github.com/pypa/virtualenv/issues/355
+    from site import getsitepackages
+else:
+    # Copy of `site.getsitepackages` from the standard library.
+    PREFIXES = [sys.prefix, sys.exec_prefix]
+
+    def getsitepackages(prefixes=None):
+        """Returns a list containing all global site-packages directories.
+        For each directory present in ``prefixes`` (or the global ``PREFIXES``),
+        this function will find its `site-packages` subdirectory depending on the
+        system environment, and will return a list of full paths.
+        """
+        sitepackages = []
+        seen = set()
+
+        if prefixes is None:
+            prefixes = PREFIXES
+
+        for prefix in prefixes:
+            if not prefix or prefix in seen:
+                continue
+            seen.add(prefix)
+
+            if os.sep == '/':
+                sitepackages.append(os.path.join(prefix, "lib",  # noqa
+                                            "python%d.%d" % sys.version_info[:2],
+                                            "site-packages"))
+            else:
+                sitepackages.append(prefix)
+                sitepackages.append(os.path.join(prefix, "lib", "site-packages"))
+            if sys.platform == "darwin":
+                # for framework builds *only* we add the standard Apple
+                # locations.
+                from sysconfig import get_config_var
+                framework = get_config_var("PYTHONFRAMEWORK")
+                if framework:
+                    sitepackages.append(  # noqa
+                            os.path.join("/Library", framework,
+                                '%d.%d' % sys.version_info[:2], "site-packages"))
+        return sitepackages
 
 
 class SchemaFixture(object):
@@ -181,3 +224,17 @@ class FakePlpyPlan(object):
                 except psycopg2.ProgrammingError as e:
                     if e.message != 'no results to fetch':
                         raise
+
+
+__all__ = (
+    'config_uri',
+    'DATA_DIRECTORY',
+    'data_fixture',
+    'db_connect',
+    'db_connection_factory',
+    'fake_plpy',
+    'integration_test_settings',
+    'is_venv',
+    'mocked_fromtimestamp',
+    'schema_fixture',
+    )
