@@ -802,7 +802,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[10], 'doctype')
         self.assertEqual(data[11], republished_submitter)
         self.assertEqual(data[12], republished_submitlog)
-        self.assertEqual(data[13], None)
+        self.assertEqual(data[13], 5)
         self.assertEqual(data[14], None)
         self.assertEqual(data[15], 'en')
         self.assertEqual(data[16], ['authors'])
@@ -1515,6 +1515,13 @@ class LegacyCompatTriggerTestCase(unittest.TestCase):
         cursor.execute("""\
 INSERT INTO abstracts (abstract) VALUES (' ') RETURNING abstractid""")
         self._abstract_id = cursor.fetchone()[0]
+        cursor.execute("""\
+INSERT INTO modulestates VALUES (0, 'unknown');
+INSERT INTO modulestates VALUES (1, 'current');
+INSERT INTO modulestates VALUES (4, 'obsolete');
+INSERT INTO modulestates VALUES (5, 'post-publication');
+INSERT INTO modulestates VALUES (6, 'processing');
+INSERT INTO modulestates VALUES (7, 'errored');""")
 
     def tearDown(self):
         self.fixture.tearDown()
