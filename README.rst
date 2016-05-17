@@ -31,7 +31,7 @@ On Debian (and Ubuntu), issue the following command::
 
     apt-get install postgresql-9.3 postgresql-server-dev-9.3 postgresql-client-9.3 postgresql-contrib-9.3 postgresql-plpython-9.3
 
-Verify the install and port by using ``pg_lscluster``. If the 9.3
+Verify the install and port by using ``pg_lsclusters``. If the 9.3
 cluster is not the first one installed (which it likely is not), note
 the port and cluster name. For example, the second cluster installed
 will end up by default with port 5433, and a cluster named ``main``.
