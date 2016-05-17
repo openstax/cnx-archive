@@ -399,6 +399,12 @@ def _get_subject_list(cursor):
         yield subject
 
 
+def _get_available_languages_and_count(cursor):
+    """Return a list of available language and its count"""
+    cursor.execute(SQL['get-available-languages-and-count'])
+    return cursor.fetchall()
+
+
 def _get_featured_links(cursor):
     """Return featured books for the front page."""
     cursor.execute(SQL['get-featured-links'])
@@ -881,6 +887,8 @@ def extras(request):
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             metadata = {
+                'languages_and_count': _get_available_languages_and_count(
+                    cursor),
                 'subjects': list(_get_subject_list(cursor)),
                 'featuredLinks': _get_featured_links(cursor),
                 'messages': _get_service_state_messages(cursor),
