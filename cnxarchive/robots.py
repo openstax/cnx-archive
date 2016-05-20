@@ -8,11 +8,19 @@
 """Classes for generating robots.txt page in a configurable way."""
 
 
+from pyramid.threadlocal import get_current_registry
+
+
 class Robots(object):
     """Singleton class for a robots.txt response."""
 
-    def __init__(self, sitemap='http://cnx.org/sitemap.xml', bots=None):
+    def __init__(self, sitemap=None, bots=None):
         """Initialize a robots.txt, with path to sitemap."""
+
+        if sitemap is None:
+            sitemap = str(
+                get_current_registry().settings['sitemap-destination'])
+
         self.sitemap = sitemap
         self.bots = bots or []
 
