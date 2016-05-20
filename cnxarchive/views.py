@@ -927,7 +927,7 @@ def sitemap(request):
 @view_config(route_name='robots', request_method='GET')
 def robots(request):
     """Return a robots.txt file."""
-    robots_dot_txt = Robots(sitemap=request.route_url('sitemap'))
+    robots_dot_txt = Robots()
 
     bot_delays = {
         '*': '',
