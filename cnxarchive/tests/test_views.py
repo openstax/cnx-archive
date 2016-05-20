@@ -2696,6 +2696,7 @@ This introductory, algebra-based, two-semester college physics book is grounded 
 This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics \
 application problems.</div>""",
                 }],
+            u'languages_and_count': [[u'da', 1], [u'en', 17]],
             u'licenses': [{u'code': u'by',
                            u'isValidForPublication': False,
                            u'name': u'Creative Commons Attribution License',

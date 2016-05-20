@@ -41,6 +41,8 @@ def _read_sql_file(name):
         return fp.read()
 
 SQL = {
+    'get-available-languages-and-count': _read_sql_file(
+        'get-available-languages-and-count'),
     'get-module': _read_sql_file('get-module'),
     'get-content-from-legacy-id': _read_sql_file('get-content-from-legacy-id'),
     'get-content-from-legacy-id-ver': _read_sql_file(
