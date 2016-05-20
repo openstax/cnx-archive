@@ -78,7 +78,8 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     declare_api_routes(config)
 
-    mandatory_settings = ['exports-directories', 'exports-allowable-types']
+    mandatory_settings = ['exports-directories', 'exports-allowable-types',
+                          'sitemap-destination']
     for setting in mandatory_settings:
         if not settings.get(setting, None):
             raise ValueError('Missing {} config setting.'.format(setting))
