@@ -26,7 +26,7 @@ if not IS_PY3:
 
 setup(
     name='cnx-archive',
-    version='2.4.1',
+    version='2.4.2',
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/cnx-archive",
