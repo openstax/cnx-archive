@@ -372,8 +372,8 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     build_tree(root_node, None)
 
 
-def republish_collection(next_minor_version, collection_ident, plpy,
-                         revised=None):
+def republish_collection(submitter, submitlog, next_minor_version,
+                         collection_ident, plpy, revised=None):
     """Insert a new row for collection_ident with a new version.
 
     Returns the module_ident of the row inserted.
@@ -385,7 +385,7 @@ def republish_collection(next_minor_version, collection_ident, plpy,
         parentauthors, google_analytics, buylink, print_style,
         major_version, minor_version)
       SELECT m.portal_type, m.moduleid, m.uuid, m.version, m.name, m.created,
-        {}, m.abstractid, m.licenseid, m.doctype, m.submitter, m.submitlog,
+        {}, m.abstractid, m.licenseid, m.doctype, $3, $4,
         m.stateid, m.parent, m.language, m.authors, m.maintainers, m.licensors,
         m.parentauthors, m.google_analytics, m.buylink, m.print_style,
         m.major_version, $1
@@ -395,12 +395,13 @@ def republish_collection(next_minor_version, collection_ident, plpy,
     '''
     if revised is None:
         sql = sql.format('CURRENT_TIMESTAMP')
-        types = ('integer', 'integer')
-        params = (next_minor_version, collection_ident)
+        types = ('integer', 'integer', 'text', 'text')
+        params = (next_minor_version, collection_ident, submitter, submitlog)
     else:
-        sql = sql.format('$3')
-        types = ('integer', 'integer', 'timestamp')
-        params = (next_minor_version, collection_ident, revised)
+        sql = sql.format('$5')
+        types = ('integer', 'integer', 'text', 'text', 'timestamp')
+        params = (next_minor_version, collection_ident, submitter, submitlog,
+                  evised)
     plan = plpy.prepare(sql, types)
     new_ident = plpy.execute(plan, params, 1)[0]['module_ident']
 
@@ -464,6 +465,8 @@ def republish_module(td, plpy):
     modified = 'OK'
     moduleid = td['new']['moduleid']
     legacy_version = td['new']['version']
+    submitter = td['new']['submitter']
+    submitlog = td['new']['submitlog']
 
     modified = set_version(portal_type, legacy_version, td)
 
@@ -484,7 +487,8 @@ def republish_module(td, plpy):
     # Module is republished
     for collection_id in get_collections(current_module_ident, plpy):
         minor = next_version(collection_id, plpy)
-        new_ident = republish_collection(minor, collection_id, plpy)
+        new_ident = republish_collection(submitter, submitlog, minor,
+                                         collection_id, plpy)
         rebuild_collection_tree(collection_id, {
             collection_id: new_ident,
             current_module_ident: td['new']['module_ident'],
