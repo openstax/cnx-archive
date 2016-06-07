@@ -780,8 +780,12 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         collection_ident = cursor.fetchone()[0]
         cursor.connection.commit()
 
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        replublished_submittor = "replublished_submittor"
+        replublished_submitlog = "replublished_submitlog"
+
+        new_ident = republish_collection(replublished_submittor,
+                                         replublished_submitlog, 3,
+                                         collection_ident, testing.fake_plpy)
 
         cursor.execute('''SELECT * FROM modules WHERE
         module_ident = %s''', [new_ident])
@@ -796,8 +800,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[8], 1)
         self.assertEqual(data[9], 11)
         self.assertEqual(data[10], 'doctype')
-        self.assertEqual(data[11], 'submitter')
-        self.assertEqual(data[12], 'submitlog')
+        self.assertEqual(data[11], replublished_submittor)
+        self.assertEqual(data[12], replublished_submitlog)
         self.assertEqual(data[13], None)
         self.assertEqual(data[14], None)
         self.assertEqual(data[15], 'en')
@@ -841,8 +845,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        new_ident = republish_collection("DEFAULT", "DEFAULT",
+                                         3, collection_ident,
+                                         testing.fake_plpy)
 
         cursor.execute("""\
         SELECT word
@@ -880,8 +885,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        new_ident = republish_collection("DEFAULT", "DEFAULT",
+                                         3, collection_ident,
+                                         testing.fake_plpy)
 
         cursor.execute("""\
         SELECT tag
