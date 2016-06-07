@@ -991,7 +991,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
          language, parent)
         VALUES ('m42955', 'Module', '1.2', 'Preface to College Physics',
         '2013-09-13 15:10:43.000000+02' , '2013-09-13 15:10:43.000000+02',
-        NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
+        NULL, NULL, NULL, 1, NULL, 11, '', 'karenc', 'I changed something',
         'en', NULL) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
 
@@ -1017,6 +1017,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         self.assertEqual(results[1], 'Collection')  # portal_type
         self.assertEqual(results[5], 'Derived Copy of College Physics')  # name
+        self.assertEqual(results[11], 'OpenStaxCollege')  # submitter
+        self.assertEqual(results[12], 'New version 1.7')  # submitlog
         self.assertEqual(results[-3], 1)  # major_version
         self.assertEqual(results[-2], 2)  # minor_version
         self.assertEqual(results[-1], None)  # print_style
