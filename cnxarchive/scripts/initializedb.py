@@ -25,6 +25,8 @@ EXAMPLE_DATA_FILEPATHS = (
 
 def main(argv=None):
     """Initialize the database."""
+    print('Deprecation warning: This script is going to be removed. '
+          'Please use cnx-db init instead.', file=sys.stderr)
     parser = create_parser('initdb', description=__doc__)
     parser.add_argument('--with-example-data', action='store_true',
                         help="Initializes the database with example data.")
