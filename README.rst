@@ -127,7 +127,6 @@ the default cluster, as defined above)
 
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
     createdb -U postgres -O cnxarchive cnxarchive
-    psql cnxarchive #to confirm the the table has been created.
 
 
 Install memcached (optional)
@@ -167,11 +166,13 @@ scripts. One of these scripts is used to initialize the database with
 the applications schema.
 ::
 
-    cnx-archive-initdb development.ini
+    cnx-db init -d cnxarchive -U cnxarchive
+    psql cnxarchive #to confirm the the table has been created.
 
-You can optionally pass ``--with-example-data``
-to the database initialization command,
-which will populate the database with a small set of content.
+You can populate the database with a small set of content with the following
+command::
+
+    psql -U cnxarchive cnxarchive <cnxarchive/tests/data/data.sql
 
 To run the application, use the ``paste`` script with the ``serve`` command.
 (The paste script and serve command come from ``PasteScript`` and
