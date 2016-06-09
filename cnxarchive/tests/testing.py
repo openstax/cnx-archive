@@ -170,8 +170,8 @@ class SchemaFixture(object):
             # Failed to clean up after last use.
             self.tearDown()
         # Initialize the database schema.
-        from ..database import initdb
-        initdb(self._settings)
+        from cnxdb.init import init_db
+        init_db(self._settings[config.CONNECTION_STRING], True)
         self.is_set_up = True
 
     def tearDown(self):
