@@ -206,7 +206,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4',
         'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31
         14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a',
-        '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
+        '', DEFAULT, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
         '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}',
         '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
         # set the html abstract using the html_abstract function
@@ -236,7 +236,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4',
         'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31
         14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a',
-        '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
+        '', DEFAULT, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
         '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}',
         '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
         # set the html abstract using the html_abstract function
@@ -262,7 +262,7 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4',
         'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31
         14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a',
-        '', NULL, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
+        '', DEFAULT, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
         '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}',
         '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
         # set the html abstract using the html_abstract function
@@ -651,21 +651,21 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col1', DEFAULT, '1.9', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 9, 1) RETURNING module_ident''')
         collection_ident = cursor.fetchone()[0]
 
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Collection', 'col2', DEFAULT, '1.8', 'Name of c1',
         '2013-07-31 12:00:00.000000+01', '2013-10-03 20:00:00.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 8, 1) RETURNING module_ident''')
         collection2_ident = cursor.fetchone()[0]
 
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
         module_ident = cursor.fetchone()[0]
 
@@ -687,6 +687,20 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         cursor.connection.commit()
 
+        # The collection will not be in latest modules yet because they need to
+        # be processed by the post publication worker.
+        self.assertEqual(
+            list(get_collections(module_ident, testing.fake_plpy)),
+            [])
+
+        # The post-publication worker will change the module state to "current"
+        # (1).
+        cursor.execute(
+            "UPDATE modules SET stateid = 1 WHERE module_ident IN %s",
+            ((collection_ident, collection2_ident),))
+        cursor.connection.commit()
+
+        # Now the collection should be in latest modules.
         self.assertEqual(
             list(get_collections(module_ident, testing.fake_plpy)),
             [collection_ident, collection2_ident])
@@ -1440,7 +1454,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 1, NULL, NULL) RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
 
@@ -1453,14 +1467,14 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 1, NULL, NULL) RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 17:57:54.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2,NULL,NULL) RETURNING module_ident, uuid''', [uuid])
         module_ident, uuid = cursor.fetchone()
 
@@ -1476,7 +1490,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', DEFAULT, '1.1', 'Name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:14:11.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 1, NULL, NULL)
         RETURNING module_ident, uuid''')
         module_ident, uuid = cursor.fetchone()
@@ -1484,7 +1498,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1 again',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 18:05:31.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 3, NULL, NULL)
         RETURNING module_ident, uuid''', [uuid])
         module_ident, uuid = cursor.fetchone()
@@ -1492,7 +1506,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         cursor.execute('''INSERT INTO modules VALUES (
         DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 17:08:57.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
+        1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2, NULL, NULL)
         RETURNING module_ident, uuid''', [uuid])
 
