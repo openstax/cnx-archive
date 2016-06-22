@@ -76,6 +76,9 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
     @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
+        cursor.execute("""\
+            INSERT INTO modulestates (stateid, statename) \
+            VALUES (1, 'current')""")
 
     def tearDown(self):
         self.fixture.tearDown()
