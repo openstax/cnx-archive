@@ -780,8 +780,12 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         collection_ident = cursor.fetchone()[0]
         cursor.connection.commit()
 
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        republished_submitter = "republished_submitter"
+        republished_submitlog = "republished_submitlog"
+
+        new_ident = republish_collection(republished_submitter,
+                                         republished_submitlog, 3,
+                                         collection_ident, testing.fake_plpy)
 
         cursor.execute('''SELECT * FROM modules WHERE
         module_ident = %s''', [new_ident])
@@ -796,8 +800,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         self.assertEqual(data[8], 1)
         self.assertEqual(data[9], 11)
         self.assertEqual(data[10], 'doctype')
-        self.assertEqual(data[11], 'submitter')
-        self.assertEqual(data[12], 'submitlog')
+        self.assertEqual(data[11], republished_submitter)
+        self.assertEqual(data[12], republished_submitlog)
         self.assertEqual(data[13], None)
         self.assertEqual(data[14], None)
         self.assertEqual(data[15], 'en')
@@ -841,8 +845,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        new_ident = republish_collection("DEFAULT", "DEFAULT",
+                                         3, collection_ident,
+                                         testing.fake_plpy)
 
         cursor.execute("""\
         SELECT word
@@ -880,8 +885,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         from ..database import republish_collection
-        new_ident = republish_collection(
-            3, collection_ident, testing.fake_plpy)
+        new_ident = republish_collection("DEFAULT", "DEFAULT",
+                                         3, collection_ident,
+                                         testing.fake_plpy)
 
         cursor.execute("""\
         SELECT tag
@@ -991,7 +997,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
          language, parent)
         VALUES ('m42955', 'Module', '1.2', 'Preface to College Physics',
         '2013-09-13 15:10:43.000000+02' , '2013-09-13 15:10:43.000000+02',
-        NULL, NULL, NULL, 1, NULL, 11, '', NULL, '',
+        NULL, NULL, NULL, 1, NULL, 11, '', 'karenc', 'I changed something',
         'en', NULL) RETURNING module_ident''')
         new_module_ident = cursor.fetchone()[0]
 
@@ -1017,6 +1023,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         self.assertEqual(results[1], 'Collection')  # portal_type
         self.assertEqual(results[5], 'Derived Copy of College Physics')  # name
+        self.assertEqual(results[11], 'karenc')  # submitter
+        self.assertEqual(results[12], 'I changed something')  # submitlog
         self.assertEqual(results[-3], 1)  # major_version
         self.assertEqual(results[-2], 2)  # minor_version
         self.assertEqual(results[-1], None)  # print_style
