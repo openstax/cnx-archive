@@ -90,6 +90,21 @@ CREATE TRIGGER delete_from_latest_version
 
 
 
+CREATE OR REPLACE FUNCTION post_publication() RETURNS trigger AS $$
+BEGIN
+  NOTIFY post_publication;
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+CREATE TRIGGER post_publication_trigger
+  AFTER INSERT OR UPDATE ON modules FOR EACH ROW
+  WHEN (NEW.stateid = 5)
+  EXECUTE PROCEDURE post_publication();
+
+
+
+
 CREATE OR REPLACE FUNCTION republish_module ()
   RETURNS trigger
 AS $$
