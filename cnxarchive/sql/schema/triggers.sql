@@ -5,7 +5,7 @@ BEGIN
               WHERE uuid = NEW.uuid ORDER BY revised DESC LIMIT 1)
               UNION ALL VALUES (NEW.revised) LIMIT 1) AND
           NEW.stateid = 1 THEN
-      DELETE FROM latest_modules WHERE moduleid = NEW.moduleid;
+      DELETE FROM latest_modules WHERE moduleid = NEW.moduleid OR uuid = NEW.uuid;
       INSERT into latest_modules (
                 uuid, module_ident, portal_type, moduleid, version, name,
   		created, revised, abstractid, stateid, doctype, licenseid,
