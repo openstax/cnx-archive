@@ -207,7 +207,7 @@ COLLECTION_JSON_TREE = {
          u'contents': [
                 {u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
                  u'shortId': u'JKLtEyKm@2',
-                 u'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
+                 u'title': u'<span style="color:red;">Introduction:</span> Further Applications of <i>Newton</i>\u2019s Laws'},
                 {u'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
                  u'shortId': u'6icTBvfy@5',
                  u'title': u'Friction'},
@@ -1786,6 +1786,29 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
         self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
+
+    def test_in_book_search_title(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        # search query param
+        self.request.params = {'q': u'Introduction: Further Applications of '
+                                     u'Newton\u2019s Laws'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
+
+        from ..views import in_book_search
+        results = in_book_search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+        IN_BOOK_SEARCH_RESULT = {u'results': {u'query': {u'search_term': u'Introduction: Further Applications of Newton\u2019s Laws', u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'}, u'total': 2, u'items': [{u'snippet': u'<span class="q-match">Introduction</span>: Further <span class="q-match">Applications</span> of <span class="q-match">Newton</span>\u2019s <span class="q-match">Laws</span>\n\n<span class="q-match">Introduction</span>: Further <span class="q-match">Applications</span> of <span class="q-match">Newton</span>\u2019s <span class="q-match">Laws</span>\n\n\n\n\n\n\n    Total hip replacement surgery has become', u'matches': u'11', u'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2', u'rank': u'0.15', u'title': u'<span class="q-match">Introduction</span>: Further <span class="q-match">Applications</span> of <span class="q-match">Newton</span>\u2019s <span class="q-match">Laws</span>'}, {u'snippet': u'<span class="q-match">applicable</span> physical <span class="q-match">laws</span>, permitting an understanding beyond just the memorization of lists of facts.\n        The unifying aspect of physical <span class="q-match">laws</span>', u'matches': u'70', u'id': u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4', u'rank': u'7.14286e-05', u'title': u'Physics: An <span class="q-match">Introduction</span>'}]}}
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
+
 
     def test_in_book_search_highlighted_results_wo_version(self):
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
