@@ -1,10 +1,11 @@
 CREATE OR REPLACE FUNCTION update_latest() RETURNS trigger AS '
 BEGIN
-  IF TG_OP = ''INSERT'' AND
+  IF (TG_OP = ''INSERT'' OR TG_OP = ''UPDATE'') AND
           NEW.revised >= ((SELECT revised FROM modules
               WHERE uuid = NEW.uuid ORDER BY revised DESC LIMIT 1)
-              UNION ALL VALUES (NEW.revised) LIMIT 1) THEN
-      DELETE FROM latest_modules WHERE moduleid = NEW.moduleid;
+              UNION ALL VALUES (NEW.revised) LIMIT 1) AND
+          NEW.stateid = 1 THEN
+      DELETE FROM latest_modules WHERE moduleid = NEW.moduleid OR uuid = NEW.uuid;
       INSERT into latest_modules (
                 uuid, module_ident, portal_type, moduleid, version, name,
   		created, revised, abstractid, stateid, doctype, licenseid,
@@ -85,6 +86,21 @@ END;
 CREATE TRIGGER delete_from_latest_version
   AFTER DELETE ON modules FOR EACH ROW
   EXECUTE PROCEDURE delete_from_latest();
+
+
+
+
+CREATE OR REPLACE FUNCTION post_publication() RETURNS trigger AS $$
+BEGIN
+  NOTIFY post_publication;
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+CREATE TRIGGER post_publication_trigger
+  AFTER INSERT OR UPDATE ON modules FOR EACH ROW
+  WHEN (NEW.stateid = 5)
+  EXECUTE PROCEDURE post_publication();
 
 
 
