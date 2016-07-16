@@ -141,3 +141,10 @@ AS $$
       plpy.warning(warning_messages)
   return content
 $$ LANGUAGE plpythonu;
+
+CREATE OR REPLACE FUNCTION strip_html(html_text TEXT)
+  RETURNS text
+AS $$
+  import re
+  return re.sub('<[^>]*?>', '', html_text, re.MULTILINE)
+$$ LANGUAGE plpythonu IMMUTABLE;
