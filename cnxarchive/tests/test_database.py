@@ -485,6 +485,30 @@ $$ LANGUAGE plpythonu;
             identifier, identifier))
         self.assertTrue(cursor.fetchone()[0])
 
+    @testing.db_connect
+    def test_strip_html(self, cursor):
+        cursor.execute("SELECT strip_html('no html')")
+        result = cursor.fetchone()[0]
+        self.assertEqual('no html', result)
+
+        cursor.execute("""\
+SELECT strip_html('<span><span class="number">1.1</span> \
+<span class="divider"> | </span>\
+<span class="text">Sampling Experiment</span></span>')""")
+        result = cursor.fetchone()[0]
+        self.assertEqual('1.1  | Sampling Experiment', result)
+
+        cursor.execute("SELECT strip_html('<span>三百年</span>')")
+        result = cursor.fetchone()[0]
+        self.assertEqual('三百年', result)
+
+        cursor.execute("""\
+SELECT strip_html('<span
+ class="number">1.1</span> multi-
+line')""")
+        result = cursor.fetchone()[0]
+        self.assertEqual('1.1 multi-\nline', result)
+
 
 class TreeToJsonTestCase(unittest.TestCase):
     fixture = testing.data_fixture
@@ -1039,7 +1063,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         new_collection_id = results[0]
 
         self.assertEqual(results[1], 'Collection')  # portal_type
-        self.assertEqual(results[5], 'Derived Copy of College Physics')  # name
+        self.assertEqual(results[5], '<span style="color:red;">Derived</span>'
+                                     ' Copy of College <i>Physics</i>')  # name
         self.assertEqual(results[11], 'karenc')  # submitter
         self.assertEqual(results[12], 'I changed something')  # submitlog
         self.assertEqual(results[-3], 1)  # major_version
