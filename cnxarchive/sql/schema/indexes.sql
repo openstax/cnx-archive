@@ -33,3 +33,5 @@ CREATE UNIQUE INDEX module_files_idx ON module_files (module_ident, filename);
 CREATE UNIQUE INDEX similarities_objectid_version_idx ON similarities (objectid, version);
 
 create index latest_modules_title_idx on latest_modules (upper(title_order(name)));
+
+CREATE INDEX modules_strip_html_name_trgm_gin ON modules USING gin(strip_html(name) gin_trgm_ops);

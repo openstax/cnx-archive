@@ -10,4 +10,4 @@ SELECT
 FROM
   latest_modules
 WHERE
-  name ~* req(%({0})s::text)
+  strip_html(name) ~* req(%({0})s::text)

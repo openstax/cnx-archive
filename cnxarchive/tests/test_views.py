@@ -1958,6 +1958,30 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             u'sort': []})
         self.assertEqual(results['results']['total'], 7)
 
+    def test_search_w_html_title(self):
+        # Build the request
+        self.request.params = {'q': 'title:"Derived Copy of College Physics" type:book'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
+        from ..views import search
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+
+        self.assertEqual(results['query'], {
+            u'per_page': 20,
+            u'page': 1,
+            u'limits': [
+                {u'tag': u'title', u'value': u'Derived Copy of College Physics'},
+                {u'tag': u'type', u'value': u'book'},
+                ],
+            u'sort': []})
+        self.assertEqual(results['results']['total'], 1)
+
     def test_search_with_subject(self):
         # Build the request
         self.request.params = {'q': 'title:"college physics" subject:"Science and Technology"'}
