@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import re
 import tempfile
 import unittest
 import zipfile
@@ -467,6 +468,31 @@ class DocumentFactoryTestCase(BaseTestCase):
         self.assertEqual(len(refs), 15)
         # Check reference binding
         self.assertEqual(set([ref.is_bound for ref in refs]), set([True]))
+
+    @testing.db_connect
+    def test_resource_wo_filename(self, cursor):
+        # Test for creating a document with resources that don't have filenames
+        # (other than the sha1 hash), this is the case for documents published
+        # using cnx-publishing
+        ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
+        cursor.execute("""\
+SELECT fileid, file FROM files NATURAL JOIN module_files NATURAL JOIN modules
+WHERE uuid || '@' || concat_ws('.', major_version, minor_version) = %s
+  AND filename = 'index.cnxml.html'""",
+                       (ident_hash,))
+        fileid, file_ = cursor.fetchone()
+        file_ = re.sub(
+            'resources/075500ad9f71890a85fe3f7a4137ac08e2b7907c/PhET_Icon.png',
+            'resources/075500ad9f71890a85fe3f7a4137ac08e2b7907c',
+            file_[:])
+
+        cursor.execute("""\
+UPDATE files SET file = %s WHERE fileid = %s""", (memoryview(file_), fileid))
+        cursor.connection.commit()
+
+        doc = self.target(ident_hash)
+
+        self.assertTrue(isinstance(doc, cnxepub.Document))
 
 
 class TreeToNodesTestCase(BaseTestCase):
