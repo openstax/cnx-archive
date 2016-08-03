@@ -76,9 +76,6 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
     @testing.db_connect
     def setUp(self, cursor):
         self.fixture.setUp()
-        cursor.execute("""\
-            INSERT INTO modulestates (stateid, statename) \
-            VALUES (1, 'current')""")
 
     def tearDown(self):
         self.fixture.tearDown()
@@ -1572,13 +1569,6 @@ class LegacyCompatTriggerTestCase(unittest.TestCase):
         cursor.execute("""\
 INSERT INTO abstracts (abstract) VALUES (' ') RETURNING abstractid""")
         self._abstract_id = cursor.fetchone()[0]
-        cursor.execute("""\
-INSERT INTO modulestates VALUES (0, 'unknown');
-INSERT INTO modulestates VALUES (1, 'current');
-INSERT INTO modulestates VALUES (4, 'obsolete');
-INSERT INTO modulestates VALUES (5, 'post-publication');
-INSERT INTO modulestates VALUES (6, 'processing');
-INSERT INTO modulestates VALUES (7, 'errored');""")
 
     def tearDown(self):
         self.fixture.tearDown()
