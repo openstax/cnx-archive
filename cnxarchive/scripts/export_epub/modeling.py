@@ -39,6 +39,9 @@ def document_factory(ident_hash, context=None):
            or not ref.uri.startswith('/resources/'):
             continue
         hash, filename = ref.uri.split('/')[-2:]
+        if hash == 'resources':
+            # if ref.uri is just /resources/hash (without filename)
+            hash = filename
         resource = resources_map[hash]
         ref.bind(resource, '/resources/{}')
     return doc
