@@ -122,19 +122,34 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         sys.path = modified_path
         self.addCleanup(setattr, sys, 'path', sys_path)
 
-        # Remove all cnxarchive modules from sys.modules
-        sys_modules = sys.modules.copy()
-        self.addCleanup(sys.modules.update, sys_modules)
-        for module in sys.modules.keys():
-            if module.startswith('cnxarchive'):
-                del sys.modules[module]
-
-        # Import the installed version
-        import cnxarchive.database as target_installed
-
         # Depending on whether "setup.py develop" or "setup.py install" is
         # used, there are different expected directories and file paths.
-        targets = [target_source, target_installed]
+        targets = [target_source]
+
+        # This is basically what pip does to determine whether a file
+        # is editable or installed.
+        import pkg_resources
+        dist = pkg_resources.get_distribution('cnx-archive')
+        is_editable = False
+        for path_item in sys.path:
+            egg_link = os.path.join(path_item, dist.project_name + '.egg-link')
+            if os.path.isfile(egg_link):
+                # it's an editable install rather than a fixed install.
+                is_editable = True
+                break
+
+        if not is_editable:
+            # Remove all cnxarchive modules from sys.modules
+            sys_modules = sys.modules.copy()
+            self.addCleanup(sys.modules.update, sys_modules)
+            for module in sys.modules.keys():
+                if module.startswith('cnxarchive'):
+                    del sys.modules[module]
+
+            # Import the installed version, if "setup.py install" was used.
+            import cnxarchive.database as target_installed
+            targets.append(target_installed)
+
         expected_directories = [
             os.path.abspath(os.path.dirname(target.__file__))
             for target in targets]
