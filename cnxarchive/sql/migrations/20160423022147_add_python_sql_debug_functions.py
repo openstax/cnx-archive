@@ -1,26 +1,13 @@
-CREATE OR REPLACE FUNCTION iso8601 (dt TIMESTAMP WITH TIME ZONE)
-RETURNS TEXT
-AS $$
--- Returns a UTC timestamp that can be parsed by all browsers
---   javascript implementations.
-  BEGIN
-    RETURN replace(date_trunc('second', dt at time zone 'UTC')::text,' ','T')||'Z';
-  END;
-$$ LANGUAGE plpgsql;
-SELECT iso8601(current_timestamp), current_timestamp;
+# -*- coding: utf-8 -*-
+"""\
+- Add SQL function `pypath`
+- Add SQL function `pyimport`
 
--- Returns arrays in the order they are stored in the database, 
---    based on the index
-CREATE OR REPLACE FUNCTION idx(anyarray, anyelement)
-  RETURNS INT AS 
-$$
-  SELECT i FROM (
-     SELECT generate_series(array_lower($1,1),array_upper($1,1))
-  ) g(i)
-  WHERE $1[i] = $2
-  LIMIT 1;
-$$ LANGUAGE SQL IMMUTABLE;
+"""
 
+def up(cursor):
+    # Add SQL function `pypath`
+    cursor.execute("""\
 -- Returns the Python `sys.path`
 --   Example usage, `SELECT unnest(pypath())`
 CREATE OR REPLACE FUNCTION pypath()
@@ -29,7 +16,10 @@ CREATE OR REPLACE FUNCTION pypath()
 import sys
 return sys.path
 $$ LANGUAGE plpythonu;
+    """)
 
+    # Add SQL function `pyimport`
+    cursor.execute("""\
 -- Returns module location for the given module
 --   Example usage, `SELECT * FROM pyimport('cnxarchive.database');`
 CREATE TYPE pyimport_value AS (
@@ -45,7 +35,7 @@ import importlib
 try:
     module = importlib.import_module(pymodule)
 except ImportError:
-    return []
+    return []  #{'import': None, 'directory': None, 'file_path': None}
 file_path = os.path.abspath(module.__file__)
 directory = os.path.dirname(file_path)
 info = {
@@ -55,3 +45,12 @@ info = {
 }
 return [info]
 $$ LANGUAGE plpythonu;
+    """)
+
+
+def down(cursor):
+    # Remove SQL function `pypath`
+    cursor.execute("DROP FUNCTION IF EXISTS pypath();")
+
+    # Remove SQL function `pyimport`
+    cursor.execute("DROP TYPE IF EXISTS pyimport_value CASCADE;")

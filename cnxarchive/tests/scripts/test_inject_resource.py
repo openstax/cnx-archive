@@ -13,7 +13,70 @@ try:
 except ImportError:
     import mock
 
+import psycopg2
+from pyramid import testing as pyramid_testing
+
 from .. import testing
+
+
+class UpsertModuleFileTestCase(unittest.TestCase):
+    fixture = testing.data_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        cls.settings = testing.integration_test_settings()
+
+    @testing.db_connect
+    def setUp(self, cursor):
+        self.fixture.setUp()
+
+        # Insert files for testing against
+        cursor.execute("INSERT INTO files (file, media_type) "
+                       "VALUES (%s, %s), (%s, %s)"
+                       "RETURNING fileid",
+                       (psycopg2.Binary("abc"), 'text/plain',
+                        psycopg2.Binary("xyz"), 'text/plain',))
+        self.fileids = [r[0] for r in cursor.fetchall()]
+
+        pyramid_testing.setUp(settings=self.settings)
+
+    def tearDown(self):
+        self.fixture.tearDown()
+        pyramid_testing.tearDown()
+
+    @property
+    def target(self):
+        from cnxarchive.scripts.inject_resource import upsert_module_file
+        return upsert_module_file
+
+    @testing.db_connect
+    def test_insert(self, cursor):
+        module_ident = 1
+        filename = 'ruleset.css'
+
+        self.target(module_ident, self.fileids[0], filename)
+
+        # Check for the module_files entry
+        cursor.execute("SELECT fileid "
+                       "FROM module_files "
+                       "WHERE module_ident = %s and filename = %s",
+                       (module_ident, filename,))
+        self.assertEqual(cursor.fetchone()[0], self.fileids[0])
+
+    @testing.db_connect
+    def test_upsert(self, cursor):
+        module_ident = 1
+        filename = 'ruleset.css'
+
+        self.target(module_ident, self.fileids[0], filename)
+        self.target(module_ident, self.fileids[1], filename)
+
+        # Check for the module_files entry
+        cursor.execute("SELECT fileid "
+                       "FROM module_files "
+                       "WHERE module_ident = %s and filename = %s",
+                       (module_ident, filename,))
+        self.assertEqual(cursor.fetchone()[0], self.fileids[1])
 
 
 class InjectResourceTestCase(unittest.TestCase):
