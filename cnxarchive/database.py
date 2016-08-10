@@ -311,7 +311,7 @@ def get_collections(module_ident, plpy):
         FROM trees c JOIN t ON (c.nodeid = t.parent)
         WHERE not c.nodeid = ANY(t.path)
     )
-    SELECT m.module_ident
+    SELECT DISTINCT m.module_ident
     FROM t JOIN latest_modules m ON (t.document = m.module_ident)
     WHERE t.parent IS NULL
     ''', ('integer',))
