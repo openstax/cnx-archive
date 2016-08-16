@@ -523,6 +523,32 @@ class ViewsTestCase(unittest.TestCase):
                 ],
             }, content['tree'])
 
+    def test_content_uncollated_collection(self):
+        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '6.1'
+
+        # Build the request environment.
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(uuid, version)}
+        self.request.GET = {'as_collated': False}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        content = get_content(self.request).json_body
+
+        # Check the tree.
+        self.assertEqual({
+            u'id': u'{}@{}'.format(uuid, version),
+            u'shortId': u'55_943-0@6.1',
+            u'title': u'College Physics',
+            u'contents': [
+                {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                 u'shortId': u'IJ3rHxpG@7',
+                 u'title': u'Preface'},
+                ],
+            }, content['tree'])
+
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
         cursor.execute("""\
@@ -825,6 +851,54 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(
             '<html><body>Page content after collation</body></html>\n',
             content['content'])
+
+    def test_content_uncollated_page_inside_book(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '6.1'
+        page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        # Build the request.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+            'separator': ':',
+            }
+        self.request.GET = {'as_collated': False}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        from pyramid.httpexceptions import HTTPFound
+        with self.assertRaises(HTTPFound) as caught_exc:
+            get_content(self.request).json_body
+
+        self.assertIn(
+            'contents/{}'.format(page_uuid),
+            dict(caught_exc.exception.headerlist)['Location'])
+
+    def test_content_uncollated_composite_page_inside_book(self):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '6.1'
+        page_uuid = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        page_version = '1'
+
+        # Build the request.
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+            'separator': ':',
+            }
+        self.request.GET = {'as_collated': False}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ..views import get_content
+        from pyramid.httpexceptions import HTTPNotFound
+        with self.assertRaises(HTTPNotFound):
+            get_content(self.request).json_body
 
     def test_content_uncollated_page(self):
         page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
