@@ -19,6 +19,7 @@ from lxml import etree
 from pytz import timezone
 from pyramid import httpexceptions
 from pyramid.response import FileIter
+from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
@@ -296,6 +297,7 @@ def _get_content_json(ident_hash=None):
         ident_hash = routing_args['ident_hash']
     id, version = split_ident_hash(ident_hash)
 
+    as_collated = asbool(request.GET.get('as_collated', True))
     page_ident_hash = routing_args.get('page_ident_hash', '')
     if page_ident_hash:
         try:
@@ -313,8 +315,9 @@ def _get_content_json(ident_hash=None):
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
-                result['tree'] = get_tree(ident_hash, cursor, as_collated=True)
-                result['collated'] = True
+                result['tree'] = get_tree(ident_hash, cursor,
+                                          as_collated=as_collated)
+                result['collated'] = as_collated
                 if not result['tree']:
                     # If collated tree is not available, get the uncollated
                     # tree.
@@ -326,8 +329,10 @@ def _get_content_json(ident_hash=None):
                         id, version = split_ident_hash(id_)
                         if id == p_id and (
                            version == p_version or not p_version):
-                            content = get_collated_content(
-                                id_, ident_hash, cursor)
+                            content = None
+                            if as_collated:
+                                content = get_collated_content(
+                                    id_, ident_hash, cursor)
                             if content:
                                 result = get_content_metadata(
                                     id, version, cursor)
