@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
+import sys
 
 
 def up(cursor):
     """Install venv schema and session_preload if in a virtualenv."""
-    import sys
 
     if hasattr(sys, 'real_prefix'):
         activate_path = os.path.join(
@@ -31,7 +32,7 @@ RETURNS void LANGUAGE plpythonu AS $_$
 import sys
 import os
 import site
-old_os_path = os.environ['PATH']
+old_os_path = os.environ.get('PATH','')
 os.environ['PATH'] = os.path.dirname(os.path.abspath('{activate_path}')) \
 + os.pathsep + old_os_path
 base = os.path.dirname(os.path.dirname(os.path.abspath('{activate_path}')))
@@ -49,7 +50,7 @@ for item in list(sys.path):
         sys.path.remove(item)
 sys.path[:0] = new_sys_path
 $_$""".format(activate_path=activate_path)
-                        cursor.execute(sql)
+            cursor.execute(sql)
 
 
 def down(cursor):
