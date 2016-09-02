@@ -401,7 +401,7 @@ def republish_collection(submitter, submitlog, next_minor_version,
         sql = sql.format('$5')
         types = ('integer', 'integer', 'text', 'text', 'timestamp')
         params = (next_minor_version, collection_ident, submitter, submitlog,
-                  evised)
+                  revised)
     plan = plpy.prepare(sql, types)
     new_ident = plpy.execute(plan, params, 1)[0]['module_ident']
 
@@ -417,6 +417,14 @@ def republish_collection(submitter, submitlog, next_minor_version,
         SELECT $1, tagid
         FROM moduletags
         WHERE module_ident = $2""", ('integer', 'integer'))
+    plpy.execute(plan, (new_ident, collection_ident,))
+
+    plan = plpy.prepare("""\
+        INSERT INTO module_files (module_ident, fileid, filename)
+        SELECT $1, fileid, filename
+        FROM module_files
+        WHERE module_ident = $2 and filename != 'collection.xml'""",
+                        ('integer', 'integer'))
     plpy.execute(plan, (new_ident, collection_ident,))
     return new_ident
 
