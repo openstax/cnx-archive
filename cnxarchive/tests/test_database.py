@@ -911,8 +911,53 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         self.assertEqual(sorted(inserted_keywords), sorted(keywords))
 
     @testing.db_connect
+    def test_republish_collection_w_files(self, cursor):
+        # Ensure association of the new collection with existing files.
+        settings = testing.integration_test_settings()
+        cursor.execute("""\
+ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.connection.commit()
+
+        cursor.execute("""INSERT INTO document_controls (uuid)
+        VALUES ('3a5344bd-410d-4553-a951-87bccd996822'::uuid)""")
+        cursor.execute('''INSERT INTO modules VALUES (
+        DEFAULT, 'Collection', 'col1', '3a5344bd-410d-4553-a951-87bccd996822',
+        '1.10', 'Name of c1', '2013-07-31 12:00:00.000000-07',
+        '2013-10-03 21:59:12.000000-07', 1, 11, 'doctype', 'submitter',
+        'submitlog', NULL, NULL, 'en', '{authors}', '{maintainers}',
+        '{licensors}', '{parentauthors}', 'analytics code', 'buylink', 10, 1
+        ) RETURNING module_ident;''')
+        collection_ident = cursor.fetchone()[0]
+
+        filepath = os.path.join(testing.DATA_DIRECTORY, 'ruleset.css')
+        with open(filepath, 'r') as f:
+            cursor.execute('''\
+            INSERT INTO files (file, media_type) VALUES
+            (%s, 'text/css') RETURNING fileid''', [memoryview(f.read())])
+            fileid = cursor.fetchone()[0]
+        cursor.execute('''\
+        INSERT INTO module_files (module_ident, fileid, filename) VALUES
+        (%s, %s, 'ruleset.css');''', [collection_ident, fileid])
+
+        cursor.connection.commit()
+
+        from ..database import republish_collection
+        new_ident = republish_collection("DEFAULT", "DEFAULT",
+                                         3, collection_ident,
+                                         testing.fake_plpy)
+
+        cursor.execute("""\
+        SELECT fileid, filename
+        FROM module_files
+        WHERE module_ident = %s""", (new_ident,))
+
+        inserted_files = cursor.fetchall()
+        self.assertEqual(sorted(inserted_files),
+                         sorted([(fileid, 'ruleset.css')]))
+
+    @testing.db_connect
     def test_republish_collection_w_subjects(self, cursor):
-        # Ensure association of the new collection with existing keywords.
+        # Ensure association of the new collection with existing subjects/tags.
         settings = testing.integration_test_settings()
         cursor.execute("""\
 ALTER TABLE modules DISABLE TRIGGER module_published""")
