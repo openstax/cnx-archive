@@ -102,28 +102,6 @@ CREATE TRIGGER index_fulltext_upsert
     FOR EACH row
       EXECUTE PROCEDURE index_fulltext_upsert_trigger();
 
-CREATE OR REPLACE FUNCTION index_fulltext_lexeme_trigger()
-  RETURNS TRIGGER AS $$
-  BEGIN
-
-    INSERT into modulefti_lexemes (module_ident, lexeme, positions)
-        (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, E' \'') as t )
-        SELECT NEW.module_ident,
-               substring(t,1,strpos(t,E'\':')-1),
-               ('{'||substring(t,strpos(t,E'\':')+2)||'}')::int[] from lex) ;
-
-  RETURN NEW;
-  END;
-  $$
-  LANGUAGE plpgsql;
-
-
-DROP TRIGGER IF EXISTS index_fulltext_lexeme ON modulefti;
-CREATE TRIGGER index_fulltext_lexeme
-  BEFORE INSERT ON modulefti
-    FOR EACH row
-      EXECUTE PROCEDURE index_fulltext_lexeme_trigger();
-
 CREATE OR REPLACE FUNCTION index_fulltext_lexeme_update_trigger()
   RETURNS TRIGGER AS $$
   BEGIN
@@ -141,10 +119,9 @@ CREATE OR REPLACE FUNCTION index_fulltext_lexeme_update_trigger()
   $$
   LANGUAGE plpgsql;
 
-
-DROP TRIGGER IF EXISTS index_fulltext_lexeme_update ON modulefti;
-CREATE TRIGGER index_fulltext_lexeme_update
-  BEFORE UPDATE ON modulefti
+DROP TRIGGER IF EXISTS index_fulltext_lexeme ON modulefti;
+CREATE TRIGGER index_fulltext_lexeme
+  BEFORE INSERT OR UPDATE ON modulefti
     FOR EACH row
       EXECUTE PROCEDURE index_fulltext_lexeme_update_trigger();
 
