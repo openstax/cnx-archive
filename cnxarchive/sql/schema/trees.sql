@@ -25,5 +25,6 @@ CREATE TABLE trees (
     FOREIGN KEY (parent_id) REFERENCES trees (nodeid) ON DELETE CASCADE
 );
 
--- the unique index insures only one top-level tree per document metadata
+-- the unique index insures only two top-level trees per document metadata - raw and collated
 CREATE UNIQUE INDEX trees_unique_doc_idx on trees(documentid, is_collated) where parent_id is null;
+CREATE INDEX trees_doc_idx on trees(documentid);
