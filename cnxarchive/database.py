@@ -63,6 +63,7 @@ SQL = {
     'get-in-book-search-full-page': _read_sql_file(
         'get-in-book-search-full-page'),
     'get-collated-content': _read_sql_file('get-collated-content'),
+    'get-collated-state': _read_sql_file('get-collated-state'),
     }
 
 
