@@ -10,7 +10,7 @@ SELECT row_to_json(combined_rows) AS module
 FROM (SELECT
   m.uuid AS id,
   short_id(m.uuid) as "shortId",
-  concat_ws('.', m.major_version, m.minor_version) AS current_version,
+  module_version(m.major_version, m.minor_version) AS current_version,
   -- can't use "version" as we need it in GROUP BY clause and it causes a
   -- "column name is ambiguous" error
 
@@ -52,7 +52,7 @@ FROM (SELECT
          ORDER BY idx(m.licensors, u.username)
          ) AS user_rows) AS licensors,
   p.uuid AS "parentId",
-  concat_ws('.', p.major_version, p.minor_version) AS "parentVersion",
+  module_version(p.major_version, p.minor_version) AS "parentVersion",
   p.name as "parentTitle",
   ARRAY(SELECT row_to_json(user_rows) FROM
         (SELECT username AS id, first_name AS firstname,
@@ -66,7 +66,7 @@ FROM (SELECT
    FROM (
      SELECT p.uuid AS id,
             short_id(p.uuid) as "shortId",
-            concat_ws('.', p.major_version, p.minor_version) AS version,
+            module_version(p.major_version, p.minor_version) AS version,
             p.name AS title,
             ARRAY(SELECT row_to_json(user_rows)
                   FROM (SELECT username AS id, first_name AS firstname,
@@ -86,7 +86,7 @@ FROM (SELECT
   m.version AS "legacy_version",
   ARRAY(
     SELECT row_to_json(history_info) FROM (
-        SELECT concat_ws('.', m1.major_version, m1.minor_version) AS version,
+        SELECT module_version(m1.major_version, m1.minor_version) AS version,
             iso8601(m1.revised) AS revised, m1.submitlog AS changes,
             (SELECT row_to_json(publisher) AS publisher
              FROM (
@@ -115,7 +115,7 @@ FROM modules m
 WHERE
   m.licenseid = l.licenseid AND
   m.uuid = %(id)s AND
-  concat_ws('.', m.major_version, m.minor_version) = %(version)s
+  module_version(m.major_version, m.minor_version) = %(version)s
 GROUP BY
   m.moduleid, m.portal_type, current_version, m.name, m.created, m.revised,
   a.html, m.stateid, m.doctype, l.code, l.name, l.version, l.url,

@@ -7,7 +7,7 @@
 
 -- arguments: id:string
 SELECT
-concat_ws('.', m.major_version, m.minor_version)
+module_version(m.major_version, m.minor_version)
 FROM modules m
 WHERE m.uuid = %(id)s
 ORDER BY m.revised DESC
