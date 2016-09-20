@@ -148,3 +148,10 @@ AS $$
   import re
   return re.sub('<[^>]*?>', '', html_text, re.MULTILINE)
 $$ LANGUAGE plpythonu IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION module_version(major int, minor int)
+  RETURNS text
+  IMMUTABLE
+AS $$
+  SELECT concat_ws('.', major, minor) ;
+$$ LANGUAGE SQL;

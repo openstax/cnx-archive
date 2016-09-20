@@ -13,5 +13,5 @@ FROM collated_file_associations AS cfa
                modules AS item
 WHERE cfa.context = context.module_ident AND
       cfa.item = item.module_ident AND
-      item.uuid || '@' || concat_ws('.', item.major_version, item.minor_version) = %s AND
-      context.uuid || '@' || concat_ws('.', context.major_version, context.minor_version) = %s
+      item.uuid || '@' || module_version(item.major_version, item.minor_version) = %s AND
+      context.uuid || '@' || module_version(context.major_version, context.minor_version) = %s
