@@ -35,7 +35,10 @@ E'StartSel="<mtext class=""q-match"">", StopSel="</mtext>", MaxFragments=0, High
 ),
 ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
- t left join  modules m on t.value = m.module_ident join modulefti mft on mft.module_ident = m.module_ident join module_files mf on m.module_ident = mf.module_ident join files f on mf.fileid = f.fileid
+ t left join  modules m on t.value = m.module_ident
+        join modulefti mft on mft.module_ident = m.module_ident
+        join module_files mf on m.module_ident = mf.module_ident
+        join files f on mf.fileid = f.fileid
 WHERE
  mft.module_idx @@ plainto_tsquery(%(search_term)s)
  and mf.filename = 'index.cnxml.html'
