@@ -14,6 +14,7 @@ CREATE UNIQUE INDEX lastest_modules_uuid_idx on latest_modules (uuid);
 CREATE UNIQUE INDEX lastest_modules_short_id_idx on latest_modules (short_id(uuid));
 
 CREATE INDEX fti_idx ON modulefti USING gist (module_idx);
+CREATE INDEX collated_fti_idx ON collated_fti USING gist (module_idx);
 
 CREATE INDEX modulefti_lexemes_module_ident on modulefti_lexemes (module_ident);
 
