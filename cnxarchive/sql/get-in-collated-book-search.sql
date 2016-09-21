@@ -15,7 +15,8 @@ WHERE
   m.uuid::text = %(uuid)s AND
   module_version(m.major_version, m.minor_version) = %(version)s AND
   tr.documentid = m.module_ident AND
-  tr.parent_id IS NULL
+  tr.parent_id IS NULL AND
+  is_collated = True
 UNION ALL
 SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder]
 FROM trees c1 JOIN t ON (c1.parent_id = t.node)
@@ -32,15 +33,13 @@ ts_headline(fulltext,
 plainto_tsquery(%(search_term)s),
 E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=1, MaxWords=20, MinWords=15,'
 ) as snippet,
-count_lexemes(mft.module_ident, %(search_term)s) as matches,
-ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
+count_collated_lexemes(cft.item, cft.context, %(search_term)s) as matches,
+ts_rank_cd(cft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
  t left join  modules m on t.value = m.module_ident
-        join modulefti mft on mft.module_ident = m.module_ident
-        join module_files mf on m.module_ident = mf.module_ident
+        join collated_fti cft on cft.item = m.module_ident
 WHERE
- mft.module_idx @@ plainto_tsquery(%(search_term)s)
- and mf.filename = 'index.cnxml.html'
+ cft.module_idx @@ plainto_tsquery(%(search_term)s)
 ORDER BY
  rank DESC,
  path

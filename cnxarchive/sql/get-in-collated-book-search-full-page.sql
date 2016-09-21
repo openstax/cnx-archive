@@ -15,7 +15,8 @@ WHERE
   m.uuid::text = %(uuid)s AND
   module_version(m.major_version, m.minor_version) = %(version)s AND
   tr.documentid = m.module_ident AND
-  tr.parent_id IS NULL
+  tr.parent_id IS NULL AND
+  is_collated = True
 UNION ALL
 SELECT c1.nodeid, c1.title, t.path || ARRAY[c1.nodeid], c1.documentid, t.depth+1, t.corder || ARRAY[c1.childorder]
 FROM trees c1 JOIN t ON (c1.parent_id = t.node)
@@ -33,16 +34,19 @@ convert_from(f.file, 'utf8'),
 plainto_tsquery(%(search_term)s),
 E'StartSel="<mtext class=""q-match"">", StopSel="</mtext>", MaxFragments=0, HighlightAll=TRUE'
 ),
-ts_rank_cd(mft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
+ts_rank_cd(cft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
- t left join  modules m on t.value = m.module_ident
-        join modulefti mft on mft.module_ident = m.module_ident
-        join module_files mf on m.module_ident = mf.module_ident
-        join files f on mf.fileid = f.fileid
+ t left join modules m on t.value = m.module_ident
+        join collated_fti cft on cft.item = m.module_ident
+        join collated_file_associations cfa on cfa.item = m.module_ident
+        join files f on cfa.fileid = f.fileid,
+ modules AS book
 WHERE
- mft.module_idx @@ plainto_tsquery(%(search_term)s)
- and mf.filename = 'index.cnxml.html'
- and m.uuid = (%(page_uuid)s)
+ cft.module_idx @@ plainto_tsquery(%(search_term)s) AND 
+ m.uuid = (%(page_uuid)s) AND
+ cft.context = book.module_ident AND
+ book.uuid = (%(uuid)s) AND
+ module_version(book.major_version, book.minor_version) = %(version)s
 ORDER BY
  rank,
  path
