@@ -663,9 +663,14 @@ def in_book_search(request):
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
-    statement = SQL['get-in-book-search']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-collated-state'], args)
+            res = cursor.fetchall()
+            if res and res[0][0]:
+                statement = SQL['get-in-collated-book-search']
+            else:
+                statement = SQL['get-in-book-search']
             cursor.execute(statement, args)
             res = cursor.fetchall()
 
@@ -719,9 +724,14 @@ def in_book_search_highlighted_results(request):
 
     settings = get_current_registry().settings
     connection_string = settings[config.CONNECTION_STRING]
-    statement = SQL['get-in-book-search-full-page']
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-collated-state'], args)
+            res = cursor.fetchall()
+            if res and res[0][0]:
+                statement = SQL['get-in-collated-book-search-full-page']
+            else:
+                statement = SQL['get-in-book-search-full-page']
             cursor.execute(statement, args)
             res = cursor.fetchall()
 
