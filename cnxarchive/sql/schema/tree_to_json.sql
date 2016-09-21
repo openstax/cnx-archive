@@ -14,7 +14,7 @@ WITH RECURSIVE t(node, title, path,value, depth, corder, is_collated) AS (
            is_collated
     FROM trees tr, modules m
     WHERE m.uuid::text = $1 AND
-          concat_ws('.',  m.major_version, m.minor_version) = $2 AND
+          module_version( m.major_version, m.minor_version) = $2 AND
       tr.documentid = m.module_ident AND
       tr.parent_id IS NULL AND
       tr.is_collated = $3
@@ -25,8 +25,8 @@ UNION ALL
 )
 SELECT
     REPEAT('    ', depth - 1) || 
-    '{"id":"' || COALESCE(m.uuid::text,'subcol') ||concat_ws('.', '@'||m.major_version, m.minor_version) ||'",' ||
-    '"shortId":"' || COALESCE(short_id(m.uuid),'subcol') ||concat_ws('.', '@'||m.major_version, m.minor_version) ||'",' ||
+    '{"id":"' || COALESCE(m.uuid::text,'subcol') || concat_ws('.','@'||m.major_version, m.minor_version) ||'",' ||
+    '"shortId":"' || COALESCE(short_id(m.uuid),'subcol') || concat_ws('.','@'||m.major_version, m.minor_version) ||'",' ||
       '"title":'||to_json(COALESCE(title,name))||
       CASE WHEN (depth < lead(depth,1,0) over(w)) THEN ', "contents":['
            WHEN (depth > lead(depth,1,0) over(w) AND lead(depth,1,0) over(w) = 0 AND m.uuid IS NULL) THEN ', "contents":[]}'||REPEAT(']}',depth - lead(depth,1,0) over(w) - 1)
@@ -52,7 +52,7 @@ WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
     SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
     FROM trees tr, modules m
     WHERE m.uuid::text = $1 AND
-          concat_ws('.',  m.major_version, m.minor_version) = $2 AND
+          module_version( m.major_version, m.minor_version) = $2 AND
       tr.documentid = m.module_ident AND
       tr.parent_id IS NULL AND
       tr.is_collated = FALSE

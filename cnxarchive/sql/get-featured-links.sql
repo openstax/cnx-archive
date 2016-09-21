@@ -10,7 +10,7 @@
 SELECT row_to_json(combined_rows) AS featured_links
 FROM (SELECT
     m.uuid AS id,
-    concat_ws('.', m.major_version, m.minor_version) AS version,
+    module_version(m.major_version, m.minor_version) AS version,
     m.name AS title,
     m.moduleid AS legacy_id,
     m.version AS legacy_version,

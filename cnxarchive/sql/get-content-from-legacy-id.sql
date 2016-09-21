@@ -7,7 +7,7 @@
 
 -- arguments: objid:string
 SELECT
-m.uuid, concat_ws('.', m.major_version, m.minor_version)
+m.uuid, module_version(m.major_version, m.minor_version)
 FROM modules m
 WHERE m.moduleid = %(objid)s
 ORDER BY m.revised DESC LIMIT 1

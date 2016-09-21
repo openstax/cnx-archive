@@ -1910,6 +1910,82 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual("<mtext class=\"q-match\">air</mtext>" in content,
                          True)
 
+    def test_in_collated_book_search(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '6.1'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        # search query param
+        self.request.params = {'q': 'collated'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search'
+
+        from ..views import in_book_search
+        results = in_book_search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        IN_BOOK_SEARCH_RESULT = {
+            'results': {
+                'query': {
+                    'search_term': 'collated',
+                    'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1'
+                    },
+                'total': 2,
+                'items': [
+                    {
+                        'snippet': 'Page content after <span class="q-match">collation</span>',
+                        'matches': 'None',
+                        'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                        'rank': '0.1',
+                        'title': 'Preface'
+                        },
+                    {
+                        'snippet': 'test <span class="q-match">collated</span> content',
+                        'matches': 'None',
+                        'id': '174c4069-2743-42e9-adfe-4c7084f81fc5@1',
+                        'rank': '0.1',
+                        'title': '<span class="q-match">Collated</span> page'
+                        }
+                    ]
+                }
+            }
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual(results, IN_BOOK_SEARCH_RESULT)
+
+    def test_in_collated_book_search_highlighted_results(self):
+        collection_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        collection_version = '6.1'
+        page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        # build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(collection_uuid, collection_version),
+                                  'page_ident_hash': '{}@{}'.format(page_uuid, page_version)}
+        # search query param
+        self.request.params = {'q': 'collated'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'in-book-search-page'
+
+        from ..views import in_book_search_highlighted_results
+        results = in_book_search_highlighted_results(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        title = results['results']['items'][0]['title']
+        id = results['results']['items'][0]['id']
+        content = results['results']['items'][0]['html']
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+        self.assertEqual('Preface', title)
+        self.assertEqual('209deb1f-1a46-4369-9e0d-18674cf58a3e@7', id)
+        self.assertEqual("<mtext class=\"q-match\">collation</mtext>" in content,
+                         True)
+
     def test_search(self):
         # Build the request
         self.request.params = {'q': '"college physics" sort:version'}

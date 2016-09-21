@@ -11,5 +11,5 @@ FROM module_files as mf
   LEFT JOIN files f on mf.fileid = f.fileid
   LEFT JOIN modules m on mf.module_ident = m.module_ident
 WHERE m.uuid = %(id)s AND
-      concat_ws('.', m.major_version, m.minor_version) = %(version)s AND
+      module_version(m.major_version, m.minor_version) = %(version)s AND
       mf.filename = %(filename)s;
