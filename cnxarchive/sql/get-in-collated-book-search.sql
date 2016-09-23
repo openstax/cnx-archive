@@ -8,10 +8,10 @@
 -- arguments: uuid:string, version:string, search_term:string
 WITH RECURSIVE t(node, title, path,value, depth, corder) AS (
 SELECT nodeid, title, ARRAY[nodeid], documentid, 1, ARRAY[childorder]
-FROM 
-  trees tr, 
+FROM
+  trees tr,
   modules m
-WHERE 
+WHERE
   m.uuid::text = %(uuid)s AND
   module_version(m.major_version, m.minor_version) = %(version)s AND
   tr.documentid = m.module_ident AND
@@ -36,10 +36,14 @@ E'StartSel="<span class=""q-match"">", StopSel="</span>", MaxFragments=1, MaxWor
 count_collated_lexemes(cft.item, cft.context, %(search_term)s) as matches,
 ts_rank_cd(cft.module_idx, plainto_tsquery(%(search_term)s)) AS rank
 FROM
- t left join  modules m on t.value = m.module_ident
-        join collated_fti cft on cft.item = m.module_ident
+ t as tt join
+ collated_fti cft on (cft.context = tt.value and tt.depth = 1) join
+ modules m on cft.item = m.module_ident join
+ t on t.value = m.module_ident
+
 WHERE
  cft.module_idx @@ plainto_tsquery(%(search_term)s)
 ORDER BY
  rank DESC,
- path
+ t.path
+;
