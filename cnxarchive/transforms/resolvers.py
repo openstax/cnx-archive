@@ -355,7 +355,7 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
         pages = list(flatten_tree_to_ident_hashes(tree))
         book_ident_hash = join_ident_hash(book_uuid, book_version)
         page_ident_hash = join_ident_hash(page_uuid, page_version)
-        for p_ident_hash in flatten_tree_to_ident_hashes(tree):
+        for p_ident_hash in pages:
             p_id, p_version = split_ident_hash(p_ident_hash)
             if (p_id == page_uuid and
                     (page_version is None or

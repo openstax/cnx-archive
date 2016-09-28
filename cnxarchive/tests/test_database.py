@@ -1221,6 +1221,12 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         WHERE module_ident = %s''', (new_module_ident,))
         self.assertEqual(cursor.fetchone()[0], 0)
 
+        # Make sure there's no fulltext index info
+        cursor.execute('''SELECT count(*)
+        FROM modulefti WHERE module_ident = %s''',
+                       (new_module_ident,))
+        self.assertEqual(cursor.fetchone()[0], 0)
+
         # Copy files for m42119 except *.html and index.cnxml
         cursor.execute('''\
         SELECT f.file, m.filename, f.media_type
@@ -1280,6 +1286,15 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         html = index_htmls[0][0][:]
         self.assertIn('<html', html)
 
+        # Test that the generated index.cnxml.html was processed for fulltext search
+        cursor.execute('''SELECT module_idx, fulltext
+        FROM modulefti WHERE module_ident = %s''',
+                       (new_module_ident,))
+        idx, fulltext = cursor.fetchall()[0]
+        self.assertEqual(len(idx), 3545)
+        self.assertIn('Introduction to Science and the Realm of Physics, '
+                      'Physical Quantities, and Units', fulltext)
+
     @testing.db_connect
     def test_module_files_from_html(self, cursor):
         # Insert abstract with cnxml -- (this is tested elsewhere)
@@ -1305,6 +1320,12 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         # database
         cursor.execute('''SELECT count(*) FROM module_files
         WHERE module_ident = %s''', (new_module_ident,))
+        self.assertEqual(cursor.fetchone()[0], 0)
+
+        # Make sure there's no fulltext index info
+        cursor.execute('''SELECT count(*)
+        FROM modulefti WHERE module_ident = %s''',
+                       (new_module_ident,))
         self.assertEqual(cursor.fetchone()[0], 0)
 
         # Copy files for m42119 except *.html and *.cnxml
@@ -1368,6 +1389,15 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         # Test that the index.html.cnxml contains cnxml
         cnxml = index_cnxmls[0][0][:]
         self.assertIn('<document', cnxml)
+
+        # Test that the inserted index.cnxml.html was processed for fulltext search
+        cursor.execute('''SELECT module_idx, fulltext
+        FROM modulefti WHERE module_ident = %s''',
+                       (new_module_ident,))
+        idx, fulltext = cursor.fetchall()[0]
+        self.assertEqual(len(idx), 3556)
+        self.assertIn('Introduction to Science and the Realm of Physics, '
+                      'Physical Quantities, and Units', fulltext)
 
     @testing.db_connect
     def test_module_files_overwrite_index_html(self, cursor):
@@ -1452,6 +1482,27 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         # Test that the index.cnxml.html contains the custom content.
         html = index_htmls[0][0][:]
         self.assertEqual(custom_content, html)
+
+    @testing.db_connect
+    def test_collated_fulltext_indexing_triggers(self, cursor):
+        """Verify that inserting a collated file association builds
+        the necessary indexes.  This is used when a book is cooked.
+        """
+
+        cursor.execute('INSERT INTO collated_file_associations (context, item, fileid) '
+                       'VALUES(18,19,108)')
+        # Verify that the inserted file has been indexed
+        cursor.execute('SELECT length(module_idx) '
+                       'FROM collated_fti '
+                       'WHERE context = 18 AND item = 19')
+        self.assertEqual(cursor.fetchone()[0], 55)
+
+        cursor.execute('SELECT lexeme '
+                       'FROM  collated_fti_lexemes '
+                       'WHERE context = 18 AND item = 19')
+        lexemes = cursor.fetchall()
+        self.assertEqual(len(lexemes), 55)
+        self.assertIn(('følger',), lexemes)
 
     @testing.db_connect
     def test_tree_to_json(self, cursor):

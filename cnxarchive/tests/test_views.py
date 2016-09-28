@@ -121,6 +121,19 @@ COLLECTION_METADATA = {
                 },
             },
         {
+            u"version": u"6.2",
+            u"revised": u"2013-08-02T01:02:23Z",
+            u"changes": u"Add second collated version",
+            u"publisher": {
+                u"surname": None,
+                u"firstname": "OpenStax College",
+                u"suffix": None,
+                u"title": None,
+                u"id": "OpenStaxCollege",
+                u"fullname": "OpenStax College",
+                },
+            },
+        {
             u'version': u'6.1',
             u'revised': u'2013-07-31T19:07:20Z',
             u'changes': 'Updated something',

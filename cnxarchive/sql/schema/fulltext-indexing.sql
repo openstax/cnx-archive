@@ -139,7 +139,7 @@ CREATE OR REPLACE FUNCTION index_collated_fulltext_trigger()
     _baretext text;
     _idx_vectors tsvector;
   BEGIN
-    has_existing_record := (SELECT item, context FROM collated_fti WHERE item = NEW.item and context = NEW.context);
+    has_existing_record := (SELECT item FROM collated_fti WHERE item = NEW.item and context = NEW.context);
     _baretext := (SELECT xml_to_baretext(convert_from(f.file, 'UTF8')::xml)::text FROM files AS f WHERE f.fileid = NEW.fileid);
     _idx_vectors := to_tsvector(_baretext);
 
@@ -165,7 +165,7 @@ CREATE OR REPLACE FUNCTION index_collated_fulltext_lexeme_update_trigger()
   RETURNS TRIGGER AS $$
   BEGIN
 
-    DELETE from collated_fti_lexemes where item = NEW.item;
+    DELETE from collated_fti_lexemes where item = NEW.item AND context = NEW.context;
 
     INSERT into collated_fti_lexemes (item, context, lexeme, positions)
        (with lex as (SELECT regexp_split_to_table(NEW.module_idx::text, E' \'') as t )
