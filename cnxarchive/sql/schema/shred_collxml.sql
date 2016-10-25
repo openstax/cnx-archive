@@ -12,7 +12,7 @@ from xml import sax
 
 # While the collxml files we process potentially contain many of these
 # namespaces, I take advantage of the fact that almost none of the
-# localnames (tags names) acutally overlap. The one case that does (title)
+# localnames (tags names) actually overlap. The one case that does (title)
 # actually works in our favor, since we want to treat it the same anyway.
 
 ns = { "cnx":"http://cnx.rice.edu/cnxml",
@@ -32,6 +32,23 @@ NODE_INS=plpy.prepare("INSERT INTO trees (parent_id,documentid,childorder) SELEC
 NODE_NODOC_INS=plpy.prepare("INSERT INTO trees (parent_id,childorder) VALUES ($1, $2) returning nodeid", ("int","int"))
 NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 from modules where nodeid = $2 and (documentid is null or (documentid = module_ident and name != $1))", ("text","int"))
 
+NODE_TITLE_DOC_UPD=plpy.prepare("UPDATE trees set title = $1, documentid = $2 where nodeid = $3", ("text", "int", "int"))
+FIND_SUBCOL=plpy.prepare("SELECT m.module_ident from modules m join modules p on m.parent = p.module_ident where m.name = $1 and p.moduleid = $2 and p.version = $3", ("text","text","text"))
+MODULE_SUBCOL_INS=plpy.prepare("""
+INSERT into modules (portal_type, moduleid, name,
+    abstractid, version, created, revised,
+    licenseid, submitter, submitlog, stateid,
+    parent, language, doctype,
+    authors, maintainers, licensors, parentauthors,
+    major_version, minor_version, print_style)
+SELECT 'SubCollection', 'col'||nextval('collectionid_seq'), $1,
+    abstractid, version, created, revised,
+    licenseid, submitter, submitlog, stateid,
+    module_ident, language, doctype,
+    authors, maintainers, licensors, parentauthors,
+    major_version, minor_version, print_style
+FROM modules WHERE moduleid = $2 and version = $3  RETURNING module_ident""", ("text","text","text"))
+
 def _do_insert(pid,cid,oid=0,ver=0):
     if oid:
         res = plpy.execute(NODE_INS,(pid,cid,oid,ver))
@@ -45,8 +62,17 @@ def _do_insert(pid,cid,oid=0,ver=0):
         nodeid = None
     return nodeid
 
-def _do_update(title,nid):
-    plpy.execute(NODE_TITLE_UPD, (title,nid))
+def _get_subcol(title,oid,ver):
+    res = plpy.execute(FIND_SUBCOL,(title,oid,ver))
+    if not res.nrows():
+        res = plpy.execute(MODULE_SUBCOL_INS,(title,oid,ver))
+    return res[0]["module_ident"]
+
+def _do_update(title,nid, docid):
+    if docid:
+        plpy.execute(NODE_TITLE_DOC_UPD, (title, docid, nid))
+    else:
+        plpy.execute(NODE_TITLE_UPD, (title,nid))
 
 class ModuleHandler(sax.ContentHandler):
     def __init__(self):
@@ -59,19 +85,21 @@ class ModuleHandler(sax.ContentHandler):
         self.title = u''
         self.nodeid = 0
         self.derivedfrom = [None]
+        self.titled = [None]
 
     def startElementNS(self, (uri, localname), qname, attrs):
         self.map[localname] = u''
         self.tag = localname
 
         if localname == 'module':
+            self.titled.append(localname)
             self.childorder[-1] += 1
             nodeid = _do_insert(self.parents[-1],self.childorder[-1],attrs[(None,"document")],attrs[(ns["cnxorg"],"version-at-this-collection-version")])
             if nodeid:
                 self.nodeid = nodeid
 
         elif localname == 'subcollection':
-            # TODO insert a metadata record into modules table for subcol.
+            self.titled.append(localname)
             self.childorder[-1] += 1
             nodeid = _do_insert(self.parents[-1],self.childorder[-1])
             if nodeid:
@@ -93,8 +121,13 @@ class ModuleHandler(sax.ContentHandler):
             self.version = self.map[localname]
         elif localname == 'title' and not self.derivedfrom[-1]:
             self.title = self.map[localname]
-            if self.parents[-1]: # current node is a subcollection or module
-               _do_update(self.title.encode('utf-8'), self.nodeid)
+            if self.titled[-1] in ('subcollection', 'module'):
+                my_title  = self.title.encode('utf-8')
+                mod_id = None
+                if self.titled[-1] == 'subcollection': #  we are in a subcollection
+                    mod_id = _get_subcol(self.title.encode('utf-8'), self.contentid, self.version)
+                _do_update(my_title, self.nodeid, mod_id)
+
 
         elif localname == 'derived-from':
             self.derivedfrom.pop()
@@ -109,10 +142,12 @@ class ModuleHandler(sax.ContentHandler):
             self.childorder.append(1)
 
         elif localname == 'content':
-            #this occurs at the end of each container class: collection or sub.
+            #  this occurs at the end of each container class: collection or subcol.
             self.parents.pop()
             self.childorder.pop()
 
+        elif localname in ('module', 'subcollection'):
+            self.titled.pop()
 
 parser = sax.make_parser()
 parser.setFeature(sax.handler.feature_namespaces, 1)
