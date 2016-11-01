@@ -33,21 +33,37 @@ NODE_NODOC_INS=plpy.prepare("INSERT INTO trees (parent_id,childorder) VALUES ($1
 NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 from modules where nodeid = $2 and (documentid is null or (documentid = module_ident and name != $1))", ("text","int"))
 
 NODE_TITLE_DOC_UPD=plpy.prepare("UPDATE trees set title = $1, documentid = $2 where nodeid = $3", ("text", "int", "int"))
-FIND_SUBCOL=plpy.prepare("SELECT m.module_ident from modules m join modules p on m.parent = p.module_ident where m.name = $1 and p.moduleid = $2 and p.version = $3", ("text","text","text"))
-MODULE_SUBCOL_INS=plpy.prepare("""
-INSERT into modules (portal_type, moduleid, name,
+FIND_SAME_SUBCOL=plpy.prepare("SELECT m.module_ident from modules m join modules c on m.uuid = uuid5(c.uuid, $1) where m.name = $1  and m.version = $3 and c.moduleid = $2 and c.version = $3", ("text","text","text"))
+FIND_SUBCOL_ID=plpy.prepare("SELECT m.moduleid from modules m join modules c on m.uuid = uuid5(c.uuid, $1) where m.name = $1 and c.moduleid = $2", ("text","text"))
+SUBCOL_INS=plpy.prepare("""
+INSERT into modules (portal_type, moduleid, name, uuid,
     abstractid, version, created, revised,
     licenseid, submitter, submitlog, stateid,
     parent, language, doctype,
     authors, maintainers, licensors, parentauthors,
     major_version, minor_version, print_style)
-SELECT 'SubCollection', 'col'||nextval('collectionid_seq'), $1,
+SELECT 'SubCollection', 'col'||nextval('collectionid_seq'), $1, uuid5(uuid, $1),
     abstractid, version, created, revised,
     licenseid, submitter, submitlog, stateid,
-    module_ident, language, doctype,
+    parent, language, doctype,
     authors, maintainers, licensors, parentauthors,
     major_version, minor_version, print_style
 FROM modules WHERE moduleid = $2 and version = $3  RETURNING module_ident""", ("text","text","text"))
+
+SUBCOL_NEW_VERSION=plpy.prepare("""
+INSERT into modules (portal_type, moduleid, name, uuid,
+    abstractid, version, created, revised,
+    licenseid, submitter, submitlog, stateid,
+    parent, language, doctype,
+    authors, maintainers, licensors, parentauthors,
+    major_version, minor_version, print_style)
+SELECT 'SubCollection', $4, $1, uuid5(uuid, $1),
+    abstractid, version, created, revised,
+    licenseid, submitter, submitlog, stateid,
+    parent, language, doctype,
+    authors, maintainers, licensors, parentauthors,
+    major_version, minor_version, print_style
+FROM modules WHERE moduleid = $2 and version = $3  RETURNING module_ident""", ("text","text","text","text"))
 
 def _do_insert(pid,cid,oid=0,ver=0):
     if oid:
@@ -63,9 +79,14 @@ def _do_insert(pid,cid,oid=0,ver=0):
     return nodeid
 
 def _get_subcol(title,oid,ver):
-    res = plpy.execute(FIND_SUBCOL,(title,oid,ver))
+    res = plpy.execute(FIND_SAME_SUBCOL, (title, oid, ver))
     if not res.nrows():
-        res = plpy.execute(MODULE_SUBCOL_INS,(title,oid,ver))
+        res = plpy.execute(FIND_SUBCOL_IDS, (title, oid))
+        if not res.nrows():
+            res = plpy.execute(SUBCOL_INS, (title, oid, ver))
+        else:
+            res = plpy.execute(SUBCOL_NEW_VERSION,
+                     (title, oid, ver, res['moduleid']))
     return res[0]["module_ident"]
 
 def _do_update(title,nid, docid):
