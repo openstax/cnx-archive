@@ -34,7 +34,12 @@ NODE_TITLE_UPD=plpy.prepare("UPDATE trees set title = $1 from modules where node
 
 NODE_TITLE_DOC_UPD=plpy.prepare("UPDATE trees set title = $1, documentid = $2 where nodeid = $3", ("text", "int", "int"))
 FIND_SAME_SUBCOL=plpy.prepare("SELECT m.module_ident from modules m join modules c on m.uuid = uuid5(c.uuid, $1) where m.name = $1  and m.version = $3 and c.moduleid = $2 and c.version = $3", ("text","text","text"))
-FIND_SUBCOL_ID=plpy.prepare("SELECT m.moduleid from modules m join modules c on m.uuid = uuid5(c.uuid, $1) where m.name = $1 and c.moduleid = $2", ("text","text"))
+FIND_SUBCOL_IDS=plpy.prepare("SELECT m.moduleid from modules m join modules c on m.uuid = uuid5(c.uuid, $1) where m.name = $1 and c.moduleid = $2", ("text","text"))
+SUBCOL_ACL=plpy.prepare("""
+INSERT INTO document_controls (uuid, licenseid)
+SELECT uuid5(m.uuid, $1), dc.licenseid
+FROM document_controls dc join modules m on  dc.uuid = m.uuid 
+WHERE moduleid = $2 and version = $3 """, ("text","text","text"))
 SUBCOL_INS=plpy.prepare("""
 INSERT into modules (portal_type, moduleid, name, uuid,
     abstractid, version, created, revised,
@@ -83,6 +88,7 @@ def _get_subcol(title,oid,ver):
     if not res.nrows():
         res = plpy.execute(FIND_SUBCOL_IDS, (title, oid))
         if not res.nrows():
+            plpy.execute(SUBCOL_ACL, (title, oid, ver))
             res = plpy.execute(SUBCOL_INS, (title, oid, ver))
         else:
             res = plpy.execute(SUBCOL_NEW_VERSION,
