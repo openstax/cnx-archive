@@ -310,7 +310,7 @@ def get_collections(module_ident, plpy):
     WITH RECURSIVE t(node, parent, path, document) AS (
         SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
         FROM trees tr
-        WHERE tr.documentid = $1
+        WHERE tr.documentid = $1 and tr.is_collated = 'False'
     UNION ALL
         SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
         FROM trees c JOIN t ON (c.nodeid = t.parent)
@@ -318,7 +318,7 @@ def get_collections(module_ident, plpy):
     )
     SELECT DISTINCT m.module_ident
     FROM t JOIN latest_modules m ON (t.document = m.module_ident)
-    WHERE t.parent IS NULL
+    WHERE t.parent IS NULL ORDER BY m.module_ident
     ''', ('integer',))
     for i in plpy.execute(plan, (module_ident,)):
         yield i['module_ident']
@@ -327,14 +327,14 @@ def get_collections(module_ident, plpy):
 def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     """Create a new tree for the collection based on the old tree.
 
-    This usesnew document ids, replacing old ones.
+    This uses new document ids, replacing old ones.
     """
     get_tree = plpy.prepare('''
     WITH RECURSIVE t(node, parent, document, title, childorder, latest, path)
         AS (SELECT tr.nodeid, tr.parent_id, tr.documentid, tr.title,
                    tr.childorder, tr.latest, ARRAY[tr.nodeid]
             FROM trees tr
-            WHERE tr.documentid = $1
+            WHERE tr.documentid = $1 AND tr.is_collated = 'False'
     UNION ALL
         SELECT c.nodeid, c.parent_id, c.documentid, c.title,
                c.childorder, c.latest, path || ARRAY[c.nodeid]
@@ -873,7 +873,7 @@ def get_collection_tree(collection_ident, cursor):
     WITH RECURSIVE t(node, parent, document, path) AS (
         SELECT tr.nodeid, tr.parent_id, tr.documentid, ARRAY[tr.nodeid]
         FROM trees tr
-        WHERE tr.documentid = %s
+        WHERE tr.documentid = %s and tr.is_collated = 'False'
     UNION ALL
         SELECT c.nodeid, c.parent_id, c.documentid, path || ARRAY[c.nodeid]
         FROM trees c JOIN t ON c.parent_id = t.node
