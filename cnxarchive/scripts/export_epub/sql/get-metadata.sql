@@ -23,6 +23,7 @@ FROM
    ARRAY(SELECT tag FROM moduletags AS mt NATURAL JOIN tags WHERE mt.module_ident = m.module_ident) AS subjects,
    ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords,
    m.uuid || '@' || concat_ws('.', m.major_version, m.minor_version) AS "cnx-archive-uri",
+   short_id(m.uuid) || '@' || concat_ws('.', m.major_version, m.minor_version) AS "cnx-archive-shortid",
    -- People
    ARRAY(SELECT row_to_json(user_rows) FROM
          (SELECT username AS id, first_name AS firstname, last_name AS surname,
