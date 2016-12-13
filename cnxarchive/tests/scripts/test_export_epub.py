@@ -142,6 +142,8 @@ class MetadataGetterTestCase(BaseTestCase):
         id, version = ('f6024d8a-1868-44c7-ab65-45419ef54881', '3')
         ident_hash = '{}@{}'.format(id, version)
         metadata = self.target(ident_hash)
+        from ...utils import CNXHash
+        shortid = '{}@{}'.format(CNXHash(id).get_shortid(), version)
 
         metadata_keys = [
             'id', 'version',
@@ -152,6 +154,8 @@ class MetadataGetterTestCase(BaseTestCase):
             # People keys
             'authors', 'editors', 'illustrators', 'publishers',
             'copyright_holders',
+            # Derived from id
+            'cnx-archive-shortid',
             # Print style
             'print_style',
             # Derivation keys
@@ -176,6 +180,7 @@ class MetadataGetterTestCase(BaseTestCase):
         self.assertEqual(metadata['keywords'], [])
         self.assertEqual(metadata['cnx-archive-uri'],
                          u'f6024d8a-1868-44c7-ab65-45419ef54881@3')
+        self.assertEqual(metadata['cnx-archive-shortid'], shortid)
 
         roles = [
             {u'firstname': u'OpenStax College',
