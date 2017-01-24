@@ -54,8 +54,8 @@ class InitializeDBTestCase(unittest.TestCase):
         #   run the function.
         with self.assertRaises(psycopg2.InternalError) as caught_exception:
             self.target(self.settings)
-        self.assertEqual(caught_exception.exception.message,
-                         'Database is already initialized.\n')
+        self.assertIn('Database is already initialized.\n',
+                      caught_exception.exception.message)
 
     @testing.db_connect
     def test_venv(self, cursor):
