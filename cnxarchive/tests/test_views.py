@@ -2574,6 +2574,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Made 4 requests, so should have called db search 4 times
         self.assertEqual(self.db_search_call_count, 3)
 
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_pagination(self):
         # Test search results with pagination
 
@@ -2671,6 +2672,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # been cached in memcached
         self.assertEqual(self.db_search_call_count, 1)
 
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_w_nocache(self):
         # Disable caching from url with nocache=True
 
@@ -2716,6 +2718,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 2)
 
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_w_cache_expired(self):
         # Build the request
         self.request.params = {'q': 'introduction',
@@ -2763,6 +2766,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(content_type, 'application/json')
         self.assertEqual(self.db_search_call_count, 2)
 
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_w_normal_cache(self):
         # Build the request
         self.request.params = {'q': '"college physics"'}
@@ -2793,6 +2797,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(results['results']['total'], 3)
         self.assertEqual(self.db_search_call_count, 2)
 
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_w_long_cache(self):
         # Test searches which should be cached for longer
 

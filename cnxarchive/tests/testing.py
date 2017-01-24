@@ -9,8 +9,10 @@ import functools
 import os
 import re
 import sys
+import warnings
 from datetime import datetime
 
+import memcache
 import pytz
 import psycopg2
 import psycopg2.extras
@@ -126,6 +128,19 @@ else:
         return sitepackages
 
 
+def is_memcache_enabled():
+    settings = integration_test_settings()
+    memcache_servers = settings['memcache-servers'].split()
+    mc = memcache.Client(memcache_servers, debug=0)
+    is_enabled = bool(mc.get_stats())
+    if not is_enabled:
+        warnings.warn("memcached is not running, some tests will be skipped")
+    return is_enabled
+
+
+IS_MEMCACHE_ENABLED = is_memcache_enabled()
+
+
 class SchemaFixture(object):
     """A testing fixture for a live (same as production) SQL database.
     This will set up the database once for a test case. After each test
@@ -234,6 +249,8 @@ __all__ = (
     'db_connection_factory',
     'fake_plpy',
     'integration_test_settings',
+    'IS_MEMCACHE_ENABLED',
+    'is_memcache_enabled',
     'is_venv',
     'mocked_fromtimestamp',
     'schema_fixture',
