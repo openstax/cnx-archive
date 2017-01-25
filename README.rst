@@ -191,8 +191,8 @@ Running tests
 .. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master
    :target: https://travis-ci.org/Connexions/cnx-archive
 
-.. image:: https://coveralls.io/repos/Connexions/cnx-archive/badge.svg?branch=master&service=github
-   :target: https://coveralls.io/github/Connexions/cnx-archive?branch=master
+.. image:: https://img.shields.io/codecov/c/github/Connexions/cnx-archive.svg
+   :target: https://codecov.io/gh/Connexions/cnx-archive
 
 The tests use the standard library ``unittest`` package and can therefore
 be run with minimal effort. Make a testing config, such as testing.ini,
