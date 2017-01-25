@@ -67,5 +67,7 @@ class InitializeDBTestCase(unittest.TestCase):
         self.assertNotEqual(return_code, 0)
 
         # Ensure a meaningfully message was sent to stderr.
-        expected_message_line = 'Error:  Database is already initialized.\n'
-        mocked_stderr.write.assert_any_call(expected_message_line)
+        expected_message_line = 'Error:  Database is already initialized.'
+        call_args_repr = repr(mocked_stderr.write.call_args_list)
+        # Postgres > 9.4 includes the raise location
+        self.assertIn(expected_message_line, call_args_repr)

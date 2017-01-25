@@ -768,18 +768,7 @@ INSERT INTO users
                         'f3c9ab70-a916-4d8c-9256-42953287b4e9',
                         'd395b566-5fe3-4428-bcb2-19016e3aa3ce',
                         ]
-        matched_on_keys = [[u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'force', u'physics'],
-                           [u'physics', u'force'],
-                           [u'physics', u'force'],
-                           ]
+        matched_on_keys = [[u'force', u'physics']] * 11
 
         results = self.call_target(query_params, query_type='weakAND')
         # Basically, everything matches the first search term,
@@ -790,5 +779,5 @@ INSERT INTO users
             self.assertEqual(results[i]['id'], id)
         # This just verifies that only two of the three terms
         #   matched on each result.
-        self.assertEqual([r.matched.keys() for r in results],
+        self.assertEqual([sorted(r.matched.keys()) for r in results],
                          matched_on_keys)
