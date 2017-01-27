@@ -10,9 +10,9 @@ from __future__ import print_function
 import sys
 
 import psycopg2
+from cnxdb.init import init_db, DBSchemaInitialized
 
 from cnxarchive import config
-from cnxarchive.database import initdb
 from cnxarchive.scripts._utils import (
     create_parser, get_app_settings_from_arguments,
     )
@@ -38,9 +38,9 @@ def main(argv=None):
 
     settings = get_app_settings_from_arguments(args)
     try:
-        initdb(settings)
-    except psycopg2.InternalError as exc:
-        print("Error:  {}".format(exc.args[0]), file=sys.stderr)
+        init_db(settings[config.CONNECTION_STRING], as_venv_importable=True)
+    except DBSchemaInitialized:
+        print("Error:  Database is already initialized.", file=sys.stderr)
         return 1
 
     if args.with_example_data:

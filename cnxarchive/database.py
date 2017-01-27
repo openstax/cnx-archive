@@ -12,6 +12,7 @@ import psycopg2
 import sys
 import logging
 
+import cnxdb
 from pyramid.threadlocal import get_current_registry
 
 from . import config
@@ -22,9 +23,8 @@ from .transforms import (
 from .utils import split_ident_hash, IdentHashMissingVersion
 
 here = os.path.abspath(os.path.dirname(__file__))
-SQL_DIRECTORY = os.path.join(here, 'sql')
-DB_SCHEMA_DIRECTORY = os.path.join(SQL_DIRECTORY, 'schema')
-SCHEMA_MANIFEST_FILENAME = 'manifest.json'
+CNXDB_DIRECTORY = os.path.abspath(os.path.dirname(cnxdb.__file__))
+SQL_DIRECTORY = os.path.join(CNXDB_DIRECTORY, 'archive-sql')
 
 logger = logging.getLogger('cnxarchive')
 
@@ -71,140 +71,12 @@ SQL = {
     }
 
 
-def _read_schema_manifest(manifest_filepath):
-    with open(os.path.abspath(manifest_filepath), 'rb') as fp:
-        raw_manifest = json.loads(fp.read())
-    manifest = []
-    relative_dir = os.path.abspath(os.path.dirname(manifest_filepath))
-    for item in raw_manifest:
-        if isinstance(item, dict):
-            file = item['file']
-        else:
-            file = item
-        if os.path.isdir(os.path.join(relative_dir, file)):
-            next_manifest = os.path.join(
-                relative_dir,
-                file,
-                SCHEMA_MANIFEST_FILENAME)
-            manifest.append(_read_schema_manifest(next_manifest))
-        else:
-            manifest.append(os.path.join(relative_dir, file))
-    return manifest
-
-
-def _compile_manifest(manifest, content_modifier=None):
-    """Compile a given ``manifest`` into a sequence of schema items.
-
-    Apply the optional ``content_modifier`` to each file's contents.
-    """
-    items = []
-    for item in manifest:
-        if isinstance(item, list):
-            items.extend(_compile_manifest(item, content_modifier))
-        else:
-            with open(item, 'rb') as fp:
-                content = fp.read()
-            if content_modifier:
-                content = content_modifier(item, content)
-            items.append(content)
-    return items
-
-
 def db_connect(connection_string=None):
     """Function to supply a database connection object."""
     if connection_string is None:
         settings = get_current_registry().settings
         connection_string = settings[config.CONNECTION_STRING]
     return psycopg2.connect(connection_string)
-
-
-def get_schema():
-    """Return the current schema."""
-    manifest_filepath = os.path.join(DB_SCHEMA_DIRECTORY,
-                                     SCHEMA_MANIFEST_FILENAME)
-    schema_manifest = _read_schema_manifest(manifest_filepath)
-
-    # Modify the file so that it contains comments that say it's origin.
-    def file_wrapper(f, c):
-        return u"-- FILE: {0}\n{1}\n-- \n".format(f, c)
-
-    return _compile_manifest(schema_manifest, file_wrapper)
-
-
-def initdb(settings):
-    """Initialize the database from the given settings."""
-    connection_string = settings[config.CONNECTION_STRING]
-    with psycopg2.connect(connection_string) as db_connection:
-        with db_connection.cursor() as cursor:
-            for schema_part in get_schema():
-                cursor.execute(schema_part)
-
-            # If you are connecting to a database that is not localhost,
-            # don't initalize with virtualenv
-            db_dict = dict(p.split('=') for p in db_connection.dsn.split())
-            if db_dict.get('host', 'localhost') == 'localhost':
-                # If virtualenv is active, use that for postgres
-                if hasattr(sys, 'real_prefix'):
-                    activate_path = os.path.join(
-                        os.path.realpath(sys.prefix),
-                        'bin/activate_this.py')
-                    cursor.execute("SELECT current_database();")
-                    db_name = cursor.fetchone()[0]
-
-                    cursor.execute("""SELECT schema_name FROM
-                                      information_schema.schemata
-                                      WHERE schema_name = 'venv';""")
-                    schema_exists = cursor.fetchall()
-
-                    if not schema_exists:
-                        cursor.execute("CREATE SCHEMA venv")
-                        try:
-                            cursor.execute("SAVEPOINT session_preload")
-                            cursor.execute("ALTER DATABASE \"{}\" SET "
-                                           "session_preload_libraries ="
-                                           "'session_exec'".format(db_name))
-                        except psycopg2.ProgrammingError, e:
-                            if e.message.startswith(
-                                    'unrecognized configuration parameter'):
-
-                                cursor.execute("ROLLBACK TO SAVEPOINT "
-                                               "session_preload")
-                                logger.warning("Postgresql < 9.4: make sure "
-                                               "to set "
-                                               "'local_preload_libraries "
-                                               "= session_exec' in "
-                                               "postgresql.conf and restart")
-                            else:
-                                raise
-
-                        cursor.execute("ALTER DATABASE \"{}\" SET "
-                                       "session_exec.login_name = "
-                                       "'venv.activate_venv'"
-                                       .format(db_name))
-                        sql = """CREATE FUNCTION venv.activate_venv()
-RETURNS void LANGUAGE plpythonu AS $_$
-import sys
-import os
-import site
-old_os_path = os.environ.get('PATH','')
-os.environ['PATH'] = os.path.dirname(os.path.abspath('{activate_path}')) \
-+ os.pathsep + old_os_path
-base = os.path.dirname(os.path.dirname(os.path.abspath('{activate_path}')))
-site_packages = os.path.join(base, 'lib', 'python%s' % sys.version[:3], \
-'site-packages')
-prev_sys_path = list(sys.path)
-site.addsitedir(site_packages)
-sys.real_prefix = sys.prefix
-sys.prefix = base
-# Move the added items to the front of the path:
-new_sys_path = []
-for item in list(sys.path):
-    if item not in prev_sys_path:
-        new_sys_path.append(item)
-        sys.path.remove(item)
-sys.path[:0] = new_sys_path
-$_$""".format(activate_path=activate_path)
-                        cursor.execute(sql)
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):
