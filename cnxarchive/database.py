@@ -567,7 +567,7 @@ def assign_moduleid_default_trigger(plpy, td):
 
     if moduleid is None:
         # If the moduleid is not supplied, it is a new publication.
-        if portal_type == "Collection":
+        if portal_type in ("Collection", "SubCollection"):
             prefix, sequence_name = 'col', "collectionid_seq"
         else:
             prefix, sequence_name = 'm', "moduleid_seq"
