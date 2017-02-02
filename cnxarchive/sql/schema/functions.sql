@@ -157,7 +157,9 @@ AS $$
   SELECT concat_ws('.', major, minor) ;
 $$ LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION public.is_baked(col_uuid uuid, col_ver text)
+SET check_function_bodies = false;
+
+CREATE OR REPLACE FUNCTION is_baked(col_uuid uuid, col_ver text)
  RETURNS boolean
  IMMUTABLE
 AS $function$
