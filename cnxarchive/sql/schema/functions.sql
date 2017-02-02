@@ -1,4 +1,5 @@
 CREATE FUNCTION uuid_generate_v4 () RETURNS uuid LANGUAGE plpythonu AS $$ import uuid; return uuid.uuid4() $$ ;
+CREATE FUNCTION uuid5 (namespace uuid, name text) RETURNS uuid LANGUAGE plpythonu AS $$ import uuid; return uuid.uuid5(uuid.UUID(namespace), name) $$ ;
 CREATE FUNCTION "comma_cat" (text,text) RETURNS text AS 'select case WHEN $2 is NULL or $2 = '''' THEN $1 WHEN $1 is NULL or $1 = '''' THEN $2 ELSE $1 || '','' || $2 END' LANGUAGE 'sql';
 
 CREATE FUNCTION "semicomma_cat" (text,text) RETURNS text AS 'select case WHEN $2 is NULL or $2 = '''' THEN $1 WHEN $1 is NULL or $1 = '''' THEN $2 ELSE $1 || '';--;'' || $2 END' LANGUAGE 'sql';
@@ -155,3 +156,15 @@ CREATE OR REPLACE FUNCTION module_version(major int, minor int)
 AS $$
   SELECT concat_ws('.', major, minor) ;
 $$ LANGUAGE SQL;
+
+SET check_function_bodies = false;
+
+CREATE OR REPLACE FUNCTION is_baked(col_uuid uuid, col_ver text)
+ RETURNS boolean
+ IMMUTABLE
+AS $function$
+SELECT bool_or(is_collated)
+    FROM modules JOIN trees
+        ON module_ident = documentid
+    WHERE uuid = col_uuid AND module_version(major_version, minor_version) = col_ver
+$function$ LANGUAGE SQL;

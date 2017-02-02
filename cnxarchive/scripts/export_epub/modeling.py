@@ -79,11 +79,18 @@ def tree_to_nodes(tree, context=None):
             sub_nodes = tree_to_nodes(item, context=context)
             titles = _title_overrides_from_tree(item)
             metadata = {}
-            if item.get('title'):
-                metadata['title'] = item['title']
-            tbinder = cnxepub.TranslucentBinder(sub_nodes,
-                                                metadata=metadata,
-                                                title_overrides=titles)
+            for key in ('title', 'id', 'shortId'):
+                if item.get(key):
+                    metadata[key] = item[key]
+            if item.get('id') is not None:
+                tbinder = cnxepub.Binder(item.get('id'),
+                                         sub_nodes,
+                                         metadata=metadata,
+                                         title_overrides=titles)
+            else:
+                tbinder = cnxepub.TranslucentBinder(sub_nodes,
+                                                    metadata=metadata,
+                                                    title_overrides=titles)
             nodes.append(tbinder)
         else:
             nodes.append(document_factory(item['id'], context=context))

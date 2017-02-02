@@ -718,6 +718,6 @@ class ModuleToCnxmlTestCase(unittest.TestCase):
         exception = caught_exc.exception
         from lxml.etree import XMLSyntaxError
         self.assertTrue(isinstance(exception, XMLSyntaxError))
-        self.assertEqual(
-            exception.message,
-            u"attributes construct error, line 2, column 197")
+        self.assertIn(
+            u"attributes construct error, line 2",
+            exception.message)
