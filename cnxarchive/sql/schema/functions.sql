@@ -156,3 +156,13 @@ CREATE OR REPLACE FUNCTION module_version(major int, minor int)
 AS $$
   SELECT concat_ws('.', major, minor) ;
 $$ LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION public.is_baked(col_uuid uuid, col_ver text)
+ RETURNS boolean
+ IMMUTABLE
+AS $function$
+SELECT bool_or(is_collated)
+    FROM modules JOIN trees
+        ON module_ident = documentid
+    WHERE uuid = col_uuid AND module_version(major_version, minor_version) = col_ver
+$function$ LANGUAGE SQL;
