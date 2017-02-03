@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+import os
+
+from contextlib import contextmanager
+
+
+@contextmanager
+def open_here(filepath, *args, **kwargs):
+    """open a file relative to this files location"""
+
+    here = os.path.abspath(os.path.dirname(__file__))
+    fp = open(os.path.join(here, filepath), *args, **kwargs)
+    yield fp
+    fp.close()
 
 
 def up(cursor):
@@ -21,10 +34,10 @@ SELECT bool_or(is_collated)
           module_version(major_version, minor_version) = col_ver
 $function$;""")
 
-    with open('../schema/subcol_uuids_func.sql', 'rb') as f:
+    with open_here('../schema/subcol_uuids_func.sql', 'rb') as f:
         cursor.execute(f.read())
 
-    with open('../schema/shred_collxml.sql', 'rb') as f:
+    with open_here('../schema/shred_collxml.sql', 'rb') as f:
         cursor.execute(f.read())
 
 
@@ -35,5 +48,5 @@ def down(cursor):
     cursor.execute('drop function is_baked(uuid, text)')
     cursor.execute('drop function subcol_uuids(text, text)')
 
-    with open('shred_collxml_20170201213850_pre.sql', 'rb') as f:
+    with open_here('shred_collxml_20170201213850_pre.sql', 'rb') as f:
         cursor.execute(f.read())
