@@ -92,7 +92,7 @@ def _get_subcol(title,oid,ver):
             res = plpy.execute(SUBCOL_INS, (title, oid, ver))
         else:
             res = plpy.execute(SUBCOL_NEW_VERSION,
-                     (title, oid, ver, res['moduleid']))
+                     (title, oid, ver, res[0]['moduleid']))
     return res[0]["module_ident"]
 
 def _do_update(title,nid, docid):
