@@ -5,8 +5,9 @@ from setuptools import setup, find_packages
 IS_PY3 = sys.version_info > (3,)
 
 install_requires = (
-    'cnx-query-grammar',
+    'cnx-db',
     'cnx-epub',
+    'cnx-query-grammar',
     'lxml',
     'python-memcached',
     'psycopg2>=2.5',

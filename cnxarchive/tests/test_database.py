@@ -18,58 +18,6 @@ import psycopg2
 from . import testing
 
 
-class InitializeDBTestCase(unittest.TestCase):
-    fixture = testing.schema_fixture
-
-    def setUp(self):
-        self.settings = testing.integration_test_settings()
-
-    def tearDown(self):
-        self.fixture.tearDown()
-
-    @property
-    def target(self):
-        from ..database import initdb
-        return initdb
-
-    @testing.db_connect
-    def test_success(self, cursor):
-        self.target(self.settings)
-        # Simply test for the 'licenses' table.
-        # This isn't comprehensive, but it tests that the schema was put in place
-        # and static data (constants) values have been added to tables.
-        cursor.execute("SELECT code, version FROM licenses ORDER BY code, version ASC;")
-        try:
-            license = cursor.fetchone()
-        except Exception as exc:
-            self.fail(exc)
-        self.assertEqual(license, ('by', '1.0'))
-
-    def test_initdb_on_already_initialized_db(self):
-        """Testing the ``initdb`` raises a discernible error when the
-        database is already initialized.
-        """
-        self.fixture.setUp()
-        # The fixture has initialized the database, so we only need to
-        #   run the function.
-        with self.assertRaises(psycopg2.InternalError) as caught_exception:
-            self.target(self.settings)
-        self.assertIn('Database is already initialized.\n',
-                      caught_exception.exception.message)
-
-    @testing.db_connect
-    def test_venv(self, cursor):
-        """Testing to veryify the venv schema is properly created and the correct
-        instance of python is used
-        """
-        cursor.execute("CREATE FUNCTION pypath() RETURNS text LANGUAGE "
-                       "plpythonu AS $$import sys;return sys.prefix$$")
-        cursor.execute("SELECT pypath()")
-        db_pypath = cursor.fetchone()[0]
-
-        self.assertEqual(True, os.path.samefile(db_pypath, sys.prefix))
-
-
 class MiscellaneousFunctionsTestCase(unittest.TestCase):
     fixture = testing.schema_fixture
 

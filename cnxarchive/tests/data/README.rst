@@ -1,6 +1,6 @@
 :data.sql:
     Generated via::
-        cnx-archive-initdb cnxarchive/tests/testing.ini --with-example-data
+        cnx-db init -d cnxarchive-testing -U cnxarchive
         pg_dump -a -T schema_migrations -T licenses -T tags -T roles -T modulestates -T service_states --disable-triggers --inserts cnxarchive-testing > cnxarchive/tests/data/data.sql
 
         If you have a a feature branch with schema and/or data changes, you'll
