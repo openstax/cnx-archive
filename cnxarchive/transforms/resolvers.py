@@ -72,12 +72,12 @@ SELECT row_to_json(row) FROM (
 """, ('integer', 'text'))
 
 SQL_MODULE_UUID_N_VERSION_BY_ID_STATEMENT = ("""\
-SELECT uuid, concat_ws('.', major_version, minor_version) FROM latest_modules
+SELECT uuid, module_version(major_version, minor_version) FROM latest_modules
 WHERE moduleid = $1
 """, ('text',))
 
 SQL_MODULE_UUID_N_VERSION_BY_ID_AND_VERSION_STATEMENT = ("""\
-SELECT uuid, concat_ws('.', major_version, minor_version) FROM modules
+SELECT uuid, module_version(major_version, minor_version) FROM modules
 WHERE moduleid = $1 and version = $2
 """, ('text', 'text'))
 
@@ -98,7 +98,7 @@ WHERE uuid = $1
 
 SQL_MODULE_ID_N_VERSION_BY_UUID_AND_VERSION_STATEMENT = ("""\
 SELECT moduleid, version FROM modules
-WHERE uuid = $1 and concat_ws('.', major_version, minor_version) = $2
+WHERE uuid::text = $1 and module_version(major_version, minor_version) = $2
 """, ('uuid', 'text'))
 
 SQL_FILENAME_BY_SHA1_STATMENT = ("""\
@@ -291,7 +291,7 @@ class CnxmlToHtmlReferenceResolver(BaseReferenceResolver):
             args = (module_id,)
         try:
             result = self.plpy.execute(plan, args, 1)[0]
-            uuid, version = result['uuid'], result['concat_ws']
+            uuid, version = result['uuid'], result['module_version']
         except (IndexError, KeyError):
             uuid, version = (None, None,)
         return uuid, version

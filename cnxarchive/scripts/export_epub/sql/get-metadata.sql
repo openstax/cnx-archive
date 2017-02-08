@@ -11,7 +11,7 @@ SELECT row_to_json(combined_rows)
 FROM
 (SELECT
    m.uuid as id,
-   concat_ws('.', m.major_version, m.minor_version) as version,
+   module_version( m.major_version, m.minor_version) as version,
    m.name as title,
    m.language,
    m.submitter AS publisher,
@@ -22,8 +22,8 @@ FROM
    a.html AS summary,
    ARRAY(SELECT tag FROM moduletags AS mt NATURAL JOIN tags WHERE mt.module_ident = m.module_ident) AS subjects,
    ARRAY(SELECT word FROM modulekeywords AS mk NATURAL JOIN keywords WHERE mk.module_ident = m.module_ident) AS keywords,
-   m.uuid || '@' || concat_ws('.', m.major_version, m.minor_version) AS "cnx-archive-uri",
-   short_id(m.uuid) || '@' || concat_ws('.', m.major_version, m.minor_version) AS "cnx-archive-shortid",
+   ident_hash(m.uuid, m.major_version, m.minor_version) AS "cnx-archive-uri",
+   short_ident_hash(m.uuid, m.major_version, m.minor_version) AS "cnx-archive-shortid",
    -- People
    ARRAY(SELECT row_to_json(user_rows) FROM
          (SELECT username AS id, first_name AS firstname, last_name AS surname,
@@ -62,7 +62,7 @@ FROM
    -- Print style
    m.print_style,
    -- Derivation 
-   p.uuid || '@' || concat_ws('.', p.major_version, p.minor_version) AS derived_from_uri,
+   ident_hash(p.uuid, p.major_version, p.minor_version) AS derived_from_uri,
    p.name AS derived_from_title
  FROM
     modules AS m
@@ -72,5 +72,5 @@ FROM
  WHERE
    m.licenseid = l.licenseid
    AND m.uuid = %(id)s
-   AND concat_ws('.', m.major_version, m.minor_version) = %(version)s
+   AND module_version(m.major_version, m.minor_version) = %(version)s
 ) AS combined_rows;

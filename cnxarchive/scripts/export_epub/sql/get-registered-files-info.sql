@@ -14,4 +14,4 @@ FROM
   LEFT JOIN modules AS m ON mf.module_ident = m.module_ident
 WHERE
   m.uuid = %(id)s
-  AND concat_ws('.', m.major_version, m.minor_version) = %(version)s;
+  AND module_version( m.major_version, m.minor_version) = %(version)s;

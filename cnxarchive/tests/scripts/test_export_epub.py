@@ -482,7 +482,7 @@ class DocumentFactoryTestCase(BaseTestCase):
         ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
         cursor.execute("""\
 SELECT fileid, file FROM files NATURAL JOIN module_files NATURAL JOIN modules
-WHERE uuid || '@' || concat_ws('.', major_version, minor_version) = %s
+WHERE ident_hash(uuid, major_version, minor_version) = %s
   AND filename = 'index.cnxml.html'""",
                        (ident_hash,))
         fileid, file_ = cursor.fetchone()

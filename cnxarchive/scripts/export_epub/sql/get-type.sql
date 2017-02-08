@@ -12,4 +12,4 @@ FROM
   modules AS m
 WHERE
   m.uuid = %(id)s
-  AND concat_ws('.', m.major_version, m.minor_version) = %(version)s;
+  AND module_version( m.major_version, m.minor_version) = %(version)s;
