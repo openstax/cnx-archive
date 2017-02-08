@@ -7,7 +7,6 @@
 # ###
 """All the views."""
 import os
-import io
 import json
 import logging
 from datetime import datetime, timedelta
@@ -18,7 +17,6 @@ from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
 from pytz import timezone
 from pyramid import httpexceptions
-from pyramid.response import FileIter
 from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
@@ -35,10 +33,10 @@ from .search import (
 from .sitemap import Sitemap
 from .robots import Robots
 from .utils import (
-    MODULE_MIMETYPE, COLLECTION_MIMETYPE, IdentHashSyntaxError,
+    COLLECTION_MIMETYPE, IdentHashSyntaxError,
     IdentHashShortId, IdentHashMissingVersion,
     portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash, CNXHash
+    join_ident_hash, split_ident_hash, split_legacy_hash
     )
 
 
@@ -930,7 +928,7 @@ def sitemap(request):
             # to multiple sitemaps before we have more content
             cursor.execute("""\
                     SELECT
-                        uuid||'@'||concat_ws('.',major_version,minor_version)
+                        ident_hash(uuid, major_version, minor_version)
                             AS idver,
                         REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
                             '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),

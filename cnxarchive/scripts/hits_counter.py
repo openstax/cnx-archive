@@ -17,7 +17,6 @@ import gzip
 
 import psycopg2
 from cnxarchive import config
-from cnxarchive.utils import split_ident_hash, CNXHash
 from cnxarchive.scripts._utils import (
     create_parser, get_app_settings_from_arguments,
     )
@@ -30,14 +29,6 @@ _log_openers = [open, gzip.open]
 LOG_FORMAT_OPENERS_MAPPING = dict(zip(LOG_FORMATS, _log_openers))
 
 URL_PATTERN_TMPLT = "^http://{}/contents/([-a-f0-9]+)@([.0-9]+)$"
-
-
-SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION = """\
-SELECT module_ident FROM modules
-  WHERE uuid = %s::uuid
-        AND concat_ws('.', major_version, minor_version) = %s
-;
-"""
 
 
 def parse_log(log, url_pattern):
@@ -98,15 +89,14 @@ def main(argv=None):
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
-                id, version = split_ident_hash(ident_hash)
-                cursor.execute(SQL_GET_MODULE_IDENT_BY_UUID_N_VERSION,
-                               (id, version))
-                module_ident = cursor.fetchone()
-                payload = (module_ident, start_timestamp, end_timestamp,
-                           hit_count,)
-                cursor.execute("INSERT INTO document_hits "
-                               "  VALUES (%s, %s, %s, %s);",
-                               payload)
+                cursor.execute("""\
+                      INSERT INTO document_hits
+                        (documentid, start_timestamp, end_timestamp, hits)
+                      SELECT module_ident, %s, %s, %s
+                      FROM modules WHERE
+                        ident_hash(uuid, major_version, minor_version) = %s""",
+                               (start_timestamp, end_timestamp, hit_count,
+                                ident_hash))
             cursor.execute("SELECT update_hit_ranks();")
     return 0
 
