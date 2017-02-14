@@ -82,6 +82,10 @@ def tree_to_nodes(tree, context=None):
             for key in ('title', 'id', 'shortId'):
                 if item.get(key):
                     metadata[key] = item[key]
+                    if key == 'id':
+                        metadata['cnx-archive-uri'] = item[key]
+                    elif key == 'shortId':
+                        metadata['cnx-archive-shortid'] = item[key]
             if item.get('id') is not None:
                 tbinder = cnxepub.Binder(item.get('id'),
                                          sub_nodes,
@@ -113,6 +117,7 @@ def _type_to_factory(type):
     try:
         factory = {'Module': document_factory,
                    'Collection': binder_factory,
+                   'SubCollection': binder_factory,
                    }[type]
     except KeyError:  # pragma: no cover
         raise RuntimeError("unknown type: {}".format(type))
