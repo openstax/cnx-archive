@@ -82,10 +82,11 @@ def tree_to_nodes(tree, context=None):
             for key in ('title', 'id', 'shortId'):
                 if item.get(key):
                     metadata[key] = item[key]
-                    if key == 'id':
-                        metadata['cnx-archive-uri'] = item[key]
-                    elif key == 'shortId':
-                        metadata['cnx-archive-shortid'] = item[key]
+                    if item[key] != 'subcol':
+                        if key == 'id':
+                            metadata['cnx-archive-uri'] = item[key]
+                        elif key == 'shortId':
+                            metadata['cnx-archive-shortid'] = item[key]
             if item.get('id') is not None:
                 tbinder = cnxepub.Binder(item.get('id'),
                                          sub_nodes,
