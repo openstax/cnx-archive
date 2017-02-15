@@ -515,8 +515,8 @@ class TreeToNodesTestCase(BaseTestCase):
                 {'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  'shortId': None,
                  'title': '(title override)'},
-                {'id': 'subcol',
-                 'shortId': None,
+                {'id': 'd7eb0963-6cfa-57fe-8e18-585474e8b563@7.1',
+                 'shortId': '1-sJY2z6@7.1',
                  'title': None,
                  'contents': [
                      {'id': 'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
