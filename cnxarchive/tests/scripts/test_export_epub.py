@@ -533,6 +533,35 @@ class BinderFactoryTestCase(BaseTestCase):
         with self.assertRaises(NotFound) as e:
             binder = self.target(ident_hash)
 
+    def test_no_baked(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+
+        from cnxarchive.scripts.export_epub import NotFound
+        with self.assertRaises(NotFound) as e:
+            binder = self.target(ident_hash, baked=True)
+
+    def test_baked(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2'
+        binder = self.target(ident_hash)
+
+        # Briefly check for the existence of metadata.
+        self.assertEqual(binder.metadata['title'], u'College Physics')
+
+        # Check for containment
+
+        expected_tree = {
+            'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2',
+            'shortId': None,
+            'title': u'College Physics',
+            'contents': [
+                {'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                 'shortId': None,
+                 'title': u'Preface to College Physics'}
+                ],
+            }
+
+        self.assertEqual(cnxepub.model_to_tree(binder), expected_tree)
+
     def test_assembly(self):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
         binder = self.target(ident_hash)

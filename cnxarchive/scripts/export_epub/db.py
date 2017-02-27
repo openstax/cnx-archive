@@ -215,6 +215,9 @@ def get_tree(ident_hash, baked=False):
                 tree = cursor.fetchone()[0]
             except TypeError:
                 raise NotFound(ident_hash)
+    if tree is None:
+        raise NotFound(ident_hash)
+
     return tree
 
 
