@@ -25,8 +25,11 @@ from cnxarchive.scripts.export_epub.db import (
     )
 
 
-def document_factory(ident_hash, context=None):
+def document_factory(ident_hash, context=None, baked=False):
     metadata = get_metadata(ident_hash)
+    if baked and context is None:
+        raise RuntimeError("Request for baked Document with no context")
+
     content = get_content(ident_hash, context)
     resources_map = {h: resource_factory(h, ident_hash)
                      for h in get_registered_files(ident_hash)}
@@ -42,7 +45,11 @@ def document_factory(ident_hash, context=None):
         if hash == 'resources':
             # if ref.uri is just /resources/hash (without filename)
             hash = filename
-        resource = resources_map[hash]
+        try:
+            resource = resources_map[hash]
+        except KeyError:  # reference w/o resource
+            resource = resource_factory(hash)
+
         ref.bind(resource, '/resources/{}')
     return doc
 
@@ -102,10 +109,14 @@ def tree_to_nodes(tree, context=None):
     return nodes
 
 
-def binder_factory(ident_hash):
+def binder_factory(ident_hash, baked=False):
     metadata = get_metadata(ident_hash)
-    tree = get_tree(ident_hash)
-    nodes = tree_to_nodes(tree)
+    tree = get_tree(ident_hash, baked=baked)
+    if baked:
+        context = tree['id']
+    else:
+        context = None
+    nodes = tree_to_nodes(tree, context)
     titles = _title_overrides_from_tree(tree)
     resources = [resource_factory(h, ident_hash)
                  for h in get_registered_files(ident_hash)]
@@ -125,18 +136,18 @@ def _type_to_factory(type):
     return factory
 
 
-def factory(ident_hash):
+def factory(ident_hash, baked=False):
     factory_callable = _type_to_factory(get_type(ident_hash))
-    return factory_callable(ident_hash)
+    return factory_callable(ident_hash, baked=baked)
 
 
-def create_epub(ident_hash, file):
+def create_epub(ident_hash, file, format='raw'):
     """Creates an epub from an ``ident_hash``, which is output to the given
     ``file`` (a file-like object).
     Returns None, writes to the given ``file``.
 
     """
-    model = factory(ident_hash)
+    model = factory(ident_hash, baked=(format != 'raw'))
     if isinstance(model, cnxepub.Document):
         model = cnxepub.TranslucentBinder(nodes=[model])
     cnxepub.make_epub(model, file)
