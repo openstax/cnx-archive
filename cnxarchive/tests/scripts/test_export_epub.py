@@ -258,11 +258,11 @@ class FileInfoGetterTestCase(BaseTestCase):
 
     def test_get(self):
         hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
-        filename = 'PhET_Icon.png'
         media_type = 'image/png'
 
+        # In the absence of context, the file has no name
         fn, mt = self.target(hash)
-        self.assertEqual(fn, filename)
+        self.assertEqual(fn, hash)
         self.assertEqual(mt, media_type)
 
     def test_with_context(self):
