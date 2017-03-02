@@ -542,7 +542,7 @@ class BinderFactoryTestCase(BaseTestCase):
 
     def test_baked(self):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2'
-        binder = self.target(ident_hash)
+        binder = self.target(ident_hash, baked=True)
 
         # Briefly check for the existence of metadata.
         self.assertEqual(binder.metadata['title'], u'College Physics')
@@ -556,7 +556,9 @@ class BinderFactoryTestCase(BaseTestCase):
             'contents': [
                 {'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  'shortId': None,
-                 'title': u'Preface to College Physics'}
+                 'title': u'New Preface'},
+                {'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
+                 'shortId': None, 'title': u'Other Composite'}
                 ],
             }
 
