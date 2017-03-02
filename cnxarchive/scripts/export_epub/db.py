@@ -18,7 +18,11 @@ from cnxarchive.utils import (
     IdentHashMissingVersion,
     )
 
-from cnxarchive.scripts.export_epub.exceptions import *
+from cnxarchive.scripts.export_epub.exceptions import (
+    NotFound,
+    FileNotFound,
+    ContentNotFound,
+    )
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -110,17 +114,18 @@ def get_metadata(ident_hash):
 def get_content(ident_hash, context=None):
     """Returns the content for the given ``ident_hash``.
     ``context`` is optionally ident-hash used to find the content
-    within the context of a Collection.
+    within the context of a Collection ident_hash.
 
     """
     id, version = get_id_n_version(ident_hash)
     filename = 'index.cnxml.html'
 
     if context is not None:
-        raise NotImplementedError('cooking has not yet been implemented')
-
-    stmt = _get_sql('get-content.sql')
-    args = dict(id=id, version=version, filename=filename)
+        stmt = _get_sql('get-baked-content.sql')
+        args = dict(id=id, version=version, context=context)
+    else:
+        stmt = _get_sql('get-content.sql')
+        args = dict(id=id, version=version, filename=filename)
 
     with db_connect() as db_conn:
         with db_conn.cursor() as cursor:
@@ -196,12 +201,12 @@ def get_registered_files(ident_hash):
     return hashes
 
 
-def get_tree(ident_hash):
+def get_tree(ident_hash, baked=False):
     """Return a tree structure of the Collection"""
     id, version = get_id_n_version(ident_hash)
 
     stmt = _get_sql('get-tree.sql')
-    args = dict(id=id, version=version)
+    args = dict(id=id, version=version, baked=baked)
 
     with db_connect() as db_conn:
         with db_conn.cursor() as cursor:
@@ -210,6 +215,9 @@ def get_tree(ident_hash):
                 tree = cursor.fetchone()[0]
             except TypeError:
                 raise NotFound(ident_hash)
+    if tree is None:
+        raise NotFound(ident_hash)
+
     return tree
 
 

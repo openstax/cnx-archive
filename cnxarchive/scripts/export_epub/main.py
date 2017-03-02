@@ -9,7 +9,6 @@
 
 """
 from __future__ import print_function
-import os
 import sys
 import argparse
 
@@ -21,6 +20,8 @@ from cnxarchive.scripts.export_epub import create_epub
 
 def main(argv=None):
     parser = create_parser('export_epub', description=__doc__)
+    parser.add_argument('-f', '--format', default='raw',
+                        help="epub format: raw, baked, hybrid; default raw ")
     parser.add_argument('ident_hash',
                         help="ident-hash of the content ")
     parser.add_argument('file', type=argparse.FileType('wb'),
@@ -32,6 +33,6 @@ def main(argv=None):
                            "because it will have issues closing")
     env = bootstrap(args.config_uri)
 
-    create_epub(args.ident_hash, args.file)
+    create_epub(args.ident_hash, args.file, args.format)
 
     return 0

@@ -7,9 +7,8 @@
 
 -- #! args:: hash:str
 
-SELECT mf.filename, f.media_type
+SELECT sha1, media_type
 FROM
-  module_files AS mf
-  LEFT JOIN files AS f ON mf.fileid = f.fileid
+  files 
 WHERE
-  f.sha1 = %(hash)s
+  sha1 = %(hash)s

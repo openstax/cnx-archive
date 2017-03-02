@@ -9,10 +9,6 @@ import re
 import tempfile
 import unittest
 import zipfile
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 import cnxepub
 from pyramid import testing as pyramid_testing
@@ -75,35 +71,23 @@ class IdAndVersionGetterTestCase(BaseTestCase):
         ident_hash = '{}@{}'.format(_id, '')
 
         from cnxarchive.utils import IdentHashSyntaxError
-        try:
+        with self.assertRaises(IdentHashSyntaxError) as e:
             id, version = self.target(ident_hash)
-        except IdentHashSyntaxError:
-            pass
-        else:
-            self.fail("should have raised a syntax error")
 
     def test_not_found(self):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
 
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             id, version = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("should have not found any content")
 
     def test_not_found_with_version(self):
         _id, _version = ('31b37e2b-9abf-4923-b2fa-de004a3cb6cd', '3')
         ident_hash = '{}@{}'.format(_id, _version)
 
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             id, version = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("should have not found any content")
 
 
 class TypeGetterTestCase(BaseTestCase):
@@ -131,12 +115,8 @@ class MetadataGetterTestCase(BaseTestCase):
     def test_not_found(self):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             doc = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("this should not have found an entry")
 
     def test_get(self):
         id, version = ('f6024d8a-1868-44c7-ab65-45419ef54881', '3')
@@ -241,12 +221,8 @@ class ContentGetterTestCase(BaseTestCase):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
 
         from cnxarchive.scripts.export_epub import ContentNotFound
-        try:
+        with self.assertRaises(ContentNotFound) as e:
             self.target(ident_hash)
-        except ContentNotFound:
-            pass
-        else:
-            self.fail("should not have found content")
 
 
 class FileInfoGetterTestCase(BaseTestCase):
@@ -258,11 +234,11 @@ class FileInfoGetterTestCase(BaseTestCase):
 
     def test_get(self):
         hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
-        filename = 'PhET_Icon.png'
         media_type = 'image/png'
 
+        # In the absence of context, the file has no name
         fn, mt = self.target(hash)
-        self.assertEqual(fn, filename)
+        self.assertEqual(fn, hash)
         self.assertEqual(mt, media_type)
 
     def test_with_context(self):
@@ -279,12 +255,8 @@ class FileInfoGetterTestCase(BaseTestCase):
         hash = 'c7097b2e80ca7314a7f3ef58a09817f9da005570'
 
         from cnxarchive.scripts.export_epub import FileNotFound
-        try:
+        with self.assertRaises(FileNotFound) as e:
             self.target(hash)
-        except FileNotFound:
-            pass
-        else:
-            self.fail("should not have found a file")
 
 
 class FileGetterTestCase(BaseTestCase):
@@ -304,12 +276,8 @@ class FileGetterTestCase(BaseTestCase):
         hash = 'c7097b2e80ca7314a7f3ef58a09817f9da005570'
 
         from cnxarchive.scripts.export_epub import FileNotFound
-        try:
+        with self.assertRaises(FileNotFound) as e:
             self.target(hash)
-        except FileNotFound:
-            pass
-        else:
-            self.fail("should not have found a file")
 
 
 class RegisteredFilesGetterTestCase(BaseTestCase):
@@ -336,23 +304,15 @@ class RegisteredFilesGetterTestCase(BaseTestCase):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd@4'
 
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             registered_files = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("should not have found content")
 
     def test_not_found_without_version(self):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd'
 
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             registered_files = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("should not have found content")
 
 
 class TreeGetterTestCase(BaseTestCase):
@@ -392,12 +352,8 @@ class TreeGetterTestCase(BaseTestCase):
         ident_hash = 'f0e62639-54fc-414b-b86b-0a27d1e5de5b@4'
 
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("should not have found a tree")
 
 
 class ResourceFactoryTestCase(BaseTestCase):
@@ -432,12 +388,37 @@ class DocumentFactoryTestCase(BaseTestCase):
     def test_not_found(self):
         ident_hash = '31b37e2b-9abf-4923-b2fa-de004a3cb6cd@4'
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             doc = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("this should not have created a document")
+
+    def test_no_context(self):
+        ident_hash = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+
+        with self.assertRaises(RuntimeError) as e:
+            doc = self.target(ident_hash, baked=True)
+
+    def test_no_baked(self):
+        ident_hash = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        context = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+
+        from cnxarchive.scripts.export_epub import ContentNotFound
+        with self.assertRaises(ContentNotFound) as e:
+            doc = self.target(ident_hash, context, baked=True)
+
+    def test_baked(self):
+        ident_hash = '174c4069-2743-42e9-adfe-4c7084f81fc5'
+        context = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2'
+
+        doc = self.target(ident_hash, context, baked=True)
+
+        self.assertTrue(isinstance(doc, cnxepub.Document))
+
+        # Briefly check for the existence of metadata.
+        self.assertEqual(doc.metadata['title'], u'Collated page')
+
+        # Check for specific content.
+        self.assertIn(u'<p>More tests of collated search</p>',
+                      doc.content)
 
     def test_assembly(self):
         ident_hash = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4'
@@ -549,12 +530,39 @@ class BinderFactoryTestCase(BaseTestCase):
     def test_not_found(self):
         ident_hash = 'f0e62639-54fc-414b-b86b-0a27d1e5de5b'
         from cnxarchive.scripts.export_epub import NotFound
-        try:
+        with self.assertRaises(NotFound) as e:
             binder = self.target(ident_hash)
-        except NotFound:
-            pass
-        else:
-            self.fail("this should not have created a document")
+
+    def test_no_baked(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
+
+        from cnxarchive.scripts.export_epub import NotFound
+        with self.assertRaises(NotFound) as e:
+            binder = self.target(ident_hash, baked=True)
+
+    def test_baked(self):
+        ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2'
+        binder = self.target(ident_hash, baked=True)
+
+        # Briefly check for the existence of metadata.
+        self.assertEqual(binder.metadata['title'], u'College Physics')
+
+        # Check for containment
+
+        expected_tree = {
+            'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2',
+            'shortId': None,
+            'title': u'College Physics',
+            'contents': [
+                {'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                 'shortId': None,
+                 'title': u'New Preface'},
+                {'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
+                 'shortId': None, 'title': u'Other Composite'}
+                ],
+            }
+
+        self.assertEqual(cnxepub.model_to_tree(binder), expected_tree)
 
     def test_assembly(self):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
@@ -755,9 +763,6 @@ class MainTestCase(BaseTestCase):
 
     def test_failure_using_stdout(self):
         args = (testing.config_uri(), self.module_ident_hash, '-')
-        try:
+        with self.assertRaises(RuntimeError) as e:
             self.target(args)
-        except RuntimeError as exc:
-            self.assertIn('stdout', exc.args[0])
-        else:
-            self.fail("should have failed to use stdout")
+            self.assertIn('stdout', e.args[0])
