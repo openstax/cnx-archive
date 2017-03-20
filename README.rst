@@ -4,7 +4,7 @@ Connexions Archive Repository
 This is an archive for Connexions documents. It holds published
 documents and collections of documents and is designed to work together with `webview <https://github.com/Connexions/webview>`_.
 It is accessible to the public via a read-only API. It has an optional write API for publishing content
-from an unpublished repository. It runs best in Python 2.7.
+from an unpublished repository. It runs on Python 2.7.
 
 Getting started
 ---------------
@@ -176,8 +176,7 @@ command::
 
 To run the application, use the ``paste`` script with the ``serve`` command.
 (The paste script and serve command come from ``PasteScript`` and
-``PasteDeploy``, respectively, which will need to be installed: ``pip install pastescript``
-``pip install pastedeploy``.)
+``PasteDeploy``, respectively.)
 
 This example uses the ``development.ini``, which has been supplied with the
 package.  If you changed any of the database setup values, you'll also need to
