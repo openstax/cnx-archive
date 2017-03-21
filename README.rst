@@ -2,9 +2,9 @@ Connexions Archive Repository
 =============================
 
 This is an archive for Connexions documents. It holds published
-documents and collections of documents. It is accessible to the public via
-a read-only API. It has an optional write API for publishing content
-from an unpublished repository.
+documents and collections of documents and is designed to work together with `webview <https://github.com/Connexions/webview>`_.
+It is accessible to the public via a read-only API. It has an optional write API for publishing content
+from an unpublished repository. It runs on Python 2.7.
 
 Getting started
 ---------------
