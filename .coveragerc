@@ -1,3 +1,9 @@
 [run]
 source =
-    ./cnxarchive
+  ./cnxarchive
+omit =
+  cnxarchive/_version.py
+
+[report]
+omit =
+  cnxarchive/_version.py
