@@ -194,6 +194,27 @@ def get_collections(module_ident, plpy):
         yield i['module_ident']
 
 
+def get_subcols(module_ident, plpy):
+    """Get all the collections that the module is part of."""
+    plan = plpy.prepare('''
+    WITH RECURSIVE t(node, parent, path, document) AS (
+        SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
+        FROM trees tr
+        WHERE tr.documentid = $1 and tr.is_collated = 'False'
+    UNION ALL
+        SELECT c.nodeid, c.parent_id, path || ARRAY[c.nodeid], c.documentid
+        FROM trees c JOIN t ON (c.nodeid = t.parent)
+        WHERE not c.nodeid = ANY(t.path)
+    )
+    SELECT DISTINCT m.module_ident
+    FROM t JOIN latest_modules m ON (t.document = m.module_ident)
+    WHERE m.portal_type in ('SubCollection')
+    ORDER BY m.module_ident
+    ''', ('integer',))
+    for i in plpy.execute(plan, (module_ident,)):
+        yield i['module_ident']
+
+
 def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     """Create a new tree for the collection based on the old tree.
 
@@ -368,14 +389,20 @@ def republish_module(td, plpy):
         return modified
 
     # Module is republished
+    replace_map = {current_module_ident: td['new']['module_ident']}
     for collection_id in get_collections(current_module_ident, plpy):
         minor = next_version(collection_id, plpy)
         new_ident = republish_collection(submitter, submitlog, minor,
                                          collection_id, plpy)
-        rebuild_collection_tree(collection_id, {
-            collection_id: new_ident,
-            current_module_ident: td['new']['module_ident'],
-            }, plpy)
+        replace_map[collection_id] = new_ident
+        # FIXME find the nested subcollections the module is in, and
+        # republish them, as well, adding to map
+        for sub_id in get_subcols(collection_id, current_module_ident, plpy):
+            new_subcol_ident = republish_collection(submitter, submitlog,
+                                                    minor, sub_id, plpy)
+            replace_map[sub_id] = new_subcol_ident
+
+        rebuild_collection_tree(collection_id, replace_map, plpy)
 
     return modified
 
@@ -491,7 +518,8 @@ def assign_version_default_trigger(plpy, td):
 
     # Set the minor version on collections, because by default it is
     # None/Null, which is the correct default for modules.
-    if portal_type == 'Collection' and minor_version is None:
+    if minor_version is None and portal_type in ('Collection',
+                                                 'SubCollection'):
         modified_state = "MODIFY"
         td['new']['minor_version'] = 1
 
