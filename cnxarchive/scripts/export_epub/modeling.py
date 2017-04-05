@@ -105,7 +105,15 @@ def tree_to_nodes(tree, context=None):
                                                     title_overrides=titles)
             nodes.append(tbinder)
         else:
-            nodes.append(document_factory(item['id'], context=context))
+            doc = document_factory(item['id'], context=context)
+            for key in ('title', 'id', 'shortId'):
+                if item.get(key):
+                    doc.metadata[key] = item[key]
+                    if key == 'id':
+                        doc.metadata['cnx-archive-uri'] = item[key]
+                    elif key == 'shortId':
+                        doc.metadata['cnx-archive-shortid'] = item[key]
+            nodes.append(doc)
     return nodes
 
 
