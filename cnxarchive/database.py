@@ -207,8 +207,8 @@ def get_subcols(module_ident, plpy):
         WHERE not c.nodeid = ANY(t.path)
     )
     SELECT DISTINCT m.module_ident
-    FROM t JOIN latest_modules m ON (t.document = m.module_ident)
-    WHERE m.portal_type in ('SubCollection')
+    FROM t JOIN modules m ON (t.document = m.module_ident)
+    WHERE m.portal_type  = 'SubCollection'
     ORDER BY m.module_ident
     ''', ('integer',))
     for i in plpy.execute(plan, (module_ident,)):
@@ -390,17 +390,19 @@ def republish_module(td, plpy):
 
     # Module is republished
     replace_map = {current_module_ident: td['new']['module_ident']}
+    # find the nested subcollections the module is in, and
+    # republish them, as well, adding to map, for all collections
+    for sub_id in get_subcols(current_module_ident, plpy):
+        minor = next_version(sub_id, plpy)
+        new_subcol_ident = republish_collection(submitter, submitlog,
+                                                minor, sub_id, plpy)
+        replace_map[sub_id] = new_subcol_ident
+
     for collection_id in get_collections(current_module_ident, plpy):
         minor = next_version(collection_id, plpy)
         new_ident = republish_collection(submitter, submitlog, minor,
                                          collection_id, plpy)
         replace_map[collection_id] = new_ident
-        # FIXME find the nested subcollections the module is in, and
-        # republish them, as well, adding to map
-        for sub_id in get_subcols(collection_id, current_module_ident, plpy):
-            new_subcol_ident = republish_collection(submitter, submitlog,
-                                                    minor, sub_id, plpy)
-            replace_map[sub_id] = new_subcol_ident
 
         rebuild_collection_tree(collection_id, replace_map, plpy)
 
