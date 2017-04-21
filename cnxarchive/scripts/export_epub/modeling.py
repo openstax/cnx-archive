@@ -74,18 +74,25 @@ def _title_overrides_from_tree(tree):
     return [x.get('title', None) for x in tree['contents']]
 
 
-def tree_to_nodes(tree, context=None):
+def tree_to_nodes(tree, context=None, metadata=None):
     """Assembles ``tree`` nodes into object models.
     If ``context`` is supplied, it will be used to contextualize
-    the contents of the nodes.
-
+    the contents of the nodes. Metadata will pass non-node identifying
+    values down to child nodes, if not overridden (license, timestamps, etc)
     """
     nodes = []
     for item in tree['contents']:
         if 'contents' in item:
-            sub_nodes = tree_to_nodes(item, context=context)
-            titles = _title_overrides_from_tree(item)
-            metadata = {}
+            sub_nodes = tree_to_nodes(item, context=context, metadata=metadata)
+            if metadata is None:
+                metadata = {}
+            else:
+                metadata = metadata.copy()
+                for key in ('title', 'id', 'shortid',
+                            'cnx-archive-uri', 'cnx-archive-shortid'):
+                    if key in metadata:
+                        metadata.pop(key)
+
             for key in ('title', 'id', 'shortId'):
                 if item.get(key):
                     metadata[key] = item[key]
@@ -94,6 +101,8 @@ def tree_to_nodes(tree, context=None):
                             metadata['cnx-archive-uri'] = item[key]
                         elif key == 'shortId':
                             metadata['cnx-archive-shortid'] = item[key]
+
+            titles = _title_overrides_from_tree(item)
             if item.get('id') is not None:
                 tbinder = cnxepub.Binder(item.get('id'),
                                          sub_nodes,
@@ -124,7 +133,7 @@ def binder_factory(ident_hash, baked=False):
         context = tree['id']
     else:
         context = None
-    nodes = tree_to_nodes(tree, context)
+    nodes = tree_to_nodes(tree, context, metadata)
     titles = _title_overrides_from_tree(tree)
     resources = [resource_factory(h, ident_hash)
                  for h in get_registered_files(ident_hash)]
