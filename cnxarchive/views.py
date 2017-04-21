@@ -260,13 +260,16 @@ def _get_page_in_book(page_uuid, page_version, book_uuid,
                       book_version, latest=False):
     book_ident_hash = join_ident_hash(book_uuid, book_version)
     coltree = _get_content_json(ident_hash=book_ident_hash)['tree']
-    pages = list(flatten_tree_to_ident_hashes(coltree))
-    page_ident_hash = join_ident_hash(page_uuid, page_version)
-    if page_ident_hash in pages:
-        return book_uuid, '{}:{}'.format(
-            latest and book_uuid or book_ident_hash, page_uuid)
-    # book not in page
-    return page_uuid, page_ident_hash
+    if coltree is None:
+         raise httpexceptions.HTTPNotFound()
+    else:
+        pages = list(flatten_tree_to_ident_hashes(coltree))
+        page_ident_hash = join_ident_hash(page_uuid, page_version)
+        if page_ident_hash in pages:
+            return book_uuid, '{}:{}'.format(
+                latest and book_uuid or book_ident_hash, page_uuid)
+        # book not in page
+        return page_uuid, page_ident_hash
 
 
 def _convert_legacy_id(objid, objver=None):
