@@ -501,17 +501,17 @@ class TreeToNodesTestCase(BaseTestCase):
                  'title': None,
                  'contents': [
                      {'id': 'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
-                      'shortId': None,
+                      'shortId': '88mrcKkW@3',
                       'title': '(another title override)'},
                      {'id': 'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
-                      'shortId': None,
+                      'shortId': '05W1Zl_j@4',
                       'title': 'Physics: An Introduction'}]}]}
         nodes = self.target(tree)
 
         self.assertEqual(
             cnxepub.model_to_tree(nodes[0]),
             {'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
-             'shortId': None,
+             'shortId': 'IJ3rHxpG@7',
              'title': '(title override)'}
             )
         self.assertEqual(
@@ -551,7 +551,7 @@ class BinderFactoryTestCase(BaseTestCase):
 
         expected_tree = {
             'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.2',
-            'shortId': None,
+            'shortId': '55_943-0@6.2',
             'title': u'College Physics',
             'contents': [
                 {'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
@@ -574,7 +574,7 @@ class BinderFactoryTestCase(BaseTestCase):
 
         # Check for containment
         expected_tree = {
-            'shortId': None,
+            'shortId': '55_943-0@7.1',
             'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
             'title': u'College Physics',
             'contents': [
@@ -582,7 +582,7 @@ class BinderFactoryTestCase(BaseTestCase):
                  'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  'title': u'Preface'},
                 {'shortId': u'subcol',
-                 'id': u'subcol',
+                 'id': u'subcol@7.1',
                  'title': u'Introduction: The Nature of Science and Physics',
                  'contents': [
                     {'shortId': u'88mrcKkW@3',
@@ -601,7 +601,7 @@ class BinderFactoryTestCase(BaseTestCase):
                      'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
                      'title': u'Approximation'}]},
                 {'shortId': u'subcol',
-                 'id': u'subcol',
+                 'id': u'subcol@7.1',
                  'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
                  'contents': [
                     {'shortId': u'JKLtEyKm@2',
@@ -642,7 +642,8 @@ class BinderFactoryTestCase(BaseTestCase):
             'shortId': 'subcol',
             'title': 'Introduction: The Nature of Science and Physics',
             }
-        self.assertEqual(expected_metadata, translucent_binder.metadata)
+        for k,v in expected_metadata.items():
+            self.assertEqual(translucent_binder.metadata[k], v)
 
 
 class FactoryFactoryTestCase(BaseTestCase):
