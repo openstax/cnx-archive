@@ -642,7 +642,7 @@ class BinderFactoryTestCase(BaseTestCase):
             'shortId': 'subcol',
             'title': 'Introduction: The Nature of Science and Physics',
             }
-        for k,v in expected_metadata.items():
+        for k, v in expected_metadata.items():
             self.assertEqual(translucent_binder.metadata[k], v)
 
 
