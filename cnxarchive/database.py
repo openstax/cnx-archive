@@ -452,18 +452,18 @@ def assign_moduleid_default_trigger(plpy, td):
         plan = plpy.prepare("""\
 SELECT setval($1, max(substr(moduleid, $2)::int))
 FROM (
-  SELECT moduleid from modules where portal_type in $3
+  SELECT moduleid from modules where portal_type in ($3,$4)
   UNION ALL
   SELECT $4) AS all_together""", ['text', 'int', 'text', 'text'])
         args = []
         if portal_type == 'Collection':
             args.append('collectionid_seq')
             args.append(4)
-            args.append(('Collection', 'SubCollection'))
+            args.extend(('Collection', 'SubCollection'))
         elif portal_type == 'Module':
             args.append('moduleid_seq')
             args.append(2)
-            args.append(('Module', 'CompositeModule'))
+            args.extend(('Module', 'CompositeModule'))
         args.append(moduleid)
         if len(args) == 4:
             plpy.execute(plan, args)
