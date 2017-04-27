@@ -29,7 +29,7 @@ PORTALTYPE_TO_MIMETYPE_MAPPING = {
     'Module': MODULE_MIMETYPE,
     'CompositeModule': COMPOSITE_MODULE_MIMETYPE,
     'Collection': COLLECTION_MIMETYPE,
-    'SubCollection': COLLECTION_MIMETYPE,
+    'SubCollection': SUBCOLLECTION_MIMETYPE,
     }
 
 
