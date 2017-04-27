@@ -9,7 +9,6 @@
 import os
 import json
 import psycopg2
-import sys
 import logging
 
 import cnxdb
@@ -117,7 +116,6 @@ def get_tree(ident_hash, cursor, as_collated=False):
     except TypeError:  # NoneType
         raise ContentNotFound()
     if type(tree) in (type(''), type(u'')):
-        import json
         return json.loads(tree)
     else:
         return tree
@@ -461,11 +459,11 @@ FROM (
         if portal_type == 'Collection':
             args.append('collectionid_seq')
             args.append(4)
-            args.append(('Collection','SubCollection'))
+            args.append(('Collection', 'SubCollection'))
         elif portal_type == 'Module':
             args.append('moduleid_seq')
             args.append(2)
-            args.append(('Module','CompositeModule'))
+            args.append(('Module', 'CompositeModule'))
         args.append(moduleid)
         if len(args) == 4:
             plpy.execute(plan, args)
