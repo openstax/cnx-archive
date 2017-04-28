@@ -582,7 +582,7 @@ class BinderFactoryTestCase(BaseTestCase):
                  'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  'title': u'Preface'},
                 {'shortId': u'subcol',
-                 'id': u'subcol@7.1',
+                 'id': u'subcol',
                  'title': u'Introduction: The Nature of Science and Physics',
                  'contents': [
                     {'shortId': u'88mrcKkW@3',
@@ -601,7 +601,7 @@ class BinderFactoryTestCase(BaseTestCase):
                      'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
                      'title': u'Approximation'}]},
                 {'shortId': u'subcol',
-                 'id': u'subcol@7.1',
+                 'id': u'subcol',
                  'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
                  'contents': [
                     {'shortId': u'JKLtEyKm@2',
