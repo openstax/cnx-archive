@@ -9,7 +9,6 @@
 import os
 import json
 import psycopg2
-import sys
 import logging
 
 import cnxdb
@@ -117,7 +116,6 @@ def get_tree(ident_hash, cursor, as_collated=False):
     except TypeError:  # NoneType
         raise ContentNotFound()
     if type(tree) in (type(''), type(u'')):
-        import json
         return json.loads(tree)
     else:
         return tree
@@ -454,17 +452,19 @@ def assign_moduleid_default_trigger(plpy, td):
         plan = plpy.prepare("""\
 SELECT setval($1, max(substr(moduleid, $2)::int))
 FROM (
-  SELECT moduleid from modules where portal_type = $3
+  SELECT moduleid from modules where portal_type in ($3,$4)
   UNION ALL
   SELECT $4) AS all_together""", ['text', 'int', 'text', 'text'])
         args = []
         if portal_type == 'Collection':
             args.append('collectionid_seq')
             args.append(4)
+            args.extend(('Collection', 'SubCollection'))
         elif portal_type == 'Module':
             args.append('moduleid_seq')
             args.append(2)
-        args.extend([portal_type, moduleid])
+            args.extend(('Module', 'CompositeModule'))
+        args.append(moduleid)
         if len(args) == 4:
             plpy.execute(plan, args)
 
