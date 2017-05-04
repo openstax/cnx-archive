@@ -1028,11 +1028,15 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
     @testing.db_connect
     def test_module(self, cursor):
-        # Create a fake collated tree for College Physics which contains the
-        # module that is going to have a new version
+        # Create a fake collated tree for College Physics, with a chapter,
+        # which contains the module that is going to have a new version
         cursor.execute("""\
 INSERT INTO trees (parent_id, documentid, is_collated)
     VALUES (NULL, 1, TRUE) RETURNING nodeid""")
+        nodeid = cursor.fetchone()[0]
+        cursor.execute("""\
+INSERT INTO trees (parent_id, documentid, is_collated)
+    VALUES (%s, 22, TRUE) RETURNING nodeid""", (nodeid,))
         nodeid = cursor.fetchone()[0]
         cursor.execute("""\
 INSERT INTO trees (parent_id, documentid, is_collated)
