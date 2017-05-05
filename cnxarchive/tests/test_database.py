@@ -1028,8 +1028,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
     @testing.db_connect
     def test_module(self, cursor):
-        # Create a fake collated tree for College Physics which contains the
-        # module that is going to have a new version
+        # Create a fake collated tree for College Physics
+        # which contains the module that is going to have a new version
         cursor.execute("""\
 INSERT INTO trees (parent_id, documentid, is_collated)
     VALUES (NULL, 1, TRUE) RETURNING nodeid""")
@@ -1038,6 +1038,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
 INSERT INTO trees (parent_id, documentid, is_collated)
     VALUES (%s, 2, TRUE)""", (nodeid,))
         cursor.connection.commit()
+
+        # update other collection to have subcollection uuids
+        cursor.execute("SELECT subcol_uuids('e79ffde3-7fb4-4af3-9ec8-df648b391597','7.1')")
 
         cursor.execute('SELECT nodeid FROM trees WHERE documentid = 18')
         old_nodeid = cursor.fetchone()[0]
@@ -1052,25 +1055,27 @@ INSERT INTO trees (parent_id, documentid, is_collated)
          created, revised,
          authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog,
          language, parent)
-        VALUES ('m42955', 'Module', '1.2', 'Preface to College Physics',
-        '2013-09-13 15:10:43.000000+02' , '2013-09-13 15:10:43.000000+02',
-        NULL, NULL, NULL, 1, NULL, 11, '', 'karenc', 'I changed something',
+        VALUES ('m42119', 'Module', '1.4',
+        'Introduction to Science and the Realm of Physics, Physical Quantities, and Units',
+        '2013-07-31 14:07:20.590652-05' , '2013-07-31 15:07:20.590652-05',
+        NULL, NULL, NULL, 1, NULL, 11, '', 'reedstrm', 'I did not change something',
         'en', NULL) RETURNING module_ident''')
+
         new_module_ident = cursor.fetchone()[0]
 
         # After the new module is inserted, there should be a new module and two
-        # new collections
+        # new collections, and two new subcollections
         cursor.execute('SELECT COUNT(*) FROM modules')
-        self.assertEqual(cursor.fetchone()[0], old_n_modules + 3)
+        self.assertEqual(cursor.fetchone()[0], old_n_modules + 5)
 
         # Test that the module inserted has the right major and minor versions
         cursor.execute('''SELECT major_version, minor_version, uuid FROM modules
             WHERE portal_type = 'Module' ORDER BY module_ident DESC''')
         major, minor, uuid = cursor.fetchone()
-        self.assertEqual(major, 2)
+        self.assertEqual(major, 4)
         self.assertEqual(minor, None)
         # Test that the module inserted has the same uuid as an older version of m42955
-        self.assertEqual(uuid, '209deb1f-1a46-4369-9e0d-18674cf58a3e')
+        self.assertEqual(uuid, 'f3c9ab70-a916-4d8c-9256-42953287b4e9')
 
         # Test that the latest row in modules is a collection with updated
         # version
@@ -1081,8 +1086,41 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         self.assertEqual(results[1], 'Collection')  # portal_type
         self.assertEqual(results[5], '<span style="color:red;">Derived</span>'
                                      ' Copy of College <i>Physics</i>')  # name
-        self.assertEqual(results[11], 'karenc')  # submitter
-        self.assertEqual(results[12], 'I changed something')  # submitlog
+        self.assertEqual(results[11], 'reedstrm')  # submitter
+        self.assertEqual(results[12], 'I did not change something')  # submitlog
+        self.assertEqual(results[-3], 1)  # major_version
+        self.assertEqual(results[-2], 2)  # minor_version
+        self.assertEqual(results[-1], None)  # print_style
+
+        results = cursor.fetchone()
+        new_collection_2_id = results[0]
+
+        self.assertEqual(results[1], 'Collection')  # portal_type
+        self.assertEqual(results[5], 'College Physics')  # name
+        self.assertEqual(results[11], 'reedstrm')  # submitter
+        self.assertEqual(results[12], 'I did not change something')  # submitlog
+        self.assertEqual(results[-3], 7)  # major_version
+        self.assertEqual(results[-2], 2)  # minor_version
+        self.assertEqual(results[-1], None)  # print_style
+
+        results = cursor.fetchone()
+        new_subcollection_id = results[0]
+
+        self.assertEqual(results[1], 'SubCollection')  # portal_type
+        self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
+        self.assertEqual(results[11], 'reedstrm')  # submitter
+        self.assertEqual(results[12], 'I did not change something')  # submitlog
+        self.assertEqual(results[-3], 7)  # major_version
+        self.assertEqual(results[-2], 2)  # minor_version
+        self.assertEqual(results[-1], None)  # print_style
+
+        results = cursor.fetchone()
+        new_subcollection_2_id = results[0]
+
+        self.assertEqual(results[1], 'SubCollection')  # portal_type
+        self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
+        self.assertEqual(results[11], 'reedstrm')  # submitter
+        self.assertEqual(results[12], 'I did not change something')  # submitlog
         self.assertEqual(results[-3], 1)  # major_version
         self.assertEqual(results[-2], 2)  # minor_version
         self.assertEqual(results[-1], None)  # print_style
@@ -1133,7 +1171,10 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         new_document_ids = {
             # old module_ident: new module_ident
             18: new_collection_id,
-            2: new_module_ident,
+            1: new_collection_2_id,
+            24: new_subcollection_id,
+            22: new_subcollection_2_id,
+            3: new_module_ident,
             }
         for i, old_node in enumerate(old_tree):
             self.assertEqual(new_document_ids.get(old_node[2], old_node[2]),
