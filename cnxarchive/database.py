@@ -351,19 +351,20 @@ def set_version(portal_type, legacy_version, td):
 def republish_module(td, plpy):
     """When a module is republished, create new minor versions of collections.
 
-    All collections that this module is contained in part of will need to be
-    updated (a minor update).
+    All collections (including subcollections) that this module is contained
+    in part of will need to be updated (a minor update).
 
+    e.g. there is a collection c1 v2.1, which contains a chapter sc1 v2.1,
+    which contains a module m1 v3. When m1 is updated, we will have a new row
+    in the modules table with m1 v4.
 
-    e.g. there is a collection c1 v2.1, which contains module m1 v3
+    This trigger will create increment the minor versions of c1 and sc1, so
+    we'll have c1 v2.2, and sc1 v2.2. However, another chapter sc2 will stay
+    at v2.1.
 
-    m1 is updated, we have a new row in the modules table with m1 v4
-
-    this trigger will create increment the minor version of c1, so we'll have
-    c1 v2.2
-
-    we need to create a collection tree for c1 v2.2 which is exactly the same
-    as c1 v2.1, but with m1 v4 instead of m1 v3, and c1 v2.2 instead of c1 v2.2
+    We need to create a collection tree for c1 v2.2 which is exactly the same
+    as c1 v2.1, but with m1 v4 instead of m1 v3, and sc1 v2.2 and c1 v2.2
+    instead of sc1 2.1 and c1 v2.1
     """
     portal_type = td['new']['portal_type']
     modified = 'OK'
@@ -392,12 +393,15 @@ def republish_module(td, plpy):
     replace_map = {current_module_ident: td['new']['module_ident']}
     # find the nested subcollections the module is in, and
     # republish them, as well, adding to map, for all collections
+    # Note that map is for all subcollections, regardless of what
+    # collection they are contained in.
     for sub_id in get_subcols(current_module_ident, plpy):
         minor = next_version(sub_id, plpy)
         new_subcol_ident = republish_collection(submitter, submitlog,
                                                 minor, sub_id, plpy)
         replace_map[sub_id] = new_subcol_ident
 
+    # Now do each collection that contains this module
     for collection_id in get_collections(current_module_ident, plpy):
         minor = next_version(collection_id, plpy)
         new_ident = republish_collection(submitter, submitlog, minor,
