@@ -407,7 +407,6 @@ def republish_module(td, plpy):
         new_ident = republish_collection(submitter, submitlog, minor,
                                          collection_id, plpy)
         replace_map[collection_id] = new_ident
-
         rebuild_collection_tree(collection_id, replace_map, plpy)
 
     return modified

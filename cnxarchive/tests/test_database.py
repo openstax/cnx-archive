@@ -983,6 +983,12 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
             'version': '1.100',
             })
 
+    @testing.plpy_connect
+    def test_get_subcols(self, plpy):
+        from ..database import get_subcols
+        subcols = tuple(get_subcols(4, plpy))
+        self.assertEqual(subcols, (22,))
+
     @testing.db_connect
     def test_insert_new_module(self, cursor):
         cursor.execute('SELECT COUNT(*) FROM modules')
