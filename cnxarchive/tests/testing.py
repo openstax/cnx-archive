@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # ###
 # Copyright (c) 2013, Rice University
 # This software is subject to the provisions of the GNU Affero General
@@ -11,6 +10,7 @@ import re
 import sys
 import warnings
 from datetime import datetime
+from uuid import uuid4
 
 import memcache
 import pytz
@@ -74,6 +74,64 @@ def db_connect(method):
         with connect() as db_connection:
             with db_connection.cursor() as cursor:
                 return method(self, cursor, *args, **kwargs)
+    return wrapped
+
+
+class PlPy(object):
+    """Class to wrap access to DB in plpy style api"""
+
+    def __init__(self, cursor):
+        """Set up the cursor and plan store"""
+        self._cursor = cursor
+        self._plans = {}
+
+    def execute(self, query, args=None):
+        """Execute a query or plan, with interpolated args"""
+
+        if query in self._plans:
+            args_fmt = self._plans[query]
+            self._cursor.execute('EXECUTE "{}"({})'.format(query, args_fmt), args)
+        else:
+            self._cursor.execute(query, args)
+
+        return self._cursor
+
+    def prepare(self, query, args=None):
+        """"Prepare a plan, with optional placeholders for EXECUTE"""
+
+        plan = str(uuid4())
+        if args:
+            argstr = str(args).replace("'", '')
+            if len(args) < 2:
+                argstr = argstr.replace(',', '')
+            self._cursor.execute('PREPARE "{}"{} AS {}'.format(plan, argstr, query))
+        else:
+            self._cursor.execute('PREPARE "{}" AS {}'.format(plan, query))
+
+        self._plans[plan] = ', '.join(('%s',) * len(args))
+        return plan
+
+
+def plpy_connect(method):
+    """Decorator for plpythonu trigger methods that need to use the database
+
+    Example::
+
+    @plpy_connect
+    def setUp(self, plpy):
+        some_sql = "SELECT TRUE"
+        plpy.execute(some_sql)
+        # some other code
+
+    """
+    @functools.wraps(method)
+    def wrapped(self, *args, **kwargs):
+        connect = db_connection_factory()
+        with connect() as db_connection:
+            with db_connection.cursor(
+                    cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                plpy = PlPy(cursor)
+                return method(self, plpy, *args, **kwargs)
     return wrapped
 
 
