@@ -115,7 +115,7 @@ def is_latest(id, version):
 
 
 TYPE_INFO = []
-LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
+LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'offline.zip'}
 
 
 def get_type_info():
