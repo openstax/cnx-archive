@@ -14,6 +14,8 @@ from contextlib import contextmanager
 
 import cnxepub
 
+from exceptions import ContentNotFound
+
 from cnxarchive.scripts.export_epub.db import (
     get_content,
     get_file,
@@ -114,7 +116,11 @@ def tree_to_nodes(tree, context=None, metadata=None):
                                                     title_overrides=titles)
             nodes.append(tbinder)
         else:
-            doc = document_factory(item['id'], context=context)
+            try:
+                doc = document_factory(item['id'], context=context)
+            except ContentNotFound:
+                continue  # Bad chapter w/ no content stanza at all?
+
             for key in ('title', 'id', 'shortId'):
                 if item.get(key):
                     doc.metadata[key] = item[key]
