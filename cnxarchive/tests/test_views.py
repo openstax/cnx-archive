@@ -1444,6 +1444,20 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         with self.assertRaises(IdentHashMissingVersion) as cm:
             get_export(self.request)
 
+    def test_get_extra_404(self):
+        id = 'b771c6fc-34f0-11e7-ad77-e3343f783f02'
+        version = '1.1'
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
+
+        from ..views import get_extra
+
+        self.assertRaises(httpexceptions.HTTPNotFound,
+                          get_extra, self.request)
+
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '6.1'
