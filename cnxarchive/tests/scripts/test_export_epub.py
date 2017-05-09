@@ -519,6 +519,28 @@ class TreeToNodesTestCase(BaseTestCase):
             tree['contents'][1]
             )
 
+    def test_missing_node(self):
+        tree = {
+            'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1',
+            'shortId': None,
+            'contents': [
+                {'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+                 'shortId': None,
+                 'title': '(title override)'},
+                {'id': '10e1639e-34c1-11e7-8e38-bb14bf244531@6.1',
+                 'shortId': 'EOFjnjTB@6.1',
+                 'title': None
+                  }]}
+        nodes = self.target(tree)
+
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(
+            cnxepub.model_to_tree(nodes[0]),
+            {'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+             'shortId': 'IJ3rHxpG@7',
+             'title': '(title override)'}
+            )
+
 
 class BinderFactoryTestCase(BaseTestCase):
 
