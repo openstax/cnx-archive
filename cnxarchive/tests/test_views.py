@@ -1486,8 +1486,6 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         #                   get_extra, self.request)
 
         with self.assertRaises(httpexceptions.HTTPNotFound) as caught_exc:
-            import pdb;
-            pdb.set_trace()
             response = get_extra(self.request)
 
     def test_get_extra_no_allowable_types(self):
