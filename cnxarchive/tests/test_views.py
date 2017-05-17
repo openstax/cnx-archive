@@ -1470,8 +1470,6 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             get_export(self.request)
 
     def test_get_extra_404(self):
-        #id = 'b771c6fc-34f0-11e7-ad77-e3343f783f02'
-        #version = '1.1'
         id = '94919e72-7573-4ed4-828e-673c1fe0cf9b'
         version = '66.1'
 
@@ -1481,9 +1479,6 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content-extras'
 
         from ..views import get_extra
-
-        # self.assertRaises(httpexceptions.HTTPNotFound,
-        #                   get_extra, self.request)
 
         with self.assertRaises(httpexceptions.HTTPNotFound) as caught_exc:
             response = get_extra(self.request)
