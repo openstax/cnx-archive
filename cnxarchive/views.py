@@ -115,7 +115,7 @@ def is_latest(id, version):
 
 
 TYPE_INFO = []
-LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'offline.zip'}
+LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
 
 
 def get_type_info():
@@ -262,14 +262,13 @@ def _get_page_in_book(page_uuid, page_version, book_uuid,
     coltree = _get_content_json(ident_hash=book_ident_hash)['tree']
     if coltree is None:
         raise httpexceptions.HTTPNotFound()
-    else:
-        pages = list(flatten_tree_to_ident_hashes(coltree))
-        page_ident_hash = join_ident_hash(page_uuid, page_version)
-        if page_ident_hash in pages:
-            return book_uuid, '{}:{}'.format(
-                latest and book_uuid or book_ident_hash, page_uuid)
-        # book not in page
-        return page_uuid, page_ident_hash
+    pages = list(flatten_tree_to_ident_hashes(coltree))
+    page_ident_hash = join_ident_hash(page_uuid, page_version)
+    if page_ident_hash in pages:
+        return book_uuid, '{}:{}'.format(
+            latest and book_uuid or book_ident_hash, page_uuid)
+    # book not in page
+    return page_uuid, page_ident_hash
 
 
 def _convert_legacy_id(objid, objver=None):

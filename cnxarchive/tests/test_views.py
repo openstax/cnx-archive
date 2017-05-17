@@ -1106,6 +1106,31 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@5'.format(uuid)))
 
+    # https://github.com/Connexions/cnx-archive/issues/452
+    @testing.db_connect
+    def test_legacy_id_old_ver_collection_with_missing_tree(self, cursor):
+        book_uuid = 'a733d0d2-de9b-43f9-8aa9-f0895036899e'
+        page_uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
+        objid = 'm42709'
+        colid = 'col15533'
+
+        # Build the request environment.
+        self.request.matchdict = {'objid': objid, 'objver': '1.4'}
+        self.request.params = {'collection': '{}/latest'.format(colid)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'legacy-redirect-w-version'
+
+        # Delete tree associated with this book.
+        cursor.execute('DELETE FROM trees WHERE documentid = (SELECT module_ident FROM modules WHERE uuid = %s);', (book_uuid,))
+        cursor.connection.commit()
+
+        # Call the view.
+        from ..views import redirect_legacy_content
+
+        # Check that the view redirects to the new url, old version
+        with self.assertRaises(httpexceptions.HTTPNotFound) as cm:
+            redirect_legacy_content(self.request)
+
     def test_legacy_id_old_ver_redirect(self):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         objid = 'm42709'
@@ -1445,8 +1470,10 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             get_export(self.request)
 
     def test_get_extra_404(self):
-        id = 'b771c6fc-34f0-11e7-ad77-e3343f783f02'
-        version = '1.1'
+        #id = 'b771c6fc-34f0-11e7-ad77-e3343f783f02'
+        #version = '1.1'
+        id = '94919e72-7573-4ed4-828e-673c1fe0cf9b'
+        version = '66.1'
 
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
@@ -1455,8 +1482,13 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         from ..views import get_extra
 
-        self.assertRaises(httpexceptions.HTTPNotFound,
-                          get_extra, self.request)
+        # self.assertRaises(httpexceptions.HTTPNotFound,
+        #                   get_extra, self.request)
+
+        with self.assertRaises(httpexceptions.HTTPNotFound) as caught_exc:
+            import pdb;
+            pdb.set_trace()
+            response = get_extra(self.request)
 
     def test_get_extra_no_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
