@@ -114,35 +114,14 @@ def is_latest(id, version):
     return get_latest_version(id) == version
 
 
-TYPE_INFO = []
 LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
-
-
-def get_type_info():
-    """Lookup type info from app configuration."""
-    if TYPE_INFO:
-        return
-    settings = get_current_registry().settings
-    for line in settings['exports-allowable-types'].splitlines():
-        if not line.strip():
-            continue
-        type_name, type_info = line.strip().split(':', 1)
-        type_info = type_info.split(',', 3)
-        TYPE_INFO.append((type_name, {
-            'type_name': type_name,
-            'file_extension': type_info[0],
-            'mimetype': type_info[1],
-            'user_friendly_name': type_info[2],
-            'description': type_info[3],
-            }))
 
 
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types."""
-    get_type_info()
     request = get_current_request()
 
-    for type_name, type_info in TYPE_INFO:
+    for type_name, type_info in request.registry.settings['_type_info']:
         try:
             (filename, mimetype, file_size, file_created, state, file_content
              ) = get_export_file(cursor, id, version, type_name, exports_dirs)
@@ -164,8 +143,8 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
 
 def get_export_file(cursor, id, version, type, exports_dirs):
     """Retrieve file associated with document."""
-    get_type_info()
-    type_info = dict(TYPE_INFO)
+    request = get_current_request()
+    type_info = dict(request.registry.settings['_type_info'])
 
     if type not in type_info:
         raise ExportError("invalid type '{}' requested.".format(type))

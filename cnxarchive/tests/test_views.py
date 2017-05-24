@@ -439,6 +439,10 @@ class ViewsTestCase(unittest.TestCase):
         from .. import declare_api_routes
         declare_api_routes(config)
 
+        # Set up type info
+        from .. import declare_type_info
+        declare_type_info(config)
+
         # Clear all cached searches
         import memcache
         mc_servers = self.settings['memcache-servers'].split()
