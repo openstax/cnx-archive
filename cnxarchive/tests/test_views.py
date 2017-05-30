@@ -2103,8 +2103,63 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 },
             }))
 
+    def test_search_with_only_special_chars(self):
+        # Disallow searches that contain only special chars ["',:]
+        from ..search import SEARCH_SPECIAL_CHARS
+        self.request.params = {'q': SEARCH_SPECIAL_CHARS}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
+        from ..views import search
+        results = search(self.request).body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+
+        self.assertEqual(results, json.dumps({
+            u'query': {
+                u'limits': [],
+                u'per_page': 20,
+                u'page': 1,
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                u'limits': [],
+                },
+            }))
+
+    def test_search_less_than_three_chars(self):
+        # Disallow searches that contain only special chars ["',:]
+        self.request.params = {'q': 'at'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
+        from ..views import search
+        results = search(self.request).body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+
+        self.assertEqual(results, json.dumps({
+            u'query': {
+                u'limits': [],
+                u'per_page': 20,
+                u'page': 1,
+                },
+            u'results': {
+                u'items': [],
+                u'total': 0,
+                u'limits': [],
+                },
+            }))
+
     def test_search_utf8(self):
-        self.request.params = {'q': '"你好"'}
+        self.request.params = {'q': '"今天你好吗"'}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
@@ -2118,7 +2173,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         expected = {
             u'query': {
-                u'limits': [{u'tag': u'text', u'value': u'你好'}],
+                u'limits': [{u'tag': u'text', u'value': u'今天你好吗'}],
                 u'sort': [],
                 u'per_page': 20,
                 u'page': 1,
