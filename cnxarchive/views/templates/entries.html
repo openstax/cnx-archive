@@ -1,0 +1,27 @@
+{% extends "recent.html" %}
+{% block entries %}
+{% for module in latest_modules %}
+  <div class="entry">
+    <h3>
+      <a href=//http://cnx.org/contents/{{module.uuid}}@{{module.major_version}}.{{module.minor_version}}>
+        <span> {{module.name}} </span>
+      </a>
+      <div class="lastUpdated">
+        {{module.revised}}
+      </div>
+    </h3>
+    <div class="feedEntryContent">
+      <b> <i>
+            {{module.authors}}
+      </i> </b>
+      <br></br>
+         {{module.abstract}}
+      <br></br>
+      <img src="http://i.creativecommons.org/l/by/4.0/80x15.png" />
+      <a href="http://creativecommons.org/licenses/by/4.0/">
+        Some Rights Reserved
+      </a>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}
