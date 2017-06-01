@@ -2333,7 +2333,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             }))
 
     def test_search_utf8(self):
-        self.request.params = {'q': '"你好"'}
+        self.request.params = {'q': u'"你好"'.encode('utf-8')}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
@@ -2837,6 +2837,30 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 3)
+        self.assertEqual(self.db_search_call_count, 2)
+
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
+    def test_search_w_unicode_cache(self):
+        # Build the request
+        self.request.params = {'q': u'"用"'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
+        from ..views import search
+        results = search(self.request).json_body
+        status = self.request.response.status
+        content_type = self.request.response.content_type
+
+        self.assertEqual(status, '200 OK')
+        self.assertEqual(content_type, 'application/json')
+
+        self.assertEqual(results['results']['total'], 0)
+        self.assertEqual(self.db_search_call_count, 1)
+
+        # Search again (use cache, but no result, and we don't cache negative)
+        results = search(self.request).json_body
+
+        self.assertEqual(results['results']['total'], 0)
         self.assertEqual(self.db_search_call_count, 2)
 
     @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")

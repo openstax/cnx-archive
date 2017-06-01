@@ -36,13 +36,17 @@ def search(query, query_type, nocache=False):
     search_params.sort(key=lambda record: (record[0], record[1]))
     search_params.append(('query_type', query_type))
 
+    sp = []
+    for key, val in search_params:
+        if type(val) != unicode:
+            val = val.decode('utf-8')
+        sp.append((key, val))
     # search_key should look something like:
     # '"sort:pubDate" "text:college physics" "query_type:weakAND"'
-    search_key = ' '.join(['"{}"'.format(':'.join(param))
-                           for param in search_params])
+    search_key = u' '.join([u'"{}"'.format(u':'.join(param)) for param in sp])
     # since search_key is not a valid memcached key, use base64
     # encoding to make it into a valid key
-    mc_search_key = base64.b64encode(search_key)
+    mc_search_key = base64.b64encode(search_key.encode('utf-8'))
 
     # look for search results in memcache first, unless nocache
     mc = memcache.Client(memcache_servers,
