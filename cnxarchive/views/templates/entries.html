@@ -3,7 +3,7 @@
 {% for module in latest_modules %}
   <div class="entry">
     <h3>
-      <a href=//http://cnx.org/contents/{{module.uuid}}@{{module.major_version}}.{{module.minor_version}}>
+      <a href={{module.link}}>
         <span> {{module.name}} </span>
       </a>
       <div class="lastUpdated">
