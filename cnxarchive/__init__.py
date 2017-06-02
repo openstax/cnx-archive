@@ -73,10 +73,29 @@ def declare_api_routes(config):
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
 
 
+def declare_type_info(config):
+    """Lookup type info from app configuration."""
+    settings = config.registry.settings
+    settings['_type_info'] = []
+    for line in settings['exports-allowable-types'].splitlines():
+        if not line.strip():
+            continue
+        type_name, type_info = line.strip().split(':', 1)
+        type_info = type_info.split(',', 3)
+        settings['_type_info'].append((type_name, {
+            'type_name': type_name,
+            'file_extension': type_info[0],
+            'mimetype': type_info[1],
+            'user_friendly_name': type_info[2],
+            'description': type_info[3],
+            }))
+
+
 def main(global_config, **settings):
     """Main WSGI application factory."""
     config = Configurator(settings=settings)
     declare_api_routes(config)
+    declare_type_info(config)
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types',
                           'sitemap-destination']
