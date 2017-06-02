@@ -11,8 +11,14 @@ from .. import config
              accept="application/json",
              renderer='json', permission='read') # originally was renderer='json'??,
 def get_recent(request):
-    num_entries = 10    # later can set there variables based on args in url
+    # setting the query variables
+    query_vars = get_query_vars(request.query_string)
+    num_entries = 10
     start_entry = 0
+    if "number" in query_vars.keys():
+        num_entries = query_vars["number"]
+    if "start" in query_vars.keys():
+        start_entry = query_vars["start"]
     settings = request.registry.settings
     statement = """
                 SELECT name, revised, authors, abstract,
@@ -21,8 +27,8 @@ def get_recent(request):
                 JOIN abstracts ON latest_modules.abstractid = abstracts.abstractid
                 WHERE portal_type in ('Collection', 'Module')
                 ORDER BY revised DESC
-                LIMIT {};
-                """.format(num_entries)
+                LIMIT {} OFFSET {};
+                """.format(num_entries, start_entry)
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(statement)
@@ -40,6 +46,15 @@ def get_recent(request):
 
     return latest_modules
 
+
+def get_query_vars(query_string):
+    qlist = query_string.split("&")
+    qdict = {}
+    for param in qlist:
+        param_split = param.split("=")
+        if len(param_split) == 2:
+            qdict[param_split[0]] = param_split[1]
+    return qdict
 
 def format_author(personids, settings):
     """
