@@ -1017,9 +1017,10 @@ def robots(request):
     resp.body = robots_dot_txt.to_string()
     return resp
 
+
 @view_config(route_name='recent', request_method='GET',
              accept="application/json",
-             renderer='templates/recent.rss') #renderer: cnxarchive.views:templates/recent.html?? also what should the permission actuall be??
+             renderer='templates/recent.rss')
 def recent(request):
     # setting the query variables
     query_vars = get_query_vars(request.query_string)
@@ -1036,9 +1037,11 @@ def recent(request):
     settings = request.registry.settings
     statement = """
                 SELECT name, revised, authors, abstract,
-                'http://cnx.org/contents/'||ident_hash( uuid, major_version, minor_version) AS link
+                'http://cnx.org/contents/'||
+                ident_hash( uuid, major_version, minor_version) AS link
                 FROM latest_modules
-                JOIN abstracts ON latest_modules.abstractid = abstracts.abstractid
+                JOIN abstracts
+                ON latest_modules.abstractid = abstracts.abstractid
                 WHERE portal_type in {}
                 ORDER BY revised DESC
                 LIMIT {} OFFSET {};

@@ -93,5 +93,4 @@ def main(global_config, **settings):
     config.scan(ignore='.tests')
     config.include('cnxarchive.events.main')
 
-
     return config.make_wsgi_app()
