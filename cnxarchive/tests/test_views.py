@@ -3058,11 +3058,17 @@ application problems.</div>""",
 
         from ..views import recent
         recent = recent(self.request)
-        # # note: recent is the dict that is returned by recent function
-
         self.assertEqual(len(recent['latest_modules']), 10)
+        dates = []
         for module in recent['latest_modules']:
+            dates.append(datetime.datetime.strptime(module["revised"],
+                                                    "%b %d, %Y at %I:%M %p"))
             keys = module.keys()
             keys.sort()
             self.assertEqual(keys,
                              ["abstract", "authors", "link", "name", "revised"])
+        print dates
+        dates_sorted = list(dates);
+        dates_sorted.sort(reverse=True)
+        print dates_sorted
+        self.assertEqual(dates_sorted, dates)

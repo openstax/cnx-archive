@@ -367,6 +367,15 @@ def html_date(datetime):
     """
     return datetime.strftime("%a, %d %b %Y %X %Z")
 
+def html_rss_date(datetime):
+    """
+    Return the HTTP-date format of python's datetime time.
+
+    Based on:
+    https://legacy.cnx.org/content/recent.rss
+    """
+    return datetime.strftime("%b %d, %Y at %I:%M %p")
+
 
 def notblocked(page):
     """Determine if given url is a page that should be in sitemap."""
@@ -1036,7 +1045,7 @@ def recent(request):
         latest_modules.append(dict(zip(titles, search_results[i])))
     for module in latest_modules:
         # module['revised'] = format_date(module['revised'])
-        module['revised'] = html_date(module['revised'])
+        module['revised'] = html_rss_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')
         module['name'] = module['name'].decode('utf-8')
