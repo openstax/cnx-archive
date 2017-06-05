@@ -71,13 +71,18 @@ def declare_api_routes(config):
     add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
-    add_route('recent', '/recent')  # cnxarchive.views:recent????????
+    add_route('recent', '/recent')  # cnxarchive.views:recent
 
 
 def main(global_config, **settings):
     """Main WSGI application factory."""
     config = Configurator(settings=settings)
     declare_api_routes(config)
+
+    # allowing the pyramid templates to render html and rss
+    config.include('pyramid_jinja2')
+    config.add_jinja2_renderer('.html')
+    config.add_jinja2_renderer('.rss')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types',
                           'sitemap-destination']
@@ -87,4 +92,6 @@ def main(global_config, **settings):
 
     config.scan(ignore='.tests')
     config.include('cnxarchive.events.main')
+
+
     return config.make_wsgi_app()

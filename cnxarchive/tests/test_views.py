@@ -3051,3 +3051,12 @@ application problems.</div>""",
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
         with open(expected_file, 'r') as f:
             self.assertMultiLineEqual(robots, f.read())
+
+    def test_recent_rss(self):
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'recent'
+
+        from ..views import recent
+        recent = recent(self.request)
+
+        # TODO Assertions
