@@ -3058,5 +3058,11 @@ application problems.</div>""",
 
         from ..views import recent
         recent = recent(self.request)
+        # # note: recent is the dict that is returned by recent function
 
-        # TODO Assertions
+        self.assertEqual(len(recent['latest_modules']), 10)
+        for module in recent['latest_modules']:
+            keys = module.keys()
+            keys.sort()
+            self.assertEqual(keys,
+                             ["abstract", "authors", "link", "name", "revised"])
