@@ -428,6 +428,38 @@ def _get_licenses(cursor):
     return [json_row[0] for json_row in cursor.fetchall()]
 
 
+def get_query_vars(query_string):
+    qlist = query_string.split("&")
+    qdict = {}
+    for param in qlist:
+        param_split = param.split("=")
+        if len(param_split) == 2:
+            qdict[param_split[0]] = param_split[1]
+    return qdict
+
+
+def format_author(personids, settings):
+    """
+    Takes a list of personid's and searches in the persons table to get their
+    full names and returns a list of the full names as a string.
+    """
+    personids_string = "("
+    for i in range(len(personids) - 1):
+        personids_string += "'{},'".format(peronids[i])
+    personids_string += "'{}'".format(personids[-1])
+    personids_string += ")"
+    statement = """
+                SELECT fullname
+                FROM persons
+                WHERE personid IN {};
+                """.format(personids_string)
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(statement)
+                authors_list = cursor.fetchall()
+    return str(authors_list)[1:-1]
+
+
 # ################### #
 #   Exception Views   #
 # ################### #
@@ -984,7 +1016,7 @@ def robots(request):
 
 @view_config(route_name='recent', request_method='GET',
              accept="application/json",
-             renderer='templates/entries.html') #renderer: cnxarchive.views:templates/recent.html?? also what should the permission actuall be??
+             renderer='templates/recent.rss') #renderer: cnxarchive.views:templates/recent.html?? also what should the permission actuall be??
 def recent(request):
     # setting the query variables
     query_vars = get_query_vars(request.query_string)
@@ -1018,60 +1050,7 @@ def recent(request):
         # module['revised'] = format_date(module['revised'])
         module['revised'] = html_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
+        module['abstract'] = module['abstract'].decode('utf-8')
+        # print(module['abstract'])
 
     return {"latest_modules": latest_modules}
-
-
-def get_query_vars(query_string):
-    qlist = query_string.split("&")
-    qdict = {}
-    for param in qlist:
-        param_split = param.split("=")
-        if len(param_split) == 2:
-            qdict[param_split[0]] = param_split[1]
-    return qdict
-
-def format_author(personids, settings):
-    """
-    Takes a list of personid's and searches in the persons table to get their
-    full names and returns a list of the full names as a string.
-    """
-    personids_string = "("
-    for i in range(len(personids) - 1):
-        personids_string += "'{},'".format(peronids[i])
-    personids_string += "'{}'".format(personids[-1])
-    personids_string += ")"
-    statement = """
-                SELECT fullname
-                FROM persons
-                WHERE personid IN {};
-                """.format(personids_string)
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute(statement)
-                authors_list = cursor.fetchall()
-    return str(authors_list)[1:-1]
-
-
-# def format_date(date):
-#     """
-#     date is in the for datetime.datetime
-#     returns date as a string in the form 'May 30, 2017 at 3:03 PM'
-#     """
-#     date_string = date.isoformat()
-#     day = date_string.split("T")[0]
-#     day = day.split("-")
-#     month = month_name[int(day[1])]
-#
-#     time = date_string.split("T")[1]
-#     hour = int(time[:2])
-#     if hour < 12:
-#         period = "AM"
-#     else:
-#         hour = hour - 12
-#         period = "PM"
-#     if hour == 0:
-#         hour = 12
-#     minute = time[3:5]
-#     return "{} {}, {} at {}:{} {}".\
-#         format(month, day[2], day[0], hour, minute, period)
