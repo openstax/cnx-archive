@@ -8,28 +8,29 @@
       <description>OpenStax CNX</description>
 
       {% for module in latest_modules %}
-        <div class="entry">
-          <h3>
-            <a href={{module.link}}>
-              <span> {{module.name}} </span>
-            </a>
-            <div class="lastUpdated">
+        <item>
+          <title>Module {{module.name}}</title>
+          <link>{{module.link}}</link>
+          <description>
+          &lt;h3&gt;
+            &lt;div class="lastUpdated"&gt;
               {{module.revised}}
-            </div>
-          </h3>
-          <div class="feedEntryContent">
-            <b> <i>
+            &lt;/div&gt;
+          &lt;/h3&gt;
+          &lt;div class="feedEntryContent"&gt;
+            &lt;b&gt;
                   {{module.authors}}
-            </i> </b>
-            <br></br>
+            &lt;/b&gt;
+            &lt;br&gt;&lt;/br&gt;
                {{module.abstract}}
-            <br></br>
-            <img src="http://i.creativecommons.org/l/by/4.0/80x15.png" />
-            <a href="http://creativecommons.org/licenses/by/4.0/">
+            &lt;br&gt;&lt;/br&gt;
+            &lt;img src="http://i.creativecommons.org/l/by/4.0/80x15.png" />
+            &lt;a href="http://creativecommons.org/licenses/by/4.0/"&gt;
               Some Rights Reserved
-            </a>
-          </div>
-        </div>
+            &lt;/a&gt;
+          &lt;/div&gt;
+          </description>
+        </item>
       {% endfor %}
 
 </rss>

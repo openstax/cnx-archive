@@ -446,8 +446,7 @@ def format_author(personids, settings):
     personids_string = "("
     for i in range(len(personids) - 1):
         personids_string += "'{},'".format(peronids[i])
-    personids_string += "'{}'".format(personids[-1])
-    personids_string += ")"
+    personids_string += "'{}')".format(personids[-1])
     statement = """
                 SELECT fullname
                 FROM persons
@@ -457,7 +456,11 @@ def format_author(personids, settings):
             with db_connection.cursor() as cursor:
                 cursor.execute(statement)
                 authors_list = cursor.fetchall()
-    return str(authors_list)[1:-1]
+    formated_string = ""
+    for i in range(len(authors_list[0]) - 1):
+        formated_string += (authors_list[0][i]) + ","
+    formated_string += authors_list[0][-1]
+    return formated_string
 
 
 # ################### #
@@ -1022,10 +1025,13 @@ def recent(request):
     query_vars = get_query_vars(request.query_string)
     num_entries = 10
     start_entry = 0
+    portal_type = "('Collection', 'Module')"
     if "number" in query_vars.keys():
         num_entries = query_vars["number"]
     if "start" in query_vars.keys():
         start_entry = query_vars["start"]
+    if "type" in query_vars.keys():
+        portal_type = query_vars["type"]
     # search the database
     settings = request.registry.settings
     statement = """
@@ -1033,10 +1039,10 @@ def recent(request):
                 'http://cnx.org/contents/'||ident_hash( uuid, major_version, minor_version) AS link
                 FROM latest_modules
                 JOIN abstracts ON latest_modules.abstractid = abstracts.abstractid
-                WHERE portal_type in ('Collection', 'Module')
+                WHERE portal_type in {}
                 ORDER BY revised DESC
                 LIMIT {} OFFSET {};
-                """.format(num_entries, start_entry)
+                """.format(portal_type, num_entries, start_entry)
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(statement)
