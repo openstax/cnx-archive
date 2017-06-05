@@ -1051,6 +1051,6 @@ def recent(request):
         module['revised'] = html_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')
-        # print(module['abstract'])
+        module['name'] = module['name'].decode('utf-8')
 
     return {"latest_modules": latest_modules}
