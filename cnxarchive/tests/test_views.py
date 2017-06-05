@@ -3068,7 +3068,7 @@ application problems.</div>""",
             self.assertEqual(keys,
                              ["abstract", "authors", "link", "name", "revised"])
         print dates
-        dates_sorted = list(dates);
+        dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
         print dates_sorted
         self.assertEqual(dates_sorted, dates)
