@@ -367,6 +367,7 @@ def html_date(datetime):
     """
     return datetime.strftime("%a, %d %b %Y %X %Z")
 
+
 def html_rss_date(datetime):
     """
     Return the HTTP-date format of python's datetime time.
