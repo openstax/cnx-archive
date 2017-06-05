@@ -428,16 +428,6 @@ def _get_licenses(cursor):
     return [json_row[0] for json_row in cursor.fetchall()]
 
 
-def get_query_vars(query_string):
-    qlist = query_string.split("&")
-    qdict = {}
-    for param in qlist:
-        param_split = param.split("=")
-        if len(param_split) == 2:
-            qdict[param_split[0]] = param_split[1]
-    return qdict
-
-
 def format_author(personids, settings):
     """
     Takes a list of personid's and searches in the persons table to get their
@@ -456,11 +446,7 @@ def format_author(personids, settings):
             with db_connection.cursor() as cursor:
                 cursor.execute(statement)
                 authors_list = cursor.fetchall()
-    formated_string = ""
-    for i in range(len(authors_list[0]) - 1):
-        formated_string += (authors_list[0][i]) + ","
-    formated_string += authors_list[0][-1]
-    return formated_string
+    return (', ').join(authors_list[0])
 
 
 # ################### #
@@ -1023,16 +1009,9 @@ def robots(request):
              renderer='templates/recent.rss')
 def recent(request):
     # setting the query variables
-    query_vars = get_query_vars(request.query_string)
-    num_entries = 10
-    start_entry = 0
-    portal_type = "('Collection', 'Module')"
-    if "number" in query_vars.keys():
-        num_entries = query_vars["number"]
-    if "start" in query_vars.keys():
-        start_entry = query_vars["start"]
-    if "type" in query_vars.keys():
-        portal_type = query_vars["type"]
+    num_entries = request.GET.get('number', 10)
+    start_entry = request.GET.get('start', 0)
+    portal_type = request.GET.get('type', "('Collection', 'Module')")
     # search the database
     settings = request.registry.settings
     statement = """
@@ -1062,4 +1041,5 @@ def recent(request):
         module['abstract'] = module['abstract'].decode('utf-8')
         module['name'] = module['name'].decode('utf-8')
 
+    request.response.content_type = 'application/rss+xml'
     return {"latest_modules": latest_modules}
