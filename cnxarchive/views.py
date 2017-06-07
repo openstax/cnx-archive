@@ -1018,6 +1018,8 @@ def recent(request):
     num_entries = request.GET.get('number', 10)
     start_entry = request.GET.get('start', 0)
     portal_type = request.GET.get('type', ['Collection', 'Module'])
+    if portal_type != ['Collection', 'Module']:
+        portal_type = [portal_type]
     # search the database
     settings = request.registry.settings
     statement = """

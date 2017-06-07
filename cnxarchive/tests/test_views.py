@@ -3055,13 +3055,11 @@ application problems.</div>""",
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start':7}
+        self.request.GET = {'number': 5, 'start':3, 'type':'Module'}
 
         from ..views import recent
         recent = recent(self.request)
         self.assertEqual(len(recent['latest_modules']), 5)
-        # assert it starts at the right module
-        self.assertEqual(recent['latest_modules'][0]['name'], 'Drag Forces')
         # check that they are in correct order
         dates = []
         for module in recent['latest_modules']:
