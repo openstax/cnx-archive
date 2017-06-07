@@ -37,6 +37,7 @@ with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
                  [chr(i) for i in range(ord('a'), ord('z') + 1)])
 WILDCARD_KEYWORD = 'text'
 VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
+SEARCH_SPECIAL_CHARS = '"\',:'
 # The maximum number of keywords and authors to return in the search result
 # counts
 MAX_VALUES_FOR_KEYWORDS = 100

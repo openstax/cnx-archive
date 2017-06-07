@@ -27,7 +27,7 @@ from . import cache
 from . import database
 from .database import SQL, get_tree, get_collated_content
 from .search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
+    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE, SEARCH_SPECIAL_CHARS,
     Query,
     )
 from .sitemap import Sitemap
@@ -774,6 +774,11 @@ def search(request):
         page = None
     if page is None or page <= 0:
         page = 1
+
+    stripped_search_terms = search_terms.strip(SEARCH_SPECIAL_CHARS)
+    if (not stripped_search_terms) or (len(stripped_search_terms) < 3):
+        resp.body = empty_response
+        return resp
 
     query = Query.from_raw_query(search_terms)
     if not(query.filters or query.terms):
