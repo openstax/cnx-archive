@@ -3055,7 +3055,7 @@ application problems.</div>""",
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start':3, 'type':'Module'}
+        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
 
         from ..views import recent
         recent = recent(self.request)
