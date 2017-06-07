@@ -443,18 +443,14 @@ def format_author(personids, settings):
     Takes a list of personid's and searches in the persons table to get their
     full names and returns a list of the full names as a string.
     """
-    personids_string = "("
-    for i in range(len(personids) - 1):
-        personids_string += "'{},'".format(peronids[i])
-    personids_string += "'{}')".format(personids[-1])
     statement = """
                 SELECT fullname
                 FROM persons
-                WHERE personid IN {};
-                """.format(personids_string)
+                WHERE personid = ANY (%s);
+                """
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.cursor() as cursor:
-                cursor.execute(statement)
+                cursor.execute(statement, vars=(personids,))
                 authors_list = cursor.fetchall()
     return (', ').join(authors_list[0])
 
@@ -1021,7 +1017,7 @@ def recent(request):
     # setting the query variables
     num_entries = request.GET.get('number', 10)
     start_entry = request.GET.get('start', 0)
-    portal_type = request.GET.get('type', "('Collection', 'Module')")
+    portal_type = request.GET.get('type', ['Collection', 'Module'])
     # search the database
     settings = request.registry.settings
     statement = """
@@ -1031,13 +1027,14 @@ def recent(request):
                 FROM latest_modules
                 JOIN abstracts
                 ON latest_modules.abstractid = abstracts.abstractid
-                WHERE portal_type in {}
+                WHERE portal_type = ANY (%s)
                 ORDER BY revised DESC
-                LIMIT {} OFFSET {};
-                """.format(portal_type, num_entries, start_entry)
+                LIMIT (%s) OFFSET (%s);
+                """
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.cursor() as cursor:
-                cursor.execute(statement)
+                cursor.execute(statement,
+                               vars=(portal_type, num_entries, start_entry))
                 search_results = cursor.fetchall()
     # alter the results to be in the correct form
     latest_modules = []
@@ -1045,7 +1042,6 @@ def recent(request):
     for i in range(len(search_results)):
         latest_modules.append(dict(zip(titles, search_results[i])))
     for module in latest_modules:
-        # module['revised'] = format_date(module['revised'])
         module['revised'] = html_rss_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')

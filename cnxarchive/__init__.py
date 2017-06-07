@@ -81,7 +81,6 @@ def main(global_config, **settings):
 
     # allowing the pyramid templates to render html and rss
     config.include('pyramid_jinja2')
-    config.add_jinja2_renderer('.html')
     config.add_jinja2_renderer('.rss')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types',

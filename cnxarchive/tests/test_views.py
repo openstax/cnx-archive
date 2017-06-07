@@ -3055,10 +3055,14 @@ application problems.</div>""",
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'recent'
+        self.request.GET = {'number': 5, 'start':7}
 
         from ..views import recent
         recent = recent(self.request)
-        self.assertEqual(len(recent['latest_modules']), 10)
+        self.assertEqual(len(recent['latest_modules']), 5)
+        # assert it starts at the right module
+        self.assertEqual(recent['latest_modules'][0]['name'], 'Drag Forces')
+        # check that they are in correct order
         dates = []
         for module in recent['latest_modules']:
             dates.append(datetime.datetime.strptime(module["revised"],
@@ -3067,8 +3071,6 @@ application problems.</div>""",
             keys.sort()
             self.assertEqual(keys,
                              ["abstract", "authors", "link", "name", "revised"])
-        print dates
         dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
-        print dates_sorted
         self.assertEqual(dates_sorted, dates)
