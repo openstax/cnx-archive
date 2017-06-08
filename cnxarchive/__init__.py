@@ -72,6 +72,7 @@ def declare_api_routes(config):
     add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('recent', '/feeds/recent.rss')  # cnxarchive.views:recent
+    add_route('oai', '/feeds/oai')  # cnxarchive.views:oai
 
 
 def declare_type_info(config):
@@ -98,9 +99,10 @@ def main(global_config, **settings):
     declare_api_routes(config)
     declare_type_info(config)
 
-    # allowing the pyramid templates to render rss
+    # allowing the pyramid templates to render rss and xml
     config.include('pyramid_jinja2')
     config.add_jinja2_renderer('.rss')
+    config.add_jinja2_renderer('.xml')
 
     mandatory_settings = ['exports-directories', 'exports-allowable-types',
                           'sitemap-destination']

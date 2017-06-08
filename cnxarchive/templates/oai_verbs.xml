@@ -1,0 +1,213 @@
+{% extends "oai_template.xml" %}
+
+{% block identify %}
+  <repositoryName>{{repository}}</repositoryName>
+  <baseURL>{{baseURL}}</baseURL>
+  <protocolVersion>2.0</protocolVersion>
+  <adminEmail>{{adminEmail}}</adminEmail>
+  <earliestDatestamp>2000-03-07 00:00:00Z</earliestDatestamp>
+  <deletedRecord>no</deletedRecord>
+  <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
+  <description>
+    <oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier
+                    http://www.openarchives.org/OAI/2.0/oai-identifier.xsd">
+      <scheme>oai</scheme>
+      <repositoryIdentifier>{{host}}</repositoryIdentifier>
+      <delimiter>:</delimiter>
+      <sampleIdentifier>oai:{{host}}:m0000</sampleIdentifier>
+    </oai-identifier>
+  </description>
+{% endblock %}
+
+{% block listMetadataFormats %}
+  {% for result in results %}
+    <metadataFormat>
+      <metadataPrefix>{{result.prefix}}</metadataPrefix>
+      <schema>{{result.schema}}</schema>
+      <metadataNamespace>{{result.namespace}}</metadataNamespace>
+    </metadataFormat>
+  {% endfor %}
+{% endblock %}
+
+{% block listIdentifiers %}
+  {% for result in results %}
+    <headers>
+      <header tal:condition="r/harvestable | string:True">
+        <identifier>oai:{{host}}/{{result.uuid}}</identifier>
+        <datestamp>{{result.revised}}</datestamp>
+      </header>
+    <headers>
+  {% endfor %}
+{% endblock %}
+
+{% block records %}
+  {% for record in results %}
+    <record>
+      <header>
+        <identifier>{{record.uuid}}</identifier>
+        <datestamp>{{record.revised}}</datestamp>
+      </header>
+      <metadata>
+        {% if metadataPrefix == "oai_dc" %}
+          <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+                           xmlns:dc="http://purl.org/dc/elements/1.1/"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/
+                           http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
+            <dc:title>{{record.title}}</dc:title>
+            {% for author in record.authors %} <dc:creator>{{author.fullname}}</dc:creator> {% endfor %}
+            {% for subject in record.subjects %} <dc:subject>{{subject}}</dc:subject> {% endfor %}
+            <dc:description>{{record.abstract}}</dc:description>
+            <dc:language>{{record.language}}</dc:language>
+            <dc:date>{{record.revised}}</dc:date>
+            <dc:identifier>{{baseURL}}/{{record.uuid}}</dc:identifier>
+            <dc:rights>{{record.licenses_url}}</dc:rights>
+          </oai_dc:dc>
+        {% endif %}
+
+        {% if metadataPrefix == "cnx_dc" %}
+          <cnxdc:dc xmlns:cnxdc="http://cnx.org/technology/schemas/cnx_dc/"
+                           xmlns:dc="http://purl.org/dc/elements/1.1/"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xsi:schemaLocation="http://cnx.rice.edu/cnx_dc/
+                           http://cnx.rice.edu/technology/cnx_dc/schema/xsd/1.0/cnx-dc-extension.xsd">
+            <dc:title>{{record.title}}</dc:title>
+            {% for author in record.authors %} <dc:creator>{{author.fullname}}</dc:creator> {% endfor %}
+            {% for maintainer in record.maintainers %} <cnxdc:maintainer>{{maintainer}}</cnxdc:maintainer> {% endfor %}
+            {% for translator in record.translator %} <cnxdc:translator>{{translator}}</cnxdc:translator> {% endfor %}
+            {% for sponsor in record.sponsor %} <cnxdc:sponsor>{{sponsor}}</cnxdc:sponsor> {% endfor %}
+            {% for sponsor in record.funders %} <cnxdc:funders>{{funders}}</cnxdc:funders> {% endfor %}
+            {% for cnx_subject in record.subjects %} <cnxdc:subject>{{cnx_subject}}</cnxdc:subject> {% endfor %}
+            {% for subject in record.subjects %} <dc:subject>{{subject}}</dc:subject> {% endfor %}
+            <dc:description>{{record.abstract}}</dc:description>
+            <dc:language>{{record.language}}</dc:language>
+            <dc:date>{{record.revised}}</dc:date>
+            <dc:identifier>{{baseURL}}/{{record.uuid}}</dc:identifier>
+            <dc:rights>{{record.licenses_url}}</dc:rights>
+          </cnxdc:dc>
+        {% endif %}
+
+        {% if metadataPrefix == "ims1_2_1" %}
+          <ims1_2_1:lom xmlns:ims1_2_1="http://www.imsglobal.org/xsd/imsmd_v1p2"
+                           xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_v1p2
+                           http://www.imsglobal.org/xsd/imsmd_v1p2p4.xsd">
+            <ims1_2_1:general>
+              <ims1_2_1:title>
+                <ims1_2_1:langstring xml:lang="{{record.language}}">{{record.title}}</ims1_2_1:langstring>
+              </ims1_2_1:title>
+              <ims1_2_1:language>{{record.language}}</ims1_2_1:language>
+              <ims1_2_1:description>
+                <ims1_2_1:langstring xml:lang="{{record.language}}">{{record.abstract}}</ims1_2_1:langstring>
+              </ims1_2_1:description>
+              {% for keyword in record.keywords %}
+                <ims1_2_1:keyword>
+                  <ims1_2_1:langstring xml:lang="{{record.language}}">{{record.keyword}}</ims1_2_1:langstring>
+                </ims1_2_1:keyword>
+              {% endfor %}
+              <ims1_2_1:structure>
+                <ims1_2_1:source>
+                  <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                </ims1_2_1:source>
+                <ims1_2_1:value>
+                  <ims1_2_1:langstring xml:lang="x-none">Mixed</ims1_2_1:langstring>
+                </ims1_2_1:value>
+              </ims1_2_1:structure>
+              <ims1_2_1:aggregationlevel>
+                <ims1_2_1:source>
+                  <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                </ims1_2_1:source>
+                {% if record.portal_type == 'Module' %}
+                  <ims1_2_1:value >
+                    <ims1_2_1:langstring xml:lang="x-none">2</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                {% endif %}
+                {% if record.portal_type == 'Collection'%}
+                  <ims1_2_1:value>
+                    <ims1_2_1:langstring xml:lang="x-none">3</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                {% endif %}
+              </ims1_2_1:aggregationlevel>
+            </ims1_2_1:general>
+            <ims1_2_1:lifecycle>
+              <ims1_2_1:version>
+                <ims1_2_1:langstring xml:lang="x-none">{{record.version}}</ims1_2_1:langstring>
+              </ims1_2_1:version>
+              <ims1_2_1:contribute>
+                <ims1_2_1:role>
+                  <ims1_2_1:source>
+                    <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                  </ims1_2_1:source>
+                  <ims1_2_1:value>
+                    <ims1_2_1:langstring xml:lang="x-none">Author</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                </ims1_2_1:role>
+                {% for author in record.authors %}
+                  <ims1_2_1:centity>
+                    <ims1_2_1:vcard>
+                      BEGIN:vCard FN:{{author.fullname}} EMAIL;INTERNET:{{author.email}} END:vCard
+                    </ims1_2_1:vcard>
+                  </ims1_2_1:centity>
+                {% endfor %}
+                <ims1_2_1:date>
+                  <ims1_2_1:datetime>{{record.revised}}</ims1_2_1:datetime>
+                </ims1_2_1:date>
+              </ims1_2_1:contribute>
+            </ims1_2_1:lifecycle>
+            <ims1_2_1:technical>
+              <ims1_2_1:format>text/html</ims1_2_1:format>
+              <ims1_2_1:location type="URI">http://cnx.org/contents/{{record.uuid}}@</ims1_2_1:location>
+              <ims1_2_1:requirement>
+                <ims1_2_1:type>
+                  <ims1_2_1:source>
+                    <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                  </ims1_2_1:source>
+                  <ims1_2_1:value>
+                    <ims1_2_1:langstring xml:lang="x-none">Browser</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                </ims1_2_1:type>
+                <ims1_2_1:name>
+                  <ims1_2_1:source>
+                    <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                  </ims1_2_1:source>
+                  <ims1_2_1:value>
+                    <ims1_2_1:langstring xml:lang="x-none">Any</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                </ims1_2_1:name>
+              </ims1_2_1:requirement>
+            </ims1_2_1:technical>
+            <ims1_2_1:rights>
+              <ims1_2_1:copyrightandotherrestrictions>
+                <ims1_2_1:source>
+                  <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                </ims1_2_1:source>
+                <ims1_2_1:value>
+                  <ims1_2_1:langstring xml:lang="x-none">yes</ims1_2_1:langstring>
+                </ims1_2_1:value>
+              </ims1_2_1:copyrightandotherrestrictions>
+              <ims1_2_1:description>
+                <ims1_2_1:langstring xml:lang="en">{{record.licenses_url}}</ims1_2_1:langstring>
+              </ims1_2_1:description>
+            </ims1_2_1:rights>
+            {% for subject in record.subjects %}
+              <ims1_2_1:classification>
+                <ims1_2_1:purpose>
+                  <ims1_2_1:source>
+                    <ims1_2_1:langstring xml:lang="x-none">LOMv1.0</ims1_2_1:langstring>
+                  </ims1_2_1:source>
+                  <ims1_2_1:value>
+                    <ims1_2_1:langstring xml:lang="x-none">Discipline</ims1_2_1:langstring>
+                  </ims1_2_1:value>
+                </ims1_2_1:purpose>
+                <ims1_2_1:keyword>
+                  <ims1_2_1:langstring xml:lang="en">{{subject}}</ims1_2_1:langstring>
+                </ims1_2_1:keyword>
+              </ims1_2_1:classification>
+            {% endfor %}
+          </ims1_2_1:lom>
+        {% endif %}
+      </metadata>
+    </record>
+  {% endfor %}
+{% endblock %}

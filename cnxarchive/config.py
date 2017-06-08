@@ -17,3 +17,4 @@ CONNECTION_STRING = 'db-connection-string'
 here = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA_DIRECTORY = os.path.join(here, 'tests', 'data')
 TEST_DATA_SQL_FILE = os.path.join(TEST_DATA_DIRECTORY, 'data.sql')
+REPOSITORY_NAME = 'OpenStax-CNX Repository'
