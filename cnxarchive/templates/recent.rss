@@ -24,7 +24,7 @@
             &lt;br&gt;&lt;/br&gt;
                {{module.abstract}}
             &lt;br&gt;&lt;/br&gt;
-            &lt;img src="http://i.creativecommons.org/l/by/4.0/80x15.png" />
+            &lt;img src="http://i.creativecommons.org/l/by/4.0/80x15.png" &gt;
             &lt;a href="http://creativecommons.org/licenses/by/4.0/"&gt;
               Some Rights Reserved
             &lt;/a&gt;

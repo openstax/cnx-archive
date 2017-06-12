@@ -1011,7 +1011,6 @@ def robots(request):
 
 
 @view_config(route_name='recent', request_method='GET',
-             accept="application/json",
              renderer='templates/recent.rss')
 def recent(request):
     # setting the query variables
@@ -1023,9 +1022,7 @@ def recent(request):
     # search the database
     settings = request.registry.settings
     statement = """
-                SELECT name, revised, authors, abstract,
-                'http://cnx.org/contents/'||
-                ident_hash( uuid, major_version, minor_version) AS link
+                SELECT name, revised, authors, abstract, uuid
                 FROM latest_modules
                 JOIN abstracts
                 ON latest_modules.abstractid = abstracts.abstractid
@@ -1040,7 +1037,7 @@ def recent(request):
                 search_results = cursor.fetchall()
     # alter the results to be in the correct form
     latest_modules = []
-    titles = ["name", "revised", "authors", "abstract", "link"]
+    titles = ["name", "revised", "authors", "abstract", "uuid"]
     for i in range(len(search_results)):
         latest_modules.append(dict(zip(titles, search_results[i])))
     for module in latest_modules:
@@ -1048,6 +1045,7 @@ def recent(request):
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')
         module['name'] = module['name'].decode('utf-8')
+        module['link'] = "http://cnx.org/contents/{}".format(module['uuid'])
 
     request.response.content_type = 'application/rss+xml'
     return {"latest_modules": latest_modules}
