@@ -1045,7 +1045,7 @@ def recent(request):
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')
         module['name'] = module['name'].decode('utf-8')
-        module['link'] = "http://cnx.org/contents/{}".format(module['uuid'])
+        module['link'] = request.route_url('content', ident_hash=module['uuid'])
 
     request.response.content_type = 'application/rss+xml'
     return {"latest_modules": latest_modules}
