@@ -3067,8 +3067,8 @@ application problems.</div>""",
                                                     "%b %d, %Y at %I:%M %p"))
             keys = module.keys()
             keys.sort()
-            self.assertEqual(keys,
-                             ["abstract", "authors", "uuid", "name", "revised"])
+            self.assertEqual(keys, ["abstract", "authors", "link", "name",
+                                    "revised", "uuid"])
         dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
         self.assertEqual(dates_sorted, dates)
