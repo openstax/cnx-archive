@@ -3068,7 +3068,7 @@ application problems.</div>""",
             keys = module.keys()
             keys.sort()
             self.assertEqual(keys,
-                             ["abstract", "authors", "link", "name", "revised"])
+                             ["abstract", "authors", "uuid", "name", "revised"])
         dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
         self.assertEqual(dates_sorted, dates)
