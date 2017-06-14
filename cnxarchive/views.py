@@ -1031,9 +1031,8 @@ def recent(request):
                 ORDER BY revised DESC
                 LIMIT (%s) OFFSET (%s);
                 """
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-            with db_connection.\
-                    cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_c:
+            with db_c.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(statement,
                                vars=(portal_type, num_entries, start_entry))
                 latest_modules = cur.fetchall()
