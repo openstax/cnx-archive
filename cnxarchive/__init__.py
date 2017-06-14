@@ -79,7 +79,7 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
     declare_api_routes(config)
 
-    # allowing the pyramid templates to render html and rss
+    # allowing the pyramid templates to render rss
     config.include('pyramid_jinja2')
     config.add_jinja2_renderer('.rss')
 

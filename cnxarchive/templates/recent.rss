@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-<?xml-stylesheet type="text/css" href="recent.css"?>
 <rss version="2.0">
 <channel>
 
@@ -9,7 +8,7 @@
 
       {% for module in latest_modules %}
         <item>
-          <title>Module {{module.name}}</title>
+          <title>{{module.name}}</title>
           <link>{{module.link}}</link>
           <description>
           &lt;h3&gt;

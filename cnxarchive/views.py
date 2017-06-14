@@ -375,7 +375,7 @@ def html_rss_date(datetime):
     Based on:
     https://legacy.cnx.org/content/recent.rss
     """
-    return datetime.strftime("%b %d, %Y at %I:%M %p")
+    return datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
 
 
 def notblocked(page):

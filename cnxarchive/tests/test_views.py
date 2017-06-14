@@ -3063,8 +3063,7 @@ application problems.</div>""",
         # check that they are in correct order
         dates = []
         for module in recent['latest_modules']:
-            dates.append(datetime.datetime.strptime(module["revised"],
-                                                    "%b %d, %Y at %I:%M %p"))
+            dates.append(module["revised"].split(',')[1])
             keys = module.keys()
             keys.sort()
             self.assertEqual(keys, ["abstract", "authors", "link", "name",
