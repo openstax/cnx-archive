@@ -12,6 +12,7 @@ install_requires = (
     'python-memcached',
     'psycopg2>=2.5',
     'pyramid',
+    'pyramid_jinja2',
     'rhaptos.cnxmlutils',
     'tzlocal',
     'waitress',  # wsgi server

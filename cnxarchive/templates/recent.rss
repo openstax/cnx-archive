@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+<channel>
+
+      <title>OpenStax-CNX: Recently Added Or Revised Content</title>
+      <link>https://legacy.cnx.org/content/</link>
+      <description>OpenStax CNX</description>
+
+      {% for module in latest_modules %}
+        <item>
+          <title>{{module.name}}</title>
+          <link>{{module.uuid}}</link>
+          <description>
+          &lt;h3&gt;
+            &lt;div class="lastUpdated"&gt;
+              {{module.revised}}
+            &lt;/div&gt;
+          &lt;/h3&gt;
+          &lt;div class="feedEntryContent"&gt;
+            &lt;b&gt;
+                  {{module.authors}}
+            &lt;/b&gt;
+            &lt;br&gt;&lt;/br&gt;
+               {{module.abstract}}
+            &lt;br&gt;&lt;/br&gt;
+            &lt;img src="http://i.creativecommons.org/l/by/4.0/80x15.png" &gt;
+            &lt;a href="http://creativecommons.org/licenses/by/4.0/"&gt;
+              Some Rights Reserved
+            &lt;/a&gt;
+          &lt;/div&gt;
+          </description>
+        </item>
+      {% endfor %}
+
+</rss>
+</channel>
