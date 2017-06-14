@@ -9,7 +9,7 @@
       {% for module in latest_modules %}
         <item>
           <title>{{module.name}}</title>
-          <link>{{module.link}}</link>
+          <link>{{module.uuid}}</link>
           <description>
           &lt;h3&gt;
             &lt;div class="lastUpdated"&gt;

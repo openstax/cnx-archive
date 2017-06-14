@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from re import compile
 
 import psycopg2
+import psycopg2.extras
 from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
 from pytz import timezone
@@ -1031,22 +1032,17 @@ def recent(request):
                 LIMIT (%s) OFFSET (%s);
                 """
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-            with db_connection.cursor() as cursor:
+            with db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 cursor.execute(statement,
                                vars=(portal_type, num_entries, start_entry))
-                search_results = cursor.fetchall()
-    # alter the results to be in the correct form
-    latest_modules = []
-    titles = ["name", "revised", "authors", "abstract", "uuid"]
-    for i in range(len(search_results)):
-        latest_modules.append(dict(zip(titles, search_results[i])))
+                latest_modules = cursor.fetchall()
     for module in latest_modules:
         module['revised'] = html_rss_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
         module['abstract'] = module['abstract'].decode('utf-8')
         module['name'] = module['name'].decode('utf-8')
-        module['link'] = request.route_url('content',
+        module['uuid'] = request.route_url('content',
                                            ident_hash=module['uuid'])
-
+    print(latest_modules)
     request.response.content_type = 'application/rss+xml'
     return {"latest_modules": latest_modules}
