@@ -1033,10 +1033,10 @@ def recent(request):
                 """
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
             with db_connection.\
-                    cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute(statement,
+                    cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                cur.execute(statement,
                                vars=(portal_type, num_entries, start_entry))
-                latest_modules = cursor.fetchall()
+                latest_modules = cur.fetchall()
     for module in latest_modules:
         module['revised'] = html_rss_date(module['revised'])
         module['authors'] = format_author(module['authors'], settings)
