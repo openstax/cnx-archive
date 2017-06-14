@@ -71,7 +71,7 @@ def declare_api_routes(config):
     add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
-    add_route('recent', '/recent.rss')  # cnxarchive.views:recent
+    add_route('recent', '/feeds/recent.rss')  # cnxarchive.views:recent
 
 
 def main(global_config, **settings):
