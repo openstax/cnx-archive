@@ -1032,7 +1032,8 @@ def recent(request):
                 LIMIT (%s) OFFSET (%s);
                 """
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-            with db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+            with db_connection.\
+                    cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 cursor.execute(statement,
                                vars=(portal_type, num_entries, start_entry))
                 latest_modules = cursor.fetchall()
