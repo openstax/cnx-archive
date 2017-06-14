@@ -1043,6 +1043,5 @@ def recent(request):
         module['name'] = module['name'].decode('utf-8')
         module['uuid'] = request.route_url('content',
                                            ident_hash=module['uuid'])
-    print(latest_modules)
     request.response.content_type = 'application/rss+xml'
     return {"latest_modules": latest_modules}
