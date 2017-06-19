@@ -35,7 +35,7 @@
   {% for result in results %}
     <headers>
       <header tal:condition="r/harvestable | string:True">
-        <identifier>oai:{{host}}/{{result.uuid}}</identifier>
+        <identifier>oai:/{{host}}:{{result.uuid}}</identifier>
         <datestamp>{{result.revised}}</datestamp>
       </header>
     <headers>
@@ -46,7 +46,7 @@
   {% for record in results %}
     <record>
       <header>
-        <identifier>{{record.uuid}}</identifier>
+        <identifier>oai:/{{host}}:{{record.uuid}}</identifier>
         <datestamp>{{record.revised}}</datestamp>
       </header>
       <metadata>
@@ -62,7 +62,7 @@
             <dc:description>{{record.abstract}}</dc:description>
             <dc:language>{{record.language}}</dc:language>
             <dc:date>{{record.revised}}</dc:date>
-            <dc:identifier>{{baseURL}}/{{record.uuid}}</dc:identifier>
+            <dc:identifier>{{record.link}}</dc:identifier>
             <dc:rights>{{record.licenses_url}}</dc:rights>
           </oai_dc:dc>
         {% endif %}
@@ -84,7 +84,7 @@
             <dc:description>{{record.abstract}}</dc:description>
             <dc:language>{{record.language}}</dc:language>
             <dc:date>{{record.revised}}</dc:date>
-            <dc:identifier>{{baseURL}}/{{record.uuid}}</dc:identifier>
+            <dc:identifier>{{record.link}}</dc:identifier>
             <dc:rights>{{record.licenses_url}}</dc:rights>
           </cnxdc:dc>
         {% endif %}
@@ -157,7 +157,7 @@
             </ims1_2_1:lifecycle>
             <ims1_2_1:technical>
               <ims1_2_1:format>text/html</ims1_2_1:format>
-              <ims1_2_1:location type="URI">http://cnx.org/contents/{{record.uuid}}@</ims1_2_1:location>
+              <ims1_2_1:location type="URI">{{record.link}}</ims1_2_1:location>
               <ims1_2_1:requirement>
                 <ims1_2_1:type>
                   <ims1_2_1:source>

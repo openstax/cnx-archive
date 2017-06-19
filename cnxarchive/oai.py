@@ -109,7 +109,8 @@ def _formatOaiResults(results, request):
     if len(results) == 0:
         return _noRecordsMatchError()
     for result in results:
-        result['uuid'] = 'oai:{}:{}'.format(request.host, result['uuid'])
+        result['link'] = "{}/content/{}".format(request.host_url,
+                                                result['uuid'])
         new_authors = []
         for i in range(len(result['authors'])):
             new_authors.append({'fullname': result['authors'][i],
@@ -120,7 +121,7 @@ def _formatOaiResults(results, request):
 
 def _oaiGetBaseStatement():
     return """
-             name, created, revised, uuid, portal_type, language,
+             name, created, revised, uuid, uuid as link, portal_type, language,
              concat(major_version, '.', minor_version) as version,
              ARRAY(SELECT k.word FROM keywords as k, modulekeywords
                 as mk WHERE mk.module_ident = lm.module_ident AND
@@ -243,25 +244,24 @@ def oai(request):
     return_vars = {}
     return_vars['dateTime'] = html_rss_date(datetime.now().time())
     return_vars['baseURL'] = request.path_url
+    return_vars['host'] = request.host
     return_vars['query_request'] = []
     for var in request.GET:
         return_vars['query_request'].append({'name': var,
                                              'val': request.GET[var]})
-
     verb = request.GET.get('verb')
     parse_results = _parseOaiArguments(verb, request)
     return_vars['verb'] = verb
     if parse_results != "No errors":
         return_vars['error'] = parse_results
         return return_vars
-
-    oaiQuery = {'Identify': do_Identify(request),
-                'ListMetadataFormats': do_ListMetadataFormats(request),
-                'ListSets': do_ListSets(request),
-                'ListIdentifiers': do_ListIdentifiers(request),
-                'GetRecord': do_GetRecords(request),
-                'ListRecords': do_ListRecords(request)}
-
-    return_vars.update(oaiQuery[verb])
-
+    oaiQuery = {'Identify': do_Identify,
+                'ListMetadataFormats': do_ListMetadataFormats,
+                'ListSets': do_ListSets,
+                'ListIdentifiers': do_ListIdentifiers,
+                'GetRecord': do_GetRecords,
+                'ListRecords': do_ListRecords}
+    return_vars.update(oaiQuery[verb](request))
+    if 'error' in return_vars.keys():
+        return_vars['verb'] = 'error'
     return return_vars

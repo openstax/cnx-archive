@@ -107,7 +107,7 @@ class OaiTestCase(unittest.TestCase):
 
         from ..oai import oai
         oai = oai(self.request)
-        columns = set(['name', 'created', 'revised', 'uuid', 'portal_type',
+        columns = set(['name', 'created', 'revised', 'uuid', 'link', 'portal_type',
                        'language', 'version', 'keywords', 'subjects',
                        'author_emails', 'authors', 'maintainers', 'translators',
                        'abstract', 'licenses_url'])
@@ -117,12 +117,12 @@ class OaiTestCase(unittest.TestCase):
             self.assertEqual(set(result.keys()), columns)
 
     def test_oai_getRecord(self):
-        uuid = "oai:{}:{}".format(self.request.host, COLLECTION_METADATA[u'id'])
+        uuid = COLLECTION_METADATA[u'id']
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'oai'
         self.request.GET = {'verb': 'GetRecord',
                             'metadataPrefix': 'cnx_dc',
-                            'identifier': uuid}
+                            'identifier': "oai:{}:{}".format(self.request.host, uuid)}
 
         from ..oai import oai
         oai = oai(self.request)
