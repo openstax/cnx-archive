@@ -10,7 +10,6 @@ import os
 import json
 import logging
 from datetime import datetime, timedelta
-from re import compile
 
 import psycopg2
 import psycopg2.extras
@@ -23,16 +22,7 @@ from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from . import config
-from . import cache
-# FIXME double import
-from . import database
 from .database import SQL, get_tree, get_collated_content
-from .search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
-    Query,
-    )
-from .sitemap import Sitemap
-from .robots import Robots
 from .utils import (
     COLLECTION_MIMETYPE, IdentHashSyntaxError,
     IdentHashShortId, IdentHashMissingVersion,
@@ -40,21 +30,7 @@ from .utils import (
     join_ident_hash, split_ident_hash, split_legacy_hash
     )
 
-
 logger = logging.getLogger('cnxarchive')
-_BLOCK_SIZE = 4096 * 64  # 256K
-
-PAGES_TO_BLOCK = [
-    'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
-    '/*/pdf$', '/*/epub$', '/*/complete$',
-    '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
-    '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
-
-
-class ExportError(Exception):
-    """Used as catchall for other export errors."""
-
-    pass
 
 
 # #################### #
