@@ -5,7 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""All the views."""
+"""In Book Search Views."""
 import os
 import json
 import logging
