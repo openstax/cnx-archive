@@ -26,6 +26,7 @@ from pyramid.traversal import PATH_SAFE
 from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
+
 def quote(path):
     """URL encode the path"""
     return url_quote(path, safe=PATH_SAFE)

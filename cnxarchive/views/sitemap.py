@@ -35,11 +35,6 @@ PAGES_TO_BLOCK = [
 
 logger = logging.getLogger('cnxarchive')
 
-class ExportError(Exception):
-    """Used as catchall for other export errors."""
-
-    pass
-
 
 # #################### #
 #   Helper functions   #
