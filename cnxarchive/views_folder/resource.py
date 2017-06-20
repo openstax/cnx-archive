@@ -5,7 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""All the views."""
+"""Resource Views."""
 import os
 import json
 import logging
