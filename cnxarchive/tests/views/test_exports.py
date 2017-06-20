@@ -26,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.exports.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.exports.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -90,7 +90,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'export'
 
-        from ...views_folder.exports import get_export
+        from ...views.exports import get_export
         export = get_export(self.request).body
 
         self.assertEqual(self.request.response.content_disposition,
@@ -130,7 +130,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'export'
 
-        from ...views_folder.exports import get_export
+        from ...views.exports import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
                           get_export, self.request)
 
@@ -143,7 +143,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'export'
 
-        from ...views_folder.exports import get_export
+        from ...views.exports import get_export
         self.assertRaises(httpexceptions.HTTPNotFound,
                           get_export, self.request)
 
@@ -155,6 +155,6 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'export'
 
-        from ...views_folder.exports import get_export
+        from ...views.exports import get_export
         with self.assertRaises(IdentHashMissingVersion) as cm:
             get_export(self.request)

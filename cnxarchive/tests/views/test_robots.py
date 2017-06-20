@@ -5,7 +5,12 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import os
 import datetime
+import glob
+import HTMLParser
+import time
+import json
 import unittest
 
 try:
@@ -21,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.recent.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.robots.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -70,22 +75,30 @@ class ViewsTestCase(unittest.TestCase):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
-    def test_recent_rss(self):
+    def test_robots(self):
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
+        self.request.matched_route.name = 'robots'
 
-        from ...views_folder.recent import recent
-        recent = recent(self.request)
-        self.assertEqual(len(recent['latest_modules']), 5)
-        # check that they are in correct order
-        dates = []
-        for module in recent['latest_modules']:
-            dates.append(module["revised"].split(',')[1])
-            keys = module.keys()
-            keys.sort()
-            self.assertEqual(keys, ["abstract", "authors", "name",
-                                    "revised", "uuid"])
-        dates_sorted = list(dates)
-        dates_sorted.sort(reverse=True)
-        self.assertEqual(dates_sorted, dates)
+        # Call the view
+        mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
+        with mock.patch('cnxarchive.views.robots.datetime') as mock_datetime:
+            def patched_now_side_effect(timezone):
+                return timezone.localize(mocked_time)
+            mock_datetime.now.side_effect = patched_now_side_effect
+            from ...views.robots import robots
+            robots = robots(self.request).body
+
+        # Check the headers
+        resp = self.request.response
+        self.assertEqual(resp.content_type, 'text/plain')
+        self.assertEqual(
+            str(resp.cache_control), 'max-age=36000, must-revalidate')
+        self.assertEqual(resp.headers['Last-Modified'],
+                         'Wed, 04 Mar 2015 18:03:29 GMT')
+        self.assertEqual(resp.headers['Expires'],
+                         'Mon, 09 Mar 2015 18:03:29 GMT')
+
+        # Check robots.txt content
+        expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
+        with open(expected_file, 'r') as f:
+            self.assertMultiLineEqual(robots, f.read())

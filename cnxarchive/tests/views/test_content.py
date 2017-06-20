@@ -35,7 +35,7 @@ def quote(path):
     return url_quote(path, safe=PATH_SAFE)
 
 
-@mock.patch('cnxarchive.views_folder.content.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.content.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -95,7 +95,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         # Remove the 'tree' from the content for separate testing.
@@ -120,7 +120,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         # Remove the 'tree' from the content for separate testing.
@@ -143,7 +143,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         # Check the tree.
@@ -172,7 +172,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         # Check the tree.
@@ -215,7 +215,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         content_tree = content.pop('tree')
@@ -275,7 +275,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         # History should only include displayed version and older versions
@@ -303,7 +303,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         content = get_content(self.request).json_body
 
@@ -330,7 +330,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         # Composite modules cannot be retrieved outside of a collection
         self.assertRaises(httpexceptions.HTTPNotFound, get_content,
@@ -352,7 +352,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         self.assertRaises(httpexceptions.HTTPNotFound, get_content,
                           self.request)
@@ -373,7 +373,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         content = get_content(self.request).json_body
 
@@ -398,7 +398,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         # Check that the view redirects to the latest version
         with self.assertRaises(IdentHashMissingVersion) as cm:
@@ -419,7 +419,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         # Check that the view redirects to the latest version
         with self.assertRaises(IdentHashShortId) as cm:
@@ -439,7 +439,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
 
         # Check that the view redirects to the latest version
         with self.assertRaises(IdentHashShortId) as cm:
@@ -452,7 +452,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         self.assertRaises(IdentHashMissingVersion, get_content,
                           self.request)
 
@@ -463,7 +463,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         self.assertRaises(IdentHashShortId, get_content,
                           self.request)
 
@@ -483,7 +483,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         self.assertEqual(
@@ -507,7 +507,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         from pyramid.httpexceptions import HTTPFound
         with self.assertRaises(HTTPFound) as caught_exc:
             get_content(self.request).json_body
@@ -533,7 +533,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         from pyramid.httpexceptions import HTTPNotFound
         with self.assertRaises(HTTPNotFound):
             get_content(self.request).json_body
@@ -550,7 +550,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         content = get_content(self.request).json_body
 
         self.assertNotEqual(
@@ -573,7 +573,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         self.assertRaises(httpexceptions.HTTPNotFound, get_content,
                           self.request)
 
@@ -593,7 +593,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
             get_content(self.request)
 
@@ -618,7 +618,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         with self.assertRaises(IdentHashMissingVersion) as cm:
             get_content(self.request)
 
@@ -640,7 +640,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
 
@@ -662,7 +662,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
 
@@ -684,7 +684,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views_folder.content import get_content
+        from ...views.content import get_content
         with self.assertRaises(IdentHashShortId) as cm:
             get_content(self.request)
 
@@ -720,7 +720,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content-html'
 
         # Call the view
-        from ...views_folder.content import get_content_html
+        from ...views.content import get_content_html
         resp = get_content_html(self.request)
 
         # Check that the view returns the expected html
@@ -737,7 +737,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matched_route.name = 'content-html'
 
         # Call the view.
-        from ...views_folder.content import get_content_html
+        from ...views.content import get_content_html
 
         # Check that the view returns some html
         resp_body = get_content_html(self.request).body
@@ -774,7 +774,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             self.request.matched_route.name = 'content'
 
             # Call the view
-            from ...views_folder.content import get_content
+            from ...views.content import get_content
             content = get_content(self.request).json_body
 
             return content.pop('content')

@@ -26,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.sitemap.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.sitemap.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -80,7 +80,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'sitemap'
 
         # Call the view
-        from ...views_folder.sitemap import sitemap
+        from ...views.sitemap import sitemap
         sitemap = sitemap(self.request).body
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
         with open(expected_file, 'r') as file:

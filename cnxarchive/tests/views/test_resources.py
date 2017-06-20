@@ -26,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.robots.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.resource.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -75,30 +75,35 @@ class ViewsTestCase(unittest.TestCase):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
-    def test_robots(self):
+    def test_resources(self):
+        # Test the retrieval of resources contained in content.
+        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
+
+        # Build the request.
+        self.request.matchdict = {'hash': hash}
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'robots'
+        self.request.matched_route.name = 'resource'
+
+        # Call the view.
+        from ...views.resource import get_resource
+        resource = get_resource(self.request).body
+
+        expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
+        # Check the response body.
+        self.assertEqual(bytes(resource)[:len(expected_bits)],
+                         expected_bits)
+
+        self.assertEqual(self.request.response.content_type, 'image/png')
+
+    def test_resources_404(self):
+        hash = 'invalid-hash'
+
+        # Build the request
+        self.request.matchdict = {'hash': hash}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'resource'
 
         # Call the view
-        mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
-        with mock.patch('cnxarchive.views_folder.robots.datetime') as mock_datetime:
-            def patched_now_side_effect(timezone):
-                return timezone.localize(mocked_time)
-            mock_datetime.now.side_effect = patched_now_side_effect
-            from ...views_folder.robots import robots
-            robots = robots(self.request).body
-
-        # Check the headers
-        resp = self.request.response
-        self.assertEqual(resp.content_type, 'text/plain')
-        self.assertEqual(
-            str(resp.cache_control), 'max-age=36000, must-revalidate')
-        self.assertEqual(resp.headers['Last-Modified'],
-                         'Wed, 04 Mar 2015 18:03:29 GMT')
-        self.assertEqual(resp.headers['Expires'],
-                         'Mon, 09 Mar 2015 18:03:29 GMT')
-
-        # Check robots.txt content
-        expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
-        with open(expected_file, 'r') as f:
-            self.assertMultiLineEqual(robots, f.read())
+        from ...views.resource import get_resource
+        self.assertRaises(httpexceptions.HTTPNotFound, get_resource,
+                          self.request)
