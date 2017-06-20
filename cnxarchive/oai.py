@@ -130,6 +130,7 @@ def _decodeArray(result_array):
         decoded.append(result.decode('utf-8'))
     return decoded
 
+
 def _oaiGetBaseStatement():
     return """
              name, created, revised, uuid, uuid as link, portal_type, language,
