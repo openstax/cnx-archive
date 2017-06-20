@@ -1399,14 +1399,3 @@ class ViewsTestCase(unittest.TestCase):
                 message.pop('ends')
             return messages
         self.assertEqual(expected_messages, _remove_timestamps(messages))
-
-    def test_sitemap(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'sitemap'
-
-        # Call the view
-        from ..views import sitemap
-        sitemap = sitemap(self.request).body
-        expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
-        with open(expected_file, 'r') as file:
-            self.assertMultiLineEqual(sitemap, file.read())
