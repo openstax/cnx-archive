@@ -22,6 +22,7 @@ from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
+from ..utils import fromtimestamp
 
 logger = logging.getLogger('cnxarchive')
 

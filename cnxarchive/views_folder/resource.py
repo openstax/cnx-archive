@@ -23,9 +23,8 @@ from pyramid.view import view_config
 
 from .. import config
 from .. import cache
-# FIXME double import
-from .. import database
 from ..database import SQL, get_tree, get_collated_content
+from ..utils import fromtimestamp
 
 logger = logging.getLogger('cnxarchive')
 

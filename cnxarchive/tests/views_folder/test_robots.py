@@ -26,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views_folder.robots.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -81,7 +81,7 @@ class ViewsTestCase(unittest.TestCase):
 
         # Call the view
         mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
-        with mock.patch('cnxarchive.views.datetime') as mock_datetime:
+        with mock.patch('cnxarchive.views_folder.robots.datetime') as mock_datetime:
             def patched_now_side_effect(timezone):
                 return timezone.localize(mocked_time)
             mock_datetime.now.side_effect = patched_now_side_effect

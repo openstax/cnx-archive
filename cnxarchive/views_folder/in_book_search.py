@@ -24,7 +24,7 @@ from pyramid.view import view_config
 from .. import config
 from ..database import SQL, get_tree, get_collated_content
 from ..utils import (
-    IdentHashShortId, IdentHashMissingVersion, split_ident_hash
+    IdentHashShortId, IdentHashMissingVersion, split_ident_hash, fromtimestamp
     )
 
 logger = logging.getLogger('cnxarchive')

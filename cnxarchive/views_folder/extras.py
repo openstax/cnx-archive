@@ -25,12 +25,7 @@ from pyramid.view import view_config
 from .. import config
 from .. import cache
 from ..database import SQL, get_module_can_publish
-from ..utils import (
-    COLLECTION_MIMETYPE, IdentHashSyntaxError,
-    IdentHashShortId, IdentHashMissingVersion,
-    portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash
-    )
+from ..utils import  fromtimestamp, split_ident_hash
 from .exports import get_export_allowable_types
 
 logger = logging.getLogger('cnxarchive')

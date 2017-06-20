@@ -26,10 +26,10 @@ from .. import cache
 # FIXME double import
 from ..database import SQL, get_tree, get_collated_content
 from ..utils import (
-    COLLECTION_MIMETYPE, IdentHashSyntaxError,
+    COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
-    portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash
+    portaltype_to_mimetype, fromtimestamp,
+    join_ident_hash, split_ident_hash
     )
 
 HTML_WRAPPER = """\
