@@ -70,22 +70,6 @@ def get_uuid(shortid):
                 raise httpexceptions.HTTPNotFound()
 
 
-def get_latest_version(uuid_):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-module-versions'], {'id': uuid_})
-            try:
-                return cursor.fetchone()[0]
-            except (TypeError, IndexError,):  # None returned
-                raise httpexceptions.HTTPNotFound()
-
-
-
-
-def is_latest(id, version):
-    """Determine if this is the latest version of this content."""
-    return get_latest_version(id) == version
 
 
 LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
@@ -167,12 +151,6 @@ def _get_subject_list(cursor):
         yield subject
 
 
-def _get_available_languages_and_count(cursor):
-    """Return a list of available language and its count"""
-    cursor.execute(SQL['get-available-languages-and-count'])
-    return cursor.fetchall()
-
-
 def _get_featured_links(cursor):
     """Return featured books for the front page."""
     cursor.execute(SQL['get-featured-links'])
@@ -192,36 +170,9 @@ def _get_licenses(cursor):
 
 
 
-
-
 # ######### #
 #   Views   #
 # ######### #
-
-
-
-@view_config(route_name='content-extras', request_method='GET')
-def get_extra(request):
-    """Return information about a module / collection that cannot be cached."""
-    settings = get_current_registry().settings
-    exports_dirs = settings['exports-directories'].split()
-    args = request.matchdict
-    id, version = split_ident_hash(args['ident_hash'])
-    results = {}
-
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            results['downloads'] = \
-                list(get_export_allowable_types(cursor, exports_dirs,
-                                                id, version))
-            results['isLatest'] = is_latest(id, version)
-            results['canPublish'] = database.get_module_can_publish(cursor, id)
-
-    resp = request.response
-    resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
-    return resp
-
 
 
 @view_config(route_name='search', request_method='GET')
@@ -358,28 +309,6 @@ def search(request):
 
     resp.body = json.dumps(results)
 
-    return resp
-
-
-@view_config(route_name='extras', request_method='GET')
-def extras(request):
-    """Return a dict with archive metadata for webview."""
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            metadata = {
-                'languages_and_count': _get_available_languages_and_count(
-                    cursor),
-                'subjects': list(_get_subject_list(cursor)),
-                'featuredLinks': _get_featured_links(cursor),
-                'messages': _get_service_state_messages(cursor),
-                'licenses': _get_licenses(cursor),
-                }
-
-    resp = request.response
-    resp.status = '200 OK'
-    resp.content_type = 'application/json'
-    resp.body = json.dumps(metadata)
     return resp
 
 
