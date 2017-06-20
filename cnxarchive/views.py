@@ -151,12 +151,6 @@ def _get_subject_list(cursor):
         yield subject
 
 
-def _get_available_languages_and_count(cursor):
-    """Return a list of available language and its count"""
-    cursor.execute(SQL['get-available-languages-and-count'])
-    return cursor.fetchall()
-
-
 def _get_featured_links(cursor):
     """Return featured books for the front page."""
     cursor.execute(SQL['get-featured-links'])

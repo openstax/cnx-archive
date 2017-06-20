@@ -79,6 +79,12 @@ def is_latest(id, version):
     return get_latest_version(id) == version
 
 
+def _get_available_languages_and_count(cursor):
+    """Return a list of available language and its count"""
+    cursor.execute(SQL['get-available-languages-and-count'])
+    return cursor.fetchall()
+
+
 # ######### #
 #   Views   #
 # ######### #
