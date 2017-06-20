@@ -277,31 +277,6 @@ def _get_licenses(cursor):
 
 
 
-
-
-@view_config(route_name='resource', request_method='GET')
-def get_resource(request):
-    """Retrieve a file's data."""
-    settings = get_current_registry().settings
-    hash = request.matchdict['hash']
-
-    # Do the file lookup
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            args = dict(hash=hash)
-            cursor.execute(SQL['get-resource'], args)
-            try:
-                mimetype, file = cursor.fetchone()
-            except TypeError:  # None returned
-                raise httpexceptions.HTTPNotFound()
-
-    resp = request.response
-    resp.status = "200 OK"
-    resp.content_type = mimetype
-    resp.body = file[:]
-    return resp
-
-
 @view_config(route_name='content-extras', request_method='GET')
 def get_extra(request):
     """Return information about a module / collection that cannot be cached."""

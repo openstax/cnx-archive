@@ -561,39 +561,6 @@ class ViewsTestCase(unittest.TestCase):
         resp_body = get_content_html(self.request).body
         self.assertTrue(resp_body.startswith('<html'))
 
-    def test_resources(self):
-        # Test the retrieval of resources contained in content.
-        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
-
-        # Build the request.
-        self.request.matchdict = {'hash': hash}
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'resource'
-
-        # Call the view.
-        from ..views import get_resource
-        resource = get_resource(self.request).body
-
-        expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
-        # Check the response body.
-        self.assertEqual(bytes(resource)[:len(expected_bits)],
-                         expected_bits)
-
-        self.assertEqual(self.request.response.content_type, 'image/png')
-
-    def test_resources_404(self):
-        hash = 'invalid-hash'
-
-        # Build the request
-        self.request.matchdict = {'hash': hash}
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'resource'
-
-        # Call the view
-        from ..views import get_resource
-        self.assertRaises(httpexceptions.HTTPNotFound, get_resource,
-                          self.request)
-
     def test_exports(self):
         # Test for the retrieval of exports (e.g. pdf files).
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
