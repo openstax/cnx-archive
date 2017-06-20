@@ -50,6 +50,8 @@ PAGES_TO_BLOCK = [
     '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
     '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
 
+LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
+
 
 
 
@@ -70,47 +72,6 @@ def get_uuid(shortid):
                 raise httpexceptions.HTTPNotFound()
 
 
-
-
-LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
-
-
-
-
-HTML_WRAPPER = """\
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <body>{}</body>
-</html>
-"""
-
-
-def html_listify(tree, root_ul_element, parent_id=None):
-    """Recursively construct HTML nested list version of book tree.
-    The original caller should not call this function with the
-    `parent_id` defined.
-
-    """
-    request = get_current_request()
-    is_first_node = parent_id is None
-    if is_first_node:
-        parent_id = tree[0]['id']
-    for node in tree:
-        li_elm = etree.SubElement(root_ul_element, 'li')
-        a_elm = etree.SubElement(li_elm, 'a')
-        a_elm.text = node['title']
-        if node['id'] != 'subcol':
-            if is_first_node:
-                a_elm.set('href', request.route_path(
-                    'content-html', ident_hash=node['id']))
-            else:
-                a_elm.set('href', request.route_path(
-                    'content-html',
-                    separator=':',
-                    ident_hash=parent_id,
-                    page_ident_hash=node['id']))
-        if 'contents' in node:
-            elm = etree.SubElement(li_elm, 'ul')
-            html_listify(node['contents'], elm, parent_id)
 
 
 
