@@ -206,23 +206,6 @@ def html_listify(tree, root_ul_element, parent_id=None):
             html_listify(node['contents'], elm, parent_id)
 
 
-def _convert_legacy_id(objid, objver=None):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            if objver:
-                args = dict(objid=objid, objver=objver)
-                cursor.execute(SQL['get-content-from-legacy-id-ver'], args)
-            else:
-                cursor.execute(SQL['get-content-from-legacy-id'],
-                               dict(objid=objid))
-            try:
-                id, version = cursor.fetchone()
-                return (id, version)
-            except TypeError:  # None returned
-                return (None, None)
-
-
 
 
 def notblocked(page):
@@ -294,51 +277,6 @@ def _get_licenses(cursor):
 
 
 
-@view_config(route_name='legacy-redirect', request_method='GET')
-@view_config(route_name='legacy-redirect-latest', request_method='GET')
-@view_config(route_name='legacy-redirect-w-version', request_method='GET')
-def redirect_legacy_content(request):
-    """Redirect from legacy /content/id/version to new /contents/uuid@version.
-
-    Handles collection context (book) as well.
-    """
-    settings = get_current_registry().settings
-    db_conn_string = settings[config.CONNECTION_STRING]
-    routing_args = request.matchdict
-    objid = routing_args['objid']
-    objver = routing_args.get('objver')
-    filename = routing_args.get('filename')
-
-    id, version = _convert_legacy_id(objid, objver)
-
-    if not id:
-        raise httpexceptions.HTTPNotFound()
-
-    if filename:
-        with psycopg2.connect(db_conn_string) as db_connection:
-            with db_connection.cursor() as cursor:
-                args = dict(id=id, version=version, filename=filename)
-                cursor.execute(SQL['get-resourceid-by-filename'], args)
-                try:
-                    res = cursor.fetchone()
-                    resourceid = res[0]
-                    raise httpexceptions.HTTPFound(request.route_path(
-                        'resource', hash=resourceid,
-                        ignore=u'/{}'.format(filename)))
-                except TypeError:  # None returned
-                    raise httpexceptions.HTTPNotFound()
-
-    ident_hash = join_ident_hash(id, version)
-    params = request.params
-    if params.get('collection'):  # page in book
-        objid, objver = split_legacy_hash(params['collection'])
-        book_uuid, book_version = _convert_legacy_id(objid, objver)
-        if book_uuid:
-            id, ident_hash = \
-                _get_page_in_book(id, version, book_uuid, book_version)
-
-    raise httpexceptions.HTTPFound(
-        request.route_path('content', ident_hash=ident_hash))
 
 
 @view_config(route_name='resource', request_method='GET')
