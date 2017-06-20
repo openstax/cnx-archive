@@ -31,8 +31,6 @@ from ..search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
     )
-from ..sitemap import Sitemap
-from ..robots import Robots
 from ..utils import (
     COLLECTION_MIMETYPE, IdentHashSyntaxError,
     IdentHashShortId, IdentHashMissingVersion,

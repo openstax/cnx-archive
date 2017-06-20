@@ -30,6 +30,7 @@ from .views_test_data import COLLECTION_JSON_TREE
 from .views_test_data import MODULE_METADATA
 from .views_test_data import COLLECTION_DERIVED_METADATA
 
+
 def quote(path):
     """URL encode the path"""
     return url_quote(path, safe=PATH_SAFE)

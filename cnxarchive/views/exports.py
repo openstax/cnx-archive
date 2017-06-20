@@ -35,15 +35,16 @@ from .content import get_content_metadata
 LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
 logger = logging.getLogger('cnxarchive')
 
-class ExportError(Exception):
-    """Used as catchall for other export errors."""
-
-    pass
-
 
 # #################### #
 #   Helper functions   #
 # #################### #
+
+
+class ExportError(Exception):
+    """Used as catchall for other export errors."""
+
+    pass
 
 
 # ######### #
