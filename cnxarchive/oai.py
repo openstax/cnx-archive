@@ -109,6 +109,11 @@ def _formatOaiResults(results, request):
     if len(results) == 0:
         return _noRecordsMatchError()
     for result in results:
+        result['name'] = result['name'].decode('utf-8')
+        result['abstract'] = result['abstract'].decode('utf-8')
+        result['authors'] = _decodeArray(result['authors'])
+        result['maintainers'] = _decodeArray(result['maintainers'])
+        result['translators'] = _decodeArray(result['translators'])
         result['link'] = "{}/content/{}".format(request.host_url,
                                                 result['uuid'])
         new_authors = []
@@ -118,6 +123,12 @@ def _formatOaiResults(results, request):
         result['authors'] = new_authors
     return {'results': results}
 
+
+def _decodeArray(result_array):
+    decoded = []
+    for result in result_array:
+        decoded.append(result.decode('utf-8'))
+    return decoded
 
 def _oaiGetBaseStatement():
     return """

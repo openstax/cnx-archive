@@ -38,7 +38,7 @@
         <identifier>oai:/{{host}}:{{result.uuid}}</identifier>
         <datestamp>{{result.revised}}</datestamp>
       </header>
-    <headers>
+    </headers>
   {% endfor %}
 {% endblock %}
 
