@@ -26,7 +26,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.in_book_search.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.in_book_search.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -86,7 +86,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
-        from ...views_folder.in_book_search import in_book_search
+        from ...views.in_book_search import in_book_search
         with self.assertRaises(IdentHashMissingVersion) as cm:
             in_book_search(self.request)
 
@@ -105,7 +105,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
-        from ...views_folder.in_book_search import in_book_search
+        from ...views.in_book_search import in_book_search
         with self.assertRaises(IdentHashShortId) as cm:
             in_book_search(self.request)
 
@@ -123,7 +123,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'in-book-search'
 
         # Call the view.
-        from ...views_folder.in_book_search import in_book_search
+        from ...views.in_book_search import in_book_search
         with self.assertRaises(IdentHashShortId) as cm:
             in_book_search(self.request)
 
@@ -138,7 +138,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'in-book-search'
 
-        from ...views_folder.in_book_search import in_book_search
+        from ...views.in_book_search import in_book_search
         results = in_book_search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -198,7 +198,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'in-book-search-page'
 
         # Call the view.
-        from ...views_folder.in_book_search import in_book_search_highlighted_results
+        from ...views.in_book_search import in_book_search_highlighted_results
 
         with self.assertRaises(IdentHashMissingVersion) as cm:
             in_book_search_highlighted_results(self.request)
@@ -217,7 +217,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'in-book-search-page'
 
-        from ...views_folder.in_book_search import in_book_search_highlighted_results
+        from ...views.in_book_search import in_book_search_highlighted_results
         results = in_book_search_highlighted_results(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -244,7 +244,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'in-book-search'
 
-        from ...views_folder.in_book_search import in_book_search
+        from ...views.in_book_search import in_book_search
         results = in_book_search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -293,7 +293,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'in-book-search-page'
 
-        from ...views_folder.in_book_search import in_book_search_highlighted_results
+        from ...views.in_book_search import in_book_search_highlighted_results
         results = in_book_search_highlighted_results(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type

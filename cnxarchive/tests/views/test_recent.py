@@ -5,12 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
 import datetime
-import glob
-import HTMLParser
-import time
-import json
 import unittest
 
 try:
@@ -26,7 +21,7 @@ from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views_folder.resource.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.recent.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -75,35 +70,22 @@ class ViewsTestCase(unittest.TestCase):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
-    def test_resources(self):
-        # Test the retrieval of resources contained in content.
-        hash = '075500ad9f71890a85fe3f7a4137ac08e2b7907c'
-
-        # Build the request.
-        self.request.matchdict = {'hash': hash}
+    def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'resource'
+        self.request.matched_route.name = 'recent'
+        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
 
-        # Call the view.
-        from ...views_folder.resource import get_resource
-        resource = get_resource(self.request).body
-
-        expected_bits = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x02\xfe\x00\x00\x00\x93\x08\x06\x00\x00\x00\xf6\x90\x1d\x14'
-        # Check the response body.
-        self.assertEqual(bytes(resource)[:len(expected_bits)],
-                         expected_bits)
-
-        self.assertEqual(self.request.response.content_type, 'image/png')
-
-    def test_resources_404(self):
-        hash = 'invalid-hash'
-
-        # Build the request
-        self.request.matchdict = {'hash': hash}
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'resource'
-
-        # Call the view
-        from ...views_folder.resource import get_resource
-        self.assertRaises(httpexceptions.HTTPNotFound, get_resource,
-                          self.request)
+        from ...views.recent import recent
+        recent = recent(self.request)
+        self.assertEqual(len(recent['latest_modules']), 5)
+        # check that they are in correct order
+        dates = []
+        for module in recent['latest_modules']:
+            dates.append(module["revised"].split(',')[1])
+            keys = module.keys()
+            keys.sort()
+            self.assertEqual(keys, ["abstract", "authors", "name",
+                                    "revised", "uuid"])
+        dates_sorted = list(dates)
+        dates_sorted.sort(reverse=True)
+        self.assertEqual(dates_sorted, dates)

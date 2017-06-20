@@ -31,7 +31,7 @@ def quote(path):
     return url_quote(path, safe=PATH_SAFE)
 
 
-@mock.patch('cnxarchive.views_folder.extras.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.extras.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -89,7 +89,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
 
         with self.assertRaises(httpexceptions.HTTPNotFound) as caught_exc:
             response = get_extra(self.request)
@@ -103,7 +103,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
 
         self.assertEqual(self.request.response.status, '200 OK')
@@ -151,7 +151,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
 
         self.assertEqual(self.request.response.status, '200 OK')
@@ -211,7 +211,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content-extras'
 
         # Call the target
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
 
         self.assertEqual(self.request.response.status, '200 OK')
@@ -257,7 +257,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
 
         self.assertEqual(self.request.response.status, '200 OK')
@@ -270,7 +270,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
 
         self.assertEqual(self.request.response.status, '200 OK')
@@ -293,7 +293,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content-extras'
 
         # Call the target
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         with self.assertRaises(IdentHashMissingVersion) as raiser:
             get_extra(self.request)
 
@@ -316,7 +316,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content-extras'
 
         # Call the target
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         with self.assertRaises(IdentHashShortId) as raiser:
             get_extra(self.request)
 
@@ -338,7 +338,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content-extras'
 
         # Call the target
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         with self.assertRaises(IdentHashShortId) as raiser:
             get_extra(self.request)
 
@@ -353,7 +353,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'content-extras'
 
         # Call the target
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         output = get_extra(self.request).json_body
         self.assertEqual(self.request.response.status, '200 OK')
         self.assertEqual(self.request.response.content_type,
@@ -404,7 +404,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
-        from ...views_folder.extras import get_extra
+        from ...views.extras import get_extra
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
                           self.request)
 
@@ -439,7 +439,7 @@ VALUES
         self.request.matched_route.name = 'extras'
 
         # Call the view
-        from ...views_folder.extras import extras
+        from ...views.extras import extras
         metadata = extras(self.request).json_body
         messages = metadata.pop('messages')
         self.assertEqual(metadata, {

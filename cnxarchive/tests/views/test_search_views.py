@@ -38,7 +38,7 @@ with open(SEARCH_RESULTS_FILEPATH, 'r') as file:
     SEARCH_RESULTS = json.load(file)
 
 
-@mock.patch('cnxarchive.views_folder.search_view.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.search_view.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -93,7 +93,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -111,7 +111,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -146,7 +146,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
 
         self.assertEqual(results['results']['total'], 0)
@@ -194,7 +194,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -215,7 +215,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -239,7 +239,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -263,7 +263,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -297,7 +297,7 @@ class ViewsTestCase(unittest.TestCase):
         # Test for no highlighting on specific field queries.
         self.request.params = {'q': 'title:"college physics"'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -331,7 +331,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -357,7 +357,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -383,7 +383,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -429,7 +429,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -475,7 +475,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -528,7 +528,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -547,7 +547,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': '"college physics" type:module'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -569,7 +569,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -588,7 +588,7 @@ class ViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.params = {'q': 'title:physics type:collection'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -607,7 +607,7 @@ class ViewsTestCase(unittest.TestCase):
         settings = self.settings.copy()
         settings['memcache-servers'] = ''
         config_kwargs = dict(settings=settings, request=self.request)
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
 
         # Build the request
         self.request.params = {'q': 'introduction',
@@ -672,7 +672,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -706,7 +706,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '2'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -735,7 +735,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '3'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -770,7 +770,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -783,7 +783,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.params = {'q': 'introduction',
                                'per_page': '3'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -797,7 +797,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'nocache': 'True'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -814,7 +814,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -828,7 +828,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '2'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -845,7 +845,7 @@ class ViewsTestCase(unittest.TestCase):
                                'per_page': '3',
                                'page': '2'}
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -861,7 +861,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type
@@ -894,7 +894,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
-        from ...views_folder.search_view import search
+        from ...views.search_view import search
         results = search(self.request).json_body
         status = self.request.response.status
         content_type = self.request.response.content_type

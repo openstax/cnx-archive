@@ -31,7 +31,7 @@ def quote(path):
     return url_quote(path, safe=PATH_SAFE)
 
 
-@mock.patch('cnxarchive.views_folder.legacy_redirect.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.legacy_redirect.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
@@ -90,7 +90,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -110,7 +110,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -139,7 +139,7 @@ class ViewsTestCase(unittest.TestCase):
         cursor.connection.commit()
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPNotFound) as cm:
@@ -155,7 +155,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -174,7 +174,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPNotFound) as cm:
@@ -195,7 +195,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -217,7 +217,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -242,7 +242,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the resources url
         with self.assertRaises(httpexceptions.HTTPFound) as cm:
@@ -266,7 +266,7 @@ class ViewsTestCase(unittest.TestCase):
         self.request.matched_route.name = 'legacy-redirect-w-version'
 
         # Call the view.
-        from ...views_folder.legacy_redirect import redirect_legacy_content
+        from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view 404s
         self.assertRaises(httpexceptions.HTTPNotFound,
