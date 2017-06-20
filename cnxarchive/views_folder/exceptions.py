@@ -62,6 +62,19 @@ class ExportError(Exception):
 # #################### #
 
 
+def get_uuid(shortid):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-uuid'], {'id': shortid})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                logger.debug("Short ID was supplied and could not discover "
+                             "UUID.")
+                raise httpexceptions.HTTPNotFound()
+
+
 # ################### #
 #   Exception Views   #
 # ################### #
