@@ -24,7 +24,7 @@ from pyramid.view import view_config
 from .. import config
 from ..database import SQL
 from ..utils import (
-    join_ident_hash, split_legacy_hash
+    join_ident_hash, split_legacy_hash, fromtimestamp
     )
 from .content import _get_content_json
 
