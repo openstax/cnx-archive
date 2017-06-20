@@ -25,10 +25,10 @@ from pyramid.traversal import PATH_SAFE
 
 from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
-from ..test_views import COLLECTION_METADATA
-from ..test_views import COLLECTION_JSON_TREE
-from ..test_views import MODULE_METADATA
-from ..test_views import COLLECTION_DERIVED_METADATA
+from .views_test_data import COLLECTION_METADATA
+from .views_test_data import COLLECTION_JSON_TREE
+from .views_test_data import MODULE_METADATA
+from .views_test_data import COLLECTION_DERIVED_METADATA
 
 def quote(path):
     """URL encode the path"""
