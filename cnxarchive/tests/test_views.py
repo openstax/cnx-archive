@@ -3055,23 +3055,3 @@ application problems.</div>""",
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
         with open(expected_file, 'r') as f:
             self.assertMultiLineEqual(robots, f.read())
-
-    def test_recent_rss(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
-
-        from ..views import recent
-        recent = recent(self.request)
-        self.assertEqual(len(recent['latest_modules']), 5)
-        # check that they are in correct order
-        dates = []
-        for module in recent['latest_modules']:
-            dates.append(module["revised"].split(',')[1])
-            keys = module.keys()
-            keys.sort()
-            self.assertEqual(keys, ["abstract", "authors", "name",
-                                    "revised", "uuid"])
-        dates_sorted = list(dates)
-        dates_sorted.sort(reverse=True)
-        self.assertEqual(dates_sorted, dates)
