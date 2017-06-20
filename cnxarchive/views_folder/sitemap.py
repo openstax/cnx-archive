@@ -23,26 +23,8 @@ from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-from .. import cache
-# FIXME double import
-from .. import database
 from ..database import SQL, get_tree, get_collated_content
-from ..search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
-    Query,
-    )
 from ..sitemap import Sitemap
-from ..robots import Robots
-from ..utils import (
-    COLLECTION_MIMETYPE, IdentHashSyntaxError,
-    IdentHashShortId, IdentHashMissingVersion,
-    portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash
-    )
-from .content import _get_content_json
-from .content import get_content_metadata
-from ..views import LEGACY_EXTENSION_MAP
-from .exports import get_export_allowable_types
 
 PAGES_TO_BLOCK = [
     'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',

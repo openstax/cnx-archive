@@ -50,8 +50,6 @@ PAGES_TO_BLOCK = [
     '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
     '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
 
-LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
-
 
 
 

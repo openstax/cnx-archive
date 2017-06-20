@@ -10,7 +10,6 @@ import os
 import json
 import logging
 from datetime import datetime, timedelta
-from re import compile
 
 import psycopg2
 import psycopg2.extras
@@ -27,28 +26,13 @@ from .. import cache
 # FIXME double import
 from .. import database
 from ..database import SQL, get_tree, get_collated_content
-from ..search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
-    Query,
-    )
-from ..sitemap import Sitemap
-from ..robots import Robots
+
 from ..utils import (
-    COLLECTION_MIMETYPE, IdentHashSyntaxError,
-    IdentHashShortId, IdentHashMissingVersion,
-    portaltype_to_mimetype, slugify, fromtimestamp,
-    join_ident_hash, split_ident_hash, split_legacy_hash
+    slugify, fromtimestamp, join_ident_hash, split_ident_hash
     )
-from .content import _get_content_json
 from .content import get_content_metadata
-from ..views import LEGACY_EXTENSION_MAP
 
-PAGES_TO_BLOCK = [
-    'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
-    '/*/pdf$', '/*/epub$', '/*/complete$',
-    '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
-    '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
-
+LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
 logger = logging.getLogger('cnxarchive')
 
 class ExportError(Exception):

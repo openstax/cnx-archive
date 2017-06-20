@@ -15,7 +15,6 @@ except ImportError:
 
 from pyramid import httpexceptions
 from pyramid import testing as pyramid_testing
-from pyramid.encode import url_quote
 from pyramid.traversal import PATH_SAFE
 
 from ...utils import IdentHashShortId, IdentHashMissingVersion

@@ -20,19 +20,10 @@ except ImportError:
 
 from pyramid import httpexceptions
 from pyramid import testing as pyramid_testing
-from pyramid.encode import url_quote
 from pyramid.traversal import PATH_SAFE
 
 from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
-from ..test_views import COLLECTION_METADATA
-from ..test_views import COLLECTION_JSON_TREE
-from ..test_views import MODULE_METADATA
-from ..test_views import COLLECTION_DERIVED_METADATA
-
-def quote(path):
-    """URL encode the path"""
-    return url_quote(path, safe=PATH_SAFE)
 
 
 @mock.patch('cnxarchive.views.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
