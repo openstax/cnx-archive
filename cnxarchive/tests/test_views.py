@@ -3027,31 +3027,3 @@ application problems.</div>""",
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
         with open(expected_file, 'r') as file:
             self.assertMultiLineEqual(sitemap, file.read())
-
-    def test_robots(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'robots'
-
-        # Call the view
-        mocked_time = datetime.datetime(2015, 3, 4, 18, 3, 29)
-        with mock.patch('cnxarchive.views.datetime') as mock_datetime:
-            def patched_now_side_effect(timezone):
-                return timezone.localize(mocked_time)
-            mock_datetime.now.side_effect = patched_now_side_effect
-            from ..views import robots
-            robots = robots(self.request).body
-
-        # Check the headers
-        resp = self.request.response
-        self.assertEqual(resp.content_type, 'text/plain')
-        self.assertEqual(
-            str(resp.cache_control), 'max-age=36000, must-revalidate')
-        self.assertEqual(resp.headers['Last-Modified'],
-                         'Wed, 04 Mar 2015 18:03:29 GMT')
-        self.assertEqual(resp.headers['Expires'],
-                         'Mon, 09 Mar 2015 18:03:29 GMT')
-
-        # Check robots.txt content
-        expected_file = os.path.join(testing.DATA_DIRECTORY, 'robots.txt')
-        with open(expected_file, 'r') as f:
-            self.assertMultiLineEqual(robots, f.read())

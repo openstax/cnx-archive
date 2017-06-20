@@ -338,16 +338,6 @@ def _get_content_json(ident_hash=None):
     return result
 
 
-def html_date(datetime):
-    """
-    Return the HTTP-date format of python's datetime time.
-
-    Based on:
-    http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
-    """
-    return datetime.strftime("%a, %d %b %Y %X %Z")
-
-
 def notblocked(page):
     """Determine if given url is a page that should be in sitemap."""
     for blocked in PAGES_TO_BLOCK:
@@ -885,34 +875,4 @@ def sitemap(request):
     resp.status = '200 OK'
     resp.content_type = 'text/xml'
     resp.body = xml()
-    return resp
-
-
-@view_config(route_name='robots', request_method='GET')
-def robots(request):
-    """Return a robots.txt file."""
-    robots_dot_txt = Robots()
-
-    bot_delays = {
-        '*': '',
-        'ScoutJet': '10',
-        'Baiduspider': '10',
-        'BecomeBot': '20',
-        'Slurp': '10'
-        }
-
-    for bot, delay in bot_delays.iteritems():
-        robots_dot_txt.add_bot(bot, delay, PAGES_TO_BLOCK)
-
-    gmt = timezone('GMT')
-    # it expires in 5 days
-    exp_time = datetime.now(gmt) + timedelta(5)
-
-    resp = request.response
-    resp.status = '200 OK'
-    resp.content_type = 'text/plain'
-    resp.cache_control = 'max-age=36000, must-revalidate'
-    resp.last_modified = html_date(datetime.now(gmt))
-    resp.expires = html_date(exp_time)
-    resp.body = robots_dot_txt.to_string()
     return resp
