@@ -348,16 +348,6 @@ def html_date(datetime):
     return datetime.strftime("%a, %d %b %Y %X %Z")
 
 
-def html_rss_date(datetime):
-    """
-    Return the HTTP-date format of python's datetime time.
-
-    Based on:
-    https://legacy.cnx.org/content/recent.rss
-    """
-    return datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
-
-
 def notblocked(page):
     """Determine if given url is a page that should be in sitemap."""
     for blocked in PAGES_TO_BLOCK:
@@ -418,21 +408,6 @@ def _get_licenses(cursor):
     return [json_row[0] for json_row in cursor.fetchall()]
 
 
-def format_author(personids, settings):
-    """
-    Takes a list of personid's and searches in the persons table to get their
-    full names and returns a list of the full names as a string.
-    """
-    statement = """
-                SELECT fullname
-                FROM persons
-                WHERE personid = ANY (%s);
-                """
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute(statement, vars=(personids,))
-                authors_list = cursor.fetchall()
-    return (', ').join(authors_list[0])
 
 
 # ################### #
@@ -988,39 +963,3 @@ def robots(request):
     resp.expires = html_date(exp_time)
     resp.body = robots_dot_txt.to_string()
     return resp
-
-
-@view_config(route_name='recent', request_method='GET',
-             renderer='templates/recent.rss')
-def recent(request):
-    # setting the query variables
-    num_entries = request.GET.get('number', 10)
-    start_entry = request.GET.get('start', 0)
-    portal_type = request.GET.get('type', ['Collection', 'Module'])
-    if portal_type != ['Collection', 'Module']:
-        portal_type = [portal_type]
-    # search the database
-    settings = request.registry.settings
-    statement = """
-                SELECT name, revised, authors, abstract, uuid
-                FROM latest_modules
-                JOIN abstracts
-                ON latest_modules.abstractid = abstracts.abstractid
-                WHERE portal_type = ANY (%s)
-                ORDER BY revised DESC
-                LIMIT (%s) OFFSET (%s);
-                """
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_c:
-            with db_c.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                cur.execute(statement,
-                            vars=(portal_type, num_entries, start_entry))
-                latest_modules = cur.fetchall()
-    for module in latest_modules:
-        module['revised'] = html_rss_date(module['revised'])
-        module['authors'] = format_author(module['authors'], settings)
-        module['abstract'] = module['abstract'].decode('utf-8')
-        module['name'] = module['name'].decode('utf-8')
-        module['uuid'] = request.route_url('content',
-                                           ident_hash=module['uuid'])
-    request.response.content_type = 'application/rss+xml'
-    return {"latest_modules": latest_modules}
