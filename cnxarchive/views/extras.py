@@ -26,6 +26,8 @@ from .. import config
 from .. import cache
 from ..database import SQL, get_module_can_publish
 from ..utils import fromtimestamp, split_ident_hash
+
+from .views_helpers import get_latest_version
 from .exports import get_export_allowable_types
 
 logger = logging.getLogger('cnxarchive')
@@ -34,17 +36,6 @@ logger = logging.getLogger('cnxarchive')
 # #################### #
 #   Helper functions   #
 # #################### #
-
-
-def get_latest_version(uuid_):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-module-versions'], {'id': uuid_})
-            try:
-                return cursor.fetchone()[0]
-            except (TypeError, IndexError,):  # None returned
-                raise httpexceptions.HTTPNotFound()
 
 
 def is_latest(id, version):

@@ -26,6 +26,7 @@ from ..database import SQL, get_tree, get_collated_content
 from ..utils import (
     IdentHashShortId, IdentHashMissingVersion, split_ident_hash, fromtimestamp
     )
+from .views_helpers import get_uuid
 
 logger = logging.getLogger('cnxarchive')
 
