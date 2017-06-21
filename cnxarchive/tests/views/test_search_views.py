@@ -37,6 +37,15 @@ SEARCH_RESULTS_FILEPATH = os.path.join(testing.DATA_DIRECTORY,
 with open(SEARCH_RESULTS_FILEPATH, 'r') as file:
     SEARCH_RESULTS = json.load(file)
 
+expected_messages = [
+    {u'message': u'This site is scheduled to be down for maintaince, please excuse the interuption. Thank you.',
+     u'name': u'Maintenance',
+     u'priority': 1},
+    {u'message': u"We have free books at free prices! Don't miss out!",
+     u'name': u'Notice',
+     u'priority': 8}
+]
+
 
 @mock.patch('cnxarchive.views.search_view.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):

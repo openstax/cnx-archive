@@ -543,11 +543,3 @@ application problems.</div>""",
                            u'url': u'http://creativecommons.org/licenses/by-nc-sa/4.0/',
                            u'version': u'4.0'}],
             })
-        expected_messages = [
-            {u'message': u'This site is scheduled to be down for maintaince, please excuse the interuption. Thank you.',
-             u'name': u'Maintenance',
-             u'priority': 1},
-            {u'message': u"We have free books at free prices! Don't miss out!",
-             u'name': u'Notice',
-             u'priority': 8}
-            ]

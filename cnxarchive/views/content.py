@@ -31,6 +31,7 @@ from ..utils import (
     portaltype_to_mimetype, fromtimestamp,
     join_ident_hash, split_ident_hash
     )
+from .views_helpers import get_uuid
 
 HTML_WRAPPER = """\
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -50,6 +51,31 @@ def tree_to_html(tree):
     ul = etree.Element('ul')
     html_listify([tree], ul)
     return HTML_WRAPPER.format(etree.tostring(ul))
+
+
+def get_content_metadata(id, version, cursor):
+    """Return metadata related to the content from the database."""
+    # Do the module lookup
+    args = dict(id=id, version=version)
+    # FIXME We are doing two queries here that can hopefully be
+    #       condensed into one.
+    cursor.execute(SQL['get-module-metadata'], args)
+    try:
+        result = cursor.fetchone()[0]
+        # version is what we want to return, but in the sql we're using
+        # current_version because otherwise there's a "column reference is
+        # ambiguous" error
+        result['version'] = result.pop('current_version')
+
+        # FIXME We currently have legacy 'portal_type' names in the database.
+        #       Future upgrades should replace the portal type with a mimetype
+        #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
+        #       Until then we will do the replacement here.
+        result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
+
+        return result
+    except (TypeError, IndexError,):  # None returned
+        raise httpexceptions.HTTPNotFound()
 
 
 def _get_content_json(ident_hash=None):
@@ -120,31 +146,6 @@ def _get_content_json(ident_hash=None):
                 result['content'] = content[:]
 
     return result
-
-
-def get_content_metadata(id, version, cursor):
-    """Return metadata related to the content from the database."""
-    # Do the module lookup
-    args = dict(id=id, version=version)
-    # FIXME We are doing two queries here that can hopefully be
-    #       condensed into one.
-    cursor.execute(SQL['get-module-metadata'], args)
-    try:
-        result = cursor.fetchone()[0]
-        # version is what we want to return, but in the sql we're using
-        # current_version because otherwise there's a "column reference is
-        # ambiguous" error
-        result['version'] = result.pop('current_version')
-
-        # FIXME We currently have legacy 'portal_type' names in the database.
-        #       Future upgrades should replace the portal type with a mimetype
-        #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
-        #       Until then we will do the replacement here.
-        result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
-
-        return result
-    except (TypeError, IndexError,):  # None returned
-        raise httpexceptions.HTTPNotFound()
 
 
 def html_listify(tree, root_ul_element, parent_id=None):

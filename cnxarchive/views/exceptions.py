@@ -21,14 +21,16 @@ from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
-from . import config
-from .database import SQL, get_tree, get_collated_content
-from .utils import (
+from .. import config
+from ..database import SQL, get_tree, get_collated_content
+from ..utils import (
     COLLECTION_MIMETYPE, IdentHashSyntaxError,
     IdentHashShortId, IdentHashMissingVersion,
     portaltype_to_mimetype, slugify, fromtimestamp,
     join_ident_hash, split_ident_hash, split_legacy_hash
     )
+from .views_helpers import get_latest_version
+from .views_helpers import get_uuid
 
 logger = logging.getLogger('cnxarchive')
 
@@ -36,19 +38,6 @@ logger = logging.getLogger('cnxarchive')
 # #################### #
 #   Helper functions   #
 # #################### #
-
-
-def get_uuid(shortid):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-module-uuid'], {'id': shortid})
-            try:
-                return cursor.fetchone()[0]
-            except (TypeError, IndexError,):  # None returned
-                logger.debug("Short ID was supplied and could not discover "
-                             "UUID.")
-                raise httpexceptions.HTTPNotFound()
 
 
 # ################### #
