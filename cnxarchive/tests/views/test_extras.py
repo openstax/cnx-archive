@@ -166,8 +166,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.pdf'.format(version),
                 u'details': u'PDF file, for viewing content offline and printing.',
-                u'path': quote(u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
-                    id, version, version)),
+                u'path': u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
+                    id, version, version),
                 },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
@@ -176,8 +176,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.epub'.format(version),
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'path': quote(u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
-                    id, version, version)),
+                u'path': u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
+                    id, version, version),
                 },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
@@ -186,8 +186,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'state': u'good',
                 u'filename': u'college-physics-{}.zip'.format(version),
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'path': quote(u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
-                    id, version, version)),
+                u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
+                    id, version, version),
                 },
             ])
 
@@ -220,8 +220,8 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'path': quote(u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
-                               .format(id, version)),
+                u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'
+                               .format(id, version),
                 u'format': u'PDF',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -230,8 +230,8 @@ class ViewsTestCase(unittest.TestCase):
                 u'filename': u'preface-to-college-physics-7.pdf',
                 },
             {
-                u'path': quote(u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
-                               .format(id, version)),
+                u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'
+                               .format(id, version),
                 u'format': u'EPUB',
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
@@ -244,7 +244,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'filename': u'preface-to-college-physics-7.zip',
                 u'format': u'Offline ZIP',
-                u'path': quote(u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip'),
+                u'path': u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip',
                 u'size': 0,
                 u'state': u'missing'}
             ])
@@ -369,7 +369,7 @@ class ViewsTestCase(unittest.TestCase):
             u'downloads': [{
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
-                               .format(id, version)),
+                               .format(id, version)).decode('utf-8'),
                 u'format': u'PDF',
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'useful-inførmation-5.pdf',
@@ -381,7 +381,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'filename': u'useful-inf\xf8rmation-5.epub',
                 u'format': u'EPUB',
                 u'path': quote('/exports/{}@{}.epub/useful-inførmation-5.epub'
-                               .format(id, version)),
+                               .format(id, version)).decode('utf-8'),
                 u'size': 0,
                 u'state': u'missing'},
                 {
@@ -390,7 +390,7 @@ class ViewsTestCase(unittest.TestCase):
                 u'filename': u'useful-inf\xf8rmation-5.zip',
                 u'format': u'Offline ZIP',
                 u'path': quote('/exports/{}@{}.zip/useful-inførmation-5.zip'
-                               .format(id, version)),
+                               .format(id, version)).decode('utf-8'),
                 u'size': 0,
                 u'state': u'missing'}],
             })
