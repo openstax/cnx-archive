@@ -115,7 +115,7 @@ def _formatOaiResults(results, request):
         result['maintainers'] = _decodeArray(result['maintainers'])
         result['translators'] = _decodeArray(result['translators'])
         result['link'] = request.route_url('content',
-                                   ident_hash=result['link'])
+                                           ident_hash=result['link'])
         new_authors = []
         for i in range(len(result['authors'])):
             new_authors.append({'fullname': result['authors'][i],
