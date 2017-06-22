@@ -48,30 +48,6 @@ class ExportError(Exception):
     pass
 
 
-def get_export_allowable_types(cursor, exports_dirs, id, version):
-    """Return export types."""
-    request = get_current_request()
-
-    for type_name, type_info in request.registry.settings['_type_info']:
-        try:
-            (filename, mimetype, file_size, file_created, state, file_content
-             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
-            yield {
-                'format': type_info['user_friendly_name'],
-                'filename': filename,
-                'size': file_size,
-                'created': file_created and file_created.isoformat() or None,
-                'state': state,
-                'details': type_info['description'],
-                'path': request.route_path(
-                    'export', ident_hash=join_ident_hash(id, version),
-                    type=type_name, ignore=u'/{}'.format(filename))
-                }
-        except ExportError as e:  # noqa
-            # Some other problem, skip it
-            pass
-
-
 # ######### #
 #   Views   #
 # ######### #

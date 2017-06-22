@@ -25,10 +25,10 @@ from pyramid.view import view_config
 from .. import config
 from .. import cache
 from ..database import SQL, get_module_can_publish
-from ..utils import fromtimestamp, split_ident_hash
+from ..utils import fromtimestamp, split_ident_hash, join_ident_hash
 
 from .views_helpers import get_latest_version
-from .exports import get_export_allowable_types
+from .exports import get_export_file, ExportError
 
 logger = logging.getLogger('cnxarchive')
 
@@ -90,6 +90,30 @@ def _get_licenses(cursor):
     """Return a list of license info."""
     cursor.execute(SQL['get-license-info-as-json'])
     return [json_row[0] for json_row in cursor.fetchall()]
+
+
+def get_export_allowable_types(cursor, exports_dirs, id, version):
+    """Return export types."""
+    request = get_current_request()
+
+    for type_name, type_info in request.registry.settings['_type_info']:
+        try:
+            (filename, mimetype, file_size, file_created, state, file_content
+             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
+            yield {
+                'format': type_info['user_friendly_name'],
+                'filename': filename,
+                'size': file_size,
+                'created': file_created and file_created.isoformat() or None,
+                'state': state,
+                'details': type_info['description'],
+                'path': request.route_path(
+                    'export', ident_hash=join_ident_hash(id, version),
+                    type=type_name, ignore=u'/{}'.format(filename))
+                }
+        except ExportError as e:  # noqa
+            # Some other problem, skip it
+            pass
 
 
 # ######### #
