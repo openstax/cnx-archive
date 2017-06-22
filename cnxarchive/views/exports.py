@@ -107,7 +107,7 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         try:
             with open(filepath, 'r') as file:
                 stats = os.fstat(file.fileno())
-                modtime = fromtimestamp(stats.st_mtime)
+                modtime = fromtimestamp(int(stats.st_mtime))
                 return (slugify_title_filename, mimetype,
                         stats.st_size, modtime, 'good', file.read())
         except IOError:
