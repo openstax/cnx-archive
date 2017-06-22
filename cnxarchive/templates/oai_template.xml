@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+         xmlns:tal="http://xml.zope.org/namespaces/tal"
+         xmlns:metal="http://xml.zope.org/namespaces/metal"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
+                             http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+  <responseDate>{{dateTime}}</responseDate>
+  <request
+    {% for var in query_request %}
+      {{var.name}}="{{var.val}}"
+    {% endfor %}
+  >{{baseURL}}</request>
+
+  {% if error %}
+    <error code="{{error.code}}">{{error.message}}</error>
+  {% endif %}
+
+  {% if verb == 'Identify' %}
+    <Identify>
+      {% block identify %}
+      {% endblock %}
+    </Identify>
+  {% endif %}
+
+  {% if verb == 'GetRecord' %}
+    <GetRecord>
+      {% block records %}
+      {% endblock %}
+    </GetRecord>
+  {% endif %}
+
+  {% if verb == 'ListMetadataFormats' %}
+    <ListMetadataFormats>
+      {% block listMetadataFormats %}
+      {% endblock %}
+    </ListMetadataFormats>
+  {% endif %}
+
+  {% if verb == 'ListIdentifiers' %}
+    <ListIdentifiers>
+      {% block listIdentifiers %}
+      {% endblock %}
+    </ListIdentifiers>
+  {% endif %}
+
+  {% if verb == 'ListRecords' or verb == 'SearchRecords' %}
+    <ListRecords>
+      {{self.records()}}
+    </ListRecords>
+  {% endif %}
+
+</OAI-PMH>
