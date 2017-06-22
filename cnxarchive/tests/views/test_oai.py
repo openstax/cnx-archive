@@ -16,12 +16,12 @@ except ImportError:
 
 from pyramid import testing as pyramid_testing
 
-from . import testing
-from .. import config
-from .test_views import COLLECTION_METADATA
+from .. import testing
+from ... import config
+from .views_test_data import COLLECTION_METADATA
 
 
-@mock.patch('cnxarchive.views.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.views.oai.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class OaiTestCase(unittest.TestCase):
     fixture = testing.data_fixture
 
@@ -39,11 +39,11 @@ class OaiTestCase(unittest.TestCase):
                                        request=self.request)
 
         # Set up routes
-        from .. import declare_api_routes
+        from ... import declare_api_routes
         declare_api_routes(config)
 
         # Set up type info
-        from .. import declare_type_info
+        from ... import declare_type_info
         declare_type_info(config)
 
         # Clear all cached searches
@@ -55,7 +55,7 @@ class OaiTestCase(unittest.TestCase):
 
         # Patch database search so that it's possible to assert call counts
         # later
-        from .. import cache
+        from ... import cache
         original_search = cache.database_search
         self.db_search_call_count = 0
 
@@ -74,7 +74,7 @@ class OaiTestCase(unittest.TestCase):
         self.request.matched_route.name = 'oai'
         self.request.GET = {'verb': 'Identify'}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         self.assertTrue('dateTime' in oai.keys())
         self.assertEqual(oai['baseURL'], self.request.path_url)
@@ -85,7 +85,7 @@ class OaiTestCase(unittest.TestCase):
         self.request.matched_route.name = 'oai'
         self.request.GET = {'verb': 'Identify'}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         self.assertEqual(oai['host'], self.request.host)
         self.assertEqual(oai['adminEmail'], "support@openstax.org")
@@ -100,7 +100,7 @@ class OaiTestCase(unittest.TestCase):
                             'metadataPrefix': 'cnx_dc',
                             'until': until_date}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         for result in oai['results']:
             self.assertTrue(str(result['revised']) <= until_date)
@@ -111,7 +111,7 @@ class OaiTestCase(unittest.TestCase):
         self.request.matched_route.name = 'oai'
         self.request.GET = {'verb': 'ListMetadataFormats'}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         prefixes = [result['prefix'] for result in oai['results']]
         self.assertEqual(prefixes, ['oai_dc', 'ims1_2_1', 'cnx_dc'])
@@ -126,7 +126,7 @@ class OaiTestCase(unittest.TestCase):
                             'from': from_date,
                             'until': until_date}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         columns = set(['name', 'created', 'revised', 'uuid', 'link', 'portal_type',
                        'language', 'version', 'keywords', 'subjects',
@@ -145,7 +145,7 @@ class OaiTestCase(unittest.TestCase):
                             'metadataPrefix': 'cnx_dc',
                             'identifier': "oai:{}:{}".format(self.request.host, uuid)}
 
-        from ..oai import oai
+        from ...views.oai import oai
         oai = oai(self.request)
         self.assertEqual(len(oai['results']), 1)
         self.assertEqual(oai['results'][0]['uuid'], uuid)
@@ -153,7 +153,7 @@ class OaiTestCase(unittest.TestCase):
     def test_oai_errors(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'oai'
-        from ..oai import oai
+        from ...views.oai import oai
 
         # Invalid Verb
         self.request.GET = {'verb': 'FakeVerb'}

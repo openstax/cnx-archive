@@ -18,14 +18,11 @@ from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
-from . import config
-from . import cache
-from . import database
-from .search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS,
-    Query, _build_search, QueryResults
-    )
-from .views import html_rss_date
+from .. import config
+from .. import cache
+from .. import database
+from ..utils import fromtimestamp
+from .recent import html_rss_date
 
 # ################### #
 #     OAI HELPERS     #
