@@ -37,12 +37,33 @@ class OaiTestCase(unittest.TestCase):
         self.request.application_url = 'http://cnx.org'
         config = pyramid_testing.setUp(settings=self.settings,
                                        request=self.request)
+
+        # Set up routes
+        from .. import declare_api_routes
+        declare_api_routes(config)
+
+        # Set up type info
+        from .. import declare_type_info
+        declare_type_info(config)
+
         # Clear all cached searches
         import memcache
         mc_servers = self.settings['memcache-servers'].split()
         mc = memcache.Client(mc_servers, debug=0)
         mc.flush_all()
         mc.disconnect_all()
+
+        # Patch database search so that it's possible to assert call counts
+        # later
+        from .. import cache
+        original_search = cache.database_search
+        self.db_search_call_count = 0
+
+        def patched_search(*args, **kwargs):
+            self.db_search_call_count += 1
+            return original_search(*args, **kwargs)
+        cache.database_search = patched_search
+        self.addCleanup(setattr, cache, 'database_search', original_search)
 
     def tearDown(self):
         pyramid_testing.tearDown()
