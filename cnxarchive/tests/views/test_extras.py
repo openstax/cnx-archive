@@ -32,7 +32,7 @@ def quote(path):
     return url_quote(path, safe=PATH_SAFE)
 
 
-@mock.patch('cnxarchive.views.extras.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
+@mock.patch('cnxarchive.utils.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
