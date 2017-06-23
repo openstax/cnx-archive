@@ -106,13 +106,8 @@ def get_export_file(cursor, id, version, type, exports_dirs):
         legacy_filepath = os.path.join(exports_dir, legacy_filename)
         try:
             with open(filepath, 'r') as file:
-                print(filepath)
-                print(file)
-                print(file.fileno())
                 stats = os.fstat(file.fileno())
-                print(stats)
                 modtime = fromtimestamp(int(stats.st_mtime))
-                print(modtime)
                 return (slugify_title_filename, mimetype,
                         stats.st_size, modtime, 'good', file.read())
         except IOError:
