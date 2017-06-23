@@ -160,7 +160,7 @@ class ViewsTestCase(unittest.TestCase):
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'PDF',
                 u'size': 28,
                 u'state': u'good',
@@ -170,7 +170,7 @@ class ViewsTestCase(unittest.TestCase):
                     id, version, version),
                 },
             {
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'EPUB',
                 u'size': 13,
                 u'state': u'good',
@@ -180,7 +180,7 @@ class ViewsTestCase(unittest.TestCase):
                     id, version, version),
                 },
             {
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'Offline ZIP',
                 u'size': 11,
                 u'state': u'good',
@@ -222,7 +222,7 @@ class ViewsTestCase(unittest.TestCase):
             {
                 u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'.format(id, version),
                 u'format': u'PDF',
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
                 u'size': 15,
                 u'details': u'PDF file, for viewing content offline and printing.',
@@ -231,7 +231,7 @@ class ViewsTestCase(unittest.TestCase):
             {
                 u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'.format(id, version),
                 u'format': u'EPUB',
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'state': u'good',
                 u'size': 16,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
@@ -365,7 +365,7 @@ class ViewsTestCase(unittest.TestCase):
                 ],
             u'isLatest': True,
             u'downloads': [{
-                u'created': u'2017-05-16T11:07:37-05:00',
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
                                .format(id, version)).decode('utf-8'),
                 u'format': u'PDF',
