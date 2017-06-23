@@ -5,8 +5,6 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
-import datetime
 import unittest
 
 try:
@@ -21,8 +19,7 @@ from ... import config
 from .views_test_data import COLLECTION_METADATA
 
 
-@mock.patch('cnxarchive.views.oai.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
-class OaiTestCase(unittest.TestCase):
+class OaiViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
 
     @classmethod

@@ -6,25 +6,19 @@
 # See LICENCE.txt for details.
 # ###
 """Legacy Redirect Views."""
-import os
-import json
 import logging
-from datetime import datetime, timedelta
 
 import psycopg2
 import psycopg2.extras
 from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
 from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
+from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
 from ..database import SQL
 from ..utils import (
-    join_ident_hash, split_legacy_hash, fromtimestamp
+    join_ident_hash, split_legacy_hash
     )
 from .content import _get_content_json
 

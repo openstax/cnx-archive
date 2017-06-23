@@ -5,12 +5,6 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
-import datetime
-import glob
-import HTMLParser
-import time
-import json
 import unittest
 
 try:
@@ -23,7 +17,6 @@ from pyramid import testing as pyramid_testing
 from pyramid.encode import url_quote
 from pyramid.traversal import PATH_SAFE
 
-from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
@@ -32,8 +25,7 @@ def quote(path):
     return url_quote(path, safe=PATH_SAFE)
 
 
-@mock.patch('cnxarchive.views.legacy_redirect.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
-class ViewsTestCase(unittest.TestCase):
+class LegacyRedirectViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
 

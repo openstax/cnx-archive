@@ -6,23 +6,13 @@
 # See LICENCE.txt for details.
 # ###
 """Recent RSS feed View."""
-import os
-import json
 import logging
-from datetime import datetime, timedelta
 
 import psycopg2
 import psycopg2.extras
-from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
-from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-from ..utils import fromtimestamp
 
 logger = logging.getLogger('cnxarchive')
 

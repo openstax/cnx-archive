@@ -7,10 +7,6 @@
 # ###
 import os
 import datetime
-import glob
-import HTMLParser
-import time
-import json
 import unittest
 
 try:
@@ -18,16 +14,12 @@ try:
 except ImportError:
     import mock
 
-from pyramid import httpexceptions
 from pyramid import testing as pyramid_testing
-from pyramid.traversal import PATH_SAFE
 
-from ...utils import IdentHashShortId, IdentHashMissingVersion
 from .. import testing
 
 
-@mock.patch('cnxarchive.views.robots.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
-class ViewsTestCase(unittest.TestCase):
+class RobotsViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
     maxDiff = 10000
 

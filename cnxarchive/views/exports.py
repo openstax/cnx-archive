@@ -7,31 +7,20 @@
 # ###
 """Export Views."""
 import os
-import json
 import logging
-from datetime import datetime, timedelta
 
 import psycopg2
 import psycopg2.extras
-from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
 from pyramid import httpexceptions
-from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-from .. import cache
-# FIXME double import
-from .. import database
-from ..database import SQL, get_tree, get_collated_content
 
 from ..utils import (
-    slugify, fromtimestamp, join_ident_hash, split_ident_hash,
-    portaltype_to_mimetype
+    slugify, fromtimestamp, split_ident_hash,
     )
-from .content import get_content_metadata
+from .helpers import get_content_metadata
 
 LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
 logger = logging.getLogger('cnxarchive')

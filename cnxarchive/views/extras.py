@@ -6,29 +6,16 @@
 # See LICENCE.txt for details.
 # ###
 """Extras Views."""
-import os
 import json
 import logging
-from datetime import datetime, timedelta
-from re import compile
 
 import psycopg2
 import psycopg2.extras
-from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
-from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
+from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from .. import cache
-from ..database import SQL, get_module_can_publish
-from ..utils import fromtimestamp, split_ident_hash, join_ident_hash
-
-from .views_helpers import get_latest_version
-from .exports import get_export_file, ExportError
+from ..database import SQL
 
 logger = logging.getLogger('cnxarchive')
 
@@ -36,11 +23,6 @@ logger = logging.getLogger('cnxarchive')
 # #################### #
 #   Helper functions   #
 # #################### #
-
-
-def is_latest(id, version):
-    """Determine if this is the latest version of this content."""
-    return get_latest_version(id) == version
 
 
 def _get_available_languages_and_count(cursor):
@@ -92,56 +74,9 @@ def _get_licenses(cursor):
     return [json_row[0] for json_row in cursor.fetchall()]
 
 
-def get_export_allowable_types(cursor, exports_dirs, id, version):
-    """Return export types."""
-    request = get_current_request()
-
-    for type_name, type_info in request.registry.settings['_type_info']:
-        try:
-            (filename, mimetype, file_size, file_created, state, file_content
-             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
-            yield {
-                'format': type_info['user_friendly_name'],
-                'filename': filename,
-                'size': file_size,
-                'created': file_created and file_created.isoformat() or None,
-                'state': state,
-                'details': type_info['description'],
-                'path': request.route_path(
-                    'export', ident_hash=join_ident_hash(id, version),
-                    type=type_name, ignore=u'/{}'.format(filename))
-                }
-        except ExportError as e:  # noqa
-            # Some other problem, skip it
-            pass
-
-
 # ######### #
 #   Views   #
 # ######### #
-
-
-@view_config(route_name='content-extras', request_method='GET')
-def get_extra(request):
-    """Return information about a module / collection that cannot be cached."""
-    settings = get_current_registry().settings
-    exports_dirs = settings['exports-directories'].split()
-    args = request.matchdict
-    id, version = split_ident_hash(args['ident_hash'])
-    results = {}
-
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
-        with db_connection.cursor() as cursor:
-            results['downloads'] = \
-                list(get_export_allowable_types(cursor, exports_dirs,
-                                                id, version))
-            results['isLatest'] = is_latest(id, version)
-            results['canPublish'] = get_module_can_publish(cursor, id)
-
-    resp = request.response
-    resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
-    return resp
 
 
 @view_config(route_name='extras', request_method='GET')

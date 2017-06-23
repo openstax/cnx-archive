@@ -59,7 +59,7 @@ def get_id_n_version(ident_hash):
     except IdentHashMissingVersion:
         # XXX Don't import from views... And don't use httpexceptions
         from pyramid.httpexceptions import HTTPNotFound
-        from cnxarchive.views.views_helpers import get_latest_version
+        from cnxarchive.views.helpers import get_latest_version
         try:
             version = get_latest_version(ident_hash)
         except HTTPNotFound:

@@ -6,26 +6,17 @@
 # See LICENCE.txt for details.
 # ###
 """Helpers Used in Multiple Views."""
-import os
-import json
 import logging
-from datetime import datetime, timedelta
-from re import compile
 
 import psycopg2
 import psycopg2.extras
-from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
 from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
-from pyramid.view import view_config
+from pyramid.threadlocal import get_current_registry
 
 from .. import config
-from .. import cache
-from ..database import SQL, get_module_can_publish
-from ..utils import fromtimestamp, split_ident_hash, portaltype_to_mimetype
+from ..database import SQL
+
+from ..utils import portaltype_to_mimetype
 
 logger = logging.getLogger('cnxarchive')
 
@@ -57,3 +48,28 @@ def get_latest_version(uuid_):
                 return cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned
                 raise httpexceptions.HTTPNotFound()
+
+
+def get_content_metadata(id, version, cursor):
+    """Return metadata related to the content from the database."""
+    # Do the module lookup
+    args = dict(id=id, version=version)
+    # FIXME We are doing two queries here that can hopefully be
+    #       condensed into one.
+    cursor.execute(SQL['get-module-metadata'], args)
+    try:
+        result = cursor.fetchone()[0]
+        # version is what we want to return, but in the sql we're using
+        # current_version because otherwise there's a "column reference is
+        # ambiguous" error
+        result['version'] = result.pop('current_version')
+
+        # FIXME We currently have legacy 'portal_type' names in the database.
+        #       Future upgrades should replace the portal type with a mimetype
+        #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
+        #       Until then we will do the replacement here.
+        result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
+
+        return result
+    except (TypeError, IndexError,):  # None returned
+        raise httpexceptions.HTTPNotFound()

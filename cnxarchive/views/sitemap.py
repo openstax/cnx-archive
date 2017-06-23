@@ -6,26 +6,16 @@
 # See LICENCE.txt for details.
 # ###
 """Sitemap Views."""
-import os
-import json
 import logging
-from datetime import datetime, timedelta
 from re import compile
 
 import psycopg2
 import psycopg2.extras
-from cnxepub.models import flatten_tree_to_ident_hashes
-from lxml import etree
-from pytz import timezone
-from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
+from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from ..database import SQL, get_tree, get_collated_content
 from ..sitemap import Sitemap
-from ..utils import fromtimestamp
 
 PAGES_TO_BLOCK = [
     'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',

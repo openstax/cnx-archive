@@ -6,32 +6,28 @@
 # See LICENCE.txt for details.
 # ###
 """Content Views."""
-import os
 import json
 import logging
-from datetime import datetime, timedelta
 
 import psycopg2
 import psycopg2.extras
 from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
-from pytz import timezone
 from pyramid import httpexceptions
 from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-from .. import cache
-# FIXME double import
-from ..database import SQL, get_tree, get_collated_content
+from ..database import (
+    SQL, get_tree, get_collated_content, get_module_can_publish)
 from ..utils import (
     COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
-    portaltype_to_mimetype, fromtimestamp,
     join_ident_hash, split_ident_hash
     )
-from .views_helpers import get_uuid
+from .helpers import get_uuid, get_latest_version, get_content_metadata
+from .exports import get_export_file, ExportError
 
 HTML_WRAPPER = """\
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -51,31 +47,6 @@ def tree_to_html(tree):
     ul = etree.Element('ul')
     html_listify([tree], ul)
     return HTML_WRAPPER.format(etree.tostring(ul))
-
-
-def get_content_metadata(id, version, cursor):
-    """Return metadata related to the content from the database."""
-    # Do the module lookup
-    args = dict(id=id, version=version)
-    # FIXME We are doing two queries here that can hopefully be
-    #       condensed into one.
-    cursor.execute(SQL['get-module-metadata'], args)
-    try:
-        result = cursor.fetchone()[0]
-        # version is what we want to return, but in the sql we're using
-        # current_version because otherwise there's a "column reference is
-        # ambiguous" error
-        result['version'] = result.pop('current_version')
-
-        # FIXME We currently have legacy 'portal_type' names in the database.
-        #       Future upgrades should replace the portal type with a mimetype
-        #       of 'application/vnd.org.cnx.(module|collection|folder|<etc>)'.
-        #       Until then we will do the replacement here.
-        result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
-
-        return result
-    except (TypeError, IndexError,):  # None returned
-        raise httpexceptions.HTTPNotFound()
 
 
 def _get_content_json(ident_hash=None):
@@ -177,6 +148,35 @@ def html_listify(tree, root_ul_element, parent_id=None):
             html_listify(node['contents'], elm, parent_id)
 
 
+def is_latest(id, version):
+    """Determine if this is the latest version of this content."""
+    return get_latest_version(id) == version
+
+
+def get_export_allowable_types(cursor, exports_dirs, id, version):
+    """Return export types."""
+    request = get_current_request()
+
+    for type_name, type_info in request.registry.settings['_type_info']:
+        try:
+            (filename, mimetype, file_size, file_created, state, file_content
+             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
+            yield {
+                'format': type_info['user_friendly_name'],
+                'filename': filename,
+                'size': file_size,
+                'created': file_created and file_created.isoformat() or None,
+                'state': state,
+                'details': type_info['description'],
+                'path': request.route_path(
+                    'export', ident_hash=join_ident_hash(id, version),
+                    type=type_name, ignore=u'/{}'.format(filename))
+                }
+        except ExportError as e:  # noqa
+            # Some other problem, skip it
+            pass
+
+
 # ######### #
 #   Views   #
 # ######### #
@@ -224,3 +224,26 @@ def get_content(request):
 
     else:
         return get_content_json(request)
+
+
+@view_config(route_name='content-extras', request_method='GET')
+def get_extra(request):
+    """Return information about a module / collection that cannot be cached."""
+    settings = get_current_registry().settings
+    exports_dirs = settings['exports-directories'].split()
+    args = request.matchdict
+    id, version = split_ident_hash(args['ident_hash'])
+    results = {}
+
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            results['downloads'] = \
+                list(get_export_allowable_types(cursor, exports_dirs,
+                                                id, version))
+            results['isLatest'] = is_latest(id, version)
+            results['canPublish'] = get_module_can_publish(cursor, id)
+
+    resp = request.response
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(results)
+    return resp
