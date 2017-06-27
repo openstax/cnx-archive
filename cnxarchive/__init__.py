@@ -9,6 +9,10 @@
 import os
 from pyramid.config import Configurator
 
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
 
 # XXX (25-Sep-2015) This should probably go somewhere?
 DEFAULT_ACCESS_CONTROL_ALLOW_HEADERS = [
