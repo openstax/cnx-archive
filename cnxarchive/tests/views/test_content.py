@@ -32,6 +32,7 @@ def quote(path):
     """URL encode the path"""
     return url_quote(path, safe=PATH_SAFE)
 
+
 @mock.patch('cnxarchive.views.exports.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
 class ContentViewsTestCase(unittest.TestCase):
     fixture = testing.data_fixture
