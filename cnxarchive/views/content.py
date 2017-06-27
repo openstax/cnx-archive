@@ -157,9 +157,7 @@ def get_state(cursor, id, version):
     """Determine the state of the content."""
     args = join_ident_hash(id, version)
     sql_statement = """
-    SELECT row_to_json(combined_rows) AS licenses
-    FROM (
-    SELECT m.stateid, ms.statename
+    SELECT ms.statename
     FROM modules as m
     JOIN modulestates as ms
     ON m.stateid=ms.stateid
@@ -167,7 +165,11 @@ def get_state(cursor, id, version):
     """
 
     cursor.execute(sql_statement, vars=(args,))
-    return cursor.fetchall()
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]
 
 
 def get_export_allowable_types(cursor, exports_dirs, id, version):
