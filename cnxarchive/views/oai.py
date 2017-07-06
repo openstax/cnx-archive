@@ -5,27 +5,15 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
-import json
-import logging
-from datetime import datetime, timedelta
-from re import compile, match
+from datetime import datetime
+from re import compile
 
 import psycopg2
 import psycopg2.extras
-from pyramid import httpexceptions
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
-from . import config
-from . import cache
-from . import database
-from .search import (
-    DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE, DEFAULT_SEARCH_WEIGHTS,
-    Query, _build_search, QueryResults
-    )
-from .views import html_rss_date
+from .. import config
+from .recent import html_rss_date
 
 # ################### #
 #     OAI HELPERS     #
