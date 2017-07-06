@@ -1,3 +1,13 @@
 [run]
 source =
     ./cnxarchive
+omit =
+    cnxarchive/_version.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+
+    if __name__ == .__main__.:
+omit =
+    cnxarchive/_version.py

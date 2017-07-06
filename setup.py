@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import versioneer
 from setuptools import setup, find_packages
 
 IS_PY3 = sys.version_info > (3,)
@@ -27,7 +28,7 @@ if not IS_PY3:
 
 setup(
     name='cnx-archive',
-    version='2.5.1',
+    version=versioneer.get_version(),
     author='Connexions team',
     author_email='info@cnx.org',
     url="https://github.com/connexions/cnx-archive",
@@ -41,6 +42,7 @@ setup(
         'cnxarchive': ['sql/*.sql', 'sql/*/*.sql', 'data/*.*', '*.yaml'],
         'cnxarchive.tests': ['data/*.*'],
         },
+    cmdclass=versioneer.get_cmdclass(),
     entry_points="""\
     [paste.app_factory]
     main = cnxarchive:main
