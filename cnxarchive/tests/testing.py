@@ -85,7 +85,7 @@ class PlPy(object):
         self._cursor = cursor
         self._plans = {}
 
-    def execute(self, query, args=None):
+    def execute(self, query, args=None, rows=None):
         """Execute a query or plan, with interpolated args"""
 
         if query in self._plans:
@@ -94,7 +94,14 @@ class PlPy(object):
         else:
             self._cursor.execute(query, args)
 
-        return self._cursor
+        if self._cursor.description is not None:
+            if rows is None:
+                res = self._cursor.fetchall()
+            else:
+                res = self._cursor.fetchmany(rows)
+        else:
+            res = None
+        return res
 
     def prepare(self, query, args=None):
         """"Prepare a plan, with optional placeholders for EXECUTE"""
