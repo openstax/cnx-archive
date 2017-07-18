@@ -598,7 +598,7 @@ class SearchViewsTestCase(unittest.TestCase):
 
     def test_search_wo_cache(self):
         # Patch settings so caching is disabled
-        settings = self.settings.copy()
+        settings = dict(self.settings).copy()
         settings['memcache-servers'] = ''
         config_kwargs = dict(settings=settings, request=self.request)
         from ...views.search import search
