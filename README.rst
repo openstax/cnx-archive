@@ -21,7 +21,8 @@ Install the PostgreSQL database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This will require a ``PostgreSQL`` install
-that is greater than or equal to version **9.3**.
+that is greater than or equal to version **9.3**,
+Note that this is likely to increase to 9.5 soon, for better json support.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
 
