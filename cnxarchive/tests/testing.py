@@ -84,6 +84,7 @@ class PlPy(object):
         """Set up the cursor and plan store"""
         self._cursor = cursor
         self._plans = {}
+        psycopg2.extras.register_default_json(globally=False, loads=lambda x: x)
 
     def execute(self, query, args=None, rows=None):
         """Execute a query or plan, with interpolated args"""
