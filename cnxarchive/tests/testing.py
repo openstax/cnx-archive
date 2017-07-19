@@ -73,6 +73,7 @@ def db_connect(method):
         connect = db_connection_factory()
         with connect() as db_connection:
             with db_connection.cursor() as cursor:
+                psycopg2.extras.register_default_json()
                 return method(self, cursor, *args, **kwargs)
     return wrapped
 
@@ -85,7 +86,7 @@ class PlPy(object):
         self._cursor = cursor
         self._plans = {}
 
-    def execute(self, query, args=None):
+    def execute(self, query, args=None, rows=None):
         """Execute a query or plan, with interpolated args"""
 
         if query in self._plans:
@@ -94,7 +95,14 @@ class PlPy(object):
         else:
             self._cursor.execute(query, args)
 
-        return self._cursor
+        if self._cursor.description is not None:
+            if rows is None:
+                res = self._cursor.fetchall()
+            else:
+                res = self._cursor.fetchmany(rows)
+        else:
+            res = None
+        return res
 
     def prepare(self, query, args=None):
         """"Prepare a plan, with optional placeholders for EXECUTE"""
@@ -129,8 +137,9 @@ def plpy_connect(method):
         connect = db_connection_factory()
         with connect() as db_connection:
             with db_connection.cursor(
-                    cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                    cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 plpy = PlPy(cursor)
+                psycopg2.extras.register_default_json(globally=False, loads=lambda x: x)
                 return method(self, plpy, *args, **kwargs)
     return wrapped
 
