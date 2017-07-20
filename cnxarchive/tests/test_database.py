@@ -1100,9 +1100,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
                                      ' Copy of College <i>Physics</i>')  # name
         self.assertEqual(results[11], 'reedstrm')  # submitter
         self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-3], 1)  # major_version
-        self.assertEqual(results[-2], 2)  # minor_version
-        self.assertEqual(results[-1], None)  # print_style
+        self.assertEqual(results[-5], 1)  # major_version
+        self.assertEqual(results[-4], 2)  # minor_version
+        self.assertEqual(results[-3], None)  # print_style
 
         results = cursor.fetchone()
         new_collection_2_id = results[0]
@@ -1111,9 +1111,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         self.assertEqual(results[5], 'College Physics')  # name
         self.assertEqual(results[11], 'reedstrm')  # submitter
         self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-3], 7)  # major_version
-        self.assertEqual(results[-2], 2)  # minor_version
-        self.assertEqual(results[-1], None)  # print_style
+        self.assertEqual(results[-5], 7)  # major_version
+        self.assertEqual(results[-4], 2)  # minor_version
+        self.assertEqual(results[-3], None)  # print_style
 
         results = cursor.fetchone()
         new_subcollection_id = results[0]
@@ -1122,9 +1122,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
         self.assertEqual(results[11], 'reedstrm')  # submitter
         self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-3], 7)  # major_version
-        self.assertEqual(results[-2], 2)  # minor_version
-        self.assertEqual(results[-1], None)  # print_style
+        self.assertEqual(results[-5], 7)  # major_version
+        self.assertEqual(results[-4], 2)  # minor_version
+        self.assertEqual(results[-3], None)  # print_style
 
         results = cursor.fetchone()
         new_subcollection_2_id = results[0]
@@ -1133,9 +1133,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
         self.assertEqual(results[11], 'reedstrm')  # submitter
         self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-3], 1)  # major_version
-        self.assertEqual(results[-2], 2)  # minor_version
-        self.assertEqual(results[-1], None)  # print_style
+        self.assertEqual(results[-5], 1)  # major_version
+        self.assertEqual(results[-4], 2)  # minor_version
+        self.assertEqual(results[-3], None)  # print_style
 
         cursor.execute("UPDATE modules SET print_style = '*NEW PRINT STYLE*'"
                        " WHERE abstractid = 1")
