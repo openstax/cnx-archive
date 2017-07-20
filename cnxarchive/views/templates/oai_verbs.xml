@@ -46,7 +46,7 @@
   {% for record in results %}
     <record>
       <header>
-        <identifier>oai:/{{host}}:{{record.uuid}}</identifier>
+        <identifier>oai:{{host}}:{{record.uuid}}</identifier>
         <datestamp>{{record.revised}}</datestamp>
       </header>
       <metadata>
