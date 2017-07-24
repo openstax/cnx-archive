@@ -68,6 +68,13 @@ def main(argv=None):
                         help="(default: {})".format(LOG_FORMAT_GZ))
     parser.add_argument('log_file',
                         help="path to the logfile.")
+    parser.add_argument(
+        '-d',
+        '--dry-run',
+        action='store_true',
+        dest='dry_run',
+        default=False
+    )
     args = parser.parse_args(argv)
 
     opener = LOG_FORMAT_OPENERS_MAPPING[args.log_format]
@@ -86,6 +93,11 @@ def main(argv=None):
 
     # Insert the hits into the database.
     connection_string = settings[config.CONNECTION_STRING]
+    if args.dry_run:
+        for id_hash, hit_count in hits.items():
+            id_, vers = split_ident_hash(id_hash)
+            print id_, vers
+        return 0
     with psycopg2.connect(connection_string) as db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
