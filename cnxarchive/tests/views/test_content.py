@@ -840,6 +840,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'OpenStaxCollege',
                 u'cnxcap',
                 ],
+            u'state': None,
             })
 
     def test_get_extra_allowable_types(self):
@@ -1058,6 +1059,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                          'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
+            u'state': u'current',
             u'canPublish': [
                 u'OpenStaxCollege',
                 u'cnxcap',
@@ -1091,6 +1093,23 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'size': 0,
                 u'state': u'missing'}],
             })
+
+    def test_extra_state(self):
+        id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        version = '7.1'
+
+        # Build the request
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
+
+        from ...views.content import get_extra
+        output = get_extra(self.request).json_body
+
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(output['state'], u'current')
 
     def test_extra_not_found(self):
         # Test version not found

@@ -153,6 +153,25 @@ def is_latest(id, version):
     return get_latest_version(id) == version
 
 
+def get_state(cursor, id, version):
+    """Determine the state of the content."""
+    args = join_ident_hash(id, version)
+    sql_statement = """
+    SELECT ms.statename
+    FROM modules as m
+    JOIN modulestates as ms
+    ON m.stateid=ms.stateid
+    WHERE ident_hash(uuid, major_version, minor_version) = %s
+    """
+
+    cursor.execute(sql_statement, vars=(args,))
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]
+
+
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types."""
     request = get_current_request()
@@ -234,7 +253,6 @@ def get_extra(request):
     args = request.matchdict
     id, version = split_ident_hash(args['ident_hash'])
     results = {}
-
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
             results['downloads'] = \
@@ -242,6 +260,7 @@ def get_extra(request):
                                                 id, version))
             results['isLatest'] = is_latest(id, version)
             results['canPublish'] = get_module_can_publish(cursor, id)
+            results['state'] = get_state(cursor, id, version)
 
     resp = request.response
     resp.content_type = 'application/json'
