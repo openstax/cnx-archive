@@ -265,6 +265,9 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
 
         # m45136 "legacy format"
         self.assertEqual(parse_reference(
+            '/content/m48897/latest?collection=col11441/latest'),
+            (MODULE_REFERENCE, ('m48897', None, 'col11441', None, '')))
+        self.assertEqual(parse_reference(
             'http://cnx.org/content/m48897/latest?collection=col11441/latest'),
             (MODULE_REFERENCE, ('m48897', None, 'col11441', None, '')))
         self.assertEqual(parse_reference(
