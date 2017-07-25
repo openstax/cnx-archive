@@ -855,6 +855,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                          'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
+            u'books': [],
             u'downloads': [{
                 u'created': None,
                 u'details': u'PDF file, for viewing content offline and printing.',
@@ -1103,6 +1104,14 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                          'application/json')
         output['canPublish'].sort()
         self.assertEqual(output, {
+            u'books': [{
+                u'authors': [u'OpenStaxCollege'],
+                u'title': u'College Physics',
+                u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'},
+                {
+                u'authors': [u'OpenStaxCollege'],
+                u'title': u'<span style="color:red;">Derived</span> Copy of College <i>Physics</i>',
+                u'ident_hash': u'a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1'}],
             u'state': u'current',
             u'canPublish': [
                 u'OpenStaxCollege',
