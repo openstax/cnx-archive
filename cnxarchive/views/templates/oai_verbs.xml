@@ -34,7 +34,7 @@
 {% block listIdentifiers %}
   {% for result in results %}
     <headers>
-      <header tal:condition="r/harvestable | string:True">
+      <header>
         <identifier>oai:/{{host}}:{{result.uuid}}</identifier>
         <datestamp>{{result.revised}}</datestamp>
       </header>
@@ -46,7 +46,7 @@
   {% for record in results %}
     <record>
       <header>
-        <identifier>oai:/{{host}}:{{record.uuid}}</identifier>
+        <identifier>oai:{{host}}:{{record.uuid}}</identifier>
         <datestamp>{{record.revised}}</datestamp>
       </header>
       <metadata>
