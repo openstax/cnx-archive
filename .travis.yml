@@ -29,6 +29,9 @@ before_install:
   # Install cnx-db
   - git clone https://github.com/Connexions/cnx-db.git
   - cd cnx-db && python setup.py install && cd ..
+  # Install cnx-cnxmltransforms
+  - git clone https://github.com/Connexions/cnx-cnxml-transforms.git
+  - cd cnx-cnxml-transforms && python setup.py install && cd ..
   # Install rhaptos.cnxmlutils
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
   - cd rhaptos.cnxmlutils && python setup.py install && cd ..
