@@ -284,6 +284,32 @@ class HtmlReferenceResolutionTestCase(unittest.TestCase):
             'http://legacy.cnx.org/content/m48897/latest?collection=col11441/'
             'latest'), (None, ()))
 
+    @testing.db_connect
+    def test_get_page_ident_hash(self, cursor):
+        book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+        page_uuid = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        cursor.execute('''\
+CREATE FUNCTION test_get_page_ident_hash() RETURNS TEXT AS $$
+import io
+
+import plpy
+
+from cnxarchive.transforms.resolvers import CnxmlToHtmlReferenceResolver
+
+resolver = CnxmlToHtmlReferenceResolver(io.BytesIO('<html></html>'), plpy, 3)
+result = resolver.get_page_ident_hash(%s, %s, %s, %s)
+return result[1]
+$$ LANGUAGE plpythonu;
+SELECT test_get_page_ident_hash();''',
+                       (page_uuid, page_version, book_uuid, book_version))
+        self.assertEqual(
+            cursor.fetchone()[0],
+            '{}@{}:{}@{}'.format(
+                book_uuid, book_version, page_uuid, page_version))
+
 
 class CnxmlReferenceResolutionTestCase(unittest.TestCase):
     fixture = testing.data_fixture
