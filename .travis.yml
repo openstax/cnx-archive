@@ -28,7 +28,8 @@ before_install:
   - cd cnx-epub && python setup.py install && cd ..
   # Install cnx-db
   - git clone https://github.com/Connexions/cnx-db.git
-  - cd cnx-db && python setup.py install && cd ..
+  - cd cnx-db && git checkout moving_transforms 
+  - python setup.py install && cd ..
   # Install cnx-cnxmltransforms
   - git clone https://github.com/Connexions/cnx-cnxml-transforms.git
   - cd cnx-cnxml-transforms && python setup.py install && cd ..
