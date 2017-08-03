@@ -156,11 +156,18 @@ def get_current_module_ident(moduleid, plpy):
 
 def get_minor_version(module_ident, plpy):
     """Retrieve minor version only given module_ident."""
+    # Make sure to always return the max minor version that is already in the
+    # database, in case the given module_ident is not the latest version
     plan = plpy.prepare('''\
-        SELECT m.minor_version
-            FROM modules m
-            WHERE m.module_ident = $1
-            ORDER BY m.revised DESC''', ('integer',))
+        WITH t AS (
+            SELECT uuid, major_version
+                FROM modules
+                WHERE module_ident = $1
+        )
+        SELECT MAX(m.minor_version) AS minor_version
+            FROM modules m, t
+            WHERE m.uuid = t.uuid AND m.major_version = t.major_version
+        ''', ('integer',))
     results = plpy.execute(plan, (module_ident,), 1)
     return results[0]['minor_version']
 
@@ -176,6 +183,9 @@ def next_version(module_ident, plpy):
 
 def get_collections(module_ident, plpy):
     """Get all the collections that the module is part of."""
+    # Make sure to only return one match per collection and only if it is the
+    # latest collection (which may not be the same as what is in
+    # latest_modules)
     plan = plpy.prepare('''
     WITH RECURSIVE t(node, parent, path, document) AS (
         SELECT tr.nodeid, tr.parent_id, ARRAY[tr.nodeid], tr.documentid
@@ -186,9 +196,14 @@ def get_collections(module_ident, plpy):
         FROM trees c JOIN t ON (c.nodeid = t.parent)
         WHERE not c.nodeid = ANY(t.path)
     )
-    SELECT DISTINCT m.module_ident
-    FROM t JOIN latest_modules m ON (t.document = m.module_ident)
-    WHERE t.parent IS NULL ORDER BY m.module_ident
+    SELECT * FROM (
+        SELECT DISTINCT m.module_ident, m.revised,
+            MAX(m.revised) OVER (PARTITION BY m.uuid) as latest
+        FROM t, modules m
+        WHERE t.parent IS NULL and t.document = m.module_ident
+    ) r
+    WHERE r.revised = r.latest
+    ORDER BY r.module_ident
     ''', ('integer',))
     for i in plpy.execute(plan, (module_ident,)):
         yield i['module_ident']

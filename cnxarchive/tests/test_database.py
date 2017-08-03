@@ -13,6 +13,7 @@ import sys
 import time
 import unittest
 
+from cnxepub import flatten_tree_to_ident_hashes
 import psycopg2
 
 from . import testing
@@ -612,19 +613,41 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_next_version(self, cursor):
-        cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
-
         from ..database import next_version
 
-        cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', DEFAULT, '1.2', 'Name of m1',
+        # Insert collection version 2.1
+        cursor.execute('''INSERT INTO modules
+        (moduleid, portal_type, version, name,
+        created, revised,
+        authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent,
+        major_version, minor_version)
+        VALUES (
+        'c1', 'Collection', '1.2', 'Name of c1',
         '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
-        1, 11, '', '', '', NULL, NULL, 'en', '{}', '{}', '{}',
-        NULL, NULL, NULL, 2, 1) RETURNING module_ident''')
+        '{}', '{}', '{}', 1, 1, 7, '', '', '', 'en', NULL,
+        2, 1) RETURNING module_ident''')
         module_ident = cursor.fetchone()[0]
         cursor.connection.commit()
 
+        # The next version should be 2.2
         self.assertEqual(next_version(module_ident, testing.fake_plpy), 2)
+
+        # Insert collection version 2.2
+        cursor.execute('''INSERT INTO modules
+        (moduleid, portal_type, version, name,
+        created, revised,
+        authors, maintainers, licensors,  abstractid, stateid, licenseid, doctype, submitter, submitlog, language, parent,
+        major_version, minor_version)
+        VALUES (
+        'c1', 'Collection', '1.2', 'Name of c1',
+        '2013-07-31 12:00:00.000000+02', '2013-10-03 21:16:20.000000+02',
+        '{}', '{}', '{}', 1, 1, 7, '', '', '', 'en', NULL,
+        2, 2)''')
+        cursor.connection.commit()
+
+        # Even if you use the module_ident for version 2.1, the next version is
+        # still going to be 2.3
+        self.assertEqual(next_version(module_ident, testing.fake_plpy), 3)
 
     @testing.db_connect
     def test_get_collections(self, cursor):
@@ -671,20 +694,6 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
         cursor.connection.commit()
 
-        # The collection will not be in latest modules yet because they need to
-        # be processed by the post publication worker.
-        self.assertEqual(
-            list(get_collections(module_ident, testing.fake_plpy)),
-            [])
-
-        # The post-publication worker will change the module state to "current"
-        # (1).
-        cursor.execute(
-            "UPDATE modules SET stateid = 1 WHERE module_ident IN %s",
-            ((collection_ident, collection2_ident),))
-        cursor.connection.commit()
-
-        # Now the collection should be in latest modules.
         self.assertEqual(
             list(get_collections(module_ident, testing.fake_plpy)),
             [collection_ident, collection2_ident])
@@ -1037,6 +1046,75 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         major, minor = cursor.fetchone()
         self.assertEqual(major, 13)
         self.assertEqual(minor, None)
+
+    @testing.db_connect
+    def test_collection_minor_updates(self, cursor):
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        old_n_modules = cursor.fetchone()[0]
+
+        # Insert a new version of an existing module
+        cursor.execute('''\
+        INSERT INTO modules
+        (moduleid, portal_type, version, name,
+         created, revised,
+         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog,
+         language, parent)
+        VALUES ('m42955', 'Module', '1.8',
+        'New Preface to College Physics',
+        '2013-07-31 14:07:20.590652-05' , '2013-07-31 15:07:20.590652-05',
+        NULL, NULL, NULL, 1, NULL, 1, '', 'reedstrm', 'I did not change something',
+        'en', NULL) RETURNING module_ident''')
+
+        cursor.connection.commit()
+
+        # Check one minor version for College Physics and Derived Copy have
+        # been created
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        new_n_modules = cursor.fetchone()[0]
+        self.assertEqual(new_n_modules, old_n_modules + 3)
+        old_n_modules = new_n_modules
+
+        cursor.execute("""\
+        SELECT module_version(major_version, minor_version)
+        FROM modules
+        WHERE portal_type = 'Collection'
+        ORDER BY revised DESC, uuid LIMIT 2""")
+        self.assertEqual(cursor.fetchall(), [('1.2',), ('7.2',)])
+
+        # Insert a new version of another existing module
+        cursor.execute('''\
+        INSERT INTO modules
+        (moduleid, portal_type, version, name,
+         created, revised,
+         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog,
+         language, parent)
+        VALUES ('m42092', 'Module', '1.5',
+        'Physics: An Introduction+',
+        '2013-07-31 14:07:20.590652-05' , '2013-07-31 15:07:20.590652-05',
+        NULL, NULL, NULL, 1, NULL, 1, '', 'reedstrm', 'I did change something',
+        'en', NULL) RETURNING module_ident''')
+        cursor.connection.commit()
+
+        # Check one more minor version for College Physics, Derived Copy and
+        # SubCollection have been created
+        cursor.execute('SELECT COUNT(*) FROM modules')
+        new_n_modules = cursor.fetchone()[0]
+        self.assertEqual(new_n_modules, old_n_modules + 4)
+
+        cursor.execute("""\
+        SELECT module_version(major_version, minor_version)
+        FROM modules
+        WHERE portal_type IN ('Collection', 'SubCollection')
+        ORDER BY revised DESC, uuid LIMIT 3""")
+        self.assertEqual(cursor.fetchall(), [('1.2',), ('1.3',), ('7.3',)])
+
+        # Check that new versions of both pages are in the collection tree
+        cursor.execute("SELECT tree_to_json(%s, '7.3', FALSE)::JSON",
+                       ('e79ffde3-7fb4-4af3-9ec8-df648b391597',))
+        tree = cursor.fetchone()[0]
+        children = list(flatten_tree_to_ident_hashes(tree))
+        self.assertIn('209deb1f-1a46-4369-9e0d-18674cf58a3e@8', children)
+        self.assertIn('d395b566-5fe3-4428-bcb2-19016e3aa3ce@5', children)
 
     @testing.db_connect
     def test_module(self, cursor):
