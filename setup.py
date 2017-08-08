@@ -39,7 +39,8 @@ setup(
     tests_require=tests_require,
     include_package_data=True,
     package_data={
-        'cnxarchive': ['sql/*.sql', 'sql/*/*.sql', 'data/*.*', '*.yaml'],
+        'cnxarchive': ['sql/*.sql', 'sql/*/*.sql', 'data/*.*', '*.yaml',
+                       'views/templates/*.*'],
         'cnxarchive.tests': ['data/*.*'],
         },
     cmdclass=versioneer.get_cmdclass(),
