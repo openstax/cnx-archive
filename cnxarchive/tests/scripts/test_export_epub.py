@@ -563,7 +563,10 @@ class BinderFactoryTestCase(BaseTestCase):
                 ],
             }
 
-        self.assertEqual(cnxepub.model_to_tree(binder), expected_tree)
+        print(binder)
+        abc = cnxepub.model_to_tree(binder)
+        print(abc)
+        self.assertEqual(abc, expected_tree)
 
     def test_assembly(self):
         ident_hash = 'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1'
