@@ -7,5 +7,6 @@ recursive-include cnxarchive/data *
 recursive-include cnxarchive/tests/data *
 recursive-include cnxarchive/xsl *
 recursive-include cnxarchive/scripts/export_epub/sql *
+recursive-include cnxarchive/views/templates *
 include versioneer.py
 include cnxarchive/_version.py
