@@ -5,7 +5,6 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import unittest
 try:
     from unittest import mock  # python 3
 except ImportError:
@@ -23,20 +22,7 @@ from ..utils import CNXHash
 from . import testing
 
 
-class FunctionalTestCase(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.settings = settings = testing.integration_test_settings()
-        # only run once for all the tests
-
-        from .. import main
-        app = main({}, **settings)
-
-        from webtest import TestApp
-        cls.testapp = TestApp(app)
-
-
-class IdentHashSyntaxErrorTestCase(FunctionalTestCase):
+class IdentHashSyntaxErrorTestCase(testing.FunctionalTestCase):
     fixture = testing.data_fixture
 
     def setUp(self):
@@ -83,7 +69,7 @@ class IdentHashSyntaxErrorTestCase(FunctionalTestCase):
         self.testapp.get('/contents/@', status=404)
 
 
-class IdentHashShortIdTestCase(FunctionalTestCase):
+class IdentHashShortIdTestCase(testing.FunctionalTestCase):
     fixture = testing.data_fixture
 
     contents_extensions = ['', '.json', '.html']
@@ -296,7 +282,7 @@ class IdentHashShortIdTestCase(FunctionalTestCase):
         self.assertEqual(resp.status, '200 OK')
 
 
-class IdentHashMissingVersionTestCase(FunctionalTestCase):
+class IdentHashMissingVersionTestCase(testing.FunctionalTestCase):
     fixture = testing.data_fixture
 
     contents_extensions = ['', '.json', '.html']

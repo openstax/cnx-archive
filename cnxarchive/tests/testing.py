@@ -8,6 +8,7 @@ import functools
 import os
 import re
 import sys
+import unittest
 import warnings
 from datetime import datetime
 from uuid import uuid4
@@ -308,6 +309,19 @@ class FakePlpyPlan(object):
                         raise
 
 
+class FunctionalTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.settings = settings = integration_test_settings()
+        # only run once for all the tests
+
+        from .. import main
+        app = main({}, **settings)
+
+        from webtest import TestApp
+        cls.testapp = TestApp(app)
+
+
 __all__ = (
     'config_uri',
     'DATA_DIRECTORY',
@@ -321,4 +335,5 @@ __all__ = (
     'is_venv',
     'mocked_fromtimestamp',
     'schema_fixture',
+    'FunctionalTestCase',
     )
