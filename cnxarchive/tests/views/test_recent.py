@@ -65,6 +65,12 @@ class RecentViewsTestCase(unittest.TestCase):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
+    def test_format_author(self):
+        from ...views.recent import format_author
+        self.assertEqual(
+            format_author(['cnxcap', 'OpenStaxCollege'], self.settings),
+            'OSC Physics Maintainer, OpenStax Cöllege')
+
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'recent'
