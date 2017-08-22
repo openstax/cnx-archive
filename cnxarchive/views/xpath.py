@@ -24,11 +24,11 @@ from .helpers import get_uuid, get_latest_version
 # #################### #
 
 
-def xpath_book(request, uuid, version):
+def xpath_book(request, uuid, version, return_json=True):
     """
     Given a request, book UUID and version:
 
-    if Accept: 'application/xhtml+xml' is in the headers, returns the HTML tree
+    if return_json is False, returns the HTML tree
     of the book, with each module title a link which returns the xpath query
     result for that page UUID (and version if supplied, else uses most recent),
     or
@@ -39,10 +39,10 @@ def xpath_book(request, uuid, version):
     xpath_results, an array of strings, each an individual xpath result.
     """
 
-    if 'application/xhtml+xml' in request.headers.get('ACCEPT', ''):
-        return xpath_book_html(request, uuid, version)
-    else:
+    if return_json:
         return execute_xpath(request, 'xpath', uuid, version)
+    else:
+        return xpath_book_html(request, uuid, version)
 
 
 def xpath_page(request, uuid, version):
@@ -163,6 +163,7 @@ def execute_xpath(request, sql_function, uuid, version):
 
 
 @view_config(route_name='xpath', request_method='GET')
+@view_config(route_name='xpath-json', request_method='GET')
 def xpath(request):
     """View for the route. Determines UUID and version from input request
     and determines the type of UUID (collection or module) and executes
@@ -192,6 +193,8 @@ def xpath(request):
             result = get_content_metadata(uuid, version, cursor)
 
     if result['mediaType'] == COLLECTION_MIMETYPE:
-        return xpath_book(request, uuid, version)
+        matched_route = request.matched_route.name
+        return xpath_book(request, uuid, version,
+                          return_json=matched_route.endswith('json'))
     else:
         return xpath_page(request, uuid, version)
