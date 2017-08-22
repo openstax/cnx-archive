@@ -39,8 +39,9 @@ def xpath_book(request, uuid, version, return_json=True):
     xpath_results, an array of strings, each an individual xpath result.
     """
 
+    xpath_string = request.params.get('q')
     if return_json:
-        return execute_xpath(request, 'xpath', uuid, version)
+        return execute_xpath(xpath_string, 'xpath', uuid, version)
     else:
         return xpath_book_html(request, uuid, version)
 
@@ -48,7 +49,8 @@ def xpath_book(request, uuid, version, return_json=True):
 def xpath_page(request, uuid, version):
     """Given a page UUID (and optional version), returns a JSON object of
     results, as in xpath_book()"""
-    return execute_xpath(request, 'xpath-module', uuid, version)
+    xpath_string = request.params.get('q')
+    return execute_xpath(xpath_string, 'xpath-module', uuid, version)
 
 
 def _get_content_json_xpath(request, uuid, version):
@@ -121,13 +123,9 @@ def html_listify_xpath(tree, root_ul_element, parent_id=None):
             html_listify_xpath(node['contents'], elm, parent_id)
 
 
-def execute_xpath(request, sql_function, uuid, version):
+def execute_xpath(xpath_string, sql_function, uuid, version):
     """Executes either xpath or xpath-module SQL function with given input
     params."""
-    xpath_string = request.params.get('q')
-
-    results = {'results': []}
-
     settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
@@ -143,18 +141,9 @@ def execute_xpath(request, sql_function, uuid, version):
                 raise exc
 
             for res in cursor.fetchall():
-                results['results'].append(
-                    {
-                        'name': res[0],
-                        'uuid': res[1],
-                        'xpath_results': res[2]
-                    })
-
-    resp = request.response
-    resp.status = "200 OK"
-    resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
-    return resp
+                yield {'name': res[0],
+                       'uuid': res[1],
+                       'xpath_results': res[2]}
 
 
 # #################### #
@@ -192,9 +181,22 @@ def xpath(request):
         with db_connection.cursor() as cursor:
             result = get_content_metadata(uuid, version, cursor)
 
+    resp = request.response
+
     if result['mediaType'] == COLLECTION_MIMETYPE:
         matched_route = request.matched_route.name
-        return xpath_book(request, uuid, version,
-                          return_json=matched_route.endswith('json'))
+        results = xpath_book(request, uuid, version,
+                             return_json=matched_route.endswith('json'))
+        if matched_route.endswith('json'):
+            results = {'results': list(results)}
+            resp.body = json.dumps(results)
+            resp.content_type = 'application/json'
+        else:
+            return results
     else:
-        return xpath_page(request, uuid, version)
+        results = {'results': list(xpath_page(request, uuid, version))}
+        resp.body = json.dumps(results)
+        resp.content_type = 'application/json'
+
+    resp.status = "200 OK"
+    return resp
