@@ -131,12 +131,12 @@ class SearchViewsTestCase(unittest.TestCase):
 
         # Build the request
         import string
-        sub = 'subject:"Arguing with Judge Judy: Popular ‘Logic’ on TV Judge Shows"'
+        sub = u'subject:"Arguing with Judge Judy: Popular ‘Logic’ on TV Judge Shows"'
         auth0 = 'authorID:cnxcap'
         auth1 = 'authorID:OpenStaxCollege'
         auth2 = 'authorID:DrBunsenHoneydew'
         fields = [sub, auth0, auth1, auth2]
-        self.request.params = {'q': string.join(fields, ' ')}
+        self.request.params = {'q': string.join(fields, u' ')}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
@@ -373,7 +373,7 @@ class SearchViewsTestCase(unittest.TestCase):
             }))
 
     def test_search_utf8(self):
-        self.request.params = {'q': '"你好"'}
+        self.request.params = {'q': u'"你好"'}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'search'
 
@@ -915,3 +915,19 @@ class SearchViewsTestCase(unittest.TestCase):
 
         self.assertEqual(results['results']['total'], 7)
         self.assertEqual(self.db_search_call_count, 2)
+
+    @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
+    def test_search_memcached_key_length_error(self):
+        # create a really long search query
+        self.request.params = {
+            'q': 'subject:"Science and Technology" pubYear:"2013" type:"Book"'
+                 ' physics introduction examples college online learning and'
+                 ' algebra'
+        }
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'search'
+
+        from ...views.search import search
+        results = search(self.request).json_body
+
+        self.assertEqual(results['results']['total'], 1)
