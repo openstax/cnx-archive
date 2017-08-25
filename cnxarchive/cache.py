@@ -7,8 +7,9 @@
 # ###
 """Memcached utilities."""
 
-import base64
+import binascii
 import copy
+import hashlib
 
 import memcache
 from pyramid.threadlocal import get_current_registry
@@ -38,11 +39,12 @@ def search(query, query_type, nocache=False):
 
     # search_key should look something like:
     # '"sort:pubDate" "text:college physics" "query_type:weakAND"'
-    search_key = ' '.join(['"{}"'.format(':'.join(param))
+    search_key = u' '.join([u'"{}"'.format(u':'.join(param))
                            for param in search_params])
-    # since search_key is not a valid memcached key, use base64
-    # encoding to make it into a valid key
-    mc_search_key = base64.b64encode(search_key)
+    # hash the search_key so it never exceeds the key length limit (250) in
+    # memcache
+    mc_search_key = binascii.hexlify(
+        hashlib.pbkdf2_hmac('sha1', search_key.encode('utf-8'), b'', 1))
 
     # look for search results in memcache first, unless nocache
     mc = memcache.Client(memcache_servers,
