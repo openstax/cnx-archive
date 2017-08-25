@@ -1,4 +1,5 @@
 import json
+import re
 from urllib import urlencode
 
 import psycopg2
@@ -35,7 +36,8 @@ def xpath_book(request, uuid, version, return_json=True):
     xpath_results, an array of strings, each an individual xpath result.
     """
 
-    xpath_string = request.params.get('q')
+    xpath_string = '{}/ancestor-or-self::*[@id][1]'.format(
+        request.params.get('q'))
     results = execute_xpath(xpath_string, 'xpath', uuid, version)
     if return_json:
         return results
@@ -44,20 +46,41 @@ def xpath_book(request, uuid, version, return_json=True):
 
 
 def xpath_book_html(request, results):
+    def remove_ns(text):
+        return re.sub(' xmlns:?[a-z]*="[^"]*"', '', text)
+
+    q = request.params.get('q', '')
     ul = etree.Element('ul')
     for item in results:
         li = etree.SubElement(ul, 'li')
-        a = etree.SubElement(li, 'a')
+        a = etree.SubElement(etree.SubElement(li, 'p'), 'a')
         a.set('href', '{}?{}'.format(
             request.route_path('xpath'),
-            urlencode({'q': request.params.get('q', ''),
-                       'id': item['uuid']})))
+            urlencode({'q': q, 'id': item['uuid']})))
+        a.set('target', '_blank')
         a.text = item['name'].decode('utf-8')
 
         xpath_list = etree.SubElement(li, 'ul')
         for xpath_result in item['xpath_results']:
             li = etree.SubElement(xpath_list, 'li')
-            li.text = xpath_result.decode('utf-8')
+            elem = etree.fromstring(xpath_result)
+
+            a = etree.SubElement(li, 'a')
+            a.set('href', '{}#{}'.format(
+                request.route_path('content-html', ident_hash=item['uuid']),
+                elem.get('id')))
+            a.set('target', '_blank')
+
+            # get the exact element the user searched for
+            m = elem.xpath(q)[0]
+            a.text = u''.join(elem.xpath(q)[0].xpath('.//text()'))
+            if not a.text.strip():
+                # return the tag in xml
+                a.text = remove_ns(etree.tostring(m, with_tail=False)
+                                   .decode('utf-8'))
+
+            etree.SubElement(li, 'p').text = remove_ns(
+                xpath_result.decode('utf-8'))
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
