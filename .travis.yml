@@ -32,7 +32,9 @@ before_install:
   - cd cnx-cnxml-transforms && python setup.py install && cd ..
   # Install cnx-db
   - git clone https://github.com/Connexions/cnx-db.git
-  - cd cnx-db && python setup.py install && cd ..
+  - cd cnx-db
+  - git checkout refactor_triggers_tests
+  - python setup.py install && cd ..
   # Install rhaptos.cnxmlutils
   - git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
   - cd rhaptos.cnxmlutils && python setup.py install && cd ..
