@@ -36,13 +36,22 @@ def xpath_book(request, uuid, version, return_json=True):
     xpath_results, an array of strings, each an individual xpath result.
     """
 
-    xpath_string = '{}/ancestor-or-self::*[@id][1]'.format(
-        request.params.get('q'))
+    xpath_string = request.params.get('q')
     results = execute_xpath(xpath_string, 'xpath', uuid, version)
     if return_json:
         return results
     else:
         return xpath_book_html(request, results)
+
+
+def get_page_content(uuid, version, filename='index.cnxml'):
+    settings = get_current_registry().settings
+    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-resource-by-filename'],
+                           {'id': uuid, 'version': version,
+                            'filename': filename})
+            return cursor.fetchone()[0][:]
 
 
 def xpath_book_html(request, results):
@@ -60,27 +69,31 @@ def xpath_book_html(request, results):
         a.set('target', '_blank')
         a.text = item['name'].decode('utf-8')
 
+        # XXX we are not using item['xpath_results'] because we need to do some
+        # xpath here
         xpath_list = etree.SubElement(li, 'ul')
-        for xpath_result in item['xpath_results']:
+        content = get_page_content(item['uuid'], item['version'])
+        root = etree.fromstring(content)
+
+        for xpath_result in root.xpath(q):
             li = etree.SubElement(xpath_list, 'li')
-            elem = etree.fromstring(xpath_result)
-
             a = etree.SubElement(li, 'a')
-            a.set('href', '{}#{}'.format(
+
+            ancestor = xpath_result.xpath('./ancestor-or-self::*[@id][1]')
+            if not ancestor:
+                ancestor_id = ''
+            else:
+                ancestor_id = '#{}'.format(ancestor[0].get('id'))
+
+            # link to the closest ancestor id
+            a.set('href', '{}{}'.format(
                 request.route_path('content-html', ident_hash=item['uuid']),
-                elem.get('id')))
+                ancestor_id))
             a.set('target', '_blank')
+            a.text = remove_ns(
+                etree.tostring(xpath_result, with_tail=False)
+                .decode('utf-8'))
 
-            # get the exact element the user searched for
-            m = elem.xpath(q)[0]
-            a.text = u''.join(elem.xpath(q)[0].xpath('.//text()'))
-            if not a.text.strip():
-                # return the tag in xml
-                a.text = remove_ns(etree.tostring(m, with_tail=False)
-                                   .decode('utf-8'))
-
-            etree.SubElement(li, 'p').text = remove_ns(
-                xpath_result.decode('utf-8'))
     return HTML_WRAPPER.format(etree.tostring(ul))
 
 
@@ -111,7 +124,8 @@ def execute_xpath(xpath_string, sql_function, uuid, version):
             for res in cursor.fetchall():
                 yield {'name': res[0],
                        'uuid': res[1],
-                       'xpath_results': res[2]}
+                       'version': res[2],
+                       'xpath_results': res[3]}
 
 
 # #################### #

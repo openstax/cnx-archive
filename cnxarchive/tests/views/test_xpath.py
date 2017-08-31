@@ -101,7 +101,8 @@ class XpathViewTestCase(unittest.TestCase):
                         u'<definition xmlns=\"http://cnx.rice.edu/cnxml\" id=\"import-auto-id2912380\">\n  <term>approximation</term>\n  <meaning id=\"fs-id1363258\"> an estimated value based on prior experience and reasoning</meaning>\n</definition>'
                     ],
                     u'name': u'Approximation',
-                    u'uuid': u'5838b105-41cd-4c3d-a957-3ac004a48af3'
+                    u'uuid': u'5838b105-41cd-4c3d-a957-3ac004a48af3',
+                    u'version': u'5',
                 }
             ]
         }
