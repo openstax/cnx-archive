@@ -17,6 +17,14 @@ then feel free to either file an
 `issue <https://github.com/Connexions/cnx-archive/issues/new>`_
 or contact Connexions for further assistance.
 
+Install using docker
+--------------------
+
+To run cnx-archive locally using docker::
+
+    docker-compose build
+    docker-compose up
+
 Install the PostgreSQL database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
