@@ -54,6 +54,8 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         for site_pkg in site_packages:
             self.assertIn(os.path.abspath(site_pkg), paths)
 
+    @unittest.skipIf(not testing.db_is_local(),
+                     'Database is not on the same host')
     @testing.db_connect
     def test_pyimport(self, cursor):
         target_name = 'cnxarchive.database'

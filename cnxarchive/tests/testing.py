@@ -57,6 +57,15 @@ def db_connection_factory(connection_string=None):
     return db_connect
 
 
+def db_is_local(connection_string=None):
+    if connection_string is None:
+        settings = integration_test_settings()
+        connection_string = settings[config.CONNECTION_STRING]
+
+    parts = dict([i.split('=', 1) for i in connection_string.split()])
+    return parts.get('host', 'localhost') == 'localhost'
+
+
 def db_connect(method):
     """Decorator for methods that need to use the database
 
