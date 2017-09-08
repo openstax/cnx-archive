@@ -36,7 +36,7 @@ def format_author(personids, settings):
             with db_connection.cursor() as cursor:
                 cursor.execute(statement, vars=(personids,))
                 authors_list = cursor.fetchall()
-    return (', ').join(authors_list[0])
+    return ', '.join([author[0] for author in authors_list]).decode('utf-8')
 
 
 def html_rss_date(datetime):

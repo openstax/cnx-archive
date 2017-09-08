@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from __future__ import unicode_literals
+import os
 import unittest
 
 try:
@@ -65,6 +67,12 @@ class RecentViewsTestCase(unittest.TestCase):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
+    def test_format_author(self):
+        from ...views.recent import format_author
+        self.assertEqual(
+            format_author(['cnxcap', 'OpenStaxCollege'], self.settings),
+            'OSC Physics Maintainer, OpenStax Cöllege')
+
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'recent'
@@ -84,3 +92,20 @@ class RecentViewsTestCase(unittest.TestCase):
         dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
         self.assertEqual(dates_sorted, dates)
+
+
+class RecentRssTestCase(testing.FunctionalTestCase):
+    fixture = testing.data_fixture
+
+    def setUp(self):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test(self):
+        resp = self.testapp.get('/feeds/recent.rss')
+        with open(os.path.join(testing.here, 'data/recent.rss')) as f:
+            recent_rss = f.read()
+        self.assertEqual(resp.status, '200 OK')
+        self.assertEqual(resp.body, recent_rss)
