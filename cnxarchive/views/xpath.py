@@ -26,6 +26,23 @@ from .helpers import get_content_metadata, get_uuid, get_latest_version
 # #################### #
 
 
+NAMESPACES = {
+    'cnx': 'http://cnx.rice.edu/cnxml',
+    'c': 'http://cnx.rice.edu/cnxml',
+    'system': 'http://cnx.rice.edu/system-info',
+    'math': 'http://www.w3.org/1998/Math/MathML',
+    'mml': 'http://www.w3.org/1998/Math/MathML',
+    'm': 'http://www.w3.org/1998/Math/MathML',
+    'md': 'http://cnx.rice.edu/mdml',
+    'qml': 'http://cnx.rice.edu/qml/1.0',
+    'bib': 'http://bibtexml.sf.net/',
+    'xhtml': 'http://www.w3.org/1999/xhtml',
+    'h': 'http://www.w3.org/1999/xhtml',
+    'data': 'http://www.w3.org/TR/html5/dom.html#custom-data-attribute',
+    'cmlnle': 'http://katalysteducation.org/cmlnle/1.0',
+}
+
+
 def xpath_book(request, uuid, version, return_json=True):
     """
     Given a request, book UUID and version:
@@ -75,11 +92,12 @@ def xpath_book_html(request, results):
         content = get_page_content(item['uuid'], item['version'])
         root = etree.fromstring(content)
 
-        for xpath_result in root.xpath(q):
+        for xpath_result in root.xpath(q, namespaces=NAMESPACES):
             li = etree.SubElement(xpath_list, 'li')
             a = etree.SubElement(li, 'a')
 
-            ancestor = xpath_result.xpath('./ancestor-or-self::*[@id][1]')
+            ancestor = xpath_result.xpath('./ancestor-or-self::*[@id][1]',
+                                          namespaces=NAMESPACES)
             if not ancestor:
                 ancestor_id = ''
             else:

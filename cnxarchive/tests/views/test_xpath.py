@@ -73,7 +73,7 @@ class XpathViewTestCase(unittest.TestCase):
     def test_xpath_tree(self):
         # Test that the returned HTML tree is correct.
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        xpath_str = "//*[local-name()='definition']"
+        xpath_str = "//cnx:definition"
 
         self.request.params = {'id': uuid, 'q': xpath_str}
         self.request.matched_route = mock.Mock()
@@ -92,7 +92,7 @@ class XpathViewTestCase(unittest.TestCase):
     def test_xpath_page(self):
         # Test that the returned results from the xpath are correct.
         uuid = '5838b105-41cd-4c3d-a957-3ac004a48af3'
-        xpath_str = "//*[local-name()='definition']"
+        xpath_str = "//cnx:definition"
 
         expected = {
             u'results': [
@@ -126,7 +126,7 @@ class XpathViewTestCase(unittest.TestCase):
         self.assertRaises(httpexceptions.HTTPBadRequest, xpath, self.request)
 
         # Test empty id
-        self.request.params = {'id': '', 'q': "//*[local-name()='definition']"}
+        self.request.params = {'id': '', 'q': "//cnx:definition"}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'xpath-json'
 
