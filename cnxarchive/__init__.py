@@ -77,6 +77,8 @@ def declare_api_routes(config):
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('recent', '/feeds/recent.rss')  # cnxarchive.views:recent
     add_route('oai', '/feeds/oai')  # cnxarchive.views:oai
+    add_route('xpath', '/xpath.html')  # cnxarchive.views.xpath
+    add_route('xpath-json', '/xpath.json')  # cnxarchive.views.xpath
 
 
 def declare_type_info(config):

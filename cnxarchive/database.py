@@ -67,6 +67,8 @@ SQL = {
         'get-in-collated-book-search-full-page'),
     'get-collated-content': _read_sql_file('get-collated-content'),
     'get-collated-state': _read_sql_file('get-collated-state'),
+    'xpath': _read_sql_file('xpath'),
+    'xpath-module': _read_sql_file('xpath-module'),
     }
 
 
