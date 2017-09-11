@@ -9,6 +9,7 @@ install_requires = (
     'cnx-db',
     'cnx-epub',
     'cnx-query-grammar',
+    'cnx-cnxml-transforms',
     'lxml',
     'python-memcached',
     'psycopg2>=2.5',
