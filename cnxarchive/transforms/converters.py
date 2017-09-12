@@ -8,6 +8,7 @@
 """CNXML <-> HTML conversion code."""
 
 import os
+import sys
 from io import BytesIO
 
 import rhaptos.cnxmlutils
@@ -29,7 +30,19 @@ MATHML_XSL_PATH = os.path.abspath(os.path.join(
 
 
 def _gen_xsl(f, d=XSL_DIR):
-    return etree.XSLT(etree.parse(os.path.join(d, f)))
+    transform = etree.XSLT(etree.parse(os.path.join(d, f)))
+
+    def transform_w_version(*args, **kwargs):
+        # If git is not in $PATH, rhaptos.cnxmlutils.__version__ returns
+        # "0+unknown"
+        if '/usr/bin' not in os.getenv('PATH', ''):
+            os.environ['PATH'] = '/usr/bin:{}'.format(os.environ['PATH'])
+            reload(rhaptos.cnxmlutils)
+        kwargs['version'] = etree.XSLT.strparam(
+            rhaptos.cnxmlutils.__version__)
+        return transform(*args, **kwargs)
+
+    return transform_w_version
 
 CNXML_TO_HTML_XSL = _gen_xsl('cnxml-to-html5.xsl')
 CNXML_TO_HTML_METADATA_XSL = _gen_xsl('cnxml-to-html5-metadata.xsl')
