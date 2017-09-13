@@ -8,7 +8,6 @@
 """CNXML <-> HTML conversion code."""
 
 import os
-import sys
 from io import BytesIO
 
 import rhaptos.cnxmlutils
