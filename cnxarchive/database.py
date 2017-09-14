@@ -51,6 +51,7 @@ SQL = {
     'get-resource-by-filename': _read_sql_file('get-resource-by-filename'),
     'get-resourceid-by-filename': _read_sql_file('get-resourceid-by-filename'),
     'get-tree-by-uuid-n-version': _read_sql_file('get-tree-by-uuid-n-version'),
+    'get-module-latest-version': _read_sql_file('get-module-latest-version'),
     'get-module-versions': _read_sql_file('get-module-versions'),
     'get-module-uuid': _read_sql_file('get-module-uuid'),
     'get-subject-list': _read_sql_file('get-subject-list'),
