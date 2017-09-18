@@ -218,6 +218,7 @@ class InBookViewsTestCase(unittest.TestCase):
         content = results['results']['items'][0]['html']
 
         self.assertEqual(status, '200 OK')
+        self.assertEqual(len(results['results']['items']), 1)
         self.assertEqual(content_type, 'application/json')
         self.assertEqual('Elasticity: Stress and Strain', title)
         self.assertEqual('56f1c5c1-4014-450d-a477-2121e276beca@8', id)
@@ -294,6 +295,8 @@ class InBookViewsTestCase(unittest.TestCase):
         content = results['results']['items'][0]['html']
 
         self.assertEqual(status, '200 OK')
+        self.assertEqual(len(results['results']['items']), 1)
+        self.assertEqual(content_type, 'application/json')
         self.assertEqual(content_type, 'application/json')
         self.assertEqual('Preface', title)
         self.assertEqual('209deb1f-1a46-4369-9e0d-18674cf58a3e@7', id)
