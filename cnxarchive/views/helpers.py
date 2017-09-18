@@ -43,7 +43,7 @@ def get_latest_version(uuid_):
     settings = get_current_registry().settings
     with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-module-versions'], {'id': uuid_})
+            cursor.execute(SQL['get-module-latest-version'], {'id': uuid_})
             try:
                 return cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned
