@@ -45,11 +45,13 @@ def main(argv=None):
 
     if args.with_example_data:
         connection_string = settings[config.CONNECTION_STRING]
-        with psycopg2.connect(connection_string) as db_connection:
+        db_connection = psycopg2.connect(connection_string)
+        with db_connection:
             with db_connection.cursor() as cursor:
                 for filepath in EXAMPLE_DATA_FILEPATHS:
                     with open(filepath, 'r') as fb:
                         cursor.execute(fb.read())
+        db_connection.close()
     return 0
 
 

@@ -8,15 +8,13 @@
 """Legacy Redirect Views."""
 import logging
 
-import psycopg2
-import psycopg2.extras
 from cnxepub.models import flatten_tree_to_ident_hashes
 from pyramid import httpexceptions
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from ..database import SQL
+from ..database import SQL, db_connect
 from ..utils import (
     join_ident_hash, split_legacy_hash
     )
@@ -45,8 +43,7 @@ def _get_page_in_book(page_uuid, page_version, book_uuid,
 
 
 def _convert_legacy_id(objid, objver=None):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             if objver:
                 args = dict(objid=objid, objver=objver)
@@ -74,8 +71,6 @@ def redirect_legacy_content(request):
 
     Handles collection context (book) as well.
     """
-    settings = get_current_registry().settings
-    db_conn_string = settings[config.CONNECTION_STRING]
     routing_args = request.matchdict
     objid = routing_args['objid']
     objver = routing_args.get('objver')
@@ -87,7 +82,7 @@ def redirect_legacy_content(request):
         raise httpexceptions.HTTPNotFound()
 
     if filename:
-        with psycopg2.connect(db_conn_string) as db_connection:
+        with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
                 args = dict(id=id, version=version, filename=filename)
                 cursor.execute(SQL['get-resourceid-by-filename'], args)

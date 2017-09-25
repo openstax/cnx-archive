@@ -8,11 +8,11 @@
 """Recent RSS feed View."""
 import logging
 
-import psycopg2
 import psycopg2.extras
 from pyramid.view import view_config
 
 from .. import config
+from ..database import db_connect
 
 logger = logging.getLogger('cnxarchive')
 
@@ -32,7 +32,7 @@ def format_author(personids, settings):
                 FROM persons
                 WHERE personid = ANY (%s);
                 """
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(statement, vars=(personids,))
                 authors_list = cursor.fetchall()
@@ -74,7 +74,7 @@ def recent(request):
                 ORDER BY revised DESC
                 LIMIT (%s) OFFSET (%s);
                 """
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_c:
+    with db_connect() as db_c:
             with db_c.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(statement,
                             vars=(portal_type, num_entries, start_entry))

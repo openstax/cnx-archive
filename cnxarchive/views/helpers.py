@@ -8,13 +8,11 @@
 """Helpers Used in Multiple Views."""
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid import httpexceptions
 from pyramid.threadlocal import get_current_registry
 
 from .. import config
-from ..database import SQL
+from ..database import SQL, db_connect
 
 from ..utils import portaltype_to_mimetype
 
@@ -27,8 +25,7 @@ logger = logging.getLogger('cnxarchive')
 
 
 def get_uuid(shortid):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-module-uuid'], {'id': shortid})
             try:
@@ -40,8 +37,7 @@ def get_uuid(shortid):
 
 
 def get_latest_version(uuid_):
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-module-latest-version'], {'id': uuid_})
             try:

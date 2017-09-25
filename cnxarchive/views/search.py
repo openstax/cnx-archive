@@ -9,14 +9,12 @@
 import json
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
 from .. import cache
-from ..database import SQL
+from ..database import SQL, db_connect
 from ..search import (
     DEFAULT_PER_PAGE, QUERY_TYPES, DEFAULT_QUERY_TYPE,
     Query,
@@ -147,10 +145,8 @@ def search(request):
         authors_results = []
         limits = results['query']['limits']
         index = 0
-        settings = get_current_registry().settings
-        connection = settings[config.CONNECTION_STRING]
         statement = SQL['get-users-by-ids']
-        with psycopg2.connect(connection) as db_connection:
+        with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
                 for idx, limit in enumerate(limits):
                     if limit['tag'] == 'authorID':

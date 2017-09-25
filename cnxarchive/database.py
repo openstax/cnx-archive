@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 """Database models and utilities."""
+import contextlib
 import os
 import json
 import psycopg2
@@ -73,12 +74,18 @@ SQL = {
     }
 
 
+@contextlib.contextmanager
 def db_connect(connection_string=None):
     """Function to supply a database connection object."""
     if connection_string is None:
         settings = get_current_registry().settings
         connection_string = settings[config.CONNECTION_STRING]
-    return psycopg2.connect(connection_string)
+    db_conn = psycopg2.connect(connection_string)
+    try:
+        with db_conn:
+            yield db_conn
+    finally:
+        db_conn.close()
 
 
 def get_module_ident_from_ident_hash(ident_hash, cursor):

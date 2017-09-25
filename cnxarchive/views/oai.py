@@ -8,11 +8,11 @@
 from datetime import datetime
 from re import compile
 
-import psycopg2
 import psycopg2.extras
 from pyramid.view import view_config
 
 from .. import config
+from ..database import db_connect
 from .recent import html_rss_date
 
 # ################### #
@@ -35,8 +35,8 @@ def _setFromUntil(request):
     return where, arguments
 
 
-def _databaseDictResults(statement, arguments, settings):
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_c:
+def _databaseDictResults(statement, arguments):
+    with db_connect() as db_c:
         cur = db_c.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute(statement, vars=arguments)
         search_results = cur.fetchall()
@@ -187,8 +187,7 @@ def do_ListIdentifiers(request):
                 FROM latest_modules {}
                 ORDER BY revised;
                 """.format(where)
-    settings = request.registry.settings
-    search_results = _databaseDictResults(statement, arguments, settings)
+    search_results = _databaseDictResults(statement, arguments)
     if len(search_results) == 0:
         return _noRecordsMatchError()
     new_vars.update({'results': search_results})
@@ -210,8 +209,7 @@ def do_GetRecords(request):
     uuid = identifier.split(':')[-1]
     statement = "SELECT" + _oaiGetBaseStatement()
     statement += "FROM latest_modules as lm  WHERE uuid=(%s);"
-    settings = request.registry.settings
-    results = _databaseDictResults(statement, (uuid,), settings)
+    results = _databaseDictResults(statement, (uuid,))
     if len(results) == 0:
         return {'error': idDoesNotExist}
     new_vars.update(_formatOaiResults(results, request))
@@ -225,8 +223,7 @@ def do_ListRecords(request):
     where, arguments = _setFromUntil(request)
     statement = "SELECT" + _oaiGetBaseStatement()
     statement += "FROM latest_modules as lm {} ORDER BY revised;".format(where)
-    settings = request.registry.settings
-    results = _databaseDictResults(statement, arguments, settings)
+    results = _databaseDictResults(statement, arguments)
     new_vars.update(_formatOaiResults(results, request))
     return new_vars
 

@@ -86,7 +86,8 @@ def main(argv=None):
 
     # Insert the hits into the database.
     connection_string = settings[config.CONNECTION_STRING]
-    with psycopg2.connect(connection_string) as db_connection:
+    db_connection = psycopg2.connect(connection_string)
+    with db_connection:
         with db_connection.cursor() as cursor:
             for ident_hash, hit_count in hits.items():
                 cursor.execute("""\
@@ -98,6 +99,7 @@ def main(argv=None):
                                (start_timestamp, end_timestamp, hit_count,
                                 ident_hash))
             cursor.execute("SELECT update_hit_ranks();")
+    db_connection.close()
     return 0
 
 
