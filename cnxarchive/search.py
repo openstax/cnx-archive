@@ -12,14 +12,13 @@ from collections import Mapping, OrderedDict, Sequence
 from datetime import datetime
 from time import strptime
 
-import psycopg2
 from cnxquerygrammar.query_parser import grammar, DictFormater
 from parsimonious.exceptions import IncompleteParseError
 from psycopg2.tz import FixedOffsetTimezone, LocalTimezone
 from pyramid.threadlocal import get_current_registry
 
 from . import config
-from .database import SQL_DIRECTORY
+from .database import SQL_DIRECTORY, db_connect
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
     PORTALTYPE_TO_MIMETYPE_MAPPING, utf8
@@ -192,9 +191,7 @@ class QueryRecord(Mapping):
         arguments = {'id': self['id'],
                      'query': ' & '.join(abstract_terms),
                      }
-        settings = get_current_registry().settings
-        connection_string = settings[config.CONNECTION_STRING]
-        with psycopg2.connect(connection_string) as db_connection:
+        with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(sql, arguments)
                 hl_abstract = cursor.fetchone()
@@ -210,9 +207,7 @@ class QueryRecord(Mapping):
         arguments = {'id': self['id'],
                      'query': ' & '.join(terms),
                      }
-        settings = get_current_registry().settings
-        connection_string = settings[config.CONNECTION_STRING]
-        with psycopg2.connect(connection_string) as db_connection:
+        with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
                 cursor.execute(_read_sql_file('highlighted-fulltext'),
                                arguments)
@@ -663,8 +658,7 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
     statement, arguments = _build_search(query, weights)
 
     # Execute the SQL.
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(statement, arguments)
             search_results = cursor.fetchall()

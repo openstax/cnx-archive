@@ -9,13 +9,11 @@
 import json
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from ..database import SQL
+from ..database import SQL, db_connect
 
 logger = logging.getLogger('cnxarchive')
 
@@ -82,8 +80,7 @@ def _get_licenses(cursor):
 @view_config(route_name='extras', request_method='GET')
 def extras(request):
     """Return a dict with archive metadata for webview."""
-    settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             metadata = {
                 'languages_and_count': _get_available_languages_and_count(

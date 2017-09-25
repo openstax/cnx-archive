@@ -9,12 +9,11 @@
 import logging
 from re import compile
 
-import psycopg2
-import psycopg2.extras
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
+from ..database import db_connect
 from ..sitemap import Sitemap
 
 PAGES_TO_BLOCK = [
@@ -49,10 +48,8 @@ def notblocked(page):
 @view_config(route_name='sitemap', request_method='GET')
 def sitemap(request):
     """Return a sitemap xml file for search engines."""
-    settings = get_current_registry().settings
     xml = Sitemap()
-    connection_string = settings[config.CONNECTION_STRING]
-    with psycopg2.connect(connection_string) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             # FIXME
             # magic number limit comes from Google policy - will need to split

@@ -9,14 +9,12 @@
 import os
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid import httpexceptions
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-
+from ..database import db_connect
 from ..utils import (
     slugify, fromtimestamp, split_ident_hash,
     )
@@ -51,7 +49,7 @@ def get_export(request):
     ident_hash, type = args['ident_hash'], args['type']
     id, version = split_ident_hash(ident_hash)
 
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             try:
                 filename, mimetype, size, modtime, state, file_content = \

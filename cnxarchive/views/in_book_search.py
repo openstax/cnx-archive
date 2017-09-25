@@ -9,13 +9,11 @@
 import json
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from ..database import SQL
+from ..database import SQL, db_connect
 from ..utils import (
     IdentHashShortId, IdentHashMissingVersion, split_ident_hash
     )
@@ -47,9 +45,7 @@ def in_book_search(request):
     args['uuid'] = id
     args['version'] = version
 
-    settings = get_current_registry().settings
-    connection_string = settings[config.CONNECTION_STRING]
-    with psycopg2.connect(connection_string) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-collated-state'], args)
             res = cursor.fetchall()
@@ -108,9 +104,7 @@ def in_book_search_highlighted_results(request):
     args['uuid'] = id
     args['version'] = version
 
-    settings = get_current_registry().settings
-    connection_string = settings[config.CONNECTION_STRING]
-    with psycopg2.connect(connection_string) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-collated-state'], args)
             res = cursor.fetchall()

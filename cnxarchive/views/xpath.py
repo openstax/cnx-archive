@@ -3,7 +3,6 @@ import re
 from urllib import urlencode
 
 import psycopg2
-import psycopg2.extras
 from pyramid import httpexceptions
 from lxml import etree
 from pyramid.settings import asbool
@@ -11,8 +10,7 @@ from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
 from .. import config
-from ..database import (
-    SQL, get_tree)
+from ..database import SQL, get_tree, db_connect
 from ..utils import (
     IdentHashShortId, IdentHashMissingVersion, IdentHashSyntaxError,
     split_ident_hash, COLLECTION_MIMETYPE, join_ident_hash
@@ -63,7 +61,7 @@ def xpath_book(request, uuid, version, return_json=True):
 
 def get_page_content(uuid, version, filename='index.cnxml'):
     settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-resource-by-filename'],
                            {'id': uuid, 'version': version,
@@ -126,7 +124,7 @@ def execute_xpath(xpath_string, sql_function, uuid, version):
     """Executes either xpath or xpath-module SQL function with given input
     params."""
     settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
 
             try:
@@ -177,7 +175,7 @@ def xpath(request):
         raise httpexceptions.HTTPBadRequest
 
     settings = get_current_registry().settings
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             result = get_content_metadata(uuid, version, cursor)
 

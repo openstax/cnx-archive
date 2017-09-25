@@ -8,14 +8,12 @@
 """Resource Views."""
 import logging
 
-import psycopg2
-import psycopg2.extras
 from pyramid import httpexceptions
 from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
 from .. import config
-from ..database import SQL
+from ..database import SQL, db_connect
 
 logger = logging.getLogger('cnxarchive')
 
@@ -32,11 +30,10 @@ logger = logging.getLogger('cnxarchive')
 @view_config(route_name='resource', request_method='GET')
 def get_resource(request):
     """Retrieve a file's data."""
-    settings = get_current_registry().settings
     hash = request.matchdict['hash']
 
     # Do the file lookup
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             args = dict(hash=hash)
             cursor.execute(SQL['get-resource'], args)

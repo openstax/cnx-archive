@@ -9,8 +9,6 @@
 import json
 import logging
 
-import psycopg2
-import psycopg2.extras
 from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
 from pyramid import httpexceptions
@@ -20,7 +18,7 @@ from pyramid.view import view_config
 
 from .. import config
 from ..database import (
-    SQL, get_tree, get_collated_content, get_module_can_publish)
+    SQL, get_tree, get_collated_content, get_module_can_publish, db_connect)
 from ..utils import (
     COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
@@ -53,7 +51,6 @@ def _get_content_json(ident_hash=None):
     """Return a content as a dict from its ident-hash (uuid@version)."""
     request = get_current_request()
     routing_args = request and request.matchdict or {}
-    settings = get_current_registry().settings
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
     id, version = split_ident_hash(ident_hash)
@@ -71,7 +68,7 @@ def _get_content_json(ident_hash=None):
             p_id = e.id
             p_version = None
 
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             result = get_content_metadata(id, version, cursor)
             if result['mediaType'] == COLLECTION_MIMETYPE:
@@ -253,7 +250,7 @@ def get_extra(request):
     args = request.matchdict
     id, version = split_ident_hash(args['ident_hash'])
     results = {}
-    with psycopg2.connect(settings[config.CONNECTION_STRING]) as db_connection:
+    with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             results['downloads'] = \
                 list(get_export_allowable_types(cursor, exports_dirs,
