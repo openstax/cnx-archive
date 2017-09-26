@@ -6,6 +6,11 @@
 
    - feature message
 
+2.6.1
+-----
+
+- Explicitly close all psycopg2 db connections (#528)
+
 2.6.0
 -----
 
