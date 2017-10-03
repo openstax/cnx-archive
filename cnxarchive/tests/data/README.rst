@@ -1,7 +1,7 @@
 :data.sql:
     Generated via::
         cnx-db init -d cnxarchive-testing -U cnxarchive
-        psql -U cnxarchive cnxrachive-testing  -f cnxarchive/tests/data/data.sql
+        psql -U cnxarchive cnxarchive-testing  -f cnxarchive/tests/data/data.sql
         pg_dump -a -T schema_migrations -T licenses -T tags -T roles -T modulestates -T service_states --disable-triggers --inserts cnxarchive-testing > cnxarchive/tests/data/data.sql
 
         If you have a a feature branch with schema and/or data changes, you'll

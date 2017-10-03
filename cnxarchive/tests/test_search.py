@@ -413,13 +413,13 @@ INSERT INTO users
 
     def test_fulltext_search(self):
         # Test the results of a search on fulltext.
-        query_params = [('fulltext', 'uncertainty'), ('fulltext', 'rotation')]
+        query_params = [('fulltext', 'følger')]
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 1)
         # Ensure the record with both values is the only result.
         self.assertEqual(results[0]['id'],
-                         'ae3e18de-638d-4738-b804-dc69cd4db3a3')
+                         '91cb5f28-2b8a-4324-9373-dac1d617bc24')
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.
@@ -508,6 +508,7 @@ INSERT INTO users
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
         self.assertEqual(len(results), 0)
+        self.assertEqual(result_ids, [])
 
     def test_pubYear_without_term(self):
         self._pubYear_setup()
@@ -620,7 +621,7 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 7)
         self.assertEqual(result_weights,
-                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 222),
+                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 223),
                           (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59', 22),
                           (u'56f1c5c1-4014-450d-a477-2121e276beca', 22),
                           (u'f6024d8a-1868-44c7-ab65-45419ef54881', 21),
@@ -765,16 +766,25 @@ INSERT INTO users
                         ('keyword', 'contentment'),
                         ]
         expectations = ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                        'a733d0d2-de9b-43f9-8aa9-f0895036899e',
                         'f3c9ab70-a916-4d8c-9256-42953287b4e9',
                         'd395b566-5fe3-4428-bcb2-19016e3aa3ce',
-                        ]
-        matched_on_keys = [[u'force', u'physics']] * 11
+                        '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
+                        'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
+                        '26346a42-84b9-48ad-9f6a-62303c16ad41',
+                        '56f1c5c1-4014-450d-a477-2121e276beca',
+                        'c8bdbabc-62b1-4a5f-b291-982ab25756d7',
+                        '5152cea8-829a-4aaf-bcc5-c58a416ecb66',
+                        'c0a76659-c311-405f-9a99-15c71af39325',
+                        'ae3e18de-638d-4738-b804-dc69cd4db3a3']
+
+        matched_on_keys = [[u'force', u'physics']] * 12
 
         results = self.call_target(query_params, query_type='weakAND')
         # Basically, everything matches the first search term,
         #   about eleven match the first two terms,
         #   and when the third is through in we condense this to two.
-        self.assertEqual(len(results), 11)
+        self.assertEqual(len(results), 12)
         for i, id in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
         # This just verifies that only two of the three terms

@@ -148,8 +148,8 @@ class InBookViewsTestCase(unittest.TestCase):
                     u'title': u'Introduction: Further Applications of '
                               u'Newton\u2019s Laws'}, {
                     u'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
-                    u'matches': u'77',
-                    u'rank': u'0.00424134',
+                    u'matches': u'79',
+                    u'rank': u'0.00415517',
                     u'snippet': u'absence of <span '
                                 u'class="q-match">air</span> <span '
                                 u'class="q-match">drag</span> (b) with '
@@ -159,7 +159,7 @@ class InBookViewsTestCase(unittest.TestCase):
                     u'title': u'<span class="q-match">Drag</span> Forces'}, {
                     u'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
                     u'matches': u'13',
-                    u'rank': u'2.59875e-05',
+                    u'rank': u'2.51826e-05',
                     u'snippet': u'compress gases and extremely difficult '
                                 u'to compress <span '
                                 u'class="q-match">liquids</span> and '
@@ -251,14 +251,14 @@ class InBookViewsTestCase(unittest.TestCase):
                 'items': [
                     {
                         'snippet': 'Page content after <span class="q-match">collation</span>',
-                        'matches': 'None',
+                        'matches': '1',
                         'id': '209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                         'rank': '0.1',
                         'title': 'Preface'
                         },
                     {
                         'snippet': 'test <span class="q-match">collated</span> content',
-                        'matches': 'None',
+                        'matches': '1',
                         'id': '174c4069-2743-42e9-adfe-4c7084f81fc5@1',
                         'rank': '0.1',
                         'title': '<span class="q-match">Collated</span> page'
