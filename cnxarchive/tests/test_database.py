@@ -1004,7 +1004,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
     def test_get_subcols(self, plpy):
         from ..database import get_subcols
         subcols = tuple(get_subcols(4, plpy))
-        self.assertEqual(subcols, (22,))
+        self.assertEqual(subcols, (22, 25))
 
     @testing.db_connect
     def test_insert_new_module(self, cursor):
@@ -1098,17 +1098,18 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         cursor.connection.commit()
 
         # Check one more minor version for College Physics, Derived Copy and
-        # SubCollection have been created
+        # two SubCollections have been created
         cursor.execute('SELECT COUNT(*) FROM modules')
         new_n_modules = cursor.fetchone()[0]
-        self.assertEqual(new_n_modules, old_n_modules + 4)
+        self.assertEqual(new_n_modules, old_n_modules + 5)
 
         cursor.execute("""\
         SELECT module_version(major_version, minor_version)
         FROM modules
         WHERE portal_type IN ('Collection', 'SubCollection')
-        ORDER BY revised DESC, uuid LIMIT 3""")
-        self.assertEqual(cursor.fetchall(), [('1.2',), ('1.3',), ('7.3',)])
+        ORDER BY revised DESC, uuid LIMIT 4""")
+
+        self.assertEqual(cursor.fetchall(), [('1.2',), ('1.3',), ('7.2',), ('7.3',)])
 
         # Check that new versions of both pages are in the collection tree
         cursor.execute("SELECT tree_to_json(%s, '7.3', FALSE)::JSON",
@@ -1476,7 +1477,7 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         FROM modulefti WHERE module_ident = %s''',
                        (new_module_ident,))
         idx, fulltext = cursor.fetchall()[0]
-        self.assertEqual(len(idx), 3556)
+        self.assertEqual(len(idx), 3545)
         self.assertIn('Introduction to Science and the Realm of Physics, '
                       'Physical Quantities, and Units', fulltext)
 
@@ -1578,12 +1579,12 @@ INSERT INTO trees (parent_id, documentid, is_collated)
                        'WHERE context = 18 AND item = 19')
         self.assertEqual(cursor.fetchone()[0], 55)
 
-        cursor.execute('SELECT lexeme '
-                       'FROM  collated_fti_lexemes '
-                       'WHERE context = 18 AND item = 19')
-        lexemes = cursor.fetchall()
-        self.assertEqual(len(lexemes), 55)
-        self.assertIn(('følger',), lexemes)
+        cursor.execute("SELECT word "
+                       "FROM  ts_stat('SELECT module_idx from collated_fti "
+                       "WHERE context = 18 AND item = 19')")
+        words = cursor.fetchall()
+        self.assertEqual(len(words), 55)
+        self.assertIn(('følger',), words)
 
     @testing.db_connect
     def test_tree_to_json(self, cursor):
@@ -1596,9 +1597,9 @@ INSERT INTO trees (parent_id, documentid, is_collated)
             u'version': u'1.7',
             u'contents': [
                 {u'id': u'm42955', u'title': u'Preface', u'version': u'1.7'},
-                {u'id': u'subcol',
+                {u'id': u'col15537',
+                 u'version': u'1.7',
                  u'title': u'Introduction: The Nature of Science and Physics',
-                 u'version': None,
                  u'contents': [
                      {u'id': u'm42119',
                       u'title': u'Introduction to Science and the Realm of '
@@ -1617,10 +1618,10 @@ INSERT INTO trees (parent_id, documentid, is_collated)
                      {u'id': u'm42121',
                       u'title': u'Approximation',
                       u'version': u'1.5'}]},
-                {u'id': u'subcol',
-                 u'title': u"Further Applications of Newton's Laws: Friction,"
+                {u'id': u'col15538',
+                 u'version': u'1.7',
+                 u"title": u"Further Applications of Newton's Laws: Friction,"
                            u" Drag, and Elasticity",
-                 u'version': None,
                  u'contents': [
                      {u'id': u'm42138',
                       u'title': u'Introduction: Further Applications of '

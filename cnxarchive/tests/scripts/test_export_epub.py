@@ -214,7 +214,7 @@ class ContentGetterTestCase(BaseTestCase):
     def test_get(self):
         ident_hash = 'f6024d8a-1868-44c7-ab65-45419ef54881@3'
         content = self.target(ident_hash)
-        self.assertIn('<span class="title">Atomic Masses</span>', content)
+        self.assertIn('<span data-type="title">Atomic Masses</span>', content)
 
     def test_not_found(self):
         # Use a collection's id to fake this.
@@ -291,10 +291,10 @@ class RegisteredFilesGetterTestCase(BaseTestCase):
         ident_hash = 'f3c9ab70-a916-4d8c-9256-42953287b4e9@3'
 
         expected_registered_files = [
-            '1b293f3e37e08896d958d25df2d69e83f2ad22b8',
             '4c13aed36dc1cb7b2c7117d896204efc70b1c0b1',
+            '8cdb49a370d8e6f503f9430a38096c8d2e3aef4f',
             'd47864c2ac77d80b1f2ff4c4c7f1b2059669e3e9',
-            'ee41b1074ce0abd970fcc15bbf1b6a962db1a389',
+            'ee41b1074ce0abd970fcc15bbf1b6a962db1a389'
             ]
 
         registered_files = self.target(ident_hash)
@@ -330,11 +330,13 @@ class TreeGetterTestCase(BaseTestCase):
         expected_flattened_tree = [
             u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
             u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+            u'd7eb0963-6cfa-57fe-8e18-585474e8b563@7.1',
             u'f3c9ab70-a916-4d8c-9256-42953287b4e9@3',
             u'd395b566-5fe3-4428-bcb2-19016e3aa3ce@4',
             u'c8bdbabc-62b1-4a5f-b291-982ab25756d7@6',
             u'5152cea8-829a-4aaf-bcc5-c58a416ecb66@7',
             u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
+            u'd17ce3fa-f871-5648-81b0-46128103d61c@7.1',
             u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
             u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
             u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
@@ -342,7 +344,7 @@ class TreeGetterTestCase(BaseTestCase):
             u'f6024d8a-1868-44c7-ab65-45419ef54881@3',
             u'7250386b-14a7-41a2-b8bf-9e9ab872f0dc@2',
             u'c0a76659-c311-405f-9a99-15c71af39325@5',
-            u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5',
+            u'ae3e18de-638d-4738-b804-dc69cd4db3a3@5'
             ]
         self.assertEqual(
             [x for x in cnxepub.flatten_tree_to_ident_hashes(tree)],
@@ -430,7 +432,7 @@ class DocumentFactoryTestCase(BaseTestCase):
         self.assertEqual(doc.metadata['title'], u'Physics: An Introduction')
 
         # Check for specific content.
-        self.assertIn('<h1 class="title">Applications of Physics</h1>',
+        self.assertIn('<h3 data-type="title">Applications of Physics</h3>',
                       doc.content)
 
         # Check for resources
@@ -451,7 +453,7 @@ class DocumentFactoryTestCase(BaseTestCase):
 
         refs = [r for r in doc.references if r.uri.startswith('/resources/')]
         # Simple check incase the data changes, otherwise not a needed test.
-        self.assertEqual(len(refs), 15)
+        self.assertEqual(len(refs), 17)
         # Check reference binding
         self.assertEqual(set([ref.is_bound for ref in refs]), set([True]))
 
@@ -581,8 +583,9 @@ class BinderFactoryTestCase(BaseTestCase):
                 {'shortId': u'IJ3rHxpG@7',
                  'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  'title': u'Preface'},
-                {'shortId': u'subcol',
-                 'id': u'subcol',
+                {
+                 'id': u'd7eb0963-6cfa-57fe-8e18-585474e8b563@7.1',
+                 'shortId': u'1-sJY2z6@7.1',
                  'title': u'Introduction: The Nature of Science and Physics',
                  'contents': [
                     {'shortId': u'88mrcKkW@3',
@@ -600,22 +603,22 @@ class BinderFactoryTestCase(BaseTestCase):
                     {'shortId': u'WDixBUHN@5',
                      'id': u'5838b105-41cd-4c3d-a957-3ac004a48af3@5',
                      'title': u'Approximation'}]},
-                {'shortId': u'subcol',
-                 'id': u'subcol',
-                 'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
-                 'contents': [
-                    {'shortId': u'JKLtEyKm@2',
-                     'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
-                     'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
-                    {'shortId': u'6icTBvfy@5',
-                     'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
-                     'title': u'Friction'},
-                    {'shortId': u'JjRqQoS5@6',
-                     'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
-                     'title': u'Drag Forces'},
-                    {'shortId': u'VvHFwUAU@8',
-                     'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
-                     'title': u'Elasticity: Stress and Strain'}], },
+                    {'shortId': u'0Xzj-vhx@7.1',
+                     'id': u'd17ce3fa-f871-5648-81b0-46128103d61c@7.1',
+                     'title': u"Further Applications of Newton's Laws: Friction, Drag, and Elasticity",
+                     'contents': [
+                        {'shortId': u'JKLtEyKm@2',
+                         'id': u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d@2',
+                         'title': u'Introduction: Further Applications of Newton\u2019s Laws'},
+                        {'shortId': u'6icTBvfy@5',
+                         'id': u'ea271306-f7f2-46ac-b2ec-1d80ff186a59@5',
+                         'title': u'Friction'},
+                        {'shortId': u'JjRqQoS5@6',
+                         'id': u'26346a42-84b9-48ad-9f6a-62303c16ad41@6',
+                         'title': u'Drag Forces'},
+                        {'shortId': u'VvHFwUAU@8',
+                         'id': u'56f1c5c1-4014-450d-a477-2121e276beca@8',
+                         'title': u'Elasticity: Stress and Strain'}], },
                 {'shortId': u'9gJNihho@3',
                  'id': u'f6024d8a-1868-44c7-ab65-45419ef54881@3',
                  'title': u'Atomic Masses'},
@@ -638,8 +641,8 @@ class BinderFactoryTestCase(BaseTestCase):
         self.assertTrue(
             isinstance(translucent_binder, cnxepub.TranslucentBinder))
         expected_metadata = {
-            'id': u'subcol',
-            'shortId': 'subcol',
+            'id': u'd7eb0963-6cfa-57fe-8e18-585474e8b563@7.1',
+            'shortId': u'1-sJY2z6@7.1',
             'title': 'Introduction: The Nature of Science and Physics',
             }
         for k, v in expected_metadata.items():
@@ -689,8 +692,8 @@ class EpubCreationTestCase(BaseTestCase):
             expected_to_contain = [
                 'contents/c0a76659-c311-405f-9a99-15c71af39325@5.xhtml',
                 'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
-                'resources/37624518e1c26bf0a1abd05610da4efb86dafc99',
                 'resources/4bfac6b2934befce939cb70321bba1fb414543b5',
+                'resources/1ce555936346f79c7589f70cef8eef9f83b13570'
                 ]
             self.assert_contains(zf.namelist(), expected_to_contain)
 
@@ -754,8 +757,8 @@ class MainTestCase(BaseTestCase):
             expected_to_contain = [
                 'contents/c0a76659-c311-405f-9a99-15c71af39325@5.xhtml',
                 'resources/0b313a1dfc181e4e5c4c86832d99e16e0fecfb20',
-                'resources/37624518e1c26bf0a1abd05610da4efb86dafc99',
                 'resources/4bfac6b2934befce939cb70321bba1fb414543b5',
+                'resources/1ce555936346f79c7589f70cef8eef9f83b13570',
                 ]
             self.assert_contains(zf.namelist(), expected_to_contain)
 
