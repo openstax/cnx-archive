@@ -994,16 +994,14 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
             'version': '1.100',
             })
 
-    @testing.plpy_connect
-    def test_get_module_uuid(self, plpy):
+    def test_get_module_uuid(self):
         from ..database import get_module_uuid
-        mod_uuid = get_module_uuid(plpy, 'm41237')
+        mod_uuid = get_module_uuid(testing.fake_plpy, 'm41237')
         self.assertEqual(mod_uuid, '91cb5f28-2b8a-4324-9373-dac1d617bc24')
 
-    @testing.plpy_connect
-    def test_get_subcols(self, plpy):
+    def test_get_subcols(self):
         from ..database import get_subcols
-        subcols = tuple(get_subcols(4, plpy))
+        subcols = tuple(get_subcols(4, testing.fake_plpy))
         self.assertEqual(subcols, (22, 25))
 
     @testing.db_connect
