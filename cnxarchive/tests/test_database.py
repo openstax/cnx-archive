@@ -1722,7 +1722,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1 again',
+        DEFAULT, 'Module', 'm1', %s, '1.3', 'Changed name of m1 again',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 18:05:31.000000+02',
         1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 3, NULL, NULL)
@@ -1730,7 +1730,7 @@ class UpdateLatestTriggerTestCase(unittest.TestCase):
         module_ident, uuid = cursor.fetchone()
 
         cursor.execute('''INSERT INTO modules VALUES (
-        DEFAULT, 'Module', 'm1', %s, '1.1', 'Changed name of m1',
+        DEFAULT, 'Module', 'm1', %s, '1.2', 'Changed name of m1',
         '2013-07-31 12:00:00.000000+02', '2013-10-14 17:08:57.000000+02',
         1, 11, '', '', '', DEFAULT, NULL, 'en', '{}', '{}', '{}',
         NULL, NULL, NULL, 2, NULL, NULL)
