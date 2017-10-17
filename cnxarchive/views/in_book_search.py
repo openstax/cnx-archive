@@ -9,10 +9,8 @@
 import json
 import logging
 
-from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
-from .. import config
 from ..database import SQL, db_connect
 from ..utils import (
     IdentHashShortId, IdentHashMissingVersion, split_ident_hash
@@ -40,6 +38,11 @@ def in_book_search(request):
     ident_hash = args['ident_hash']
 
     args['search_term'] = request.params.get('q', '')
+    query_type = request.params.get('query_type', '')
+    combiner = ''
+    if query_type:
+        if query_type.lower() == 'or':
+            combiner = '_or'
 
     id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
@@ -53,7 +56,7 @@ def in_book_search(request):
                 statement = SQL['get-in-collated-book-search']
             else:
                 statement = SQL['get-in-book-search']
-            cursor.execute(statement, args)
+            cursor.execute(statement.format(combiner=combiner), args)
             res = cursor.fetchall()
 
             results['results'] = {'query': [],
@@ -99,6 +102,12 @@ def in_book_search_highlighted_results(request):
 
     args['search_term'] = request.params.get('q', '')
 
+    query_type = request.params.get('query_type', '')
+    combiner = ''
+    if query_type:
+        if query_type.lower() == 'or':
+            combiner = '_or'
+
     # Get version from URL params
     id, version = split_ident_hash(ident_hash)
     args['uuid'] = id
@@ -112,7 +121,7 @@ def in_book_search_highlighted_results(request):
                 statement = SQL['get-in-collated-book-search-full-page']
             else:
                 statement = SQL['get-in-book-search-full-page']
-            cursor.execute(statement, args)
+            cursor.execute(statement.format(combiner=combiner), args)
             res = cursor.fetchall()
 
             results['results'] = {'query': [],
