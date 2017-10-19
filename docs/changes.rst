@@ -6,6 +6,16 @@
 
    - feature message
 
+2.7.0
+-----
+
+- Use cnx-db docker image in travis tests (#521)
+- update test data and tests for subcol uuids and fulltext-book search (#529)
+- Fix update latest trigger tests to use legacy version in inserts
+- Install tzdata for cnx-archive docker image
+- Update book search test following changes in book search sql
+- In book search to provide query_type parameterization for AND vs OR queries (#532)
+
 2.6.1
 -----
 
