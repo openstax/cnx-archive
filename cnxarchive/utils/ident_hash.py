@@ -120,7 +120,7 @@ class CNXHash(uuid.UUID):
     def __init__(self, uu=None, *args, **kwargs):
 
         if isinstance(uu, uuid.UUID):
-            uuid.UUID.__init__(self, bytes=uu.get_bytes())
+            uuid.UUID.__init__(self, bytes=uu.bytes)
         elif isinstance(uu, basestring):
             uuid.UUID.__init__(self, hex=uu)
         else:
@@ -141,7 +141,7 @@ class CNXHash(uuid.UUID):
             identifier = uuid.UUID(identifier)
         elif not(isinstance(identifier, uuid.UUID)):
             raise TypeError("must be uuid or string.")
-        identifier = base64.urlsafe_b64encode(identifier.get_bytes())
+        identifier = base64.urlsafe_b64encode(identifier.bytes)
         identifier = identifier.rstrip(cls._HASH_PADDING_CHAR)
         return identifier
 
