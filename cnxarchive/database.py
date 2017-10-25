@@ -468,7 +468,7 @@ def republish_module_trigger(plpy, td):
     plpy.log('modified: {}'.format(modified))
     plpy.log('insert values:\n{}\n'.format('\n'.join([
         '{}: {}'.format(key, value)
-        for key, value in td['new'].iteritems()])))
+        for key, value in td['new'].items()])))
 
     return modified
 
