@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+import sys
 import uuid
 import base64
 
@@ -21,6 +22,10 @@ __all__ = (
     'split_legacy_hash',
     'CNXHash',
     )
+
+
+if sys.version_info >= (3,):
+    basestring = (str, bytes)
 
 
 class IdentHashError(Exception):
@@ -114,7 +119,7 @@ class CNXHash(uuid.UUID):
     FULLUUID = 2
     _SHORT_HASH_LENGTH = 8
     _MAX_SHORT_HASH_LENGTH = 22
-    _HASH_PADDING_CHAR = '='
+    _HASH_PADDING_CHAR = b'='
     _HASH_DUMMY_CHAR = '0'
 
     def __init__(self, uu=None, *args, **kwargs):
