@@ -17,7 +17,8 @@ Example::
         return xml.get_response()
 """
 
-from utils import escape
+from lxml import etree
+
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
@@ -48,18 +49,13 @@ class Sitemap(object):
             len(self.urls)
         )
 
-    def generate(self):
-        """Return a generate that yields pieces of XML."""
-        yield u'<?xml version="1.0" encoding="utf-8"?>\n'
-        yield u'<urlset xmlns="%s">\n' % SITEMAP_NS
-        for url in self.urls:
-            for line in url.generate():
-                yield u'  ' + line
-        yield u'</urlset>\n'
-
     def to_string(self):
         """Convert the sitemap into a string."""
-        return u''.join(self.generate())
+        root = etree.Element('urlset', nsmap={None: SITEMAP_NS})
+        for url in self.urls:
+            url.generate(root)
+        return etree.tostring(root, pretty_print=True, xml_declaration=True,
+                              encoding='utf-8')
 
     def __call__(self):
         """Return the string."""
@@ -113,25 +109,28 @@ class UrlEntry(object):
             self.loc
         )
 
-    def generate(self):
-        """Yield next XML fragment as a string."""
-        yield u'<url>\n'
-        yield u'<loc>%s</loc>\n' % escape(self.loc)
+    def generate(self, root_element=None):
+        """Create <url> element under root_element."""
+        if root_element is not None:
+            url = etree.SubElement(root_element, 'url')
+        else:
+            url = etree.Element('url')
+        etree.SubElement(url, 'loc').text = self.loc
         if self.lastmod:
             if hasattr(self.lastmod, 'strftime'):
-                yield u'<lastmod>%s</lastmod>\n' % \
+                etree.SubElement(url, 'lastmod').text = \
                     self.lastmod.strftime('%Y-%m-%d')
             elif isinstance(self.lastmod, str):
-                yield u'<lastmod>%s</lastmod>\n' % self.lastmod
+                etree.SubElement(url, 'lastmod').text = self.lastmod
         if self.changefreq and self.changefreq in self.freq_values:
-            yield u'<changefreq>%s</changefreq>\n' % self.changefreq
+            etree.SubElement(url, 'changefreq').text = self.changefreq
         if self.priority and 0.0 <= self.priority <= 1.0:
-            yield u'<priority>%s</priority>\n' % self.priority
-        yield u'</url>\n'
+            etree.SubElement(url, 'priority').text = str(self.priority)
+        return url
 
     def to_string(self):
         """Convert the url item into a unicode object."""
-        return u''.join(self.generate())
+        return etree.tostring(self.generate(), pretty_print=True)
 
     def __unicode__(self):
         """Return the string."""
