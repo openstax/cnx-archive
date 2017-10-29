@@ -10,7 +10,7 @@ import re
 import unicodedata
 
 
-__all__ = ('escape', 'slugify', 'utf8',)
+__all__ = ('slugify', 'utf8',)
 
 
 def slugify(string):
@@ -30,15 +30,6 @@ def slugify(string):
         elif cat in 'Z':
             filtered_string.append(' ')
     return re.sub('\s+', '-', ''.join(filtered_string)).lower()
-
-
-def escape(s):
-    """Perform xml/html entity escaping of < > and &."""
-    s = s.replace('&', '&amp;')\
-        .replace('<', '&lt;')\
-        .replace('>', '&gt;')\
-        .replace('"', "&quot;")
-    return s
 
 
 def utf8(item):
