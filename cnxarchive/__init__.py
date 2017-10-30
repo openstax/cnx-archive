@@ -70,6 +70,7 @@ def declare_api_routes(config):
     add_route('in-book-search', '/search/{ident_hash:([^:/]+)}')  # noqa cnxarchive.views:in-book-search
     add_route('in-book-search-page', '/search/{ident_hash:([^:/]+)}:{page_ident_hash}')  # noqa cnxarchive.views:in_book_search_highlighted_results
     add_route('extras', '/extras')  # cnxarchive.views:extras
+    add_route('sitemap-index', '/sitemap_index.xml')  # noqa cnxarchive.views:sitemap
     add_route('sitemap', '/sitemap-{from_id}.xml')  # noqa cnxarchive.views:sitemap
     add_route('robots', '/robots.txt')  # cnxarchive.views:robots
     add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # noqa cnxarchive.views:redirect_legacy_content

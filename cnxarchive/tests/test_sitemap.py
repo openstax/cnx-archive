@@ -8,7 +8,47 @@
 from datetime import datetime
 import unittest
 
+import mock
+
 from .. import sitemap
+
+
+class SitemapIndexTestCase(unittest.TestCase):
+
+    def test_no_sitemaps(self):
+        si = sitemap.SitemapIndex()
+        self.assertMultiLineEqual(str(si), """\
+<?xml version='1.0' encoding='utf-8'?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>
+""")
+
+    def test_sitemap_wo_url(self):
+        with self.assertRaises(ValueError) as cm:
+            si = sitemap.SitemapIndex(sitemaps=[sitemap.Sitemap()])
+        self.assertEqual(str(cm.exception), 'sitemap url must be set')
+
+    @mock.patch('cnxarchive.sitemap.datetime')
+    def test(self, mock_datetime):
+        utcnow = mock_datetime.datetime.utcnow
+        utcnow.return_value = datetime(2017, 10, 29, 17, 44, 56, 875614)
+        si = sitemap.SitemapIndex(sitemaps=[
+            sitemap.Sitemap(url='http://cnx.org/sitemap1.xml',
+                            lastmod='2017-10-28'),
+            sitemap.Sitemap(url='http://cnx.org/sitemap2.xml'),
+            ])
+        self.assertMultiLineEqual(str(si), """\
+<?xml version='1.0' encoding='utf-8'?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>http://cnx.org/sitemap1.xml</loc>
+    <lastmod>2017-10-28</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>http://cnx.org/sitemap2.xml</loc>
+    <lastmod>2017-10-29</lastmod>
+  </sitemap>
+</sitemapindex>
+""")
 
 
 class SitemapTestCase(unittest.TestCase):
