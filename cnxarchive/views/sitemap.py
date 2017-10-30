@@ -22,6 +22,10 @@ PAGES_TO_BLOCK = [
     '/*/offline$', '/*?format=*$', '/*/multimedia$', '/*/lens_add?*$',
     '/lens_add', '/*/lens_view/*$', '/content/*view_mode=statistics$']
 
+# According to https://www.sitemaps.org/faq.html#faq_sitemap_size, a sitemap
+# file cannot have more than 50,000 urls and cannot exceed 50MB.
+SITEMAP_LIMIT = 50000
+
 logger = logging.getLogger('cnxarchive')
 
 
@@ -49,11 +53,9 @@ def notblocked(page):
 def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
+    from_id = request.matchdict.get('from_id')
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
-            # FIXME
-            # magic number limit comes from Google policy - will need to split
-            # to multiple sitemaps before we have more content
             cursor.execute("""\
                 SELECT
                     ident_hash(uuid, major_version, minor_version)
@@ -63,7 +65,9 @@ def sitemap(request):
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
-                ORDER BY revised DESC LIMIT 50000""")
+                  AND module_ident >= (SELECT COALESCE(%s, 0))
+                ORDER BY module_ident
+                LIMIT {}""".format(SITEMAP_LIMIT), (from_id,))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 url = request.route_url('content',

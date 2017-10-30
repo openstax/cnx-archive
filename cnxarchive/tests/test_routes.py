@@ -160,7 +160,9 @@ class RoutingTestCase(unittest.TestCase):
                 ('/extras', {}),
                 ),
             'sitemap': (
-                ('/sitemap.xml', {}),
+                ('/sitemap-1.xml', {
+                    'from_id': '1',
+                    }),
                 ),
             'robots': (
                 ('/robots.txt', {}),
