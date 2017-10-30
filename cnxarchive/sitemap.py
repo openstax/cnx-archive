@@ -17,18 +17,55 @@ Example::
         return xml.get_response()
 """
 
+import datetime
+
 from lxml import etree
 
 
 SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
 
+class SitemapIndex(object):
+    """A helper class that creates sitemap_index.xml."""
+
+    def __init__(self, sitemaps=None):
+        self.sitemaps = sitemaps and list(sitemaps) or []
+        for sitemap in self.sitemaps:
+            if not sitemap.url:
+                raise ValueError('sitemap url must be set')
+
+    def to_string(self):
+        """Convert SitemapIndex into a string."""
+        root = etree.Element('sitemapindex', nsmap={None: SITEMAP_NS})
+        for sitemap in self.sitemaps:
+            sm = etree.SubElement(root, 'sitemap')
+            etree.SubElement(sm, 'loc').text = sitemap.url
+            etree.SubElement(sm, 'lastmod').text = sitemap.lastmod
+        return etree.tostring(root, pretty_print=True, xml_declaration=True,
+                              encoding='utf-8')
+
+    def __call__(self):
+        """Return the string."""
+        return self.__str__()
+
+    def __unicode__(self):
+        """Return the string."""
+        return self.to_string()
+
+    def __str__(self):
+        """Return the string."""
+        return self.to_string().encode('utf-8')
+
+
 class Sitemap(object):
     """A helper class that creates sitemap.xml."""
 
-    def __init__(self, urls=None):
+    def __init__(self, urls=None, lastmod=None, url=None):
         """Build sitemap from urls."""
         self.urls = urls and list(urls) or []
+        self.lastmod = lastmod or \
+            datetime.datetime.utcnow().strftime('%Y-%m-%d')
+        self.url = url
 
     def add_url(self, *args, **kwargs):
         """Add a new url to the sitemap.

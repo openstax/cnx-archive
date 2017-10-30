@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+from datetime import datetime
 import os
 import unittest
 
@@ -48,12 +49,40 @@ class SitemapViewsTestCase(unittest.TestCase):
         self.fixture.tearDown()
 
     def test_sitemap(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'sitemap'
-
         # Call the view
         from ...views.sitemap import sitemap
         sitemap = sitemap(self.request).body
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
         with open(expected_file, 'r') as file:
             self.assertMultiLineEqual(sitemap, file.read())
+
+    @mock.patch('cnxarchive.sitemap.datetime')
+    def test_sitemap_index(self, mock_datetime):
+        from ...views import sitemap
+
+        utcnow = mock_datetime.datetime.utcnow
+        utcnow.return_value = datetime(2017, 10, 29, 17, 44, 56, 875614)
+        with mock.patch.object(sitemap, 'SITEMAP_LIMIT', 10):
+            sitemap_index = sitemap.sitemap_index(self.request).body
+            expected_file = os.path.join(testing.DATA_DIRECTORY,
+                                         'sitemap_index.xml')
+            with open(expected_file, 'r') as f:
+                self.assertMultiLineEqual(sitemap_index, f.read())
+
+            self.request.matchdict = {
+                'from_id': '1',
+            }
+            sitemap1 = sitemap.sitemap(self.request).body
+            expected_file = os.path.join(testing.DATA_DIRECTORY,
+                                         'sitemap-1.xml')
+            with open(expected_file, 'r') as f:
+                self.assertMultiLineEqual(sitemap1, f.read())
+
+            self.request.matchdict = {
+                'from_id': '11',
+            }
+            sitemap11 = sitemap.sitemap(self.request).body
+            expected_file = os.path.join(testing.DATA_DIRECTORY,
+                                         'sitemap-11.xml')
+            with open(expected_file, 'r') as f:
+                self.assertMultiLineEqual(sitemap11, f.read())

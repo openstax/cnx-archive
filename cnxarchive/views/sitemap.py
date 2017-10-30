@@ -14,7 +14,7 @@ from pyramid.view import view_config
 
 from .. import config
 from ..database import db_connect
-from ..sitemap import Sitemap
+from ..sitemap import Sitemap, SitemapIndex
 
 PAGES_TO_BLOCK = [
     'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
@@ -80,4 +80,33 @@ def sitemap(request):
     resp.status = '200 OK'
     resp.content_type = 'text/xml'
     resp.body = xml()
+    return resp
+
+
+@view_config(route_name='sitemap-index', request_method='GET')
+def sitemap_index(request):
+    """Return a sitemap index xml file for search engines."""
+    sitemaps = []
+    with db_connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute("""\
+                SELECT t.module_ident
+                FROM (
+                    SELECT module_ident,
+                           row_number() OVER (ORDER BY module_ident) AS row
+                    FROM latest_modules
+                    WHERE portal_type NOT IN (
+                        'CompositeModule', 'SubCollection')
+                ) AS t
+                WHERE t.row % {} = 1""".format(SITEMAP_LIMIT))
+
+            for (module_ident,) in cursor.fetchall():
+                sitemaps.append(Sitemap(url=request.route_url(
+                    'sitemap', from_id=module_ident)))
+
+    si = SitemapIndex(sitemaps=sitemaps)
+    resp = request.response
+    resp.status = '200 OK'
+    resp.content_type = 'text/xml'
+    resp.body = si()
     return resp

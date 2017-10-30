@@ -164,6 +164,9 @@ class RoutingTestCase(unittest.TestCase):
                     'from_id': '1',
                     }),
                 ),
+            'sitemap-index': (
+                ('/sitemap_index.xml', {}),
+                ),
             'robots': (
                 ('/robots.txt', {}),
                 ),
