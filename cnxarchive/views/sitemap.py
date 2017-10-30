@@ -55,15 +55,15 @@ def sitemap(request):
             # magic number limit comes from Google policy - will need to split
             # to multiple sitemaps before we have more content
             cursor.execute("""\
-                    SELECT
-                        ident_hash(uuid, major_version, minor_version)
-                            AS idver,
-                        REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
-                            '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
-                        revised
-                    FROM latest_modules
-                    WHERE portal_type != 'CompositeModule'
-                    ORDER BY revised DESC LIMIT 50000""")
+                SELECT
+                    ident_hash(uuid, major_version, minor_version)
+                        AS idver,
+                    REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
+                        '[^0-9a-z]+', ' ', 'g')), ' +', '-', 'g'),
+                    revised
+                FROM latest_modules
+                WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
+                ORDER BY revised DESC LIMIT 50000""")
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 url = request.route_url('content',
