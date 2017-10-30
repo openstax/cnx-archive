@@ -1,4 +1,4 @@
-Sitemap: http://cnx.org/sitemap.xml
+Sitemap: http://cnx.org/sitemap_index.xml
 User-agent: ScoutJet
 Crawl-delay: 10
 Disallow: legacy.cnx.org
