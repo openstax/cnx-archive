@@ -14,12 +14,14 @@ import logging
 
 import cnxdb
 from pyramid.threadlocal import get_current_registry
+from cnxdb.triggers.transforms import (
+    produce_cnxml_for_module,
+    produce_html_for_module,
+    transform_abstract_to_cnxml,
+    transform_abstract_to_html,
+)
 
 from . import config
-from .transforms import (
-    produce_cnxml_for_module, produce_html_for_module,
-    transform_abstract_to_cnxml, transform_abstract_to_html,
-    )
 from .utils import split_ident_hash, IdentHashMissingVersion
 
 here = os.path.abspath(os.path.dirname(__file__))
