@@ -167,9 +167,6 @@ class RoutingTestCase(unittest.TestCase):
             'sitemap-index': (
                 ('/sitemap_index.xml', {}),
                 ),
-            'robots': (
-                ('/robots.txt', {}),
-                ),
             'legacy-redirect': (
                 ('/content/m12345', {
                     'objid': 'm12345',
