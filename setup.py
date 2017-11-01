@@ -48,7 +48,6 @@ setup(
     [paste.app_factory]
     main = cnxarchive:main
     [console_scripts]
-    cnx-archive-initdb = cnxarchive.scripts.initializedb:main
     cnx-archive-hits_counter = cnxarchive.scripts.hits_counter:main
     cnx-archive-inject_resource = cnxarchive.scripts.inject_resource:main
     cnx-archive-export_epub = cnxarchive.scripts.export_epub.main:main
