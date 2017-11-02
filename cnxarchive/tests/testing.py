@@ -62,8 +62,7 @@ def db_is_local(connection_string=None):
         settings = integration_test_settings()
         connection_string = settings[config.CONNECTION_STRING]
 
-    parts = dict([i.split('=', 1) for i in connection_string.split()])
-    return parts.get('host', 'localhost') == 'localhost'
+    return '@localhost' in connection_string
 
 
 def db_connect(method):
@@ -218,35 +217,6 @@ def is_memcache_enabled():
 IS_MEMCACHE_ENABLED = is_memcache_enabled()
 
 
-def _dsn_to_args(dsn):
-    """Translates a libpq DSN to dict
-    to be used with ``sqlalchemy.engine.url.URL``.
-    """
-    args = {'query': {}}
-    import inspect
-    from sqlalchemy.engine.url import URL
-    url_args = inspect.getargspec(URL.__init__).args
-    for item in dsn.split():
-        name, value = item.split('=')
-        if name == 'user':
-            name = 'username'
-        elif name == 'dbname':
-            name = 'database'
-        if name in url_args:
-            args[name] = value
-        else:
-            args['query'][name] = value
-    return args
-
-
-def libpq_dsn_to_url(dsn):
-    """Translate a libpq DSN to URL"""
-    from sqlalchemy.engine.url import URL
-    args = _dsn_to_args(dsn)
-    url = URL('postgresql', **args)
-    return str(url)
-
-
 class SchemaFixture(object):
     """A testing fixture for a live (same as production) SQL database.
     This will set up the database once for a test case. After each test
@@ -278,8 +248,8 @@ class SchemaFixture(object):
         # Initialize the database schema.
         from cnxdb.init import init_db
         from sqlalchemy import create_engine
-        dsn = self._settings[config.CONNECTION_STRING]
-        engine = create_engine(libpq_dsn_to_url(dsn))
+        db_url = self._settings[config.CONNECTION_STRING]
+        engine = create_engine(db_url)
         init_db(engine, True)
         self.is_set_up = True
 
