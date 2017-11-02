@@ -6,6 +6,13 @@
 
    - feature message
 
+2.8.0
+-----
+
+- Python 3 compatability fixes
+- Fix crashing with long search queries (#517)
+- Implement multi-part sitemap.xml to allow for more content
+
 2.7.0
 -----
 
