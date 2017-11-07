@@ -20,6 +20,9 @@ before_script:
   # Stop init_venv from doing anything
   - docker exec cnxarchive_db_1 /bin/bash -c "echo 'CREATE SCHEMA venv' | psql -U cnxarchive cnxarchive-testing"
 
+  # Wait for cnxarchive_archive_1 to be available
+  - while sleep 5; do docker ps -a; if [[ -n "`docker ps | grep cnxarchive_archive_1 | grep ' Up '`" ]]; then break; fi; done
+
   # Install packages needed for testing
   - docker exec cnxarchive_archive_1 /bin/bash -c "pip install --user coverage codecov"
 script:
