@@ -21,7 +21,7 @@ before_script:
   - docker exec cnxarchive_db_1 /bin/bash -c "echo 'CREATE SCHEMA venv' | psql -U cnxarchive cnxarchive-testing"
 
   # Wait for cnxarchive_archive_1 to be available
-  - while sleep 5; do docker ps -a; if [[ -n "`docker ps | grep cnxarchive_archive_1 | grep ' Up '`" ]]; then break; fi; done
+  - timeout=0; while sleep 5; do ((timeout++)); if [[ $timeout -gt 10 ]]; then break; fi; docker ps -a; if [[ -n "`docker ps | grep cnxarchive_archive_1 | grep ' Up '`" ]]; then break; fi; done; if [[ $timeout -gt 10 ]]; then false; fi
 
   # Install packages needed for testing
   - docker exec cnxarchive_archive_1 /bin/bash -c "pip install --user coverage codecov"
