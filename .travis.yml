@@ -13,7 +13,7 @@ install:
   - docker-compose -f .travis-compose.yml up -d
 before_script:
   # wait for postgres to be available
-  - while ! echo | psql 'user=postgres host=localhost port=5433'; do docker logs cnxarchive_db_1 | tail; sleep 5; done
+  - timeout=0; while ! echo | psql 'user=postgres host=localhost port=5433'; do ((timeout++)); if [[ $timeout -gt 10 ]]; then break; fi; docker logs cnxarchive_db_1 | tail; sleep 5; done; if [[ $timeout -gt 10 ]]; then false; fi
 
   # Give cnxarchive superuser privileges on postgres
   - docker exec cnxarchive_db_1 /bin/bash -c "echo 'ALTER USER cnxarchive WITH SUPERUSER' | psql -U postgres postgres"
