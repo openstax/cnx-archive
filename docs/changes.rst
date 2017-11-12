@@ -6,6 +6,15 @@
 
    - feature message
 
+3.0.0
+-----
+
+- Move transforms to cnxdb.triggers.transforms
+- Wait for the archive container to be up in .travis.yml (#539)
+- Remove cnx-archive-initdb commandline script
+- Fix tests usage of cnxdb initdb to use a sqlalchemy engines
+- Add DB_URL and DB_SUPER_URL to the travis docker config
+
 2.8.0
 -----
 
