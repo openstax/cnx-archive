@@ -16,7 +16,6 @@ from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
-from .. import config
 from ..database import (
     SQL, get_tree, get_collated_content, get_module_can_publish, db_connect)
 from ..utils import (
@@ -193,6 +192,22 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
             pass
 
 
+def get_books_containing_page(uuid, version):
+    """Return a list of book names and UUIDs
+    that contain a given module UUID."""
+
+    with db_connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-books-containing-page'],
+                           {'document_uuid': uuid,
+                            'document_version': version})
+            results = [{'title': res[0],
+                        'ident_hash': res[1],
+                        'authors': res[2]}
+                       for res in cursor.fetchall()]
+
+    return results
+
 # ######### #
 #   Views   #
 # ######### #
@@ -258,6 +273,7 @@ def get_extra(request):
             results['isLatest'] = is_latest(id, version)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
+            results['books'] = get_books_containing_page(id, version)
 
     resp = request.response
     resp.content_type = 'application/json'
