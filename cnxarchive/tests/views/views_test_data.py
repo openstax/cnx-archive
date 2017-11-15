@@ -162,6 +162,7 @@ COLLECTION_METADATA = {
          },
         ],
     u'collated': False,
+    u'baked': None,
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
@@ -372,4 +373,5 @@ MODULE_METADATA = {
              u'id': u'ff325274bcfa3be254a6cf39f86985df7ddaf294',
              u'media_type': u'image/jpg'}
             ],
+    u'baked': None,
     }

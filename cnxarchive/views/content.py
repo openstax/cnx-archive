@@ -218,8 +218,11 @@ def get_content_json(request):
     """Retrieve content as JSON using the ident-hash (uuid@version)."""
     result = _get_content_json()
 
-    result = json.dumps(result)
     resp = request.response
+    if result['baked'] is not None:
+        resp.cache_control = "no-cache"
+
+    result = json.dumps(result)
     resp.status = "200 OK"
     resp.content_type = 'application/json'
     resp.body = result
@@ -241,6 +244,8 @@ def get_content_html(request):
     resp.status = "200 OK"
     resp.content_type = 'application/xhtml+xml'
     resp.body = content
+    if result['baked'] is not None:
+        resp.cache_control = "no-cache"
     return resp
 
 
