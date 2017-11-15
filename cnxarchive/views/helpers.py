@@ -66,6 +66,14 @@ def get_content_metadata(id, version, cursor):
         #       Until then we will do the replacement here.
         result['mediaType'] = portaltype_to_mimetype(result['mediaType'])
 
+        cursor.execute("""
+        SELECT baked FROM modules as m
+        WHERE
+          m.uuid = %(id)s AND
+          module_version(m.major_version, m.minor_version) = %(version)s
+        """, args)
+        result['baked'] = cursor.fetchone()[0]
+
         return result
     except (TypeError, IndexError,):  # None returned
         raise httpexceptions.HTTPNotFound()
