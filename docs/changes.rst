@@ -6,6 +6,12 @@
 
    - feature message
 
+3.1.0
+-----
+
+- Add list of books containing the in context page to
+  ``/extras/{ident_hash}``. (#502)
+
 3.0.0
 -----
 
