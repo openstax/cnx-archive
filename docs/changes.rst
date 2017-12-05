@@ -5,6 +5,10 @@
    ----------------------
 
    - feature message
+3.2.0
+-----
+
+- Removed robots.txt generation - handled upstream (#536)
 
 3.1.0
 -----
