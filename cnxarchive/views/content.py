@@ -242,6 +242,10 @@ def get_content_html(request):
     """Retrieve content as HTML using the ident-hash (uuid@version)."""
     result = _get_content_json()
 
+    print(request)
+    print(request.url)
+    # print(result)
+
     media_type = result['mediaType']
     if media_type == COLLECTION_MIMETYPE:
         content = tree_to_html(result['tree'])
