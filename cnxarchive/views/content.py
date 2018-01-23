@@ -221,14 +221,14 @@ def get_content_json(request):
 
     resp = request.response
     # If there is no ident-hash then cache
-    if re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url):
+    if not(re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url)):
         resp.cache_control = "public"
     else:  # otherwise (there is an ident-hash) then check baking status
         if (result['baked']) and (result['state'] in [1, 8]):
             # state 1 = current, state 8 = fallback
             resp.cache_control = "public"
         else:
-            resp.cache_control = "no-cache"
+            resp.cache_control = "no-cache, no-store, must-revalidate"
 
     result = json.dumps(result)
     resp.status = "200 OK"
@@ -254,14 +254,14 @@ def get_content_html(request):
     resp.body = content
 
     # If there is no ident-hash then cache
-    if re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url):
+    if not (re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url)):
         resp.cache_control = "public"
     else:  # otherwise (there is an ident-hash) then check baking status
         if (result['baked']) and (result['state'] in [1, 8]):
             # state 1 = current, state 8 = fallback
             resp.cache_control = "public"
         else:
-            resp.cache_control = "no-cache"
+            resp.cache_control = "no-cache, no-store, must-revalidate"
 
     return resp
 
