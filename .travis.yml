@@ -29,7 +29,7 @@ script:
   # This is the same as `python -m unittest discover` with a coverage wrapper.
   #- coverage run --source=cnxarchive setup.py test
   - docker exec cnxarchive_archive_1 /bin/bash -c "cd /src; TESTING_CONFIG=cnxarchive/tests/.travis-testing.ini coverage run --source=cnxarchive setup.py test"
-  - docker-compose down
+  - docker-compose -f .travis-compose.yml down
 after_success:
   # Report test coverage to codecov.io
   - docker exec cnxarchive_archive_1 /bin/bash -c "codecov"
