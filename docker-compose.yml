@@ -11,7 +11,7 @@ services:
     build: https://github.com/Connexions/cnx-db.git
     ports:
       - "5432"
-    volumes:
+#    volumes:
       # https://github.com/Connexions/devops/wiki/How-To%3A-Get-a-Slim-Database-Dump
   memcached:
     image: memcached:1.5
