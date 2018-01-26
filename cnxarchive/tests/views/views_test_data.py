@@ -79,6 +79,7 @@ COLLECTION_METADATA = {
     u'mediaType': u'application/vnd.org.cnx.collection',
     u'version': u'7.1',
     u'printStyle': None,
+    u'baked': None,
     u'googleAnalytics': u'UA-XXXXX-Y',
     u'buyLink': None,
     u'legacy_id': u'col11406',
@@ -240,6 +241,7 @@ COLLECTION_DERIVED_METADATA = {
 }
 MODULE_METADATA = {
     u'printStyle': None,
+    u'baked': None,
     u'roles': None,
     u'subjects': [u'Science and Technology'],
     u'abstract': None,
