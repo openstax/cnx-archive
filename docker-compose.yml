@@ -12,9 +12,7 @@ services:
     ports:
       - "5432"
     volumes:
-      # slim database dump
       # https://github.com/Connexions/devops/wiki/How-To%3A-Get-a-Slim-Database-Dump
-      - ./cnxarchive_dump.tar:/tmp/cnxarchive_dump.tar:ro
   memcached:
     image: memcached:1.5
     ports:
