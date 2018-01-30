@@ -224,7 +224,7 @@ def get_content_json(request):
     if not(re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url)):
         resp.cache_control = "public"
     else:  # otherwise (there is an ident-hash) then check baking status
-        if (result['baked']) and (result['state'] in [1, 8]):
+        if (result['baked']) and (result['stateid'] in [1, 8]):
             # state 1 = current, state 8 = fallback
             resp.cache_control = "public"
         else:
@@ -257,7 +257,7 @@ def get_content_html(request):
     if not (re.compile(r'\w{8}-\w{4}-\w{4}-\w{4}-\w{12}').search(request.url)):
         resp.cache_control = "public"
     else:  # otherwise (there is an ident-hash) then check baking status
-        if (result['baked']) and (result['state'] in [1, 8]):
+        if (result['baked']) and (result['stateid'] in [1, 8]):
             # state 1 = current, state 8 = fallback
             resp.cache_control = "public"
         else:

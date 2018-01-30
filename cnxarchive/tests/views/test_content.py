@@ -27,6 +27,8 @@ from .views_test_data import COLLECTION_JSON_TREE
 from .views_test_data import MODULE_METADATA
 from .views_test_data import COLLECTION_DERIVED_METADATA
 
+from ...database import db_connect
+
 
 def quote(path):
     """URL encode the path"""
@@ -1206,16 +1208,18 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Check that the view has the correct cache status
         self.assertEqual(resp.headers["Cache-Control"], "public")
 
-    @testing.db_connect
-    def test_cache_baked_html(self, cursor):
+    # @testing.db_connect
+    def test_cache_baked_html(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
-        # # set the baked value in the database
-        cursor.execute("""
-            UPDATE modules set baked = now()
-            where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-            and major_version = 7 and minor_version = 1;""")
+        # set the baked value in the database
+        with db_connect() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE modules set baked = now()
+                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+                    and major_version = 7 and minor_version = 1;""")
 
         # Build the environment
         self.request.matchdict = {
@@ -1232,11 +1236,13 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Check that the view has the correct cache status
         self.assertEqual(resp.headers["Cache-Control"], "public")
 
-        # # set the baked value in the database
-        cursor.execute("""
-            UPDATE modules set baked = NULL
-            where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-            and major_version = 7 and minor_version = 1;""")
+        # reset the baked value in the database
+        with db_connect() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE modules set baked = NULL
+                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+                    and major_version = 7 and minor_version = 1;""")
 
     def test_cache_not_baked_html(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1275,16 +1281,17 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Check that the view has the correct cache status
         self.assertEqual(resp.headers["Cache-Control"], "public")
 
-    @testing.db_connect
-    def test_cache_baked_json(self, cursor):
+    def test_cache_baked_json(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
         # set the baked value in the database
-        cursor.execute("""
-            UPDATE modules set baked = now()
-            where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-            and major_version = 7 and minor_version = 1;""")
+        with db_connect() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE modules set baked = now()
+                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+                    and major_version = 7 and minor_version = 1;""")
 
         # Build the environment
         self.request.matchdict = {
@@ -1301,11 +1308,13 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Check that the view has the correct cache status
         self.assertEqual(resp.headers["Cache-Control"], "public")
 
-        # # set reset the baked value in the database
-        cursor.execute("""
-            UPDATE modules set baked = NULL
-            where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-            and major_version = 7 and minor_version = 1;""")
+        # set reset the baked value in the database
+        with db_connect() as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE modules set baked = NULL
+                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+                    and major_version = 7 and minor_version = 1;""")
 
     def test_cache_not_baked_json(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
