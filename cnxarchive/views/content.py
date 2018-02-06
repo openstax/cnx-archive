@@ -249,7 +249,10 @@ def get_content(request):
 
     Depending on extension or HTTP_ACCEPT header return HTML or JSON.
     """
-    ext = request.matchdict['ext']
+    if 'ext' in request.params:
+        ext = request.matchdict['ext']
+    else:
+        ext = None
     accept = request.headers.get('ACCEPT', '')
     if not ext:
         if ('application/xhtml+xml' in accept):
@@ -270,6 +273,8 @@ def get_content(request):
         cc.no_cache = True
         cc.no_store = True
         cc.must_revalidate = True
+    else:
+        resp.cache_control.public = True
 
     return resp
 

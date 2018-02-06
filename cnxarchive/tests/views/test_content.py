@@ -1190,61 +1190,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
                           self.request)
 
-    def test_cache_with_no_ident_hash_html(self):
-        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
-
-        # Build the environment
-        self.request.matchdict = {
-            'ident_hash': '{}@{}'.format(uuid, version),
-            }
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-html'
-
-        # Call the view
-        from ...views.content import get_content_html
-        resp = get_content_html(self.request)
-
-        # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "public")
-
     # @testing.db_connect
-    def test_cache_baked_html(self):
-        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
-
-        # set the baked value in the database
-        with db_connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE modules set baked = now()
-                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-                    and major_version = 7 and minor_version = 1;""")
-
-        # Build the environment
-        self.request.matchdict = {
-            'ident_hash': '{}@{}'.format(uuid, version),
-            }
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-html'
-        self.request.url = "cnx.org/contents/{}@{}".format(uuid, version)
-
-        # Call the view
-        from ...views.content import get_content_html
-        resp = get_content_html(self.request)
-
-        # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "public")
-
-        # reset the baked value in the database
-        with db_connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE modules set baked = NULL
-                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-                    and major_version = 7 and minor_version = 1;""")
-
-    def test_cache_not_baked_html(self):
+    def test_cached_content(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
 
@@ -1253,84 +1200,32 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(uuid, version),
             }
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-html'
-        self.request.url = "cnx.org/contents/{}@{}".format(uuid, version)
+        self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views.content import get_content_html
-        resp = get_content_html(self.request)
+        from ...views.content import get_content
+        content = get_content(self.request)
 
         # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "no-cache, no-store, must-revalidate")
+        self.assertEqual(content.cache_control.public, True)
 
-    def test_cache_with_no_ident_hash_json(self):
+    def test_not_cached_content(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
+        version = '6.1'
 
         # Build the environment
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
             }
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-json'
+        self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views.content import get_content_json
-        resp = get_content_json(self.request)
+        from ...views.content import get_content
+        resp = get_content(self.request)
 
         # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "public")
-
-    def test_cache_baked_json(self):
-        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
-
-        # set the baked value in the database
-        with db_connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE modules set baked = now()
-                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-                    and major_version = 7 and minor_version = 1;""")
-
-        # Build the environment
-        self.request.matchdict = {
-            'ident_hash': '{}@{}'.format(uuid, version),
-            }
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-json'
-        self.request.url = "cnx.org/contents/{}@{}".format(uuid, version)
-
-        # Call the view
-        from ...views.content import get_content_json
-        resp = get_content_json(self.request)
-
-        # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "public")
-
-        # set reset the baked value in the database
-        with db_connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE modules set baked = NULL
-                    where uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-                    and major_version = 7 and minor_version = 1;""")
-
-    def test_cache_not_baked_json(self):
-        uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
-
-        # Build the environment
-        self.request.matchdict = {
-            'ident_hash': '{}@{}'.format(uuid, version),
-            }
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-json'
-        self.request.url = "cnx.org/contents/{}@{}".format(uuid, version)
-
-        # Call the view
-        from ...views.content import get_content_json
-        resp = get_content_json(self.request)
-
-        # Check that the view has the correct cache status
-        self.assertEqual(resp.headers["Cache-Control"], "no-cache, no-store, must-revalidate")
+        self.assertEqual(resp.cache_control.prevent_auto, True)
+        self.assertEqual(resp.cache_control.no_cache, "*")
+        self.assertEqual(resp.cache_control.no_store, True)
+        self.assertEqual(resp.cache_control.must_revalidate, True)
