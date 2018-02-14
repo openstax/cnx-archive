@@ -57,7 +57,7 @@ def ident_hash_short_id(exc, request):
     route_name = request.matched_route.name
     route_args = request.matchdict.copy()
     route_args['ident_hash'] = join_ident_hash(uuid_, exc.version)
-    return httpexceptions.HTTPFound(request.route_path(
+    return httpexceptions.HTTPMovedPermanently(request.route_path(
         route_name, _query=request.params, **route_args))
 
 
