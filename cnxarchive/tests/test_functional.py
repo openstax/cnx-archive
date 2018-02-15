@@ -86,7 +86,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
 
         for ext in self.contents_extensions:
             resp = self.testapp.get('/contents/{}@8{}'.format(short_id, ext))
-            self.assertEqual(resp.status, '302 Found')
+            self.assertEqual(resp.status, '301 Moved Permanently')
             self.assertEqual(
                 unquote(resp.location),
                 'http://localhost/contents/{}@8{}'.format(uuid, ext))
@@ -120,7 +120,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
             resp = self.testapp.get(
                 '/contents/{}@{}:{}@0{}'.format(
                     book_shortid, book_version, page_shortid, ext))
-            self.assertEqual(resp.status, '302 Found')
+            self.assertEqual(resp.status, '301 Moved Permanently')
             self.assertEqual(
                 unquote(resp.location),
                 'http://localhost/contents/{}@{}:{}@0{}'.format(
@@ -139,7 +139,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
         for ext in self.contents_extensions:
             resp = self.testapp.get('/contents/{}@{}:{}@{}{}'.format(
                 book_shortid, book_version, page_shortid, page_version, ext))
-            self.assertEqual(resp.status, '302 Found')
+            self.assertEqual(resp.status, '301 Moved Permanently')
             self.assertEqual(
                 unquote(resp.location),
                 'http://localhost/contents/{}@{}:{}@{}{}'.format(
@@ -192,7 +192,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
         version = '7.1'
 
         resp = self.testapp.get('/extras/{}@{}'.format(short_id, version))
-        self.assertEqual(resp.status, '302 Found')
+        self.assertEqual(resp.status, '301 Moved Permanently')
         self.assertEqual(
             unquote(resp.location),
             'http://localhost/extras/{}@{}'.format(uuid, version))
@@ -221,7 +221,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
 
         resp = self.testapp.get('/search/{}@{}?q=air'.format(
             short_id, version))
-        self.assertEqual(resp.status, '302 Found')
+        self.assertEqual(resp.status, '301 Moved Permanently')
         self.assertEqual(
             unquote(resp.location),
             'http://localhost/search/{}@{}?q=air'.format(uuid, version))
@@ -272,7 +272,7 @@ class IdentHashShortIdTestCase(testing.FunctionalTestCase):
 
         resp = self.testapp.get('/search/{}@{}:{}?q=air'.format(
             book_short_id, book_version, page_short_id))
-        self.assertEqual(resp.status, '302 Found')
+        self.assertEqual(resp.status, '301 Moved Permanently')
         self.assertEqual(
             unquote(resp.location),
             'http://localhost/search/{}@{}:{}?q=air'.format(
