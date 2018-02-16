@@ -86,10 +86,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@5'.format(uuid)))
 
@@ -106,10 +106,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, latest version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@5'.format(uuid)))
 
@@ -151,10 +151,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@4'.format(uuid)))
 
@@ -191,10 +191,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(
             cm.exception.headers['Location'],
             quote('/contents/{}@1.1:{}'.format(book_uuid, page_uuid)))
@@ -213,10 +213,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the new url, old version
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/contents/{}@4'.format(uuid)))
 
@@ -238,10 +238,10 @@ class LegacyRedirectViewsTestCase(unittest.TestCase):
         from ...views.legacy_redirect import redirect_legacy_content
 
         # Check that the view redirects to the resources url
-        with self.assertRaises(httpexceptions.HTTPFound) as cm:
+        with self.assertRaises(httpexceptions.HTTPMovedPermanently) as cm:
             redirect_legacy_content(self.request)
 
-        self.assertEqual(cm.exception.status, '302 Found')
+        self.assertEqual(cm.exception.status, '301 Moved Permanently')
         self.assertEqual(cm.exception.headers['Location'],
                          quote('/resources/{}/{}'.format(sha1, filename)))
 

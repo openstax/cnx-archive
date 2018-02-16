@@ -89,9 +89,10 @@ def redirect_legacy_content(request):
                 try:
                     res = cursor.fetchone()
                     resourceid = res[0]
-                    raise httpexceptions.HTTPFound(request.route_path(
-                        'resource', hash=resourceid,
-                        ignore=u'/{}'.format(filename)))
+                    raise httpexceptions.HTTPMovedPermanently(
+                         request.route_path(
+                            'resource', hash=resourceid,
+                            ignore=u'/{}'.format(filename)))
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
@@ -104,5 +105,5 @@ def redirect_legacy_content(request):
             id, ident_hash = \
                 _get_page_in_book(id, version, book_uuid, book_version)
 
-    raise httpexceptions.HTTPFound(
+    raise httpexceptions.HTTPMovedPermanently(
         request.route_path('content', ident_hash=ident_hash))
