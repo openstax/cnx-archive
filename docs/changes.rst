@@ -5,6 +5,12 @@
    ----------------------
 
    - feature message
+3.3.0
+----------------------
+
+- Change "302 Found" redirects to "301 Permanently Moved"
+  for shortid and legacy redirects
+
 3.2.0
 -----
 
