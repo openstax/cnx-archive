@@ -72,6 +72,7 @@ def declare_api_routes(config):
     add_route('extras', '/extras')  # cnxarchive.views:extras
     add_route('sitemap-index', '/sitemap_index.xml')  # noqa cnxarchive.views:sitemap
     add_route('sitemap', '/sitemap-{from_id}.xml')  # noqa cnxarchive.views:sitemap
+    add_route('robots', '/robots.txt')  # noqa cnxarchive.views:robots
     add_route('legacy-redirect', '/content/{objid}{ignore:(/)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-latest', '/content/{objid}/latest{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
     add_route('legacy-redirect-w-version', '/content/{objid}/{objver}{ignore:(/)?}{filename:(.+)?}')  # noqa cnxarchive.views:redirect_legacy_content
