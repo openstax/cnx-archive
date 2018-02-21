@@ -761,7 +761,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(uuid, version),
             }
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-html'
+        self.request.matched_route.name = 'content'
 
         # Call the view
         from ...views.content import get_content_html
@@ -778,7 +778,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the request environment.
         self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
         self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'content-html'
+        self.request.matched_route.name = 'content'
 
         # Call the view.
         from ...views.content import get_content_html
