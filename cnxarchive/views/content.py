@@ -235,8 +235,10 @@ def get_books_containing_page(uuid, version):
                             'document_version': version})
             results = [{'title': res[0],
                         'ident_hash': res[1],
-                        'authors': res[2]}
+                        'authors': res[2],
+                        'revised': str(res[3])}
                        for res in cursor.fetchall()]
+
 
     return results
 
