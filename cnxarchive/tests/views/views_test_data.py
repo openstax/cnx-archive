@@ -80,7 +80,7 @@ COLLECTION_METADATA = {
     u'version': u'7.1',
     u'printStyle': None,
     u'baked': None,
-    u'googleAnalytics': u'UA-XXXXX-Y',
+    u'googleAnalytics': [u'UA-XXXXX-Y'],
     u'buyLink': None,
     u'legacy_id': u'col11406',
     u'legacy_version': u'1.7',
