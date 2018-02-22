@@ -348,6 +348,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': '{}@{}'.format(uuid, version),
             'separator': ':',
+            'ext': '',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -369,6 +370,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': '{}@{}'.format(uuid, version),
             'separator': ':',
+            'ext': '',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -478,6 +480,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
+            'ext': '',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -501,6 +504,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
+            'ext': '',
             }
         self.request.GET = {'as_collated': False}
         self.request.matched_route = mock.Mock()
@@ -527,6 +531,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': '{}@{}'.format(book_uuid, book_version),
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
+            'ext': '',
             }
         self.request.GET = {'as_collated': False}
         self.request.matched_route = mock.Mock()
@@ -568,6 +573,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@0'.format(page_uuid),
                 'separator': ':',
+                'ext': '',
                 }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -588,6 +594,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
                 'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
                 'separator': ':',
+                'ext': '',
                 }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -613,6 +620,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'ident_hash': book_uuid,
             'page_ident_hash': page_uuid,
             'separator': ':',
+            'ext': '',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -759,13 +767,14 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the environment
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
+            'ext': '.html',
             }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
         # Call the view
-        from ...views.content import get_content_html
-        resp = get_content_html(self.request)
+        from ...views.content import get_content
+        resp = get_content(self.request)
 
         # Check that the view returns the expected html
         p = HTMLParser.HTMLParser()
@@ -776,15 +785,17 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '4'
 
         # Build the request environment.
-        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version)}
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version),
+                                  'ext': '.html',
+                                  }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
         # Call the view.
-        from ...views.content import get_content_html
+        from ...views.content import get_content
 
         # Check that the view returns some html
-        resp_body = get_content_html(self.request).body
+        resp_body = get_content(self.request).body
         self.assertTrue(resp_body.startswith('<html'))
 
     @testing.db_connect

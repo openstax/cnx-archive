@@ -20,106 +20,118 @@ class RoutingTestCase(unittest.TestCase):
 
         tests = {
             # controller name: (path, routing args)
-            'content-html': (
+            'content': (
                 ('/contents/abcd-1234.html', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '',
+                    'ext': '.html',
                     }),
                 ('/contents/abcd-1234/title.html', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '/title',
+                    'ext': '.html',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678@3.html', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '',
+                    'ext': '.html',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678@3/ignore.html', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '/ignore',
+                    'ext': '.html',
                     }),
-                ),
-            'content-json': (
                 ('/contents/abcd-1234.json', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '',
+                    'ext': '.json',
                     }),
                 ('/contents/abcd-1234/title.json', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '/title',
+                    'ext': '.json',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678@3.json', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '',
+                    'ext': '.json',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678@3/ignore.json', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '/ignore',
-                    })
-                ),
-            'content': (
+                    'ext': '.json',
+                    }),
                 ('/contents/abcd-1234', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234/', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '/',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234/title', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '/title',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234/title/', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': '',
                     'separator': '',
                     'ignore': '/title/',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234:efgh-5678@3/ignore', {
                     'ident_hash': 'abcd-1234',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '/ignore',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678',
                     'separator': ':',
                     'ignore': '',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678/', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678',
                     'separator': ':',
                     'ignore': '/',
+                    'ext': '',
                     }),
                 ('/contents/abcd-1234@1.2:efgh-5678@3/ignore', {
                     'ident_hash': 'abcd-1234@1.2',
                     'page_ident_hash': 'efgh-5678@3',
                     'separator': ':',
                     'ignore': '/ignore',
+                    'ext': '',
                     })
                 ),
             'resource': (
