@@ -95,9 +95,12 @@ def _get_content_json(ident_hash=None):
                                     id, version, cursor)
                                 result['content'] = content[:]
                                 return result
+                            # 302 'cause lack of baked content may be temporary
                             raise httpexceptions.HTTPFound(request.route_path(
                                 request.matched_route.name,
-                                ident_hash=join_ident_hash(id, version)))
+                                _query=request.params,
+                                ident_hash=join_ident_hash(id, version),
+                                ext=routing_args['ext']))
                     raise httpexceptions.HTTPNotFound()
             else:
                 # Grab the html content.
@@ -249,10 +252,7 @@ def get_content(request):
 
     Depending on extension or HTTP_ACCEPT header return HTML or JSON.
     """
-    if 'ext' in request.params:
-        ext = request.matchdict['ext']
-    else:
-        ext = None
+    ext = request.matchdict.get('ext')
     accept = request.headers.get('ACCEPT', '')
     if not ext:
         if ('application/xhtml+xml' in accept):
