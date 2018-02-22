@@ -9,6 +9,8 @@
 import json
 import logging
 
+import psycopg2.extras
+
 from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
 from pyramid import httpexceptions
@@ -21,7 +23,8 @@ from ..database import (
 from ..utils import (
     COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
-    join_ident_hash, split_ident_hash
+    join_ident_hash, split_ident_hash,
+    json_serial,
     )
 from .helpers import get_uuid, get_latest_version, get_content_metadata
 from .exports import get_export_file, ExportError
@@ -229,15 +232,12 @@ def get_books_containing_page(uuid, version):
     that contain a given module UUID."""
 
     with db_connect() as db_connection:
-        with db_connection.cursor() as cursor:
+        with db_connection.cursor(
+                cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(SQL['get-books-containing-page'],
                            {'document_uuid': uuid,
                             'document_version': version})
-            results = [{'title': res[0],
-                        'ident_hash': res[1],
-                        'authors': res[2]}
-                       for res in cursor.fetchall()]
-
+            results = cursor.fetchall()
     return results
 
 # ######### #
@@ -296,8 +296,37 @@ def get_extra(request):
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
             results['books'] = get_books_containing_page(id, version)
+            formatAuthors(results['books'])
 
     resp = request.response
     resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
+    resp.body = json.dumps(results, default=json_serial)
     return resp
+
+
+def formatAuthors(books):
+    for book in books:
+        for author in book['authors']:
+            author['formattedName'] = formatAuthorName(author)
+
+
+def formatAuthorName(author):
+    if author["fullname"]:
+        return author["fullname"]
+    flag = 0
+    s = ""
+    if author["title"]:
+        flag += 1
+        s += author["title"]
+    if author['firstname']:
+        flag += 1
+        s += " " + author['firstname']
+    if author['surname']:
+        flag += 1
+        s += " " + author['surname']
+    if author['suffix']:
+        s += " " + author['suffix']
+    if flag >= 2:
+        return s.strip()
+    else:
+        return author['username']
