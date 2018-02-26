@@ -60,9 +60,7 @@ def declare_api_routes(config):
         return config.add_route(name, path, *args,
                                 pregenerator=pregenerator(path), **kwargs)
 
-    add_route('content-html', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.html')  # noqa cnxarchive.views:get_content_html
-    add_route('content-json', '/contents/{ident_hash:([^:/]*)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}.json')  # noqa cnxarchive.views:get_content_json
-    add_route('content', '/contents/{ident_hash:([^:/]+)}{separator:(:?)}{page_ident_hash:([^/]*)}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_content
+    add_route('content', '/contents/{ident_hash:([^:/@.]+(@[0-9.]*[0-9]+)?)}{separator:(:?)}{page_ident_hash:([^:/@.]+(@[0-9.]*[0-9]+)?)?}{ignore:(/.*?)?}{ext:([.](html|json))?}')  # noqa cnxarchive.views:get_content
     add_route('resource', '/resources/{hash}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_resource
     add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_export
     add_route('content-extras', '/extras/{ident_hash}')  # noqa cnxarchive.views:get_extra

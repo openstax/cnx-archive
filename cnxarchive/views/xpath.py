@@ -102,8 +102,8 @@ def xpath_book_html(request, results):
                 ancestor_id = '#{}'.format(ancestor[0].get('id'))
 
             # link to the closest ancestor id
-            a.set('href', '{}{}'.format(
-                request.route_path('content-html', ident_hash=item['uuid']),
+            a.set('href', '{}.html{}'.format(
+                request.route_path('content', ident_hash=item['uuid']),
                 ancestor_id))
             a.set('target', '_blank')
             a.text = remove_ns(

@@ -95,9 +95,12 @@ def _get_content_json(ident_hash=None):
                                     id, version, cursor)
                                 result['content'] = content[:]
                                 return result
+                            # 302 'cause lack of baked content may be temporary
                             raise httpexceptions.HTTPFound(request.route_path(
                                 request.matched_route.name,
-                                ident_hash=join_ident_hash(id, version)))
+                                _query=request.params,
+                                ident_hash=join_ident_hash(id, version),
+                                ext=routing_args['ext']))
                     raise httpexceptions.HTTPNotFound()
             else:
                 # Grab the html content.
@@ -113,6 +116,34 @@ def _get_content_json(ident_hash=None):
                 result['content'] = content[:]
 
     return result
+
+
+def get_content_json(request):
+    """Retrieve content as JSON using the ident-hash (uuid@version)."""
+    result = _get_content_json()
+
+    resp = request.response
+    resp.status = "200 OK"
+    resp.content_type = 'application/json'
+    resp.body = json.dumps(result)
+    return result, resp
+
+
+def get_content_html(request):
+    """Retrieve content as HTML using the ident-hash (uuid@version)."""
+    result = _get_content_json()
+
+    media_type = result['mediaType']
+    if media_type == COLLECTION_MIMETYPE:
+        content = tree_to_html(result['tree'])
+    else:
+        content = result['content']
+
+    resp = request.response
+    resp.body = content
+    resp.status = "200 OK"
+    resp.content_type = 'application/xhtml+xml'
+    return result, resp
 
 
 def html_listify(tree, root_ul_element, parent_id=None):
@@ -132,13 +163,14 @@ def html_listify(tree, root_ul_element, parent_id=None):
         if node['id'] != 'subcol':
             if is_first_node:
                 a_elm.set('href', request.route_path(
-                    'content-html', ident_hash=node['id']))
+                    'content', ident_hash=node['id'], ext='.html'))
             else:
                 a_elm.set('href', request.route_path(
-                    'content-html',
+                    'content',
                     separator=':',
                     ident_hash=parent_id,
-                    page_ident_hash=node['id']))
+                    page_ident_hash=node['id'],
+                    ext='.html'))
         if 'contents' in node:
             elm = etree.SubElement(li_elm, 'ul')
             html_listify(node['contents'], elm, parent_id)
@@ -213,48 +245,38 @@ def get_books_containing_page(uuid, version):
 # ######### #
 
 
-@view_config(route_name='content-json', request_method='GET')
-def get_content_json(request):
-    """Retrieve content as JSON using the ident-hash (uuid@version)."""
-    result = _get_content_json()
-
-    result = json.dumps(result)
-    resp = request.response
-    resp.status = "200 OK"
-    resp.content_type = 'application/json'
-    resp.body = result
-    return resp
-
-
-@view_config(route_name='content-html', request_method='GET')
-def get_content_html(request):
-    """Retrieve content as HTML using the ident-hash (uuid@version)."""
-    result = _get_content_json()
-
-    media_type = result['mediaType']
-    if media_type == COLLECTION_MIMETYPE:
-        content = tree_to_html(result['tree'])
-    else:
-        content = result['content']
-
-    resp = request.response
-    resp.status = "200 OK"
-    resp.content_type = 'application/xhtml+xml'
-    resp.body = content
-    return resp
-
-
-@view_config(route_name='content', request_method='GET')
+@view_config(route_name='content', request_method='GET',
+             http_cache=(3600000, {'public': True}))
 def get_content(request):
     """Retrieve content using the ident-hash (uuid@version).
 
-    Depending on the HTTP_ACCEPT header return HTML or JSON.
+    Depending on extension or HTTP_ACCEPT header return HTML or JSON.
     """
-    if 'application/xhtml+xml' in request.headers.get('ACCEPT', ''):
-        return get_content_html(request)
-
+    ext = request.matchdict.get('ext')
+    accept = request.headers.get('ACCEPT', '')
+    if not ext:
+        if ('application/xhtml+xml' in accept):
+            result, resp = get_content_html(request)
+        else:  # default to json
+            result, resp = get_content_json(request)
+    elif ext == '.html':
+        result, resp = get_content_html(request)
+    elif ext == '.json':
+        result, resp = get_content_json(request)
     else:
-        return get_content_json(request)
+        raise httpexceptions.HTTPNotFound()
+
+    if result['stateid'] not in [1, 8]:
+        # state 1 = current, state 8 = fallback
+        cc = resp.cache_control
+        cc.prevent_auto = True
+        cc.no_cache = True
+        cc.no_store = True
+        cc.must_revalidate = True
+    else:
+        resp.cache_control.public = True
+
+    return resp
 
 
 @view_config(route_name='content-extras', request_method='GET')
