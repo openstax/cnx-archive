@@ -276,8 +276,36 @@ def get_extra(request):
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
             results['books'] = get_books_containing_page(id, version)
+            formatAuthors(results['books'])
+            # results['books'].sort(key=lambda x: x['username']!='')
 
     resp = request.response
     resp.content_type = 'application/json'
     resp.body = json.dumps(results)
     return resp
+
+def formatAuthors(books):
+    for book in books:
+        for author in book['authors']:
+            author['formattedName'] = formatAuthorName(author)
+
+def formatAuthorName(author):
+    if author["fullname"]:
+        return author["fullname"]
+    flag = 0
+    s = ""
+    if author["title"]:
+        flag +=1
+        s += author["title"]
+    if author['firstname']:
+        flag +=1
+        s += " " + author['firstname']
+    if author['surname']:
+        flag +=1
+        s += " " + author['surname']
+    if author['suffix']:
+        s += " " + author['suffix']
+    if flag >= 2:
+        return s.strip()
+    else:
+        return author['username']
