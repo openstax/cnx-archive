@@ -238,8 +238,6 @@ def get_books_containing_page(uuid, version):
                         'authors': res[2],
                         'revised': str(res[3])}
                        for res in cursor.fetchall()]
-
-
     return results
 
 # ######### #
@@ -306,10 +304,12 @@ def get_extra(request):
     resp.body = json.dumps(results)
     return resp
 
+
 def formatAuthors(books):
     for book in books:
         for author in book['authors']:
             author['formattedName'] = formatAuthorName(author)
+
 
 def formatAuthorName(author):
     if author["fullname"]:
@@ -317,13 +317,13 @@ def formatAuthorName(author):
     flag = 0
     s = ""
     if author["title"]:
-        flag +=1
+        flag += 1
         s += author["title"]
     if author['firstname']:
-        flag +=1
+        flag += 1
         s += " " + author['firstname']
     if author['surname']:
-        flag +=1
+        flag += 1
         s += " " + author['surname']
     if author['suffix']:
         s += " " + author['suffix']
