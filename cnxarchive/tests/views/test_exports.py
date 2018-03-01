@@ -176,7 +176,13 @@ class GetExportFileTestCase(unittest.TestCase):
         self.assertEqual(state, 'good')
         self.assertEqual(content, file_content)
 
-    def test_for_cascading_ioerror_on_legacy_filename_lookup(self):
+    def test_for_file_not_found(self):
+        # Patch the logger to capture the message call.
+        mock_logger = mock.MagicMock()
+        patch = mock.patch('cnxarchive.views.exports.logger', mock_logger)
+        patch.start()
+        self.addCleanup(patch.stop)
+
         id, version = '<id>', '<version>'
 
         # Test the target function
@@ -198,6 +204,46 @@ class GetExportFileTestCase(unittest.TestCase):
         self.assertEqual(time, None)
         self.assertEqual(state, 'missing')
         self.assertEqual(content, None)
+
+        # Check the log message
+        self.assertTrue(mock_logger.error.called)
+        mock_logger.error.assert_called_with(
+            "Could not find a file for '<id>' at version '<version>' "
+            "with any of the following file names:\n"
+            " - <id>@<version>.zip\n"
+            " - m55321-1.4.complete.zip\n"
+            " - m55321-1.4.zip")
+
+    # https://github.com/Connexions/cnx-archive/issues/420
+    def test_finding_file_with_multiple_suffix(self):
+        # Create the export file
+        id, version = '<id>', '<version>'
+        filename = '{}-{}.zip'.format(self.legacy_id,
+                                      self.legacy_version)
+        filepath = os.path.join(self.export_dirs[-1], filename)
+        file_content = 'not a .complete.zip, only a .zip'
+        with open(filepath, 'w') as fb:
+            fb.write(file_content)
+
+        # Test the target function
+        export_file_info = self.target(
+            self.cursor,
+            id,
+            version,
+            'zip',
+            self.export_dirs,
+        )
+
+        # Check the results
+        title, mimetype, size, time, state, content = export_file_info
+        self.assertEqual(
+            title,
+            u'the-kittens-and-their-mittens-<version>.zip')
+        self.assertEqual(mimetype, 'application/zip')
+        self.assertEqual(size, 32)
+        self.assertEqual(time, '<datetime>')
+        self.assertEqual(state, 'good')
+        self.assertEqual(content, file_content)
 
 
 @mock.patch('cnxarchive.views.exports.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
