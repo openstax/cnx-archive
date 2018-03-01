@@ -6,6 +6,8 @@
 # See LICENCE.txt for details.
 # ###
 import os
+import shutil
+import tempfile
 import unittest
 
 try:
@@ -18,6 +20,184 @@ from pyramid import testing as pyramid_testing
 
 from ...utils import IdentHashMissingVersion
 from .. import testing
+
+
+TYPE_INFO = [
+    ('pdf',
+     {'description': 'PDF file, for viewing content offline and printing.',
+      'file_extension': 'pdf',
+      'mimetype': 'application/pdf',
+      'user_friendly_name': 'PDF'}),
+    ('epub',
+     {'description': 'Electronic book format file, for viewing on mobile devices.',
+      'file_extension': 'epub',
+      'mimetype': 'application/epub+zip',
+      'user_friendly_name': 'EPUB'}),
+    ('zip',
+     {'description': 'An offline HTML copy of the content.  Also includes XML, '
+      'included media files, and other support files.',
+      'file_extension': 'zip',
+      'mimetype': 'application/zip',
+      'user_friendly_name': 'Offline ZIP'}),
+]
+
+
+class GetExportFileTestCase(unittest.TestCase):
+
+    @property
+    def target(self):
+        from cnxarchive.views.exports import get_export_file
+        return get_export_file
+
+    def setUp(self):
+        self._mock_get_content_metadata()
+        self._mock_fromtimestamp()
+        self._setup_pyramid_app()
+
+        self.cursor = None  # No need for a real cursor
+
+    def _setup_pyramid_app(self):
+        # Setup some faux export directories
+        self.export_dirs = []
+        for i in range(0, 2):
+            dir = tempfile.mkdtemp()
+            self.export_dirs.append(dir)
+            self.addCleanup(shutil.rmtree, dir)
+
+        request = pyramid_testing.DummyRequest()
+        settings = {
+            '_type_info': TYPE_INFO,
+            'exports-directories': ' '.join(self.export_dirs),
+        }
+        config = pyramid_testing.setUp(
+            request=request,
+            settings=settings,
+        )
+        self.addCleanup(pyramid_testing.tearDown)
+
+    def _mock_get_content_metadata(self):
+        self.legacy_id = 'm55321'
+        self.legacy_version = '1.4'
+        self.legacy_title = 'The kittens and their mittens'
+
+        metadata = {
+            'legacy_id': self.legacy_id,
+            'legacy_version': self.legacy_version,
+            'title': self.legacy_title,
+        }
+
+        def get_content_metadata(id, version, cursor):
+            return metadata
+
+        patch = mock.patch(
+            'cnxarchive.views.exports.get_content_metadata',
+            get_content_metadata)
+        patch.start()
+
+        self.addCleanup(patch.stop)
+
+    def _mock_fromtimestamp(self):
+
+        def fromtimestamp(stamp):
+            return '<datetime>'
+
+        patch = mock.patch(
+            'cnxarchive.views.exports.fromtimestamp',
+            fromtimestamp)
+        patch.start()
+
+        self.addCleanup(patch.stop)
+
+    def test_for_exporterror_on_invalid_type(self):
+        from cnxarchive.views.exports import ExportError
+        with self.assertRaises(ExportError) as caught_exception:
+            self.target(self.cursor, '<id>', '<version>', 'book',
+                        self.export_dirs)
+
+        exc = caught_exception.exception
+        self.assertEqual(exc.args, ("invalid type 'book' requested.",))
+
+    def test_found_export(self):
+        # Create the export file
+        id, version = '<id>', '<version>'
+        filename = '{}@{}.pdf'.format(id, version)
+        filepath = os.path.join(self.export_dirs[-1], filename)
+        file_content = 'mittens'
+        with open(filepath, 'w') as fb:
+            fb.write(file_content)
+
+        # Test the target function
+        export_file_info = self.target(
+            self.cursor,
+            id,
+            version,
+            'pdf',
+            self.export_dirs,
+        )
+
+        # Check the results
+        title, mimetype, size, time, state, content = export_file_info
+        self.assertEqual(
+            title,
+            u'the-kittens-and-their-mittens-<version>.pdf')
+        self.assertEqual(mimetype, 'application/pdf')
+        self.assertEqual(size, 7)
+        self.assertEqual(time, '<datetime>')
+        self.assertEqual(state, 'good')
+        self.assertEqual(content, file_content)
+
+    def test_found_legacy_export(self):
+        # Create the export file
+        id, version = '<id>', '<version>'
+        filename = '{}-{}.complete.zip'.format(self.legacy_id,
+                                               self.legacy_version)
+        filepath = os.path.join(self.export_dirs[-1], filename)
+        file_content = 'mittens'
+        with open(filepath, 'w') as fb:
+            fb.write(file_content)
+
+        # Test the target function
+        export_file_info = self.target(
+            self.cursor,
+            id,
+            version,
+            'zip',
+            self.export_dirs,
+        )
+
+        # Check the results
+        title, mimetype, size, time, state, content = export_file_info
+        self.assertEqual(
+            title,
+            u'the-kittens-and-their-mittens-<version>.zip')
+        self.assertEqual(mimetype, 'application/zip')
+        self.assertEqual(size, 7)
+        self.assertEqual(time, '<datetime>')
+        self.assertEqual(state, 'good')
+        self.assertEqual(content, file_content)
+
+    def test_for_cascading_ioerror_on_legacy_filename_lookup(self):
+        id, version = '<id>', '<version>'
+
+        # Test the target function
+        export_file_info = self.target(
+            self.cursor,
+            id,
+            version,
+            'zip',
+            self.export_dirs,
+        )
+
+        # Check the results
+        title, mimetype, size, time, state, content = export_file_info
+        self.assertEqual(
+            title,
+            u'the-kittens-and-their-mittens-<version>.zip')
+        self.assertEqual(mimetype, 'application/zip')
+        self.assertEqual(size, 0)
+        self.assertEqual(time, None)
+        self.assertEqual(state, 'missing')
+        self.assertEqual(content, None)
 
 
 @mock.patch('cnxarchive.views.exports.fromtimestamp', mock.Mock(side_effect=testing.mocked_fromtimestamp))
