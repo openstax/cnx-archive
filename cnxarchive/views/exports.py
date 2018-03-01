@@ -20,7 +20,11 @@ from ..utils import (
     )
 from .helpers import get_content_metadata
 
-LEGACY_EXTENSION_MAP = {'epub': 'epub', 'pdf': 'pdf', 'zip': 'complete.zip'}
+LEGACY_EXTENSION_MAP = {
+    'epub': ['epub'],
+    'pdf': ['pdf'],
+    'zip': ['complete.zip', 'zip'],
+}
 logger = logging.getLogger('cnxarchive')
 
 
@@ -83,14 +87,15 @@ def get_export_file(cursor, id, version, type, exports_dirs):
     filename = '{}@{}.{}'.format(id, version, file_extension)
     legacy_id = metadata['legacy_id']
     legacy_version = metadata['legacy_version']
-    legacy_filename = '{}-{}.{}'.format(
-        legacy_id, legacy_version, LEGACY_EXTENSION_MAP[file_extension])
+    legacy_filenames = [
+        '{}-{}.{}'.format(legacy_id, legacy_version, ext)
+        for ext in LEGACY_EXTENSION_MAP[file_extension]
+    ]
     slugify_title_filename = u'{}-{}.{}'.format(slugify(metadata['title']),
                                                 version, file_extension)
 
-    for exports_dir in exports_dirs:
-        filepath = os.path.join(exports_dir, filename)
-        legacy_filepath = os.path.join(exports_dir, legacy_filename)
+    for dir in exports_dirs:
+        filepath = os.path.join(dir, filename)
         try:
             with open(filepath, 'r') as file:
                 stats = os.fstat(file.fileno())
@@ -99,22 +104,22 @@ def get_export_file(cursor, id, version, type, exports_dirs):
                         stats.st_size, modtime, 'good', file.read())
         except IOError:
             # Let's see if the legacy file's there and make the new link if so
-            # FIXME remove this code when we retire legacy
-            try:
-                with open(legacy_filepath, 'r') as file:
-                    stats = os.fstat(file.fileno())
-                    modtime = fromtimestamp(stats.st_mtime)
-                    os.link(legacy_filepath, filepath)
-                    return (slugify_title_filename, mimetype,
-                            stats.st_size, modtime, 'good', file.read())
-            except IOError as e:
-                # to be handled by the else part below if unable to find file
-                # in any of the export dirs
-                if not str(e).startswith('[Errno 2] No such file or direct'):
-                    logger.warn('IOError when accessing legacy export file:\n'
-                                'exception: {}\n'
-                                'filepath: {}\n'
-                                .format(str(e), legacy_filepath))
+            legacy_filepaths = [os.path.join(dir, fn)
+                                for fn in legacy_filenames]
+            for legacy_filepath in legacy_filepaths:
+                if os.path.exists(legacy_filepath):
+                    with open(legacy_filepath, 'r') as file:
+                        stats = os.fstat(file.fileno())
+                        modtime = fromtimestamp(stats.st_mtime)
+                        os.link(legacy_filepath, filepath)
+                        return (slugify_title_filename, mimetype,
+                                stats.st_size, modtime, 'good', file.read())
     else:
+        filenames = [filename] + legacy_filenames
+        log_formatted_filenames = '\n'.join([' - {}'.format(x)
+                                             for x in filenames])
+        logger.error("Could not find a file for '{}' at version '{}' with "
+                     "any of the following file names:\n{}"
+                     .format(id, version, log_formatted_filenames))
         # No file, return "missing" state
         return (slugify_title_filename, mimetype, 0, None, 'missing', None)
