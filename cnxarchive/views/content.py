@@ -21,7 +21,7 @@ from ..database import (
 from ..utils import (
     COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
-    join_ident_hash, split_ident_hash
+    join_ident_hash, split_ident_hash, CNXHash
     )
 from .helpers import get_uuid, get_latest_version, get_content_metadata
 from .exports import get_export_file, ExportError
@@ -236,7 +236,10 @@ def get_books_containing_page(uuid, version):
             results = [{'title': res[0],
                         'ident_hash': res[1],
                         'authors': res[2],
-                        'revised': str(res[3])}
+                        'revised': str(res[3]),
+                        'shortId': "{}@{}".format(
+                            CNXHash(res[1].split('@')[0]).get_shortid(),
+                            res[1].split('@')[1])}
                        for res in cursor.fetchall()]
     return results
 
