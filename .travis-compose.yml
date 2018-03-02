@@ -13,7 +13,7 @@ services:
       - db
       - memcached
   db:
-    build: https://github.com/Connexions/cnx-db.git
+    image: openstax/cnx-db:1.5.1
     ports:
       - "5433:5432"
     environment:
