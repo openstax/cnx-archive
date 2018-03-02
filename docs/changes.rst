@@ -5,8 +5,20 @@
    ----------------------
 
    - feature message
+
+3.5.0
+-----
+
+- Add cache controls on content routes and condense content routes to one
+  route declaration (#545)
+
+3.4.0
+-----
+
+- Restore a /robots.txt route. Returns do not index robots.txt (#547)
+
 3.3.0
-----------------------
+-----
 
 - Change "302 Found" redirects to "301 Permanently Moved"
   for shortid and legacy redirects
