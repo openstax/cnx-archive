@@ -236,7 +236,7 @@ def get_books_containing_page(uuid, version):
             results = [{'title': res[0],
                         'ident_hash': res[1],
                         'authors': res[2],
-                        'revised': str(res[3]),
+                        'revised': str(res[3].date()),
                         'shortId': "{}@{}".format(
                             CNXHash(res[1].split('@')[0]).get_shortid(),
                             res[1].split('@')[1])}

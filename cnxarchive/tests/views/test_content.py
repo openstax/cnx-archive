@@ -1116,7 +1116,6 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.content_type,
                          'application/json')
         output['canPublish'].sort()
-        print(output)
         self.assertEqual(output, {
             u'books': [
                 {u'authors': [{u'username': u'OpenStaxCollege',
@@ -1128,7 +1127,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                                u'firstname': u'OpenStax College'}],
                  u'title': u'College Physics',
                  u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
-                 u'revised': u'2013-08-31 12:07:20.342798-07:00'},
+                 u'revised': u'2013-08-31',
+                 u'shortId': u'55_943-0@7.1'},
                 {u'authors': [{u'username': u'OpenStaxCollege',
                                u'formattedName': u'OpenStax College',
                                u'fullname': u'OpenStax College',
@@ -1138,7 +1138,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                                u'firstname': u'OpenStax College'}],
                  u'title': u'<span style="color:red;">Derived</span> Copy of College <i>Physics</i>',
                  u'ident_hash': u'a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1',
-                 u'revised': u'2013-08-31 12:07:20.342798-07:00'},
+                 u'revised': u'2013-08-31',
+                 u'shortId': u'pzPQ0t6b@1.1'},
                 ],
             u'state': u'current',
             u'canPublish': [
