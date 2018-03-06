@@ -21,7 +21,8 @@ from ..database import (
 from ..utils import (
     COLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
-    join_ident_hash, split_ident_hash, CNXHash
+    join_ident_hash, split_ident_hash,
+    json_serial,
     )
 from .helpers import get_uuid, get_latest_version, get_content_metadata
 from .exports import get_export_file, ExportError
@@ -235,11 +236,10 @@ def get_books_containing_page(uuid, version):
                             'document_version': version})
             results = [{'title': res[0],
                         'ident_hash': res[1],
-                        'authors': res[2],
-                        'revised': str(res[3].date()),
-                        'shortId': "{}@{}".format(
-                            CNXHash(res[1].split('@')[0]).get_shortid(),
-                            res[1].split('@')[1])}
+                        'shortId': res[2],
+                        'authors': res[3],
+                        'revised': res[4]
+                        }
                        for res in cursor.fetchall()]
     return results
 
@@ -304,7 +304,7 @@ def get_extra(request):
 
     resp = request.response
     resp.content_type = 'application/json'
-    resp.body = json.dumps(results)
+    resp.body = json.dumps(results, default=json_serial)
     return resp
 
 
