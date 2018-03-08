@@ -9,6 +9,8 @@
 import json
 import logging
 
+import psycopg2.extras
+
 from cnxepub.models import flatten_tree_to_ident_hashes
 from lxml import etree
 from pyramid import httpexceptions
@@ -198,17 +200,12 @@ def get_books_containing_page(uuid, version):
     that contain a given module UUID."""
 
     with db_connect() as db_connection:
-        with db_connection.cursor() as cursor:
+        with db_connection.cursor(
+                cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
             cursor.execute(SQL['get-books-containing-page'],
                            {'document_uuid': uuid,
                             'document_version': version})
-            results = [{'title': res[0],
-                        'ident_hash': res[1],
-                        'shortId': res[2],
-                        'authors': res[3],
-                        'revised': res[4]
-                        }
-                       for res in cursor.fetchall()]
+            results = cursor.fetchall()
     return results
 
 # ######### #
