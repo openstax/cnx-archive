@@ -6,6 +6,13 @@
 
    - feature message
 
+3.6.0
+-----
+
+- Fix issue #420 - access to zips for pages
+- Add additional human-readable fields to /extras/<id>/books/authors
+
+
 3.5.0
 -----
 
