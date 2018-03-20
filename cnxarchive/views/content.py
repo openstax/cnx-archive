@@ -238,6 +238,7 @@ def get_books_containing_page(uuid, version):
                            {'document_uuid': uuid,
                             'document_version': version})
             results = cursor.fetchall()
+            formatAuthors(results)
     return results
 
 # ######### #
@@ -296,7 +297,6 @@ def get_extra(request):
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
             results['books'] = get_books_containing_page(id, version)
-            formatAuthors(results['books'])
 
     resp = request.response
     resp.content_type = 'application/json'
