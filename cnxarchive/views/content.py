@@ -22,6 +22,7 @@ from ..database import (
     SQL, get_tree, get_collated_content, get_module_can_publish, db_connect)
 from ..utils import (
     COLLECTION_MIMETYPE,
+    SUBCOLLECTION_MIMETYPE,
     IdentHashShortId, IdentHashMissingVersion,
     join_ident_hash, split_ident_hash,
     json_serial,
@@ -73,7 +74,8 @@ def _get_content_json(ident_hash=None):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             result = get_content_metadata(id, version, cursor)
-            if result['mediaType'] == COLLECTION_MIMETYPE:
+            if result['mediaType'] in (COLLECTION_MIMETYPE,
+                                       SUBCOLLECTION_MIMETYPE):
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor,
                                           as_collated=as_collated)
@@ -137,7 +139,7 @@ def get_content_html(request):
     result = _get_content_json()
 
     media_type = result['mediaType']
-    if media_type == COLLECTION_MIMETYPE:
+    if media_type in (COLLECTION_MIMETYPE, SUBCOLLECTION_MIMETYPE):
         content = tree_to_html(result['tree'])
     else:
         content = result['content']
