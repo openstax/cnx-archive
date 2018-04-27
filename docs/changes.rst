@@ -6,6 +6,11 @@
 
    - feature message
 
+3.6.1
+-----
+
+- Change order of links in sitemap - newest first (SEO test)
+
 3.6.0
 -----
 

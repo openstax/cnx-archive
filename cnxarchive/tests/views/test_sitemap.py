@@ -51,10 +51,10 @@ class SitemapViewsTestCase(unittest.TestCase):
     def test_sitemap(self):
         # Call the view
         from ...views.sitemap import sitemap
-        sitemap = sitemap(self.request).body
+        this_sitemap = sitemap(self.request).body
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'sitemap.xml')
-        with open(expected_file, 'r') as file:
-            self.assertMultiLineEqual(sitemap, file.read())
+        with open(expected_file, 'r') as f:
+            self.assertMultiLineEqual(this_sitemap, f.read())
 
     @mock.patch('cnxarchive.sitemap.datetime')
     def test_sitemap_index(self, mock_datetime):
@@ -69,20 +69,21 @@ class SitemapViewsTestCase(unittest.TestCase):
             with open(expected_file, 'r') as f:
                 self.assertMultiLineEqual(sitemap_index, f.read())
 
-            self.request.matchdict = {
-                'from_id': '1',
-            }
-            sitemap1 = sitemap.sitemap(self.request).body
-            expected_file = os.path.join(testing.DATA_DIRECTORY,
-                                         'sitemap-1.xml')
-            with open(expected_file, 'r') as f:
-                self.assertMultiLineEqual(sitemap1, f.read())
+            from lxml import etree
+            import re
+            ID_RE = re.compile('/sitemap-(\d+).xml')
 
-            self.request.matchdict = {
-                'from_id': '11',
-            }
-            sitemap11 = sitemap.sitemap(self.request).body
-            expected_file = os.path.join(testing.DATA_DIRECTORY,
-                                         'sitemap-11.xml')
-            with open(expected_file, 'r') as f:
-                self.assertMultiLineEqual(sitemap11, f.read())
+            si_tree = etree.XML(sitemap_index)
+            for loc in si_tree.xpath('//s:loc/text()',
+                                     namespaces={'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}):
+                fromid = int(ID_RE.search(loc).groups()[0])
+
+                self.request.matchdict = {
+                    'from_id': fromid,
+                }
+
+                sitemap_sub = sitemap.sitemap(self.request).body
+                expected_file = os.path.join(testing.DATA_DIRECTORY,
+                                             'sitemap-{}.xml'.format(fromid))
+                with open(expected_file, 'r') as f:
+                    self.assertMultiLineEqual(sitemap_sub, f.read())
