@@ -54,6 +54,10 @@ def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
     from_id = request.matchdict.get('from_id')
+    if from_id is not None:
+        fromlimit = 'AND module_ident <= {}'.format(from_id)
+    else:
+        fromlimit = ''
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute("""\
@@ -65,9 +69,9 @@ def sitemap(request):
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
-                  AND module_ident >= (SELECT COALESCE(%s, 0))
-                ORDER BY module_ident
-                LIMIT {}""".format(SITEMAP_LIMIT), (from_id,))
+                  {}
+                ORDER BY module_ident DESC
+                LIMIT {}""".format(fromlimit, SITEMAP_LIMIT))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 url = request.route_url('content',
@@ -92,11 +96,11 @@ def sitemap_index(request):
             cursor.execute("""\
                 SELECT t.module_ident
                 FROM (
-                    SELECT module_ident,
-                           row_number() OVER (ORDER BY module_ident) AS row
-                    FROM latest_modules
-                    WHERE portal_type NOT IN (
-                        'CompositeModule', 'SubCollection')
+                  SELECT module_ident,
+                         row_number() OVER (ORDER BY module_ident DESC) AS row
+                  FROM latest_modules
+                  WHERE portal_type NOT IN (
+                      'CompositeModule', 'SubCollection')
                 ) AS t
                 WHERE t.row % {} = 1""".format(SITEMAP_LIMIT))
 
