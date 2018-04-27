@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM python:2.7-jessie
 
 RUN addgroup --system archive \
     && adduser --system --group archive
@@ -9,15 +9,12 @@ RUN apt-get update && apt-get install -y \
     libxslt-dev \
     git \
     make \
-    python2.7 \
-    python2.7-dev \
-    python-pip \
     pkg-config \
     gcc \
     zlib1g-dev \
     wget \
     tzdata \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . /src/
 WORKDIR /src/
@@ -34,9 +31,12 @@ ENV ARCHIVE_REQUIREMENTS ${ARCHIVE_REQUIREMENTS:-https://raw.githubusercontent.c
 RUN wget -O archive-requirements.txt $ARCHIVE_REQUIREMENTS
 
 USER archive
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir --user -r archive-requirements.txt
-RUN pip install --no-cache-dir --user -e .
+# See also https://github.com/pypa/pip/issues/5221
+RUN wget -O get-pip.py https://bootstrap.pypa.io/get-pip.py \
+    && python get-pip.py --user \
+    && rm get-pip.py
+RUN python -m pip install --no-cache-dir --user -r archive-requirements.txt
+RUN python -m pip install --no-cache-dir --user -e .
 
 ENV PATH $PATH:/home/archive/.local/bin
 
