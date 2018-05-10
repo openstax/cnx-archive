@@ -64,7 +64,7 @@ def sitemap(request):
             cursor.execute("""SELECT
                     ident_hash(uuid, major_version, minor_version)
                         AS idver,
-                    REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name), 
+                    REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
                         '[^\w\s)]', '', 'g')), ' +', '-', 'g'),
                     revised
                 FROM latest_modules
