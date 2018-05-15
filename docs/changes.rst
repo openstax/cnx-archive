@@ -6,6 +6,11 @@
 
    - feature message
 
+3.6.2
+-----
+
+- Increase number of sitemap segments 1000 per, in date order (SEO test)
+
 3.6.1
 -----
 
