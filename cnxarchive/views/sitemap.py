@@ -9,10 +9,8 @@
 import logging
 from re import compile
 
-from pyramid.threadlocal import get_current_registry
 from pyramid.view import view_config
 
-from .. import config
 from ..database import db_connect
 from ..sitemap import Sitemap, SitemapIndex
 
@@ -57,7 +55,7 @@ def sitemap(request):
     xml = Sitemap()
     from_id = request.matchdict.get('from_id')
     if from_id is not None:
-        fromlimit = 'AND module_ident <= {}'.format(from_id)
+        fromlimit = 'AND module_ident >= {}'.format(from_id)
     else:
         fromlimit = ''
     with db_connect() as db_connection:
@@ -72,10 +70,9 @@ def sitemap(request):
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
                   {}
-                ORDER BY module_ident DESC
+                ORDER BY module_ident ASC
                 LIMIT {}""".format(fromlimit, SITEMAP_LIMIT))
-            res = cursor.fetchall()
-            for ident_hash, page_name, revised in res:
+            for ident_hash, page_name, revised in cursor.fetchall():
                 url = request.route_url('content',
                                         ident_hash=ident_hash,
                                         ignore='/{}'.format(page_name))
@@ -99,14 +96,15 @@ def sitemap_index(request):
                 SELECT t.module_ident
                 FROM (
                   SELECT module_ident,
-                         row_number() OVER (ORDER BY module_ident DESC) AS row
+                         row_number() OVER (ORDER BY module_ident) AS row
                   FROM latest_modules
                   WHERE portal_type NOT IN (
                       'CompositeModule', 'SubCollection')
                 ) AS t
                 WHERE t.row % {} = 1""".format(SITEMAP_LIMIT))
 
-            for (module_ident,) in cursor.fetchall():
+            idents = sorted(cursor.fetchall(), reverse=True)
+            for (module_ident,) in idents:
                 sitemaps.append(Sitemap(url=request.route_url(
                     'sitemap', from_id=module_ident)))
 
