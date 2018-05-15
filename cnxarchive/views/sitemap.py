@@ -24,7 +24,9 @@ PAGES_TO_BLOCK = [
 
 # According to https://www.sitemaps.org/faq.html#faq_sitemap_size, a sitemap
 # file cannot have more than 50,000 urls and cannot exceed 50MB.
-SITEMAP_LIMIT = 50000
+
+# SEO suggests keeping the individual sitemaps below 1000 urls.
+SITEMAP_LIMIT = 1000
 
 logger = logging.getLogger('cnxarchive')
 
