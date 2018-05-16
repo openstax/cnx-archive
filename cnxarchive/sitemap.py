@@ -40,7 +40,11 @@ class SitemapIndex(object):
         for sitemap in self.sitemaps:
             sm = etree.SubElement(root, 'sitemap')
             etree.SubElement(sm, 'loc').text = sitemap.url
-            etree.SubElement(sm, 'lastmod').text = sitemap.lastmod
+            if hasattr(sitemap.lastmod, 'strftime'):
+                etree.SubElement(sm, 'lastmod').text = \
+                    sitemap.lastmod.strftime('%Y-%m-%d')
+            elif isinstance(sitemap.lastmod, str):
+                etree.SubElement(sm, 'lastmod').text = sitemap.lastmod
         return etree.tostring(root, pretty_print=True, xml_declaration=True,
                               encoding='utf-8')
 
