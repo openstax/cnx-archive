@@ -93,20 +93,23 @@ def sitemap_index(request):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute("""\
-                SELECT t.module_ident
+                SELECT min(t.module_ident), max(t.revised)
                 FROM (
-                  SELECT module_ident,
-                         row_number() OVER (ORDER BY module_ident) AS row
+                  SELECT module_ident, revised,
+                         (row_number() OVER (ORDER BY module_ident)) -1 AS row
                   FROM latest_modules
                   WHERE portal_type NOT IN (
                       'CompositeModule', 'SubCollection')
                 ) AS t
-                WHERE t.row % {} = 1""".format(SITEMAP_LIMIT))
+                WHERE t.row % {sml} in (0, {sml} -1)
+                GROUP BY floor(t.row/{sml})
+                ORDER BY 1;""".format(sml=SITEMAP_LIMIT))
 
             idents = sorted(cursor.fetchall(), reverse=True)
-            for (module_ident,) in idents:
+            for (module_ident, revised) in idents:
                 sitemaps.append(Sitemap(url=request.route_url(
-                    'sitemap', from_id=module_ident)))
+                    'sitemap', from_id=module_ident),
+                    lastmod=revised))
 
     si = SitemapIndex(sitemaps=sitemaps)
     resp = request.response
