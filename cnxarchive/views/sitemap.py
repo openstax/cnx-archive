@@ -53,15 +53,10 @@ def notblocked(page):
 def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
-    from_id = request.matchdict.get('from_id')
-    if from_id is not None:
-        fromlimit = 'AND module_ident >= {}'.format(from_id)
-    else:
-        fromlimit = ''
+    author = request.matchdict.get('from_id')
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute("""\
-                SELECT
+            cursor.execute("""SELECT
                     ident_hash(uuid, major_version, minor_version)
                         AS idver,
                     REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
@@ -69,10 +64,10 @@ def sitemap(request):
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
-                  {}
-                ORDER BY module_ident ASC
-                LIMIT {}""".format(fromlimit, SITEMAP_LIMIT))
-            for ident_hash, page_name, revised in cursor.fetchall():
+                AND %s = authors[1]
+                ORDER BY module_ident DESC""", (author,))
+            res = cursor.fetchall()
+            for ident_hash, page_name, revised in res:
                 url = request.route_url('content',
                                         ident_hash=ident_hash,
                                         ignore='/{}'.format(page_name))
@@ -93,22 +88,15 @@ def sitemap_index(request):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute("""\
-                SELECT min(t.module_ident), max(t.revised)
-                FROM (
-                  SELECT module_ident, revised,
-                         (row_number() OVER (ORDER BY module_ident)) -1 AS row
-                  FROM latest_modules
-                  WHERE portal_type NOT IN (
-                      'CompositeModule', 'SubCollection')
-                ) AS t
-                WHERE t.row % {sml} in (0, {sml} -1)
-                GROUP BY floor(t.row/{sml})
-                ORDER BY 1;""".format(sml=SITEMAP_LIMIT))
+                SELECT authors[1], max(revised)
+                FROM latest_modules
+                WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
+                GROUP BY authors[1]
+            """)
 
-            idents = sorted(cursor.fetchall(), reverse=True)
-            for (module_ident, revised) in idents:
+            for author, revised in cursor.fetchall():
                 sitemaps.append(Sitemap(url=request.route_url(
-                    'sitemap', from_id=module_ident),
+                    'sitemap', from_id=author),
                     lastmod=revised))
 
     si = SitemapIndex(sitemaps=sitemaps)
