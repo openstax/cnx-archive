@@ -71,12 +71,12 @@ class SitemapViewsTestCase(unittest.TestCase):
 
             from lxml import etree
             import re
-            ID_RE = re.compile('/sitemap-(\d+).xml')
+            ID_RE = re.compile('/sitemap-(.+).xml')
 
             si_tree = etree.XML(sitemap_index)
             for loc in si_tree.xpath('//s:loc/text()',
                                      namespaces={'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}):
-                fromid = int(ID_RE.search(loc).groups()[0])
+                fromid = ID_RE.search(loc).groups()[0]
 
                 self.request.matchdict = {
                     'from_id': fromid,
