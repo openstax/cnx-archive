@@ -65,7 +65,7 @@ def sitemap(request):
                     ident_hash(uuid, major_version, minor_version)
                         AS idver,
                     REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
-                        '[^[:alnum:]]', '', 'g')), ' +', '-', 'g'),
+                        '[^[:alnum:]|  +]', '', 'g')), ' +', '-', 'g'),
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
