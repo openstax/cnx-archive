@@ -54,6 +54,11 @@ def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
     author = request.matchdict.get('from_id')
+    if author is not None:
+        match = "AND '{}' = authors[1]".format(author)
+    else:
+        match = ''
+
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute("""SELECT
@@ -64,8 +69,8 @@ def sitemap(request):
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
-                AND %s = authors[1]
-                ORDER BY module_ident DESC""", (author,))
+                {}
+                ORDER BY module_ident DESC""".format(match))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 url = request.route_url('content',
