@@ -45,6 +45,15 @@ def get_latest_version(uuid_):
             except (TypeError, IndexError,):  # None returned
                 raise httpexceptions.HTTPNotFound()
 
+def get_head_version(uuid_):
+    with db_connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-head-version'], {'id': uuid_})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                raise httpexceptions.HTTPNotFound()
+
 
 def get_content_metadata(id, version, cursor):
     """Return metadata related to the content from the database."""
