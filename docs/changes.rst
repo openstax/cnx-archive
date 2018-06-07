@@ -6,6 +6,13 @@
 
    - feature message
 
+3.8.0
+-----
+
+- Provide the 'head' version of content in the content resposne. The head
+  is the last publication made for that content regardless of whether
+  it is in a publicly viewable state.
+
 3.7.0
 -----
 
