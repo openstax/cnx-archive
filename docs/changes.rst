@@ -6,6 +6,11 @@
 
    - feature message
 
+3.7.0
+-----
+
+- Change to order the sitemap by author.
+
 3.6.2
 -----
 
