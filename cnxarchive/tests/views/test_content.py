@@ -894,6 +894,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'size': 0,
                 u'state': u'missing'}],
             u'isLatest': False,
+            u'latestVersion': u'7.1',
+            u'headVersion': u'7.1',
             u'canPublish': [
                 u'OpenStaxCollege',
                 u'cnxcap',
@@ -1007,10 +1009,10 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
     def test_extra_latest(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
-        version = '7.1'
+        latest_version = '7.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, latest_version)}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1021,6 +1023,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.content_type,
                          'application/json')
         self.assertEqual(output['isLatest'], True)
+        self.assertEqual(output['latestVersion'], latest_version)
+        self.assertEqual(output['headVersion'], latest_version)
 
         version = '6.1'
 
@@ -1034,6 +1038,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.content_type,
                          'application/json')
         self.assertEqual(output['isLatest'], False)
+        self.assertEqual(output['latestVersion'], latest_version)
+        self.assertEqual(output['headVersion'], latest_version)
 
     def test_extra_wo_version(self):
         # Request the extras for a document, but without specifying
@@ -1145,6 +1151,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'cnxcap',
                 ],
             u'isLatest': True,
+            u'latestVersion': u'5',
+            u'headVersion': u'5',
             u'downloads': [{
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'

@@ -9,9 +9,7 @@
 import logging
 
 from pyramid import httpexceptions
-from pyramid.threadlocal import get_current_registry
 
-from .. import config
 from ..database import SQL, db_connect
 
 from ..utils import portaltype_to_mimetype
@@ -40,6 +38,16 @@ def get_latest_version(uuid_):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(SQL['get-module-latest-version'], {'id': uuid_})
+            try:
+                return cursor.fetchone()[0]
+            except (TypeError, IndexError,):  # None returned
+                raise httpexceptions.HTTPNotFound()
+
+
+def get_head_version(uuid_):
+    with db_connect() as db_connection:
+        with db_connection.cursor() as cursor:
+            cursor.execute(SQL['get-module-head-version'], {'id': uuid_})
             try:
                 return cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned

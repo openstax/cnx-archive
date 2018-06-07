@@ -26,7 +26,9 @@ from ..utils import (
     join_ident_hash, split_ident_hash,
     json_serial,
     )
-from .helpers import get_uuid, get_latest_version, get_content_metadata
+from .helpers import (
+    get_uuid, get_latest_version, get_head_version, get_content_metadata
+    )
 from .exports import get_export_file, ExportError
 
 HTML_WRAPPER = """\
@@ -293,6 +295,8 @@ def get_extra(request):
                 list(get_export_allowable_types(cursor, exports_dirs,
                                                 id, version))
             results['isLatest'] = is_latest(id, version)
+            results['latestVersion'] = get_latest_version(id)
+            results['headVersion'] = get_head_version(id)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
             results['books'] = get_books_containing_page(id, version)
