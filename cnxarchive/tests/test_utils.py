@@ -5,9 +5,9 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-import os
 import uuid
 import unittest
+
 
 from ..utils import (CNXHash, IdentHashSyntaxError, IdentHashShortId,
                      IdentHashMissingVersion)
@@ -439,3 +439,16 @@ class TestCNXHash(unittest.TestCase):
             self.cnxhash.get_shortid(), self.cnxhash.get_shortid()))
         self.assertFalse(identifiers_equal(self.cnxhash, []))
         self.assertFalse(identifiers_equal(uuid.uuid4(), uuid.uuid4()))
+
+
+class SafeStatTestCase(unittest.TestCase):
+
+    def call_target(self, *args, **kwargs):
+        from ..utils import safe_stat
+        return safe_stat(*args, **kwargs)
+
+    def test_success(self):
+        self.assertTrue(self.call_target('/tmp', 1))
+
+    def test_timeout(self):
+        self.assertFalse(self.call_target('/tmp', 1, cmd=['/bin/sleep', '10']))
