@@ -12,3 +12,4 @@ from .ident_hash import *  # noqa
 from .mimetype import *  # noqa
 from .text import *  # noqa
 from .json import *  # noqa
+from .safe import safe_stat  # noqa

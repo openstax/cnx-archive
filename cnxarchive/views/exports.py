@@ -17,7 +17,7 @@ from pyramid.view import view_config
 from .. import config
 from ..database import db_connect
 from ..utils import (
-    slugify, fromtimestamp, split_ident_hash,
+    slugify, fromtimestamp, split_ident_hash, safe_stat,
     )
 from .helpers import get_content_metadata
 
@@ -101,25 +101,27 @@ def get_export_file(cursor, id, version, type, exports_dirs):
                                                 version, file_extension)
 
     for dir in exports_dirs:
-        filepath = os.path.join(dir, filename)
-        try:
-            with open(filepath, 'r') as file:
-                stats = os.fstat(file.fileno())
-                modtime = fromtimestamp(int(stats.st_mtime))
-                return (slugify_title_filename, mimetype,
-                        stats.st_size, modtime, 'good', file.read())
-        except IOError:
-            # Let's see if the legacy file's there and make the new link if so
-            legacy_filepaths = [os.path.join(dir, fn)
-                                for fn in legacy_filenames]
-            for legacy_filepath in legacy_filepaths:
-                if os.path.exists(legacy_filepath):
-                    with open(legacy_filepath, 'r') as file:
-                        stats = os.fstat(file.fileno())
-                        modtime = fromtimestamp(stats.st_mtime)
-                        os.link(legacy_filepath, filepath)
-                        return (slugify_title_filename, mimetype,
-                                stats.st_size, modtime, 'good', file.read())
+        if safe_stat(dir):
+            filepath = os.path.join(dir, filename)
+            try:
+                with open(filepath, 'r') as file:
+                    stats = os.fstat(file.fileno())
+                    modtime = fromtimestamp(int(stats.st_mtime))
+                    return (slugify_title_filename, mimetype,
+                            stats.st_size, modtime, 'good', file.read())
+            except IOError:
+                # Let's see if the legacy file's there and make the new link
+                legacy_filepaths = [os.path.join(dir, fn)
+                                    for fn in legacy_filenames]
+                for legacy_filepath in legacy_filepaths:
+                    if os.path.exists(legacy_filepath):
+                        with open(legacy_filepath, 'r') as file:
+                            stats = os.fstat(file.fileno())
+                            modtime = fromtimestamp(stats.st_mtime)
+                            os.link(legacy_filepath, filepath)
+                            return (slugify_title_filename, mimetype,
+                                    stats.st_size, modtime, 'good',
+                                    file.read())
     else:
         filenames = [filename] + legacy_filenames
         log_formatted_filenames = '\n'.join([' - {}'.format(x)
