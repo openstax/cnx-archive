@@ -314,12 +314,31 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
 
         self.assertEqual(self.request.response.content_disposition,
-                         "attached; filename=college-physics-{}.pdf"
+                         "attached; filename=college-physics-7.1.pdf;"
+                         " filename*=UTF-8''college-physics-7.1.pdf"
                          .format(version))
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
         with open(expected_file, 'r') as file:
             self.assertEqual(export, file.read())
+
+        # Test unicode filename
+        id = 'c0a76659-c311-405f-9a99-15c71af39325'
+        version = '5'
+        ident_hash = '{}@{}'.format(id, version)
+        filename = '{}@{}.pdf'.format(id, version)
+        self.request.matchdict = {'ident_hash': ident_hash,
+                                  'type': 'pdf'
+                                  }
+
+        export = get_export(self.request).body
+        self.assertEqual(
+            self.request.response.content_disposition,
+            "attached; filename=useful-inf%C3%B8rmation-5.pdf;"
+            " filename*=UTF-8''useful-inf%C3%B8rmation-5.pdf"
+            .format(version))
+
+        self.assertEqual(export, '')
 
         # Test exports can access the other exports directory
         id = '56f1c5c1-4014-450d-a477-2121e276beca'
@@ -333,7 +352,8 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attached; filename=elasticity-stress-and-strain-{}.pdf"
+            "attached; filename=elasticity-stress-and-strain-8.pdf;"
+            " filename*=UTF-8''elasticity-stress-and-strain-8.pdf"
             .format(version))
 
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
