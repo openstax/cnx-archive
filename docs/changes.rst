@@ -6,6 +6,12 @@
 
    - feature message
 
+3.9.0
+-----
+- Add safe_stat util, to avoid locking up on file-system stalls (stale NFS)
+
+- Fix unicode filename issue w/ export files (pdb, zip)
+
 3.8.0
 -----
 
