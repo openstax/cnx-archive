@@ -8,6 +8,7 @@
 """Export Views."""
 import os
 import logging
+import urllib
 
 from pyramid import httpexceptions
 from pyramid.threadlocal import get_current_registry, get_current_request
@@ -65,10 +66,15 @@ def get_export(request):
     if state == 'missing':
         raise httpexceptions.HTTPNotFound()
 
+    encoded_filename = urllib.quote(filename.encode('utf-8'))
     resp = request.response
     resp.status = "200 OK"
     resp.content_type = mimetype
-    resp.content_disposition = u'attached; filename={}'.format(filename)
+    #  Need both filename and filename* below for various browsers
+    #  See: https://fastmail.blog/2011/06/24/download-non-english-filenames/
+    resp.content_disposition = "attached; filename={fname};" \
+                               " filename*=UTF-8''{fname}".format(
+                                       fname=encoded_filename)
     resp.body = file_content
     return resp
 
