@@ -314,9 +314,9 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
 
         self.assertEqual(self.request.response.content_disposition,
-                         "attached; filename=college-physics-7.1.pdf;"
-                         " filename*=UTF-8''college-physics-7.1.pdf"
-                         .format(version))
+                         "attached; filename=college-physics-{ver}.pdf;"
+                         " filename*=UTF-8''college-physics-{ver}.pdf"
+                         .format(ver=version))
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
         with open(expected_file, 'r') as file:
@@ -334,9 +334,9 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attached; filename=useful-inf%C3%B8rmation-5.pdf;"
-            " filename*=UTF-8''useful-inf%C3%B8rmation-5.pdf"
-            .format(version))
+            "attached; filename=useful-inf%C3%B8rmation-{ver}.pdf;"
+            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.pdf"
+            .format(ver=version))
 
         self.assertEqual(export, '')
 
@@ -352,9 +352,9 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attached; filename=elasticity-stress-and-strain-8.pdf;"
-            " filename*=UTF-8''elasticity-stress-and-strain-8.pdf"
-            .format(version))
+            "attached; filename=elasticity-stress-and-strain-{ver}.pdf;"
+            " filename*=UTF-8''elasticity-stress-and-strain-{ver}.pdf"
+            .format(ver=version))
 
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
                                      filename)
