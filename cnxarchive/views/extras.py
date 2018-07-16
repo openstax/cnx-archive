@@ -29,7 +29,7 @@ def _get_available_languages_and_count(cursor):
     return cursor.fetchall()
 
 
-def _get_subject_list(cursor):
+def _get_subject_list_generator(cursor):
     """Return all subjects (tags) in the database except "internal" scheme."""
     subject = None
     last_tagid = None
@@ -52,6 +52,10 @@ def _get_subject_list(cursor):
 
     if subject:
         yield subject
+
+
+def _get_subject_list(cursor):
+    return list(_get_subject_list_generator(cursor))
 
 
 def _get_featured_links(cursor):
@@ -80,16 +84,22 @@ def _get_licenses(cursor):
 @view_config(route_name='extras', request_method='GET')
 def extras(request):
     """Return a dict with archive metadata for webview."""
+    key = request.matchdict.get('key', '').lstrip('/')
+    key_map = {
+        'languages': ('languages_and_count', _get_available_languages_and_count),
+        'subjects': ('subjects', _get_subject_list),
+        'featured-links': ('featuredLinks', _get_featured_links),
+        'site-messages': ('messages', _get_service_state_messages),
+        'licenses': ('licenses', _get_licenses),
+    }
+
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
-            metadata = {
-                'languages_and_count': _get_available_languages_and_count(
-                    cursor),
-                'subjects': list(_get_subject_list(cursor)),
-                'featuredLinks': _get_featured_links(cursor),
-                'messages': _get_service_state_messages(cursor),
-                'licenses': _get_licenses(cursor),
-                }
+            if key:
+                (field, proc) = key_map[key]
+                metadata = {field: proc(cursor)}
+            else:
+                metadata = {field: proc(cursor) for (field, proc) in key_map.values()}
 
     resp = request.response
     resp.status = '200 OK'
