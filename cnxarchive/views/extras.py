@@ -91,8 +91,8 @@ def extras(request):
         'subjects': ('subjects', _get_subject_list),
         'featured-links': ('featuredLinks', _get_featured_links),
         'site-messages': ('messages', _get_service_state_messages),
-        'licenses': ('licenses', _get_licenses),
-    }
+        'licenses': ('licenses', _get_licenses)
+        }
 
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
