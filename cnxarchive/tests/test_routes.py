@@ -160,6 +160,26 @@ class RoutingTestCase(unittest.TestCase):
                     'ignore': '/title.pdf',
                     }),
                 ),
+            'extras': (
+                ('/extras', {
+                    'key': ''
+                    }),
+                ('/extras/featured-links', {
+                    'key': '/featured-links'
+                    }),
+                ('/extras/site-messages', {
+                    'key': '/site-messages'
+                    }),
+                ('/extras/licenses', {
+                    'key': '/licenses'
+                    }),
+                ('/extras/subjects', {
+                    'key': '/subjects'
+                    }),
+                ('/extras/languages', {
+                    'key': '/languages'
+                    }),
+                ),
             'content-extras': (
                 ('/extras/abcd-1234', {
                     'ident_hash': 'abcd-1234',
@@ -167,9 +187,6 @@ class RoutingTestCase(unittest.TestCase):
                 ),
             'search': (
                 ('/search', {}),
-                ),
-            'extras': (
-                ('/extras', {}),
                 ),
             'sitemap': (
                 ('/sitemap-1.xml', {
