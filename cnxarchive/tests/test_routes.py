@@ -164,11 +164,11 @@ class RoutingTestCase(unittest.TestCase):
                 ('/extras', {
                     'key': ''
                     }),
-                ('/extras/featured-links', {
-                    'key': '/featured-links'
+                ('/extras/featured', {
+                    'key': '/featured'
                     }),
-                ('/extras/site-messages', {
-                    'key': '/site-messages'
+                ('/extras/messages', {
+                    'key': '/messages'
                     }),
                 ('/extras/licenses', {
                     'key': '/licenses'

@@ -90,8 +90,8 @@ VALUES
         pyramid_testing.tearDown()
         self.fixture.tearDown()
 
-    def assert_featured_links_match(self, extras):
-        self.assertEqual(extras['featuredLinks'], [
+    def assert_featured_match(self, extras):
+        self.assertEqual(extras['featured'], [
             {u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597',
              u'title': u'College Physics',
              u'version': u'7.1',
@@ -212,34 +212,34 @@ application problems.</div>"""}
              }
             ])
 
-    def assert_languages_and_count_match(self, extras):
-        self.assertEqual(extras['languages_and_count'], [[u'da', 1], [u'en', 19]])
+    def assert_languages_match(self, extras):
+        self.assertEqual(extras['languages'], [[u'da', 1], [u'en', 19]])
 
     @testing.db_connect
     def test_extras(self, cursor):
         # Call the view
         from ...views.extras import extras
         metadata = extras(self.request).json_body
-        self.assert_featured_links_match(metadata)
+        self.assert_featured_match(metadata)
         self.assert_messages_match(metadata)
         self.assert_licenses_match(metadata)
         self.assert_subjects_match(metadata)
-        self.assert_languages_and_count_match(metadata)
+        self.assert_languages_match(metadata)
 
     @testing.db_connect
     def test_featured_links(self, cursor):
         # Call the view
         from ...views.extras import extras
-        self.request.matchdict['key'] = 'featured-links'
+        self.request.matchdict['key'] = 'featured'
         metadata = extras(self.request).json_body
-        self.assertEqual(metadata.keys(), ['featuredLinks'])
-        self.assert_featured_links_match(metadata)
+        self.assertEqual(metadata.keys(), ['featured'])
+        self.assert_featured_match(metadata)
 
     @testing.db_connect
     def test_messages(self, cursor):
         # Call the view
         from ...views.extras import extras
-        self.request.matchdict['key'] = 'site-messages'
+        self.request.matchdict['key'] = 'messages'
         metadata = extras(self.request).json_body
         self.assertEqual(metadata.keys(), ['messages'])
         self.assert_messages_match(metadata)
@@ -263,10 +263,10 @@ application problems.</div>"""}
         self.assert_subjects_match(metadata)
 
     @testing.db_connect
-    def test_languages_and_count(self, cursor):
+    def test_languages(self, cursor):
         # Call the view
         from ...views.extras import extras
         self.request.matchdict['key'] = 'languages'
         metadata = extras(self.request).json_body
-        self.assertEqual(metadata.keys(), ['languages_and_count'])
-        self.assert_languages_and_count_match(metadata)
+        self.assertEqual(metadata.keys(), ['languages'])
+        self.assert_languages_match(metadata)

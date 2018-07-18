@@ -86,22 +86,21 @@ def extras(request):
     """Return a dict with archive metadata for webview."""
     key = request.matchdict.get('key', '').lstrip('/')
     key_map = {
-        'languages': ('languages_and_count',
-                      _get_available_languages_and_count),
-        'subjects': ('subjects', _get_subject_list),
-        'featured-links': ('featuredLinks', _get_featured_links),
-        'site-messages': ('messages', _get_service_state_messages),
-        'licenses': ('licenses', _get_licenses)
+        'languages': _get_available_languages_and_count,
+        'subjects': _get_subject_list,
+        'featured': _get_featured_links,
+        'messages': _get_service_state_messages,
+        'licenses': _get_licenses
         }
 
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             if key:
-                (field, proc) = key_map[key]
-                metadata = {field: proc(cursor)}
+                proc = key_map[key]
+                metadata = {key: proc(cursor)}
             else:
-                metadata = {field: proc(cursor)
-                            for (field, proc) in key_map.values()}
+                metadata = {key: proc(cursor)
+                            for (key, proc) in key_map.items()}
 
     resp = request.response
     resp.status = '200 OK'
