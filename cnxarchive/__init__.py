@@ -64,7 +64,7 @@ def declare_api_routes(config):
     add_route('resource', '/resources/{hash}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_resource
     add_route('export', '/exports/{ident_hash}.{type}{ignore:(/.*)?}')  # noqa cnxarchive.views:get_export
     add_route('extras', '/extras{key:(/(featured|messages|licenses|subjects|languages))?}')  # noqa cnxarchive.views:extras
-    add_route('content-extras', '/extras/{ident_hash}')  # noqa cnxarchive.views:get_extra
+    add_route('content-extras', '/extras/{ident_hash:([^:/@.]+(@[0-9.]*[0-9]+)?)}{separator:(:?)}{page_ident_hash:([^:/@.]+(@[0-9.]*[0-9]+)?)?}')  # noqa cnxarchive.views:get_extra
     add_route('search', '/search')  # cnxarchive.views:search
     add_route('in-book-search', '/search/{ident_hash:([^:/]+)}')  # noqa cnxarchive.views:in-book-search
     add_route('in-book-search-page', '/search/{ident_hash:([^:/]+)}:{page_ident_hash}')  # noqa cnxarchive.views:in_book_search_highlighted_results

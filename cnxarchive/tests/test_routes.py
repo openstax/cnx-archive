@@ -181,8 +181,17 @@ class RoutingTestCase(unittest.TestCase):
                     }),
                 ),
             'content-extras': (
-                ('/extras/abcd-1234', {
-                    'ident_hash': 'abcd-1234',
+                ('/extras/abcd@1234', {
+                    'ident_hash': 'abcd@1234',
+                    'page_ident_hash': '',
+                    'separator': ''
+                    }),
+                ),
+            'content-extras': (
+                ('/extras/abcd@1234:efgh@5678', {
+                    'ident_hash': 'abcd@1234',
+                    'page_ident_hash': 'efgh@5678',
+                    'separator': ':'
                     }),
                 ),
             'search': (
