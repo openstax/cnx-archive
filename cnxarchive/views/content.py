@@ -287,7 +287,11 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    id, version = split_ident_hash(args['ident_hash'])
+    is_contextual = 'page_ident_hash' in args and args['page_ident_hash']
+    if is_contextual:
+        id, version = split_ident_hash(args['page_ident_hash'])
+    else:
+        id, version = split_ident_hash(args['ident_hash'])
     results = {}
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
@@ -299,8 +303,9 @@ def get_extra(request):
             results['headVersion'] = get_head_version(id)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
-            results['books'] = get_books_containing_page(id, version)
-            formatAuthors(results['books'])
+            if not is_contextual:
+                results['books'] = get_books_containing_page(id, version)
+                formatAuthors(results['books'])
 
     resp = request.response
     resp.content_type = 'application/json'
