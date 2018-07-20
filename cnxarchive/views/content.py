@@ -287,9 +287,18 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    is_contextual = 'page_ident_hash' in args and args['page_ident_hash']
+    is_contextual = bool(args['page_ident_hash'])
     if is_contextual:
-        id, version = split_ident_hash(args['page_ident_hash'])
+        try:
+            id, version = split_ident_hash(args['page_ident_hash'])
+        except IdentHashShortId as e:
+            id = get_uuid(e.id)
+            version = e.version
+        except IdentHashMissingVersion as e:
+            # Ideally we would find the page version
+            # that is in the book instead of latest
+            id = e.id
+            version = get_latest_version(e.id)
     else:
         id, version = split_ident_hash(args['ident_hash'])
     results = {}
@@ -303,6 +312,7 @@ def get_extra(request):
             results['headVersion'] = get_head_version(id)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
+
             if not is_contextual:
                 results['books'] = get_books_containing_page(id, version)
                 formatAuthors(results['books'])
