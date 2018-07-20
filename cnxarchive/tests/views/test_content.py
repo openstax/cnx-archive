@@ -842,7 +842,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '66.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -856,7 +858,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '6.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -908,7 +912,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '7.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -967,7 +973,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.addCleanup(remove_generated_files)
 
         # Build the request
-        self.request.matchdict = {'ident_hash': requested_ident_hash}
+        self.request.matchdict = {'ident_hash': requested_ident_hash,
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1012,7 +1020,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         latest_version = '7.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, latest_version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, latest_version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1029,7 +1039,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '6.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
 
         from ...views.content import get_extra
         output = get_extra(self.request).json_body
@@ -1051,7 +1063,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         expected_ident_hash = "{}@{}".format(id, version)
 
         # Build the request
-        self.request.matchdict = {'ident_hash': requested_ident_hash}
+        self.request.matchdict = {'ident_hash': requested_ident_hash,
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1074,7 +1088,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         # Build the request
         self.request.matchdict = {
-            'ident_hash': "{}@{}".format(short_id, version)}
+            'ident_hash': "{}@{}".format(short_id, version),
+            'page_ident_hash': '',
+            'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1096,7 +1112,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         expected_ident_hash = "{}@{}".format(id, version)
 
         # Build the request
-        self.request.matchdict = {'ident_hash': short_id}
+        self.request.matchdict = {'ident_hash': short_id,
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1114,7 +1132,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the request
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(book_id, book_version),
-            'page_ident_hash': '{}@{}'.format(page_id, page_version)}
+            'page_ident_hash': '{}@{}'.format(page_id, page_version),
+            'separator': ':'}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1134,7 +1153,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         ident_hash = '{}@{}'.format(id, version)
 
         # Build the request
-        self.request.matchdict = {'ident_hash': ident_hash}
+        self.request.matchdict = {'ident_hash': ident_hash,
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1210,7 +1231,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '7.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1228,7 +1251,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '1.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content-extras'
 
@@ -1241,7 +1266,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         version = '1.1'
 
         # Build the request
-        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version)}
+        self.request.matchdict = {'ident_hash': '{}@{}'.format(id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
 
         self.assertRaises(httpexceptions.HTTPNotFound, get_extra,
                           self.request)
