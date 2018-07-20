@@ -1124,9 +1124,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.status, '200 OK')
         self.assertEqual(self.request.response.content_type,
                          'application/json')
-        self.assertEqual(set(output.keys()),
-            set(['canPublish', 'downloads', 'headVersion',
-                 'isLatest', 'latestVersion', 'state']))
+        self.assertEqual(
+            set(output.keys()), set(['canPublish', 'downloads', 'headVersion',
+                                     'isLatest', 'latestVersion', 'state']))
 
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
