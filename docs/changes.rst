@@ -6,8 +6,20 @@
 
    - feature message
 
+4.0.0
+-----
+
+- Changes /extras api to allow separate fetching of sub-keys: i.e.
+    /extras/featured and /extras/messages not just /extras
+
+- Changed key names to shorten them, for consistency: BREAKING CHANGE
+  featuredLinks -> featured
+  site-messages -> messages
+  languages_and_counts -> languages
+
 3.9.0
 -----
+
 - Add safe_stat util, to avoid locking up on file-system stalls (stale NFS)
 
 - Fix unicode filename issue w/ export files (pdb, zip)
