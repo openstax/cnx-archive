@@ -14,7 +14,7 @@ from pyramid.view import view_config
 from ..database import db_connect
 from ..sitemap import Sitemap, SitemapIndex
 
-NON_WORD = re.compile('\W', re.UNICODE)
+NON_WORD = re.compile('\W+', re.UNICODE)
 
 PAGES_TO_BLOCK = [
     'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
@@ -74,11 +74,13 @@ def sitemap(request):
                 ORDER BY module_ident DESC""".format(match))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
-                re.sub(NON_WORD, '-', page_name) #  replace spaces and punc
+                #  replace spaces and punctuation
+                page_name = re.sub(NON_WORD, '-',
+                                   page_name.decode('utf-8'), re.UNICODE)
 
                 url = request.route_url('content',
                                         ident_hash=ident_hash,
-                                        ignore='/{}'.format(page_name))
+                                        ignore=u'/{}'.format(page_name))
                 if notblocked(url):
                     xml.add_url(url, lastmod=revised)
 
