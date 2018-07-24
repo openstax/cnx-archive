@@ -7,12 +7,14 @@
 # ###
 """Sitemap Views."""
 import logging
-from re import compile
+import re
 
 from pyramid.view import view_config
 
 from ..database import db_connect
 from ..sitemap import Sitemap, SitemapIndex
+
+NON_WORD = re.compile('\W', re.UNICODE)
 
 PAGES_TO_BLOCK = [
     'legacy.cnx.org', '/lenses', '/browse_content', '/content/', '/content$',
@@ -39,7 +41,7 @@ def notblocked(page):
     for blocked in PAGES_TO_BLOCK:
         if blocked[0] != '*':
             blocked = '*' + blocked
-        rx = compile(blocked.replace('*', '[^$]*'))
+        rx = re.compile(blocked.replace('*', '[^$]*'))
         if rx.match(page):
             return False
     return True
@@ -64,8 +66,7 @@ def sitemap(request):
             cursor.execute("""SELECT
                     ident_hash(uuid, major_version, minor_version)
                         AS idver,
-                    REGEXP_REPLACE(TRIM(REGEXP_REPLACE(LOWER(name),
-                        '[^[:alnum:]|  +]', '', 'g')), ' +', '-', 'g'),
+                    name,
                     revised
                 FROM latest_modules
                 WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
@@ -73,6 +74,8 @@ def sitemap(request):
                 ORDER BY module_ident DESC""".format(match))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
+                re.sub(NON_WORD, '-', page_name) #  replace spaces and punc
+
                 url = request.route_url('content',
                                         ident_hash=ident_hash,
                                         ignore='/{}'.format(page_name))
