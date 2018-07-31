@@ -44,7 +44,7 @@ MAX_VALUES_FOR_KEYWORDS = 100
 MAX_VALUES_FOR_AUTHORS = 100
 SORT_VALUES_MAPPING = {
     'pubdate': 'revised DESC',
-     'version': 'version DESC',
+    'version': 'version DESC',
     'popularity': 'rank DESC NULLS LAST',
     }
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
@@ -501,13 +501,15 @@ def _build_search(structured_query):
         for (keyword, value) in structured_query.filters:
             # Sanity check.
             if keyword not in VALID_FILTER_KEYWORDS:
-                raise ValueError("Invalid filter keyword '{}'.".format(keyword))
+                raise ValueError("Invalid filter keyword '{}'."
+                                 .format(keyword))
             if keyword == 'pubYear':
                 conditions['pubYear'] = 'AND extract(year from cm.revised) = \
                                          %(pubYear)s'
                 arguments.update({'pubYear': value})
             if keyword == 'authorID':
-                conditions['authorID'] = 'AND ARRAY[%(authorID)s] <@ cm.authors'
+                conditions['authorID'] = 'AND ARRAY[%(authorID)s] \
+                                          <@ cm.authors'
                 arguments.update({'authorID': value})
             if keyword == 'type':
                 value = value.lower()
@@ -525,8 +527,8 @@ def _build_search(structured_query):
                                          FROM latest_modules AS lm, \
                                          modulekeywords AS mk, \
                                          keywords AS kw \
-                                         WHERE kw.word ~* %(keyword)s \
-                                         AND lm.module_ident = mk.module_ident \
+                                         WHERE kw.word ~* %(keyword)s AND \
+                                         lm.module_ident = mk.module_ident \
                                          AND mk.keywordid = kw.keywordid)'
                 arguments.update({'keyword': value})
             if keyword == 'subject':
