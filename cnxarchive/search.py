@@ -15,14 +15,15 @@ from time import strptime
 from cnxquerygrammar.query_parser import grammar, DictFormater
 from parsimonious.exceptions import IncompleteParseError
 from psycopg2.tz import FixedOffsetTimezone, LocalTimezone
-from pyramid.threadlocal import get_current_registry
 
-from . import config
 from .database import SQL_DIRECTORY, db_connect
 from .utils import (
     portaltype_to_mimetype, COLLECTION_MIMETYPE, MODULE_MIMETYPE,
     PORTALTYPE_TO_MIMETYPE_MAPPING, utf8
     )
+import logging
+
+logger = logging.getLogger('cnxarchive')
 
 
 __all__ = ('search', 'Query',)
@@ -35,14 +36,15 @@ with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     STOPWORDS = (f.read().split(',') +
                  [chr(i) for i in range(ord('a'), ord('z') + 1)])
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'submitterID')
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'keyword', 'subject', 'language',
+                         'title', 'author')
 # The maximum number of keywords and authors to return in the search result
 # counts
 MAX_VALUES_FOR_KEYWORDS = 100
 MAX_VALUES_FOR_AUTHORS = 100
 SORT_VALUES_MAPPING = {
     'pubdate': 'revised DESC',
-    'version': 'version DESC',
+     'version': 'version DESC',
     'popularity': 'rank DESC NULLS LAST',
     }
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
@@ -59,9 +61,21 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     ('licensor', 10),
     ('exact_title', 100),
     ('title', 10),
+    # ('parentauthor', 0),
+    # ('language', 0),
+    # ('subject', 0),
+    # ('fulltext', 1),
+    # ('abstract', 0),
+    # ('keyword', 10),
+    # ('author', 0),
+    # ('editor', 0),
+    # ('translator', 0),
+    # ('maintainer', 0),
+    # ('licensor', 0),
+    # ('exact_title', 0),
+    # ('title', 20),
     ])
 SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
-
 
 def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql',
                    remove_comments=False):
@@ -78,6 +92,7 @@ SQL_SEARCH_TEMPLATES = {name: _read_sql_file(name, extension='.part.sql',
                                              remove_comments=True)
                         for name in DEFAULT_SEARCH_WEIGHTS.keys()}
 SQL_WEIGHTED_SELECT_WRAPPER = _read_sql_file('wrapper')
+SQL_QUICK_SELECT_WRAPPER = _read_sql_file('quick-wrapper')
 SEARCH_QUERY = _read_sql_file('query')
 QUERY_FIELD_ITEM_SEPARATOR = ';--;'
 QUERY_FIELD_PAIR_SEPARATOR = '-::-'
@@ -162,9 +177,11 @@ class QueryRecord(Mapping):
         self.fields = {}
         # Parse the matching fields
         for field_record in kwargs['_keys'].split(QUERY_FIELD_ITEM_SEPARATOR):
-            term, key = field_record.split(QUERY_FIELD_PAIR_SEPARATOR)
-            self.matched.setdefault(term, set()).add(key)
-            self.fields.setdefault(key, set()).add(term)
+
+            if len(field_record) > 0:
+                term, key = field_record.split(QUERY_FIELD_PAIR_SEPARATOR)
+                self.matched.setdefault(term, set()).add(key)
+                self.fields.setdefault(key, set()).add(term)
         self.match_hits = (self.matched, self.fields)
 
     def __repr__(self):
@@ -249,6 +266,7 @@ def _apply_query_type(records, query, query_type):
             #: List of records that match some of the terms.
             some_matched_records = [rec for rec in records
                                     if len(rec.matched) == matching_length]
+            # ???? term[1]
             matched_terms = [term for term in query
                              if utf8(term[1]) in term_matches]
         else:
@@ -426,56 +444,6 @@ class QueryResults(Sequence):
         return counts
 
 
-def _transmute_filter(keyword, value):
-    """SQL producer for conditionals.
-
-    Produces a SQL condition statement that is a python format statement,
-    to be used with the string ``format`` method.
-    This is to allow for the input of argument names for later
-    SQL query preparation.
-    For example::
-
-        >>> statement, value = _transmute_filter('type', 'book')
-        >>> statement.format('type_argument_one')
-        >>> statement
-        "portal_type = %(type_argument_one)s"
-
-    And later when the DBAPI ``execute`` method works on this statement,
-    it will supply an argument dictionary.
-    ::
-
-        >>> query = "SELECT * FROM modules WHERE {};".format(statement)
-        >>> cursor.execute(query, dict(type_argument_one=value))
-        >>> cursor.query
-        "SELECT * FROM modules WHERE portal_type = 'Collection';"
-
-    """
-    if keyword not in VALID_FILTER_KEYWORDS:
-        raise ValueError("Invalid filter keyword '{}'.".format(keyword))
-
-    if keyword == 'type':
-        value = value.lower()
-        if value in ['book', 'collection']:
-            type_name = 'Collection'
-        elif value in ['page', 'module']:
-            type_name = 'Module'
-        else:
-            raise ValueError("Invalid filter value '{}' for filter '{}'."
-                             .format(value, keyword))
-        return ('portal_type = %({})s', type_name)
-
-    elif keyword == 'pubYear':
-        return ('extract(year from revised) = %({})s', int(value))
-
-    elif keyword == 'authorID':
-        return ('%({})s = ANY(authors)', value)
-
-    elif keyword == 'submitterID':
-        return ('submitter = %({})s', value)
-
-    return None, None
-
-
 def _transmute_sort(sort_value):
     """Provide a value translation to the SQL column name."""
     try:
@@ -484,47 +452,7 @@ def _transmute_sort(sort_value):
         raise ValueError("Invalid sort key '{}' provided.".format(sort_value))
 
 
-class WeightedSelect:
-    """A SQL SELECT builder with weighted results."""
-
-    def __init__(self, name, template, weight=0,
-                 is_keyword_exclusive=True):
-        self.name = name
-        self.template = template
-        self.weight = weight
-        self.is_keyword_exclusive = is_keyword_exclusive
-
-    def prepare(self, query):
-        """Prepare the statement for DBAPI 2.0 execution.
-
-        :returns: A tuple of the statement text and the arguments in an ordered
-                  dictionary.
-        """
-        statements = []
-        final_statement = None
-        arguments = []
-
-        for i, (keyword, value) in enumerate(query):
-            if self.is_keyword_exclusive \
-               and (keyword != self.name and keyword != WILDCARD_KEYWORD):
-                continue
-            argument_key = "{}_{}".format(self.name, i)
-            stmt = self.template.format(argument_key)
-            statements.append(stmt)
-            arguments.append((argument_key, value))
-        if statements:
-            final_statement = SQL_WEIGHTED_SELECT_WRAPPER.format(
-                self.weight,
-                '\nUNION ALL\n'.join(statements))
-        return (final_statement, OrderedDict(arguments))
-
-
-def _make_weighted_select(name, weight=0):
-    """Private factory for creation of WeightedSelect objects."""
-    return WeightedSelect(name, SQL_SEARCH_TEMPLATES[name], weight)
-
-
-def _build_search(structured_query, weights):
+def _build_search(structured_query):
     """Construct search statment for db execution.
 
     Produces the search statement and argument dictionary to be executed
@@ -539,81 +467,75 @@ def _build_search(structured_query, weights):
     :rtype: a two value tuple of a SQL template and a dictionary of
             arguments to pass into that template
     """
-    statement = ''
     arguments = {}
-
-    # Clone the weighted queries for popping.
-    query_weight_order = DEFAULT_SEARCH_WEIGHTS.keys()
-
-    # Roll over the weight sequence.
-    query_list = []
-    while query_weight_order:
-        weight_name = query_weight_order.pop(0)
-        if weights[weight_name]:
-            weighted_select = _make_weighted_select(weight_name,
-                                                    weights[weight_name])
-            stmt, args = weighted_select.prepare(structured_query.terms)
-            query_list.append(stmt)
-            arguments.update(args)
 
     # get text terms and filter out common words
     text_terms = [term for ttype, term in structured_query.terms
                   if ttype == 'text']
     text_terms_wo_stopwords = [term for term in text_terms
                                if term.lower() not in STOPWORDS]
+    # sql where clauses
+    conditions = {'text_terms': '', 'pubYear': '', 'authorID': '', 'type': '', 'keyword': '', 'subject': '',
+                  'language': '', 'title': '', 'author': ''}
+
     # if there are other search terms (not type "text") or if the text
     # terms do not only consist of stopwords, then use the text terms
     # without stopwords
     if arguments or text_terms_wo_stopwords:
         text_terms = text_terms_wo_stopwords
     arguments.update({'text_terms': ' '.join(text_terms)})
-    queries = '\nUNION ALL\n'.join([q for q in query_list if q is not None])
 
-    # Add the arguments for filtering.
-    filter_list = []
+    if len(text_terms) > 0:
+        conditions['text_terms'] = 'AND module_idx @@ plainto_tsquery(%(text_terms)s)'
+
+    # build fulltext keys
+    fulltext_key = []
+    for term in text_terms_wo_stopwords:
+        fulltext_key.append(term + '-::-fulltext')
+    arguments.update({'fulltext_key':  ';--;'.join(fulltext_key)})
+
     if structured_query.filters:
-        if len(filter_list) == 0:
-            filter_list.append('')  # For SQL AND joining.
-        for i, (keyword, value) in enumerate(structured_query.filters):
-            arg_name = "{}_{}".format(keyword, i)
-            # These key values are special in that they don't,
-            #   directly translate to SQL fields and values.
-            try:
-                filter_stmt, match_value = _transmute_filter(keyword, value)
-            except ValueError:
-                del structured_query.filters[i]
-                continue
-            if filter_stmt:
-                arguments[arg_name] = match_value
-                filter_stmt = filter_stmt.format(arg_name)
-                filter_list.append(filter_stmt)
-    filters = ' AND '.join(filter_list)
-
-    limits = ''
-    groupby = ''
-    having_list = []
-    having = ''
-    subject_filters = [v for k, v in structured_query.filters
-                       if k == 'subject']
-    if subject_filters:
-        limits = 'NATURAL LEFT JOIN moduletags NATURAL LEFT JOIN tags'
-        groupby = '''GROUP BY lm.name, lm.uuid, lm.portal_type, lm.authors,
-             lm.major_version, lm.minor_version, language, lm.revised,
-             ab.abstract, weight, rank, lm.module_ident, weighted.keys'''
-
-        for subj in subject_filters:
-            having_list.append("'{}' = ANY(array_agg(tag))".format(subj))
-        having = 'HAVING ' + ' AND '.join(having_list)
-    groupby = '\n'.join((groupby, having,))
-
-    if not queries:  # all filter term case
-        key_list = []
-        for key, value in structured_query.filters:
-            key_list.append(QUERY_FIELD_PAIR_SEPARATOR.join((value, key,)))
-        keys = QUERY_FIELD_ITEM_SEPARATOR.join(key_list)
-        queries = """\
-SELECT module_ident, 1 AS weight, '{}'::text AS keys
-FROM latest_modules""".format(keys)
+        for (keyword, value) in structured_query.filters:
+            # Sanity check.
+            if keyword not in VALID_FILTER_KEYWORDS:
+                raise ValueError("Invalid filter keyword '{}'.".format(keyword))
+            if keyword == 'pubYear':
+                conditions['pubYear'] = 'AND extract(year from cm.revised) = %(pubYear)s'
+                arguments.update({'pubYear': value})
+            if keyword == 'authorID':
+                conditions['authorID'] = 'AND ARRAY[%(authorID)s] <@ cm.authors'
+                arguments.update({'authorID': value})
+            if keyword == 'type':
+                value = value.lower()
+                conditions['type'] = 'AND cm.portal_type = %(type)s'
+                # Sanity check.
+                if value != 'book' and value != 'page':
+                    raise ValueError("Invalid filter value '{}' for filter '{}'."
+                                     .format(value, keyword))
+                value = 'Collection' if value == 'book' else 'Module'
+                arguments.update({'type': value})
+            if keyword == 'keyword':
+                conditions['keyword'] = 'AND cm.module_ident = ANY(Select lm.module_ident FROM latest_modules as lm, \
+                modulekeywords as mk, keywords as kw where kw.word ~* %(keyword)s \
+                and lm.module_ident = mk.module_ident \
+                and mk.keywordid = kw.keywordid)'
+                arguments.update({'keyword': value})
+            if keyword == 'subject':
+                conditions['subject'] = 'AND cm.module_ident = ANY(Select lm.module_ident FROM latest_modules as lm, \
+                moduletags as mt, tags as tg where tg.tag = %(subject)s and lm.module_ident = mt.module_ident \
+                and mt.tagid = tg.tagid)'
+                arguments.update({'subject': value})
+            if keyword == 'language':
+                conditions['language'] = 'AND cm.language = %(language)s'
+                arguments.update({'language': value})
+            if keyword == 'title':
+                conditions['title'] = 'AND to_tsvector(cm.name) @@ plainto_tsquery(%(title)s)'
+                arguments.update({'title': value})
+            if keyword == 'author':
+                conditions['author'] = 'AND cm.module_ident = ANY( WITH name as (select personid from persons p where \
+                 p.fullname ~* %(author)s) select lm.module_ident from latest_modules lm \
+                join name n on ARRAY[n.personid] <@ lm.authors)'
+                arguments.update({'author': value})
 
     # Add the arguments for sorting.
     sorts = ['portal_type']
@@ -626,15 +548,14 @@ FROM latest_modules""".format(keys)
     sorts.extend(('weight DESC', 'uuid DESC',))
     sorts = ', '.join(sorts)
 
-    # Wrap the weighted queries with the main query.
-    fmt_args = dict(limits=limits, queries=queries, filters=filters,
-                    groupby=groupby, sorts=sorts)
-    statement = SEARCH_QUERY.format(**fmt_args)
-    return (statement, arguments)
+    statement = SQL_QUICK_SELECT_WRAPPER.format(conditions['pubYear'], conditions['authorID'], conditions['type'],
+                                                conditions['keyword'], conditions['subject'], conditions['text_terms'],
+                                                conditions['language'], conditions['title'], conditions['author'],
+                                                sorts=sorts)
+    return statement, arguments
 
 
-def search(query, query_type=DEFAULT_QUERY_TYPE,
-           weights=DEFAULT_SEARCH_WEIGHTS):
+def search(query, query_type=DEFAULT_QUERY_TYPE):
     """Search database using parsed query.
 
     Executes a database search query from the given ``query``
@@ -643,19 +564,12 @@ def search(query, query_type=DEFAULT_QUERY_TYPE,
 
     :param query: containing terms, filters, and sorts.
     :type query: Query
-    :param weights: weight values to assign to each keyword search field
-    :type weights: dictionary of field names to weight integers
     :returns: a sequence of records that match the query conditions
     :rtype: QueryResults (which is a sequence of QueryRecord objects)
     """
-    # Ensure all the weights are available, since the developer can supply
-    #   a minimal set of weights. All missing weights become naught.
-    weights = weights.copy()
-    for default in [(key, 0) for key in DEFAULT_SEARCH_WEIGHTS]:
-        weights.setdefault(*default)
 
     # Build the SQL statement.
-    statement, arguments = _build_search(query, weights)
+    statement, arguments = _build_search(query)
 
     # Execute the SQL.
     with db_connect() as db_connection:
