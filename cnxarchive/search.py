@@ -36,8 +36,8 @@ with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     STOPWORDS = (f.read().split(',') +
                  [chr(i) for i in range(ord('a'), ord('z') + 1)])
 WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'keyword', 'subject', 'language',
-                         'title', 'author')
+VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'keyword', 'subject',
+                         'language', 'title', 'author')
 # The maximum number of keywords and authors to return in the search result
 # counts
 MAX_VALUES_FOR_KEYWORDS = 100
@@ -76,6 +76,7 @@ DEFAULT_SEARCH_WEIGHTS = OrderedDict([
     # ('title', 20),
     ])
 SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
+
 
 def _read_sql_file(name, root=SQL_SEARCH_DIRECTORY, extension='.sql',
                    remove_comments=False):
@@ -475,8 +476,9 @@ def _build_search(structured_query):
     text_terms_wo_stopwords = [term for term in text_terms
                                if term.lower() not in STOPWORDS]
     # sql where clauses
-    conditions = {'text_terms': '', 'pubYear': '', 'authorID': '', 'type': '', 'keyword': '', 'subject': '',
-                  'language': '', 'title': '', 'author': ''}
+    conditions = {'text_terms': '', 'pubYear': '', 'authorID': '', 'type': '',
+                  'keyword': '', 'subject': '', 'language': '', 'title': '',
+                  'author': ''}
 
     # if there are other search terms (not type "text") or if the text
     # terms do not only consist of stopwords, then use the text terms
@@ -486,7 +488,8 @@ def _build_search(structured_query):
     arguments.update({'text_terms': ' '.join(text_terms)})
 
     if len(text_terms) > 0:
-        conditions['text_terms'] = 'AND module_idx @@ plainto_tsquery(%(text_terms)s)'
+        conditions['text_terms'] = 'AND module_idx \
+                                    @@ plainto_tsquery(%(text_terms)s)'
 
     # build fulltext keys
     fulltext_key = []
@@ -500,7 +503,8 @@ def _build_search(structured_query):
             if keyword not in VALID_FILTER_KEYWORDS:
                 raise ValueError("Invalid filter keyword '{}'.".format(keyword))
             if keyword == 'pubYear':
-                conditions['pubYear'] = 'AND extract(year from cm.revised) = %(pubYear)s'
+                conditions['pubYear'] = 'AND extract(year from cm.revised) = \
+                                         %(pubYear)s'
                 arguments.update({'pubYear': value})
             if keyword == 'authorID':
                 conditions['authorID'] = 'AND ARRAY[%(authorID)s] <@ cm.authors'
@@ -510,31 +514,46 @@ def _build_search(structured_query):
                 conditions['type'] = 'AND cm.portal_type = %(type)s'
                 # Sanity check.
                 if value != 'book' and value != 'page':
-                    raise ValueError("Invalid filter value '{}' for filter '{}'."
+                    raise ValueError("Invalid filter value '{}' \
+                                      for filter '{}'."
                                      .format(value, keyword))
                 value = 'Collection' if value == 'book' else 'Module'
                 arguments.update({'type': value})
             if keyword == 'keyword':
-                conditions['keyword'] = 'AND cm.module_ident = ANY(Select lm.module_ident FROM latest_modules as lm, \
-                modulekeywords as mk, keywords as kw where kw.word ~* %(keyword)s \
-                and lm.module_ident = mk.module_ident \
-                and mk.keywordid = kw.keywordid)'
+                conditions['keyword'] = 'AND cm.module_ident = \
+                                         ANY(Select lm.module_ident \
+                                         FROM latest_modules AS lm, \
+                                         modulekeywords AS mk, \
+                                         keywords AS kw \
+                                         WHERE kw.word ~* %(keyword)s \
+                                         AND lm.module_ident = mk.module_ident \
+                                         AND mk.keywordid = kw.keywordid)'
                 arguments.update({'keyword': value})
             if keyword == 'subject':
-                conditions['subject'] = 'AND cm.module_ident = ANY(Select lm.module_ident FROM latest_modules as lm, \
-                moduletags as mt, tags as tg where tg.tag = %(subject)s and lm.module_ident = mt.module_ident \
-                and mt.tagid = tg.tagid)'
+                conditions['subject'] = 'AND cm.module_ident = \
+                                         ANY(Select lm.module_ident \
+                                         FROM latest_modules AS lm, \
+                                         moduletags AS mt, tags AS tg \
+                                         WHERE tg.tag = %(subject)s AND \
+                                         lm.module_ident = mt.module_ident \
+                                         AND mt.tagid = tg.tagid)'
                 arguments.update({'subject': value})
             if keyword == 'language':
                 conditions['language'] = 'AND cm.language = %(language)s'
                 arguments.update({'language': value})
             if keyword == 'title':
-                conditions['title'] = 'AND to_tsvector(cm.name) @@ plainto_tsquery(%(title)s)'
+                conditions['title'] = 'AND to_tsvector(cm.name) @@ \
+                                       plainto_tsquery(%(title)s)'
                 arguments.update({'title': value})
             if keyword == 'author':
-                conditions['author'] = 'AND cm.module_ident = ANY( WITH name as (select personid from persons p where \
-                 p.fullname ~* %(author)s) select lm.module_ident from latest_modules lm \
-                join name n on ARRAY[n.personid] <@ lm.authors)'
+                conditions['author'] = 'AND cm.module_ident = \
+                                        ANY(WITH name AS (\
+                                        SELECT personid FROM persons p WHERE \
+                                        p.fullname ~* %(author)s) \
+                                        SELECT lm.module_ident \
+                                        FROM latest_modules lm \
+                                        JOIN name n ON ARRAY[n.personid] \
+                                        <@ lm.authors)'
                 arguments.update({'author': value})
 
     # Add the arguments for sorting.
@@ -548,9 +567,15 @@ def _build_search(structured_query):
     sorts.extend(('weight DESC', 'uuid DESC',))
     sorts = ', '.join(sorts)
 
-    statement = SQL_QUICK_SELECT_WRAPPER.format(conditions['pubYear'], conditions['authorID'], conditions['type'],
-                                                conditions['keyword'], conditions['subject'], conditions['text_terms'],
-                                                conditions['language'], conditions['title'], conditions['author'],
+    statement = SQL_QUICK_SELECT_WRAPPER.format(conditions['pubYear'],
+                                                conditions['authorID'],
+                                                conditions['type'],
+                                                conditions['keyword'],
+                                                conditions['subject'],
+                                                conditions['text_terms'],
+                                                conditions['language'],
+                                                conditions['title'],
+                                                conditions['author'],
                                                 sorts=sorts)
     return statement, arguments
 
