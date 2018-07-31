@@ -223,7 +223,7 @@ class SearchTestCase(BaseSearchTestCase):
         from ..search import search, Query
         self.query = Query(query_params)
         self.addCleanup(delattr, self, 'query')
-        return search(self.query, query_type=query_type, weights=weights)
+        return search(self.query, query_type=query_type)
 
     def test_utf8_search(self):
         query_params = [('text', 'inførmation')]
