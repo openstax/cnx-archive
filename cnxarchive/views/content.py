@@ -205,6 +205,23 @@ def get_state(cursor, id, version):
         return res[0]
 
 
+def get_portal_type(cursor, id, version):
+    """Return the module's portal_type."""
+    args = join_ident_hash(id, version)
+    sql_statement = """
+    SELECT m.portal_type
+    FROM modules as m
+    WHERE ident_hash(uuid, major_version, minor_version) = %s
+    """
+
+    cursor.execute(sql_statement, vars=(args,))
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]
+
+
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types."""
     request = get_current_request()
@@ -314,8 +331,9 @@ def get_extra(request):
             results['state'] = get_state(cursor, id, version)
 
             if not is_contextual:
-                results['books'] = get_books_containing_page(id, version)
-                formatAuthors(results['books'])
+                if get_portal_type(cursor, id, version) == 'Module':
+                    results['books'] = get_books_containing_page(id, version)
+                    formatAuthors(results['books'])
 
     resp = request.response
     resp.content_type = 'application/json'
