@@ -205,6 +205,23 @@ def get_state(cursor, id, version):
         return res[0]
 
 
+def get_portal_type(cursor, id, version):
+    """Return the module's portal_type."""
+    args = join_ident_hash(id, version)
+    sql_statement = """
+    SELECT m.portal_type
+    FROM modules as m
+    WHERE ident_hash(uuid, major_version, minor_version) = %s
+    """
+
+    cursor.execute(sql_statement, vars=(args,))
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res[0]
+
+
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types."""
     request = get_current_request()
