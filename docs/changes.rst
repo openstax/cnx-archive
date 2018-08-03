@@ -6,6 +6,14 @@
 
    - feature message
 
+4.1.0
+-----
+
+- Documentation for OAI Feed
+- Fix failing tests due to get_extra changes
+- Allow short ids for the page extras
+- Allow contextual urls in the page extras
+
 4.0.0
 -----
 
