@@ -74,10 +74,14 @@ def sitemap(request):
                 ORDER BY module_ident DESC""".format(match))
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
-                #  replace spaces and punctuation
-                page_name = re.sub(NON_WORD, '-',
+                #  replace punctuation with whitespace
+                page_name = re.sub(NON_WORD, ' ',
                                    page_name.decode('utf-8'), re.UNICODE)
-
+                # remove leading and trailing whitespace
+                page_name = page_name.strip().encode('utf-8')
+                # replace spaces with dashes
+                page_name = re.sub(' +', '-',
+                                   page_name.decode('utf-8'), re.UNICODE)
                 url = request.route_url('content',
                                         ident_hash=ident_hash,
                                         ignore=u'/{}'.format(page_name))
