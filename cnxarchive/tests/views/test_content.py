@@ -566,12 +566,12 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         book_uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         book_version = '7.1'
         page_uuid = 'f3c9ab70-a916-4d8c-9256-42953287b4e9'
-        page_version = '3'
+        page_version = '0'
 
         # Build the request
         self.request.matchdict = {
                 'ident_hash': '{}@{}'.format(book_uuid, book_version),
-                'page_ident_hash': '{}@0'.format(page_uuid),
+                'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
                 'separator': ':',
                 'ext': '',
                 }
@@ -1180,6 +1180,34 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
              u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
              u'revised': u'2013-08-31T12:07:20.342798-07:00',
              u'shortid': u'55_943-0@7.1'}])
+
+    def test_get_extra_page_contextual_url_404(self):
+        test_cases = (
+            ('f79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1',
+             '209deb1f-1a46-4369-9e0d-18674cf58a3e', '7'),
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1',
+             '309deb1f-1a46-4369-9e0d-18674cf58a3e', '7'),
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597', '8.1',
+             '209deb1f-1a46-4369-9e0d-18674cf58a3e', '7'),
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1',
+             '209deb1f-1a46-4369-9e0d-18674cf58a3e', '8'),
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1',
+             '174c4069-2743-42e9-adfe-4c7084f81fc5', '1'),
+            ('e79ffde3-7fb4-4af3-9ec8-df648b391597', '7.1',
+             'f3c9ab70-a916-4d8c-9256-42953287b4e9', '0')
+        )
+        for (book_id, book_version, page_id, page_version) in test_cases:
+            # Build the request
+            self.request.matchdict = {
+                'ident_hash': '{}@{}'.format(book_id, book_version),
+                'page_ident_hash': '{}@{}'.format(page_id, page_version),
+                'separator': ':'}
+            self.request.matched_route = mock.Mock()
+            self.request.matched_route.name = 'content-extras'
+
+            from ...views.content import get_extra
+            with self.assertRaises(httpexceptions.HTTPNotFound) as caught_exc:
+                get_extra(self.request)
 
     def test_get_extra_page_non_contextual_url(self):
         page_id = '209deb1f-1a46-4369-9e0d-18674cf58a3e'

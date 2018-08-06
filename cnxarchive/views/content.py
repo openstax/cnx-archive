@@ -17,6 +17,7 @@ from pyramid import httpexceptions
 from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
+from pyramid.httpexceptions import HTTPNotFound
 
 from ..database import (
     SQL, get_tree, get_collated_content, get_module_can_publish, db_connect)
@@ -229,10 +230,23 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
             pass
 
 
-# NOTE: Expects a RealDictCursor
-def get_module_info(cursor, id, version):
-    """Return a module's title, id, shortId authors and revised date."""
-    args = join_ident_hash(id, version)
+# NOTE: Expects both a normal cursor and a RealDictCursor
+def get_book_info(cursor, real_dict_cursor, book_id,
+                  book_version, page_id, page_version):
+    """Return information about a given book.
+
+    Return the book's title, id, shortId, authors and revised date.
+    Raise HTTPNotFound if the page is not in the book.
+    """
+    book_ident_hash = join_ident_hash(book_id, book_version)
+    page_ident_hash = join_ident_hash(page_id, page_version)
+    tree = get_tree(book_ident_hash, cursor)
+
+    # Check if the page appears in the book tree
+    if not tree or page_ident_hash not in flatten_tree_to_ident_hashes(tree):
+        # Return a 404 error if the page is not actually in the book tree
+        raise httpexceptions.HTTPNotFound()
+
     sql_statement = """
     SELECT m.name as title,
            ident_hash(m.uuid, m.major_version, m.minor_version)
@@ -251,16 +265,11 @@ def get_module_info(cursor, id, version):
     JOIN users as u on u.username = ANY(m.authors)
     WHERE ident_hash(m.uuid, m.major_version, m.minor_version) = %s
     """
-
-    cursor.execute(sql_statement, vars=(args,))
-    res = cursor.fetchone()
-    if res is None:
-        return None
-    else:
-        return res
+    real_dict_cursor.execute(sql_statement, vars=(book_ident_hash,))
+    return real_dict_cursor.fetchone()
 
 
-# NOTE: Expects a RealDictCursor
+# NOTE: Expects a normal cursor
 def get_portal_type(cursor, id, version):
     """Return the module's portal_type."""
     args = join_ident_hash(id, version)
@@ -275,30 +284,30 @@ def get_portal_type(cursor, id, version):
     if res is None:
         return None
     else:
-        return res['portal_type']
+        return res[0]
 
 
-def get_books_containing_page(uuid, version,
+def get_books_containing_page(cursor, uuid, version,
                               context_uuid=None, context_version=None):
     """Return a list of book names and UUIDs
     that contain a given module UUID."""
     with db_connect() as db_connection:
         # Uses a RealDictCursor instead of the regular cursor
         with db_connection.cursor(
-                cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+                    cursor_factory=psycopg2.extras.RealDictCursor
+                ) as real_dict_cursor:
             # In the future the books-containing-page SQL might handle
             # all of these cases. For now we branch the code out in here.
             if context_uuid and context_version:
-                # NOTE: Currently does not check that
-                # the page is actually in the book
-                return [get_module_info(cursor, context_uuid, context_version)]
+                return [get_book_info(cursor, real_dict_cursor, context_uuid,
+                                      context_version, uuid, version)]
             else:
                 portal_type = get_portal_type(cursor, uuid, version)
                 if portal_type == 'Module':
-                    cursor.execute(SQL['get-books-containing-page'],
-                                   {'document_uuid': uuid,
-                                    'document_version': version})
-                    return cursor.fetchall()
+                    real_dict_cursor.execute(SQL['get-books-containing-page'],
+                                             {'document_uuid': uuid,
+                                              'document_version': version})
+                    return real_dict_cursor.fetchall()
                 else:
                     # Books are currently not in any other book
                     return []
@@ -374,7 +383,7 @@ def get_extra(request):
             results['headVersion'] = get_head_version(id)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
-            results['books'] = get_books_containing_page(id, version,
+            results['books'] = get_books_containing_page(cursor, id, version,
                                                          context_id,
                                                          context_version)
             formatAuthors(results['books'])
