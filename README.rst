@@ -20,7 +20,7 @@ or contact Connexions for further assistance.
 Install using docker
 --------------------
 
-To run cnx-archive locally using docker::
+To run cnx-archive locally using docker, first install `Docker <https://www.docker.com/community-edition>`_ and then::
 
     docker-compose build
     docker-compose up
@@ -205,17 +205,20 @@ Running tests
    :target: https://codecov.io/gh/Connexions/cnx-archive
 
 The tests use the standard library ``unittest`` package and can therefore
-be run with minimal effort. Set the environment variable ``TESTING_CONFIG`` to the location of the testing.ini file::
+be run with minimal effort. Set the environment variable TESTING_CONFIG to point to your testing configuration file. A default example can be found at ``cnxarchive/tests/testing.ini``, and can be used directly or copied to another location and modified. Please do not modify it in place unless you intend to change the defaults for everyone.::
 
-    export TESTING_CONFIG=cnxarchive/tests/testing.ini
+    export TESTING_CONFIG=testing.ini
 
 Then, use either of the following to invoke the test suite::
 
     $ python -m unittest discover
     $ python setup.py test
-    $ pytest (if you have [pytest](https://docs.pytest.org/en/latest/getting-started.html) installed)
 
-This uses example data found in the ``cxarchive/tests/data`` directory.
+Or with `pytest <https://docs.pytest.org/en/latest/getting-started.html>`_, if you have it installed::
+
+    $ pytest
+
+This uses sample data found in the ``cxarchive/tests/data`` directory.
 
 Usage
 -----
