@@ -116,6 +116,7 @@ def search(request):
             'summarySnippet': record['abstract'],
             'bodySnippet': record['headline'],
             'pubDate': record['pubDate'],
+            'weight': record['weight'],
             })
     result_limits = []
     for count_name, values in db_results.counts.items():
