@@ -1373,7 +1373,7 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         FROM modulefti WHERE module_ident = %s''',
                        (new_module_ident,))
         idx, fulltext = cursor.fetchall()[0]
-        self.assertEqual(len(idx), 3545)
+        self.assertEqual(len(idx), 3948)
         self.assertIn('Introduction to Science and the Realm of Physics, '
                       'Physical Quantities, and Units', fulltext)
 
@@ -1477,7 +1477,7 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         FROM modulefti WHERE module_ident = %s''',
                        (new_module_ident,))
         idx, fulltext = cursor.fetchall()[0]
-        self.assertEqual(len(idx), 3545)
+        self.assertEqual(len(idx), 3922)
         self.assertIn('Introduction to Science and the Realm of Physics, '
                       'Physical Quantities, and Units', fulltext)
 

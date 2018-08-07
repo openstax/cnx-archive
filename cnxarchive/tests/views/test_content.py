@@ -77,6 +77,7 @@ class ContentViewsTestCase(unittest.TestCase):
         def patched_search(*args, **kwargs):
             self.db_search_call_count += 1
             return original_search(*args, **kwargs)
+
         cache.database_search = patched_search
         self.addCleanup(setattr, cache, 'database_search', original_search)
 
@@ -158,8 +159,8 @@ class ContentViewsTestCase(unittest.TestCase):
                 {u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
                  u'shortId': u'F0xAaSdD@1',
                  u'title': u'Collated page'},
-                ],
-            }, content['tree'])
+            ],
+        }, content['tree'])
 
     def test_content_uncollated_collection(self):
         uuid = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -184,8 +185,8 @@ class ContentViewsTestCase(unittest.TestCase):
                 {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  u'shortId': u'IJ3rHxpG@7',
                  u'title': u'Preface'},
-                ],
-            }, content['tree'])
+            ],
+        }, content['tree'])
 
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
@@ -235,34 +236,34 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                             u'shortId': u'subcol',
                             u'title': u'empty 1',
                             u'contents': [],
-                            },
+                        },
                         {
                             u'id': u'subcol',
                             u'shortId': u'subcol',
                             u'title': u'empty 2',
                             u'contents': [],
-                            },
+                        },
 
-                        ],
-                    },
+                    ],
+                },
                 {
                     u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                     u'shortId': u'IJ3rHxpG@7',
                     u'title': u'Preface',
-                    },
+                },
                 {
                     u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
                     u'shortId': u'F0xAaSdD@1',
                     u'title': u'Collated page',
-                    },
+                },
                 {
                     u'id': u'subcol',
                     u'shortId': u'subcol',
                     u'title': u'Empty Subcollection',
                     u'contents': [],
-                    },
-                ],
-            })
+                },
+            ],
+        })
 
     def test_history_metadata(self):
         # Test for the history field in the metadata
@@ -290,8 +291,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'title': None,
                 u'id': u'OpenStaxCollege',
                 u'fullname': u'OpenStax College',
-                },
-            }])
+            },
+        }])
 
     def test_module_content(self):
         # Test for retreiving a module.
@@ -315,7 +316,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         for key in content:
             self.assertEqual(content[key], MODULE_METADATA[key],
                              u'content[{key}] = {v1} but MODULE_METADATA[{key}] = {v2}'.format(
-                             key=key, v1=content[key], v2=MODULE_METADATA[key]))
+                                 key=key, v1=content[key], v2=MODULE_METADATA[key]))
 
         # Check the content is the html file.
         self.assertTrue(content_text.find('<html') >= 0)
@@ -349,7 +350,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': '{}@{}'.format(uuid, version),
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -371,7 +372,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': '{}@{}'.format(uuid, version),
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -395,7 +396,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the request environment.
         self.request.matchdict = {
             'ident_hash': uuid,
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -481,7 +482,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -505,7 +506,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.GET = {'as_collated': False}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -532,7 +533,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.GET = {'as_collated': False}
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
@@ -550,7 +551,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the request.
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(page_uuid, page_version),
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -570,11 +571,11 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         # Build the request
         self.request.matchdict = {
-                'ident_hash': '{}@{}'.format(book_uuid, book_version),
-                'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
-                'separator': ':',
-                'ext': '',
-                }
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+            'separator': ':',
+            'ext': '',
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -591,11 +592,11 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         # Build the request
         self.request.matchdict = {
-                'ident_hash': '{}@{}'.format(book_uuid, book_version),
-                'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
-                'separator': ':',
-                'ext': '',
-                }
+            'ident_hash': '{}@{}'.format(book_uuid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_uuid, page_version),
+            'separator': ':',
+            'ext': '',
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -621,7 +622,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             'page_ident_hash': page_uuid,
             'separator': ':',
             'ext': '',
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -641,9 +642,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         # Build the request
         self.request.matchdict = {
-                'ident_hash': '{}@{}'.format(book_shortid, book_version),
-                'page_ident_hash': '{}@0'.format(page_shortid),
-                }
+            'ident_hash': '{}@{}'.format(book_shortid, book_version),
+            'page_ident_hash': '{}@0'.format(page_shortid),
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -663,9 +664,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
 
         # Build the request
         self.request.matchdict = {
-                'ident_hash': '{}@{}'.format(book_shortid, book_version),
-                'page_ident_hash': '{}@{}'.format(page_shortid, page_version),
-                }
+            'ident_hash': '{}@{}'.format(book_shortid, book_version),
+            'page_ident_hash': '{}@{}'.format(page_shortid, page_version),
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -687,7 +688,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matchdict = {
             'ident_hash': book_shortid,
             'page_ident_hash': page_shortid,
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -768,7 +769,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
             'ext': '.html',
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -881,31 +882,31 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.pdf/college-physics-6.1.pdf'),
                 u'size': 0,
                 u'state': u'missing'},
-               {
-                u'created': None,
-                u'details': u'Electronic book format file, for viewing on mobile devices.',
-                u'filename': u'college-physics-6.1.epub',
-                u'format': u'EPUB',
-                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub'),
-                u'size': 0,
-                u'state': u'missing'},
-               {
-                u'created': None,
-                u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
-                u'filename': u'college-physics-6.1.zip',
-                u'format': u'Offline ZIP',
-                u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip'),
-                u'size': 0,
-                u'state': u'missing'}],
+                {
+                    u'created': None,
+                    u'details': u'Electronic book format file, for viewing on mobile devices.',
+                    u'filename': u'college-physics-6.1.epub',
+                    u'format': u'EPUB',
+                    u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.epub/college-physics-6.1.epub'),
+                    u'size': 0,
+                    u'state': u'missing'},
+                {
+                    u'created': None,
+                    u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
+                    u'filename': u'college-physics-6.1.zip',
+                    u'format': u'Offline ZIP',
+                    u'path': quote(u'/exports/e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1.zip/college-physics-6.1.zip'),
+                    u'size': 0,
+                    u'state': u'missing'}],
             u'isLatest': False,
             u'latestVersion': u'7.1',
             u'headVersion': u'7.1',
             u'canPublish': [
                 u'OpenStaxCollege',
                 u'cnxcap',
-                ],
+            ],
             u'state': None,
-            })
+        })
 
     def test_get_extra_allowable_types(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -934,7 +935,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'path': u'/exports/{}@{}.pdf/college-physics-{}.pdf'.format(
                     id, version, version),
-                },
+            },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'EPUB',
@@ -944,7 +945,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'path': u'/exports/{}@{}.epub/college-physics-{}.epub'.format(
                     id, version, version),
-                },
+            },
             {
                 u'created': u'2015-03-04T10:03:29-08:00',
                 u'format': u'Offline ZIP',
@@ -954,8 +955,8 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'path': u'/exports/{}@{}.zip/college-physics-{}.zip'.format(
                     id, version, version),
-                },
-            ])
+            },
+        ])
 
     def test_extra_downloads_with_legacy_filenames(self):
         # Tests for finding legacy filenames after a module is published from
@@ -970,6 +971,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                                                                id, version))
             for f in file_glob:
                 os.unlink(f)
+
         self.addCleanup(remove_generated_files)
 
         # Build the request
@@ -995,7 +997,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'size': 15,
                 u'details': u'PDF file, for viewing content offline and printing.',
                 u'filename': u'preface-to-college-physics-7.pdf',
-                },
+            },
             {
                 u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'.format(id, version),
                 u'format': u'EPUB',
@@ -1004,7 +1006,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'size': 16,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'filename': u'preface-to-college-physics-7.epub',
-                },
+            },
             {
                 u'created': None,
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
@@ -1013,7 +1015,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'path': u'/exports/209deb1f-1a46-4369-9e0d-18674cf58a3e@7.zip/preface-to-college-physics-7.zip',
                 u'size': 0,
                 u'state': u'missing'}
-            ])
+        ])
 
     def test_extra_latest(self):
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
@@ -1388,7 +1390,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the environment
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 
@@ -1406,7 +1408,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         # Build the environment
         self.request.matchdict = {
             'ident_hash': '{}@{}'.format(uuid, version),
-            }
+        }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'content'
 

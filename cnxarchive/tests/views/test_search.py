@@ -275,6 +275,7 @@ class SearchViewsTestCase(unittest.TestCase):
             'questions, links to labs and simulations, and ample practice '
             'opportunities to solve traditional <b>physics</b> application '
             'problems. ')
+
         self.assertEqual(
             results['results']['items'][1]['summarySnippet'],
             'algebra-based, two-semester <b>college</b> <b>physics</b> book '
@@ -287,6 +288,7 @@ class SearchViewsTestCase(unittest.TestCase):
             'problems. ')
         self.assertEqual(results['results']['items'][2]['summarySnippet'],
                          ' A number list:   one  two  three   ')
+
 
         # Test for no highlighting on specific field queries.
         self.request.params = {'q': 'title:"college physics"'}
@@ -620,7 +622,7 @@ class SearchViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(results['results']['total'], 6)
         self.assertEqual(len(results['results']['items']), 3)
 
         # Fetch next page
@@ -635,26 +637,11 @@ class SearchViewsTestCase(unittest.TestCase):
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
 
-        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(results['results']['total'], 6)
         self.assertEqual(len(results['results']['items']), 3)
 
-        # Fetch next page
-        self.request.params = {'q': 'introduction',
-                               'per_page': '3',
-                               'page': '3'}
-
-        results = call_search_view().json_body
-        status = self.request.response.status
-        content_type = self.request.response.content_type
-
-        self.assertEqual(status, '200 OK')
-        self.assertEqual(content_type, 'application/json')
-
-        self.assertEqual(results['results']['total'], 7)
-        self.assertEqual(len(results['results']['items']), 1)
-
         # Made 4 requests, so should have called db search 4 times
-        self.assertEqual(self.db_search_call_count, 3)
+        self.assertEqual(self.db_search_call_count, 2)
 
     @unittest.skipUnless(testing.IS_MEMCACHE_ENABLED, "requires memcached")
     def test_search_pagination(self):
@@ -680,13 +667,13 @@ class SearchViewsTestCase(unittest.TestCase):
             'per_page': 3,
             'page': 1,
             })
-        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(results['results']['total'], 6)
         self.assertEqual(len(results['results']['items']), 3)
         self.assertEqual(
-                results['results']['items'][0]['title'],
+                results['results']['items'][1]['title'],
                 'College Physics')
         self.assertEqual(
-                results['results']['items'][1]['title'],
+                results['results']['items'][0]['title'],
                 '<span style="color:red;">Derived</span>'
                 ' Copy of College <i>Physics</i>')
         self.assertEqual(
@@ -695,7 +682,7 @@ class SearchViewsTestCase(unittest.TestCase):
                 ' Physical Quantities, and Units')
         pub_year = [limit['values'] for limit in results['results']['limits']
                     if limit['tag'] == 'pubYear'][0]
-        self.assertEqual(pub_year, [{'value': '2013', 'count': 7}])
+        self.assertEqual(pub_year, [{'value': '2013', 'count': 6}])
 
         # Fetch next page
         self.request.params = {'q': 'introduction',
@@ -716,7 +703,7 @@ class SearchViewsTestCase(unittest.TestCase):
             'per_page': 3,
             'page': 2,
             })
-        self.assertEqual(results['results']['total'], 7)
+        self.assertEqual(results['results']['total'], 6)
         self.assertEqual(len(results['results']['items']), 3)
         self.assertEqual(results['results']['items'][0]['title'],
                          'Physics: An Introduction')
@@ -725,7 +712,7 @@ class SearchViewsTestCase(unittest.TestCase):
                          u' of Newton\u2019s Laws')
         pub_year = [limit['values'] for limit in results['results']['limits']
                     if limit['tag'] == 'pubYear'][0]
-        self.assertEqual(pub_year, [{'value': '2013', 'count': 7}])
+        self.assertEqual(pub_year, [{'value': '2013', 'count': 6}])
 
         # Fetch next page
         self.request.params = {'q': 'introduction',
@@ -739,18 +726,6 @@ class SearchViewsTestCase(unittest.TestCase):
 
         self.assertEqual(status, '200 OK')
         self.assertEqual(content_type, 'application/json')
-
-        self.assertEqual(results['query'], {
-            'sort': [],
-            'limits': [{'tag': 'text', 'value': 'introduction'}],
-            'per_page': 3,
-            'page': 3,
-            })
-        self.assertEqual(results['results']['total'], 7)
-        self.assertEqual(len(results['results']['items']), 1)
-        pub_year = [limit['values'] for limit in results['results']['limits']
-                    if limit['tag'] == 'pubYear'][0]
-        self.assertEqual(pub_year, [{'value': '2013', 'count': 7}])
 
         # Fetching all the pages should only query the
         # database once because the result should already
