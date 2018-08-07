@@ -592,13 +592,13 @@ def _build_search(structured_query):
 
     # Add the arguments for sorting.
     sorts = ['portal_type']
-    sorts.extend(('weight DESC', 'uuid DESC',))
     if structured_query.sorts:
         for sort in structured_query.sorts:
             # These sort values are not the name of the column used
             #   in the database.
             stmt = _transmute_sort(sort)
             sorts.append(stmt)
+    sorts.extend(('weight DESC', 'uuid DESC',))
     sorts = ', '.join(sorts)
 
     statement = SQL_QUICK_SELECT_WRAPPER.format(conditions['pubYear'],
