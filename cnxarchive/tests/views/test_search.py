@@ -670,10 +670,10 @@ class SearchViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['total'], 6)
         self.assertEqual(len(results['results']['items']), 3)
         self.assertEqual(
-                results['results']['items'][1]['title'],
+                results['results']['items'][0]['title'],
                 'College Physics')
         self.assertEqual(
-                results['results']['items'][0]['title'],
+                results['results']['items'][1]['title'],
                 '<span style="color:red;">Derived</span>'
                 ' Copy of College <i>Physics</i>')
         self.assertEqual(

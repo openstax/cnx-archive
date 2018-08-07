@@ -2,392 +2,395 @@
  "query": {
   "sort": [
    "version"
-  ], 
+  ],
   "limits": [
    {
-    "tag": "text", 
+    "tag": "text",
     "value": "college physics"
    }
   ],
   "per_page": 20,
   "page": 1
- }, 
+ },
  "results": {
   "items": [
    {
-    "bodySnippet": null, 
-    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ", 
-    "pubDate": "2013-08-31T19:07:20Z", 
-    "title": "College Physics", 
+    "bodySnippet": null,
+    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ",
+    "pubDate": "2013-08-31T19:07:20Z",
+    "title": "College Physics",
+    "weight": 2.85739970207214,
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
      {"index": 1, "id": "OpenStaxCollege"}
-    ], 
+    ],
     "keywords": [
-     "college physics", 
-     "physics", 
-     "friction", 
-     "ac circuits", 
-     "atomic physics", 
-     "bioelectricity", 
-     "biological and medical applications", 
-     "circuits", 
-     "collisions", 
-     "dc instruments", 
-     "drag", 
-     "elasticity", 
-     "electric charge and electric field", 
-     "electric current", 
-     "electric potential", 
-     "electrical technologies", 
-     "electromagnetic induction", 
-     "electromagnetic waves", 
-     "energy", 
-     "fluid dynamics", 
-     "fluid statics", 
-     "forces", 
-     "frontiers of physics", 
-     "gas laws", 
-     "geometric optics", 
-     "heat and transfer methods", 
-     "kinematics", 
-     "kinetic theory", 
-     "linear momentum", 
-     "magnetism", 
-     "medical applications of nuclear physics", 
-     "Newton\u2019s Laws of Motion", 
-     "Ohm\u2019s Law", 
-     "oscillatory motion and waves", 
-     "particle physics", 
-     "physics of hearing", 
-     "quantum physics", 
-     "radioactivity and nuclear physics", 
-     "resistance", 
-     "rotational motion and angular momentum", 
-     "special relativity", 
-     "statics and torque", 
-     "temperature", 
-     "thermodynamics", 
-     "uniform circular motion and gravitation", 
-     "vision and optical instruments", 
-     "wave optics", 
+     "college physics",
+     "physics",
+     "friction",
+     "ac circuits",
+     "atomic physics",
+     "bioelectricity",
+     "biological and medical applications",
+     "circuits",
+     "collisions",
+     "dc instruments",
+     "drag",
+     "elasticity",
+     "electric charge and electric field",
+     "electric current",
+     "electric potential",
+     "electrical technologies",
+     "electromagnetic induction",
+     "electromagnetic waves",
+     "energy",
+     "fluid dynamics",
+     "fluid statics",
+     "forces",
+     "frontiers of physics",
+     "gas laws",
+     "geometric optics",
+     "heat and transfer methods",
+     "kinematics",
+     "kinetic theory",
+     "linear momentum",
+     "magnetism",
+     "medical applications of nuclear physics",
+     "Newton\u2019s Laws of Motion",
+     "Ohm\u2019s Law",
+     "oscillatory motion and waves",
+     "particle physics",
+     "physics of hearing",
+     "quantum physics",
+     "radioactivity and nuclear physics",
+     "resistance",
+     "rotational motion and angular momentum",
+     "special relativity",
+     "statics and torque",
+     "temperature",
+     "thermodynamics",
+     "uniform circular motion and gravitation",
+     "vision and optical instruments",
+     "wave optics",
      "work"
-    ], 
+    ],
     "id": "e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1"
-   }, 
+   },
    {
-    "bodySnippet": null, 
-    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ", 
-    "pubDate": "2013-08-31T19:07:20Z", 
+    "bodySnippet": null,
+    "summarySnippet": "algebra-based, two-semester <b>college</b> <b>physics</b> book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental <b>physics</b> concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional <b>physics</b> application problems. ",
+    "pubDate": "2013-08-31T19:07:20Z",
     "title": "<span style=\"color:red;\">Derived</span> Copy of College <i>Physics</i>",
+    "weight": 2.05739970207214,
     "mediaType": "application/vnd.org.cnx.collection",
     "authors": [
      {"index": 1, "id": "OpenStaxCollege"}
-    ], 
-    "keywords": [], 
+    ],
+    "keywords": [],
     "id": "a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1"
    },
    {
-    "bodySnippet": null, 
+    "bodySnippet": null,
     "summarySnippet": " A number list:   one  two  three   ",
-    "pubDate": "2013-07-31T19:07:20Z", 
-    "title": "Preface to College Physics", 
+     "weight": 2.85736703872681,
+    "pubDate": "2013-07-31T19:07:20Z",
+    "title": "Preface to College Physics",
     "mediaType": "application/vnd.org.cnx.module",
     "authors": [
      {"index": 0, "id": "cnxcap"},
      {"index": 1, "id": "OpenStaxCollege"}
-    ], 
+    ],
     "keywords": [
-     "college physics", 
-     "introduction", 
+     "college physics",
+     "introduction",
      "physics"
-    ], 
+    ],
     "id": "209deb1f-1a46-4369-9e0d-18674cf58a3e@7"
    }
-  ], 
-  "total": 3, 
+  ],
+  "total": 3,
   "auxiliary": {
    "types": [
     {
-     "id": "application/vnd.org.cnx.collection", 
+     "id": "application/vnd.org.cnx.collection",
      "name": "Book"
-    }, 
+    },
     {
-     "id": "application/vnd.org.cnx.module", 
+     "id": "application/vnd.org.cnx.module",
      "name": "Page"
     }
-   ], 
+   ],
    "authors": [
     {
-     "surname": "Physics", 
-     "firstname": "College", 
+     "surname": "Physics",
+     "firstname": "College",
      "suffix": null,
-     "title": null, 
-     "fullname": "OSC Physics Maintainer", 
+     "title": null,
+     "fullname": "OSC Physics Maintainer",
      "id": "cnxcap"
-    }, 
+    },
     {
-     "surname": null, 
-     "firstname": "OpenStax College", 
+     "surname": null,
+     "firstname": "OpenStax College",
      "suffix": null,
-     "title": null, 
-     "fullname": "OpenStax College", 
+     "title": null,
+     "fullname": "OpenStax College",
      "id": "OpenStaxCollege"
     }
    ]
-  }, 
+  },
   "limits": [
    {
-    "tag": "pubYear", 
+    "tag": "pubYear",
     "values": [
      {
-      "count": 3, 
+      "count": 3,
       "value": "2013"
      }
     ]
-   }, 
+   },
    {
-    "tag": "authorID", 
+    "tag": "authorID",
     "values": [
      {
-      "count": 3, 
+      "count": 3,
       "value": "OpenStaxCollege",
       "index": 1
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "cnxcap",
       "index": 0
      }
     ]
-   }, 
+   },
    {
-    "tag": "type", 
+    "tag": "type",
     "values": [
      {
-      "count": 2, 
+      "count": 2,
       "value": "application/vnd.org.cnx.collection"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "application/vnd.org.cnx.module"
      }
     ]
-   }, 
+   },
    {
-    "tag": "keyword", 
+    "tag": "keyword",
     "values": [
      {
-      "count": 1, 
+      "count": 1,
       "value": "ac circuits"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "atomic physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "bioelectricity"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "biological and medical applications"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "circuits"
-     }, 
+     },
      {
-      "count": 2, 
+      "count": 2,
       "value": "college physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "collisions"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "dc instruments"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "drag"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "elasticity"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electric charge and electric field"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electric current"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electric potential"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electrical technologies"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electromagnetic induction"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "electromagnetic waves"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "energy"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "fluid dynamics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "fluid statics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "forces"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "friction"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "frontiers of physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "gas laws"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "geometric optics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "heat and transfer methods"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "introduction"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "kinematics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "kinetic theory"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "linear momentum"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "magnetism"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "medical applications of nuclear physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "Newton\u2019s Laws of Motion"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "Ohm\u2019s Law"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "oscillatory motion and waves"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "particle physics"
-     }, 
+     },
      {
-      "count": 2, 
+      "count": 2,
       "value": "physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "physics of hearing"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "quantum physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "radioactivity and nuclear physics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "resistance"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "rotational motion and angular momentum"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "special relativity"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "statics and torque"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "temperature"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "thermodynamics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "uniform circular motion and gravitation"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "vision and optical instruments"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "wave optics"
-     }, 
+     },
      {
-      "count": 1, 
+      "count": 1,
       "value": "work"
      }
     ]
-   }, 
+   },
    {
-    "tag": "subject", 
+    "tag": "subject",
     "values": [
      {
-      "count": 2, 
+      "count": 2,
       "value": "Mathematics and Statistics"
-     }, 
+     },
      {
       "count": 1,
       "value": "OpenStax Featured"
      },
      {
-      "count": 1, 
+      "count": 1,
       "value": "Science and Technology"
      }
     ]
