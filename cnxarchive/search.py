@@ -35,9 +35,9 @@ with open(os.path.join(here, 'data', 'common-english-words.txt'), 'r') as f:
     # stopwords are all the common english words plus single characters
     STOPWORDS = (f.read().split(',') +
                  [chr(i) for i in range(ord('a'), ord('z') + 1)])
-WILDCARD_KEYWORD = 'text'
-VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'keyword', 'subject',
-                         'language', 'title', 'author')
+# WILDCARD_KEYWORD = 'text'
+# VALID_FILTER_KEYWORDS = ('type', 'pubYear', 'authorID', 'keyword', 'subject',
+#                          'language', 'title', 'author', 'abstract')
 # The maximum number of keywords and authors to return in the search result
 # counts
 MAX_VALUES_FOR_KEYWORDS = 100
@@ -48,32 +48,6 @@ SORT_VALUES_MAPPING = {
     'popularity': 'rank DESC NULLS LAST',
     }
 DEFAULT_SEARCH_WEIGHTS = OrderedDict([
-    ('parentauthor', 0),
-    ('language', 5),
-    ('subject', 10),
-    ('fulltext', 1),
-    ('abstract', 1),
-    ('keyword', 10),
-    ('author', 50),
-    ('editor', 20),
-    ('translator', 40),
-    ('maintainer', 10),
-    ('licensor', 10),
-    ('exact_title', 100),
-    ('title', 10),
-    # ('parentauthor', 0),
-    # ('language', 0),
-    # ('subject', 0),
-    # ('fulltext', 1),
-    # ('abstract', 0),
-    # ('keyword', 10),
-    # ('author', 0),
-    # ('editor', 0),
-    # ('translator', 0),
-    # ('maintainer', 0),
-    # ('licensor', 0),
-    # ('exact_title', 0),
-    # ('title', 20),
     ])
 SQL_SEARCH_DIRECTORY = os.path.join(SQL_DIRECTORY, 'search')
 
@@ -110,7 +84,7 @@ class Query(Sequence):
 
     def __init__(self, query):
         """Create a query object."""
-        self.filters = [q for q in query if q[0] in VALID_FILTER_KEYWORDS]
+        self.filters = [q for q in query if q[0] != 'text']
         self.sorts = [q[1] for q in query if q[0] == 'sort']
         self.terms = [q for q in query
                       if q not in self.filters and q[0] != 'sort']
@@ -453,6 +427,27 @@ def _transmute_sort(sort_value):
         raise ValueError("Invalid sort key '{}' provided.".format(sort_value))
 
 
+def _convert(tup, dictlist):
+    """
+    :param tup: a list of tuples
+    :param di: a dictionary converted from tup
+    :return: dictionary
+    """
+    di = {}
+    for a, b in tup:
+        di.setdefault(a, []).append(b)
+    for key, val in di.items():
+        dictlist.append((key, val))
+    return dictlist
+
+
+def _upper(val_list):
+    res = []
+    for ele in val_list:
+        res.append(ele.upper())
+    return res
+
+
 def _build_search(structured_query):
     """Construct search statment for db execution.
 
@@ -473,12 +468,13 @@ def _build_search(structured_query):
     # get text terms and filter out common words
     text_terms = [term for ttype, term in structured_query.terms
                   if ttype == 'text']
+
     text_terms_wo_stopwords = [term for term in text_terms
                                if term.lower() not in STOPWORDS]
     # sql where clauses
     conditions = {'text_terms': '', 'pubYear': '', 'authorID': '', 'type': '',
                   'keyword': '', 'subject': '', 'language': '', 'title': '',
-                  'author': ''}
+                  'author': '', 'abstract': ''}
 
     # if there are other search terms (not type "text") or if the text
     # terms do not only consist of stopwords, then use the text terms
@@ -486,6 +482,7 @@ def _build_search(structured_query):
     if arguments or text_terms_wo_stopwords:
         text_terms = text_terms_wo_stopwords
     arguments.update({'text_terms': ' '.join(text_terms)})
+    # raise Exception(structured_query.filters, structured_query.terms)
 
     if len(text_terms) > 0:
         conditions['text_terms'] = 'AND module_idx \
@@ -497,76 +494,111 @@ def _build_search(structured_query):
         fulltext_key.append(term + '-::-fulltext')
     arguments.update({'fulltext_key':  ';--;'.join(fulltext_key)})
 
-    if structured_query.filters:
-        for (keyword, value) in structured_query.filters:
-            # Sanity check.
-            if keyword not in VALID_FILTER_KEYWORDS:
-                raise ValueError("Invalid filter keyword '{}'."
-                                 .format(keyword))
-            if keyword == 'pubYear':
-                conditions['pubYear'] = 'AND extract(year from cm.revised) = \
-                                         %(pubYear)s'
-                arguments.update({'pubYear': value})
-            if keyword == 'authorID':
-                conditions['authorID'] = 'AND ARRAY[%(authorID)s] \
-                                          <@ cm.authors'
-                arguments.update({'authorID': value})
-            if keyword == 'type':
-                value = value.lower()
-                conditions['type'] = 'AND cm.portal_type = %(type)s'
-                # Sanity check.
-                if value != 'book' and value != 'page':
-                    raise ValueError("Invalid filter value '{}' \
-                                      for filter '{}'."
-                                     .format(value, keyword))
-                value = 'Collection' if value == 'book' else 'Module'
-                arguments.update({'type': value})
-            if keyword == 'keyword':
-                conditions['keyword'] = 'AND cm.module_ident = \
-                                         ANY(Select lm.module_ident \
-                                         FROM latest_modules AS lm, \
-                                         modulekeywords AS mk, \
-                                         keywords AS kw \
-                                         WHERE kw.word ~* %(keyword)s AND \
-                                         lm.module_ident = mk.module_ident \
-                                         AND mk.keywordid = kw.keywordid)'
-                arguments.update({'keyword': value})
-            if keyword == 'subject':
-                conditions['subject'] = 'AND cm.module_ident = \
-                                         ANY(Select lm.module_ident \
-                                         FROM latest_modules AS lm, \
-                                         moduletags AS mt, tags AS tg \
-                                         WHERE tg.tag = %(subject)s AND \
-                                         lm.module_ident = mt.module_ident \
-                                         AND mt.tagid = tg.tagid)'
-                arguments.update({'subject': value})
-            if keyword == 'language':
-                conditions['language'] = 'AND cm.language = %(language)s'
-                arguments.update({'language': value})
-            if keyword == 'title':
-                conditions['title'] = 'AND to_tsvector(cm.name) @@ \
-                                       plainto_tsquery(%(title)s)'
-                arguments.update({'title': value})
-            if keyword == 'author':
-                conditions['author'] = 'AND cm.module_ident = \
-                                        ANY(WITH name AS (\
-                                        SELECT personid FROM persons p WHERE \
-                                        p.fullname ~* %(author)s) \
-                                        SELECT lm.module_ident \
-                                        FROM latest_modules lm \
-                                        JOIN name n ON ARRAY[n.personid] \
-                                        <@ lm.authors)'
-                arguments.update({'author': value})
+    idx = 0
+    invalid_filters = []
+    filters = _convert(structured_query.filters, [])
+
+    while idx < len(filters):
+        keyword = filters[idx][0]
+        value = filters[idx][1]
+        if keyword == 'pubYear':
+            conditions['pubYear'] = 'AND extract(year from cm.revised) = \
+                                     %(pubYear)s'
+            arguments.update({'pubYear': value[0]})
+        elif keyword == 'authorID':
+            conditions['authorID'] = 'AND ARRAY[%(authorID)s] \
+                                      <@ cm.authors'
+            arguments.update({'authorID': value[0]})
+        elif keyword == 'type':
+            value[0] = value[0].lower()
+
+            conditions['type'] = 'AND cm.portal_type = %(type)s'
+            if value[0] != 'book' and value[0] != 'collection' and \
+                    value[0] != 'page' and value[0] != 'module':
+                invalid_filters.append(idx)
+            value[0] = 'Collection' if (value[0] == 'book' or \
+                value[0] == 'collection') else 'Module'
+            arguments.update({'type': value[0]})
+        elif keyword == 'keyword':
+            value = _upper(value)
+            conditions['keyword'] = 'AND cm.module_ident = \
+                                     ANY(WITH target AS ( \
+                                     SELECT lm.module_ident AS id, \
+                                     array_agg(UPPER(kw.word)) AS akw \
+                                     FROM latest_modules lm, \
+                                     modulekeywords mk, \
+                                     keywords kw \
+                                     WHERE lm.module_ident = mk.module_ident \
+                                     AND kw.keywordid = mk.keywordid \
+                                     GROUP BY id) \
+                                     SELECT target.id FROM target WHERE \
+                                     target.akw @> %(keyword)s)'
+            arguments.update({'keyword': value})
+        elif keyword == 'subject':
+            conditions['subject'] = 'AND cm.module_ident = \
+                                     ANY(WITH sub AS ( \
+                                     SELECT module_ident AS id, \
+                                     array_agg(tag) AS atag \
+                                     FROM latest_modules \
+                                     NATURAL JOIN \
+                                     moduletags NATURAL JOIN \
+                                     tags GROUP BY id) \
+                                     SELECT sub.id FROM sub WHERE \
+                                     sub.atag @> %(subject)s)'
+            arguments.update({'subject': value})
+        elif keyword == 'language':
+            conditions['language'] = 'AND cm.language = %(language)s'
+            arguments.update({'language': value[0]})
+        elif keyword == 'title':
+            conditions['title'] = 'AND strip_html(cm.name) ~* \
+                                   %(title)s'
+            arguments.update({'title': value[0]})
+        elif keyword == 'author':
+            conditions['author'] = 'AND cm.module_ident = \
+                                    ANY(WITH name AS ( \
+                                    SELECT username FROM users u WHERE \
+                                    u.first_name||\' \'||u.last_name \
+                                    ~* %(author)s) \
+                                    SELECT lm.module_ident \
+                                    FROM latest_modules lm \
+                                    JOIN name n ON ARRAY[n.username] \
+                                    <@ lm.authors)'
+            arguments.update({'author': value[0]})
+        elif keyword == 'abstract':
+            conditions['abstract'] = 'AND cm.module_ident = \
+                                      ANY(SELECT lm.module_ident FROM \
+                                      latest_modules lm, \
+                                      abstracts ab WHERE\
+                                      lm.abstractid = ab.abstractid \
+                                      AND ab.abstract \
+                                      ~* %(abstract)s)'
+            arguments.update({'abstract': value[0]})
+        else:
+            # Invalid filter!
+            invalid_filters.append(idx)
+        idx += 1
+
+    if len(invalid_filters) == len(structured_query.filters) and \
+            len(structured_query.terms) == 0:
+        # Either query terms are all invalid filters
+        # or we received a null query.
+        # Clear the filter list in this case.
+        structured_query.filters = []
+        return None, None
+
+    for invalid_filter_idx in invalid_filters:
+        # Remove invalid filters.
+        del structured_query.filters[invalid_filter_idx]
 
     # Add the arguments for sorting.
     sorts = ['portal_type']
+    sorts.extend(('weight DESC', 'uuid DESC',))
     if structured_query.sorts:
         for sort in structured_query.sorts:
             # These sort values are not the name of the column used
             #   in the database.
             stmt = _transmute_sort(sort)
             sorts.append(stmt)
-    sorts.extend(('weight DESC', 'uuid DESC',))
     sorts = ', '.join(sorts)
 
     statement = SQL_QUICK_SELECT_WRAPPER.format(conditions['pubYear'],
@@ -578,6 +610,7 @@ def _build_search(structured_query):
                                                 conditions['language'],
                                                 conditions['title'],
                                                 conditions['author'],
+                                                conditions['abstract'],
                                                 sorts=sorts)
     return statement, arguments
 
@@ -599,6 +632,8 @@ def search(query, query_type=DEFAULT_QUERY_TYPE):
     statement, arguments = _build_search(query)
 
     # Execute the SQL.
+    if statement is None and arguments is None:
+        return QueryResults([], [], 'AND')
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             cursor.execute(statement, arguments)
