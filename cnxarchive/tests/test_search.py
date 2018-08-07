@@ -517,9 +517,9 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 2)
         # Both of these are books, the a733d0d2 is derived from e79ffde3.
-        # Because the a733d0d2 has derived parentage, it get's a -1 penalty.
+        # Because the a733d0d2 has derived parentage, it get's a penalty.
         expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 0),
-                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', -1),
+                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', -0.2),
                     ]
         self.assertEqual(result_weights, expected)
 
