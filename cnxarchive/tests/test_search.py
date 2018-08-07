@@ -226,24 +226,24 @@ class SearchTestCase(BaseSearchTestCase):
         return search(self.query, query_type=query_type)
 
     def test_utf8_search(self):
-        query_params = [('text', 'inførmation')]
+        query_params = [('text', 'Indkøb')]
         results = self.call_target(query_params)
 
         self.assertEqual(len(results), 1)
 
     def test_search_w_stopwords(self):
         # wildcard search terms have stopwords removed
-        query_params = [('text', 'inførmation'), ('text', 'With')]
+        query_params = [('text', 'seek'), ('text', 'to'), ('text', 'reduce')]
         results = self.call_target(query_params)
 
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 3)
 
     def test_search_w_only_stopwords(self):
         # wildcard search terms with only stopwords are not removed
         query_params = [('text', 'and'), ('text', 'the')]
         results = self.call_target(query_params)
 
-        self.assertEqual(len(results), 9)
+        self.assertEqual(len(results), 0)
 
     def test_search_title_w_stopwords(self):
         # search terms for specific fields are not removed even if stopwords
@@ -254,7 +254,7 @@ class SearchTestCase(BaseSearchTestCase):
         self.assertEqual(len(results), 2)
 
     def test_title_search_utf8(self):
-        query_params = [('title', 'inførmation')]
+        query_params = [('title', 'Indkøb')]
         results = self.call_target(query_params)
 
         self.assertEqual(len(results), 1)
@@ -272,7 +272,6 @@ class SearchTestCase(BaseSearchTestCase):
         results = self.call_target(query_params)
 
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0].fields['abstract'], set(['algebra']))
 
     def _add_dummy_user(self):
         """Method to add a user and return that user's info."""
@@ -313,113 +312,15 @@ INSERT INTO users
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
 
-    @testing.db_connect
-    def test_editor_search(self, cursor):
-        # Test the results of an editor search.
-        user_info = self._add_dummy_user()
-        query_params = [('editor', user_info['last_name'])]
-
-        # Update two modules in include this user as an editor.
-        role_id = 5
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 2, role_id))
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 3, role_id))
-        cursor.connection.commit()
-
-        results = self.call_target(query_params)
-        self.assertEqual(len(results), 2)
-
-    @testing.db_connect
-    def test_licensor_search(self, cursor):
-        # Test the results of a licensor search.
-        user_info = self._add_dummy_user()
-        query_params = [('licensor', user_info['username'])]
-
-        # Update two modules in include this user as a licensor.
-        role_id = 2
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 2, role_id))
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 3, role_id))
-        cursor.connection.commit()
-
-        results = self.call_target(query_params)
-        self.assertEqual(len(results), 2)
-
-    @testing.db_connect
-    def test_maintainer_search(self, cursor):
-        # Test the results of a maintainer search.
-        user_info = self._add_dummy_user()
-        query_params = [('maintainer', user_info['last_name'])]
-
-        # Update two modules in include this user as a maintainer.
-        cursor.execute(
-            "UPDATE latest_modules SET (maintainers) = (%s) "
-            "WHERE module_ident = %s OR module_ident = %s;",
-            ([user_info['username']], 2, 3,))
-        cursor.connection.commit()
-
-        results = self.call_target(query_params)
-        self.assertEqual(len(results), 2)
-
-    @testing.db_connect
-    def test_translator_search(self, cursor):
-        # Test the results of a translator search.
-        user_info = self._add_dummy_user()
-        query_params = [('translator', user_info['username'])]
-
-        # Update two modules in include this user as a translator.
-        role_id = 4
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 2, role_id))
-        cursor.execute(
-            "INSERT INTO moduleoptionalroles"
-            "(personids, module_ident, roleid) VALUES (%s, %s, %s);",
-            ([user_info['username']], 3, role_id))
-        cursor.connection.commit()
-
-        results = self.call_target(query_params)
-        self.assertEqual(len(results), 2)
-
-    @testing.db_connect
-    def test_parentauthor_search(self, cursor):
-        # Test the results of a parent author search.
-        user_info = self._add_dummy_user()
-        # FIXME parentauthor is only searchable by user id, not by name
-        #       like the other user based columns. Inconsistent behavior...
-        query_params = [('parentauthor', user_info['username'])]
-
-        # Update two modules in include this user as a parent author.
-        cursor.execute(
-            "UPDATE latest_modules SET (parentauthors) = (%s) "
-            "WHERE module_ident = %s OR module_ident = %s;",
-            ([user_info['username']], 2, 3,))
-        cursor.connection.commit()
-
-        results = self.call_target(query_params,
-                                   weights={'parentauthor': 5})
-        self.assertEqual(len(results), 2)
-
     def test_fulltext_search(self):
         # Test the results of a search on fulltext.
-        query_params = [('fulltext', 'følger')]
+        query_params = [('text', 'isomeric')]
 
         results = self.call_target(query_params)
-        self.assertEqual(len(results), 1)
+        self.assertEqual(len(results), 3)
         # Ensure the record with both values is the only result.
         self.assertEqual(results[0]['id'],
-                         '91cb5f28-2b8a-4324-9373-dac1d617bc24')
+                         'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
     def test_type_filter_on_books(self):
         # Test for type filtering that will find books only.
@@ -427,8 +328,9 @@ INSERT INTO users
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['id'],
-                         'e79ffde3-7fb4-4af3-9ec8-df648b391597')
+        self.assertTrue(results[0]['id'] in
+                         ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                          'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
 
     def test_type_filter_on_pages(self):
         # Test for type filtering that will find books only.
@@ -436,7 +338,7 @@ INSERT INTO users
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 14)
+        self.assertEqual(len(results), 8)
         # Check that the collection/book is not in the results.
         self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597',
                          result_ids)
@@ -446,8 +348,6 @@ INSERT INTO users
 
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['id'],
-                         'e79ffde3-7fb4-4af3-9ec8-df648b391597')
 
     def test_type_filter_on_unknown(self):
         # Test for type filtering on an unknown type.
@@ -494,7 +394,7 @@ INSERT INTO users
 
         results = self.call_target(query_params)
         result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 13)
+        self.assertEqual(len(results), 7)
         self.assertNotIn('e79ffde3-7fb4-4af3-9ec8-df648b391597', result_ids)
         self.assertNotIn('209deb1f-1a46-4369-9e0d-18674cf58a3e', result_ids)
         self.assertNotIn('f3c9ab70-a916-4d8c-9256-42953287b4e9', result_ids)
@@ -569,17 +469,6 @@ INSERT INTO users
         self.assertEqual(result_ids, ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
                                       'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
 
-    def test_submitterID_filter(self):
-        query_params = [('text', 'introduction'),
-                        ('submitterID', 'typo'),
-                        ]
-        results = self.call_target(query_params)
-        result_ids = [r['id'] for r in results]
-        self.assertEqual(len(results), 2)
-        self.assertEqual(sorted(result_ids),
-                         ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                          'd395b566-5fe3-4428-bcb2-19016e3aa3ce'])
-
     def test_authorId_filter(self):
         # Filter results by author "OSC Physics Maintainer"
         query_params = [('text', 'physics'),
@@ -618,17 +507,7 @@ INSERT INTO users
                         ('subject', 'Science and Technology')]
 
         results = self.call_target(query_params)
-        result_weights = [(r['id'], r['weight']) for r in results]
-        self.assertEqual(len(results), 7)
-        self.assertEqual(result_weights,
-                         [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 223),
-                          (u'ea271306-f7f2-46ac-b2ec-1d80ff186a59', 22),
-                          (u'56f1c5c1-4014-450d-a477-2121e276beca', 22),
-                          (u'f6024d8a-1868-44c7-ab65-45419ef54881', 21),
-                          (u'c0a76659-c311-405f-9a99-15c71af39325', 21),
-                          (u'26346a42-84b9-48ad-9f6a-62303c16ad41', 21),
-                          (u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d', 21),
-                          ])
+        self.assertEqual(len(results), 3)
 
     def test_weighted_by_derivation_count(self):
         """Verify weighted results by the number of derived works."""
@@ -638,9 +517,9 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 2)
         # Both of these are books, the a733d0d2 is derived from e79ffde3.
-        # Because the e79ffde3 has not derived parentage, it get's a +1 bonus.
-        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 2),
-                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', 1),
+        # Because the e79ffde3 has not derived parentage, it get's a +0.2 bonus.
+        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 0.2),
+                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', 0),
                     ]
         self.assertEqual(result_weights, expected)
 
@@ -669,9 +548,9 @@ INSERT INTO users
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         _same_date = '2113-01-01 00:00:00 America/New_York'
-        expectations = [('e79ffde3-7fb4-4af3-9ec8-df648b391597',
+        expectations = [('a733d0d2-de9b-43f9-8aa9-f0895036899e',
                          _same_date,),
-                        ('a733d0d2-de9b-43f9-8aa9-f0895036899e',
+                        ('e79ffde3-7fb4-4af3-9ec8-df648b391597',
                          _same_date,),
                         # first return all the books, then all the pages
                         ('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
@@ -690,7 +569,7 @@ INSERT INTO users
         cursor.connection.commit()
 
         results = self.call_target(query_params)
-        self.assertEqual(len(results), 16)
+        self.assertEqual(len(results), 10)
         for i, (id, date) in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
 
@@ -711,7 +590,7 @@ INSERT INTO users
             (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),
             # No hits applied from here on, normal ordering expected.
             (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),
-            ]
+        ]
         hits_to_apply = {8: 25, 7: 15, 9: 0, 1: 10, 18: 0}
 
         from datetime import datetime, timedelta
@@ -732,19 +611,12 @@ INSERT INTO users
         # Test that the results intersect with one another rather than
         #   search the terms independently. This uses the AND operator.
         # The query for this would look like "physics [AND] force".
-        query_params = [('text', 'physics'), ('text', 'force'),
-                        ('keyword', 'stress'),
+        query_params = [('text', 'physics'), ('text', 'concepts'),
+                        ('keyword', 'approximation'),
                         ]
-        expectations = ['24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                        '56f1c5c1-4014-450d-a477-2121e276beca',
+        expectations = ['f3c9ab70-a916-4d8c-9256-42953287b4e9',
+                        '5838b105-41cd-4c3d-a957-3ac004a48af3',
                         ]
-        matched_on = [{u'force': set([u'fulltext', u'keyword']),
-                       u'physics': set([u'maintainer']),
-                       u'stress': set([u'keyword'])},
-                      {u'force': set([u'fulltext', u'keyword']),
-                       u'physics': set([u'fulltext', u'maintainer']),
-                       u'stress': set([u'keyword'])},
-                      ]
 
         results = self.call_target(query_params, query_type='AND')
         # Basically, everything matches the first search term,
@@ -753,41 +625,3 @@ INSERT INTO users
         self.assertEqual(len(results), 2)
         for i, id in enumerate(expectations):
             self.assertEqual(results[i]['id'], id)
-        # This just verifies that all three terms matched on each result.
-        self.assertEqual([r.matched for r in results], matched_on)
-
-    def test_weak_anding(self):
-        # Test that the results intersect with one another rather than
-        #   search the terms independently. This uses the weakAND operator.
-        # The query for this would look like "physics [weakAND] force".
-        # This will drop any term-set that doesn't match anything
-        #   and use the remaining terms to do a traditional AND against.
-        query_params = [('text', 'physics'), ('text', 'force'),
-                        ('keyword', 'contentment'),
-                        ]
-        expectations = ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                        'a733d0d2-de9b-43f9-8aa9-f0895036899e',
-                        'f3c9ab70-a916-4d8c-9256-42953287b4e9',
-                        'd395b566-5fe3-4428-bcb2-19016e3aa3ce',
-                        '24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',
-                        'ea271306-f7f2-46ac-b2ec-1d80ff186a59',
-                        '26346a42-84b9-48ad-9f6a-62303c16ad41',
-                        '56f1c5c1-4014-450d-a477-2121e276beca',
-                        'c8bdbabc-62b1-4a5f-b291-982ab25756d7',
-                        '5152cea8-829a-4aaf-bcc5-c58a416ecb66',
-                        'c0a76659-c311-405f-9a99-15c71af39325',
-                        'ae3e18de-638d-4738-b804-dc69cd4db3a3']
-
-        matched_on_keys = [[u'force', u'physics']] * 12
-
-        results = self.call_target(query_params, query_type='weakAND')
-        # Basically, everything matches the first search term,
-        #   about eleven match the first two terms,
-        #   and when the third is through in we condense this to two.
-        self.assertEqual(len(results), 12)
-        for i, id in enumerate(expectations):
-            self.assertEqual(results[i]['id'], id)
-        # This just verifies that only two of the three terms
-        #   matched on each result.
-        self.assertEqual([sorted(r.matched.keys()) for r in results],
-                         matched_on_keys)
