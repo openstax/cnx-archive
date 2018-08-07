@@ -517,9 +517,9 @@ INSERT INTO users
         result_weights = [(r['id'], r['weight']) for r in results]
         self.assertEqual(len(results), 2)
         # Both of these are books, the a733d0d2 is derived from e79ffde3.
-        # Because the e79ffde3 has not derived parentage, it get's a +0.2 bonus.
-        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 0.2),
-                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', 0),
+        # Because the a733d0d2 has derived parentage, it get's a -1 penalty.
+        expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 0),
+                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', -1),
                     ]
         self.assertEqual(result_weights, expected)
 
@@ -548,9 +548,10 @@ INSERT INTO users
         # Test the sorting of results by publication date.
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         _same_date = '2113-01-01 00:00:00 America/New_York'
-        expectations = [('a733d0d2-de9b-43f9-8aa9-f0895036899e',
-                         _same_date,),
+        expectations = [
                         ('e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                         _same_date,),
+                        ('a733d0d2-de9b-43f9-8aa9-f0895036899e',
                          _same_date,),
                         # first return all the books, then all the pages
                         ('d395b566-5fe3-4428-bcb2-19016e3aa3ce',
@@ -586,12 +587,12 @@ INSERT INTO users
             # books with no hits applied, normal ordering expected.
             (18, u'a733d0d2-de9b-43f9-8aa9-f0895036899e',),
             # then pages
-            (8, u'24a2ed13-22a6-47d6-97a3-c8aa8d54ac6d',),
+            (3, u'f3c9ab70-a916-4d8c-9256-42953287b4e9',),
             (7, u'5838b105-41cd-4c3d-a957-3ac004a48af3',),
             # No hits applied from here on, normal ordering expected.
             (9, u'ea271306-f7f2-46ac-b2ec-1d80ff186a59',),
         ]
-        hits_to_apply = {8: 25, 7: 15, 9: 0, 1: 10, 18: 0}
+        hits_to_apply = {3: 25, 7: 15, 9: 0, 1: 10, 18: 0}
 
         from datetime import datetime, timedelta
         end = datetime.today()
