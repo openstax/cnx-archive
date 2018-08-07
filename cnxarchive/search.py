@@ -516,8 +516,8 @@ def _build_search(structured_query):
             if value[0] != 'book' and value[0] != 'collection' and \
                     value[0] != 'page' and value[0] != 'module':
                 invalid_filters.append(idx)
-            value[0] = 'Collection' if (value[0] == 'book' or \
-                value[0] == 'collection') else 'Module'
+            value[0] = 'Collection' if (value[0] == 'book' or
+                        value[0] == 'collection') else 'Module'
             arguments.update({'type': value[0]})
         elif keyword == 'keyword':
             value = _upper(value)
