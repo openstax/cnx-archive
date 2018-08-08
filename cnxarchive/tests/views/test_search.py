@@ -289,7 +289,6 @@ class SearchViewsTestCase(unittest.TestCase):
         self.assertEqual(results['results']['items'][2]['summarySnippet'],
                          ' A number list:   one  two  three   ')
 
-
         # Test for no highlighting on specific field queries.
         self.request.params = {'q': 'title:"college physics"'}
 
