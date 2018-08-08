@@ -519,7 +519,7 @@ INSERT INTO users
         # Both of these are books, the a733d0d2 is derived from e79ffde3.
         # Because the a733d0d2 has derived parentage, it get's a penalty.
         expected = [(u'e79ffde3-7fb4-4af3-9ec8-df648b391597', 0),
-                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', -0.2),
+                    (u'a733d0d2-de9b-43f9-8aa9-f0895036899e', -1),
                     ]
         self.assertEqual(result_weights, expected)
 
@@ -549,9 +549,9 @@ INSERT INTO users
         query_params = [('text', 'physics'), ('sort', 'pubDate')]
         _same_date = '2113-01-01 00:00:00 America/New_York'
         expectations = [
-                        ('e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                         _same_date,),
                         ('a733d0d2-de9b-43f9-8aa9-f0895036899e',
+                         _same_date,),  # this one has a higher weight.
+                        ('e79ffde3-7fb4-4af3-9ec8-df648b391597',
                          _same_date,),
                         # first return all the books, then all the pages
                         ('d395b566-5fe3-4428-bcb2-19016e3aa3ce',

@@ -810,7 +810,7 @@ class SearchViewsTestCase(unittest.TestCase):
         self.assertEqual(self.db_search_call_count, 1)
 
         # Wait for cache to expire
-        time.sleep(30)
+        time.sleep(60)
 
         # Fetch the same page (cache expired)
         self.request.params = {'q': 'introduction',

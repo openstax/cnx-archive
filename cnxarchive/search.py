@@ -133,6 +133,7 @@ class Query(Sequence):
         except IncompleteParseError:
             query_string = cls.fix_quotes(query_string)
             node_tree = grammar.parse(query_string)
+
         structured_query = DictFormater().visit(node_tree)
 
         return cls([t for t in structured_query
@@ -207,56 +208,6 @@ class QueryRecord(Mapping):
         return hl_fulltext
 
 
-def _apply_query_type(records, query, query_type):
-    """Boolean combination of records.
-
-    Apply a AND, weak AND or OR operation to the results records.
-    Returns the revised list of records, unmatched terms, and matched terms.
-    """
-    # These all get revised an returned at the end.
-    query = list(set(query))  # Ensure a unique query list
-    matched_terms = []
-    unmatched_terms = query
-    revised_records = records
-
-    if records and query:  # no query implies limit-only case
-        #: List of records that match all terms.
-        all_matched_records = []
-        term_matches = []
-        query_terms_wo_stopwords = [utf8(term) for ttype, term in query
-                                    if ttype != 'text' or term.lower()
-                                    not in STOPWORDS]
-        if not query_terms_wo_stopwords:
-            query_terms_wo_stopwords = [utf8(term) for ttype, term in query]
-        query_terms_wo_stopwords.sort()
-        for rec in records:
-            if sorted(rec.matched.keys()) == query_terms_wo_stopwords:
-                all_matched_records.append(rec)
-            term_matches.extend(utf8(list(rec.matched)))
-
-        unmatched_terms = [term for term in query
-                           if utf8(term[1]) not in term_matches]
-        if unmatched_terms:
-            matching_length = len(query) - len(unmatched_terms)
-            #: List of records that match some of the terms.
-            some_matched_records = [rec for rec in records
-                                    if len(rec.matched) == matching_length]
-            # ???? term[1]
-            matched_terms = [term for term in query
-                             if utf8(term[1]) in term_matches]
-        else:
-            some_matched_records = all_matched_records
-            matched_terms = query
-
-        if query_type.upper() == 'AND':
-            revised_records = all_matched_records
-        elif query_type.upper() == 'WEAKAND':
-            revised_records = some_matched_records
-        # elif query_type.upper() == 'OR':
-        #     pass
-    return revised_records, unmatched_terms, matched_terms
-
-
 class QueryResults(Sequence):
     """List of search results.
 
@@ -270,14 +221,7 @@ class QueryResults(Sequence):
             raise ValueError("Invalid query type supplied: '{}'"
                              .format(query_type))
         self._query = query
-        # Capture all the rows for interal usage.
-        self._all_records = [QueryRecord(**r[0]) for r in rows]
-        # Apply the query type to the results.
-        applied_results = _apply_query_type(self._all_records, self._query,
-                                            query_type)
-        self._records = applied_results[0]
-        self._unmatched_terms = applied_results[1]
-        self._matched_terms = applied_results[2]
+        self._records = [QueryRecord(**r[0]) for r in rows]
         self.counts = {
             'type': self._count_media(),
             'subject': self._count_field('subjects'),
@@ -442,10 +386,18 @@ def _convert(tup, dictlist):
 
 
 def _upper(val_list):
+    """
+    :param val_list: a list of strings
+    :return: a list of upper-cased strings
+    """
     res = []
     for ele in val_list:
         res.append(ele.upper())
     return res
+
+
+def _filter_stop_words(raw_query):
+    return [term for term in raw_query if term.lower() not in STOPWORDS]
 
 
 def _build_search(structured_query):
@@ -517,7 +469,7 @@ def _build_search(structured_query):
                     value[0] != 'page' and value[0] != 'module':
                 invalid_filters.append(idx)
             value[0] = 'Collection' if (value[0] == 'book' or
-                        value[0] == 'collection') else 'Module'
+                                        value[0] == 'collection') else 'Module'
             arguments.update({'type': value[0]})
         elif keyword == 'keyword':
             value = _upper(value)
