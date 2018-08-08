@@ -1,7 +1,7 @@
 version: "2"
 services:
   archive:
-    build: https://github.com/Connexions/cnx-db.git#weighted_search
+    build: .
     environment:
       - DB_USER=cnxarchive
       - DB_NAME=cnxarchive-testing
@@ -13,7 +13,7 @@ services:
       - db
       - memcached
   db:
-    build: https://github.com/Connexions/cnx-db.git#weighted_search
+    image: openstax/cnx-db:weighted_search
     ports:
       - "5433:5432"
     environment:
