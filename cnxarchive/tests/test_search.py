@@ -329,8 +329,8 @@ INSERT INTO users
         results = self.call_target(query_params)
         self.assertEqual(len(results), 2)
         self.assertTrue(results[0]['id'] in
-                         ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
-                          'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
+                        ['e79ffde3-7fb4-4af3-9ec8-df648b391597',
+                        'a733d0d2-de9b-43f9-8aa9-f0895036899e'])
 
     def test_type_filter_on_pages(self):
         # Test for type filtering that will find books only.
