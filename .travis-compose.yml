@@ -1,7 +1,7 @@
 version: "2"
 services:
   archive:
-    build: .
+    build: https://github.com/Connexions/cnx-db.git#weighted_search
     environment:
       - DB_USER=cnxarchive
       - DB_NAME=cnxarchive-testing
