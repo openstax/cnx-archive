@@ -24,7 +24,7 @@ before_script:
   - docker-compose -f .travis-compose.yml exec db /bin/bash -c "echo 'CREATE SCHEMA venv' | psql -U cnxarchive cnxarchive-testing"
 
   # Wait for cnxarchive_archive_1 to be available
-  - while sleep 5; do docker ps -a; if [[ -n "`docker ps | grep cnxarchive_archive_1 | grep ' Up '`" ]]; then break; fi; done
+  - while sleep 5; do docker-compose -f .travis-compose.yml ps; if [[ -n "`docker-compose -f .travis-compose.yml ps | grep cnxarchive_archive_1 | grep ' Up '`" ]]; then break; fi; done
 
   # Install packages needed for testing
   - docker-compose -f .travis-compose.yml exec archive /bin/bash -c "pip install --user coverage codecov"
