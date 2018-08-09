@@ -6,6 +6,9 @@ python:
 services:
   - docker
 before_install:
+  # Stop the local postgres service
+  - sudo service postgresql stop
+
   - pip install pep8
   - pep8 --exclude=tests,migrations *.py cnxarchive/
   - pep8 --max-line-length=300 cnxarchive/tests
@@ -13,7 +16,7 @@ install:
   - docker-compose -f .travis-compose.yml up -d
 before_script:
   # wait for postgres to be available
-  - while ! echo | psql 'user=postgres host=localhost port=5433'; do docker-compose -f .travis-compose.yml logs db | tail; sleep 5; done
+  - while ! echo | psql 'user=postgres host=localhost port=5432'; do docker-compose -f .travis-compose.yml logs db | tail; sleep 5; done
 
   # Give cnxarchive superuser privileges on postgres
   - docker-compose -f .travis-compose.yml exec db /bin/bash -c "echo 'ALTER USER cnxarchive WITH LOGIN SUPERUSER' | psql -U postgres postgres"

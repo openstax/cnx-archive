@@ -15,12 +15,12 @@ services:
   db:
     image: openstax/cnx-db:weighted_search
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       - "DB_USER=cnxarchive"
       - "POSTGRES_DB=cnxarchive-testing"
-      - "DB_URL=postgresql://cnxarchive@localhost/cnxarchive-testing"
-      - "DB_SUPER_URL=postgresql://postgres@localhost/cnxarchive-testing"
+      - "DB_URL=postgresql://cnxarchive@/cnxarchive-testing"
+      - "DB_SUPER_URL=postgresql://postgres@/cnxarchive-testing"
   memcached:
     image: memcached:1.5
     ports:
