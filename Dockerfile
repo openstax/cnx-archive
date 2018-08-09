@@ -36,7 +36,8 @@ RUN wget -O get-pip.py https://bootstrap.pypa.io/get-pip.py \
     && python get-pip.py --user \
     && rm get-pip.py
 RUN python -m pip install --no-cache-dir --user -r archive-requirements.txt
-RUN python -m pip install git+https://github.com/Connexions/cnx-db.git@weighted_search#egg=cnx-db
+RUN python -m pip uninstall -y cnx-db \
+    && python -m pip install -e git+https://github.com/Connexions/cnx-db.git@weighted_search#egg=cnx-db
 RUN python -m pip install --no-cache-dir --user -e .
 
 ENV PATH $PATH:/home/archive/.local/bin
