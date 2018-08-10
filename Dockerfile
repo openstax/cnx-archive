@@ -30,14 +30,19 @@ ARG ARCHIVE_REQUIREMENTS
 ENV ARCHIVE_REQUIREMENTS ${ARCHIVE_REQUIREMENTS:-https://raw.githubusercontent.com/Connexions/cnx-deploy/master/environments/vm/files/archive-requirements.txt}
 RUN wget -O archive-requirements.txt $ARCHIVE_REQUIREMENTS
 
-USER archive
-# See also https://github.com/pypa/pip/issues/5221
+# Install the latest pip
 RUN wget -O get-pip.py https://bootstrap.pypa.io/get-pip.py \
-    && python get-pip.py --user \
+    && python get-pip.py \
     && rm get-pip.py
+
+USER archive
+
 RUN python -m pip install --no-cache-dir --user -r archive-requirements.txt
+
+# XXX Install the custom branch of cnx-db
 RUN python -m pip uninstall -y cnx-db \
-    && python -m pip install -e git+https://github.com/Connexions/cnx-db.git@weighted_search#egg=cnx-db
+    && python -m pip install --user -e git+https://github.com/Connexions/cnx-db.git@weighted_search#egg=cnx-db
+
 RUN python -m pip install --no-cache-dir --user -e .
 
 ENV PATH $PATH:/home/archive/.local/bin
