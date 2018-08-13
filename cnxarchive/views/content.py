@@ -229,18 +229,79 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
             pass
 
 
-def get_books_containing_page(uuid, version):
+# NOTE: Expects a RealDictCursor
+def get_module_info(cursor, id, version):
+    """Return a module's title, id, shortId authors and revised date."""
+    args = join_ident_hash(id, version)
+    sql_statement = """
+    SELECT m.name as title,
+           ident_hash(m.uuid, m.major_version, m.minor_version)
+           as ident_hash,
+           short_ident_hash(m.uuid, m.major_version, m.minor_version)
+           as shortId, ARRAY(
+               SELECT row_to_json(user_row)
+               FROM (
+                   SELECT u.username, u.first_name as firstname,
+                        u.last_name as surname, u.full_name as fullname,
+                        u.title, u.suffix
+               ) as user_row
+           ) as authors,
+           m.revised
+    FROM modules m
+    JOIN users as u on u.username = ANY(m.authors)
+    WHERE ident_hash(m.uuid, m.major_version, m.minor_version) = %s
+    """
+
+    cursor.execute(sql_statement, vars=(args,))
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res
+
+
+# NOTE: Expects a RealDictCursor
+def get_portal_type(cursor, id, version):
+    """Return the module's portal_type."""
+    args = join_ident_hash(id, version)
+    sql_statement = """
+    SELECT m.portal_type
+    FROM modules as m
+    WHERE ident_hash(uuid, major_version, minor_version) = %s
+    """
+
+    cursor.execute(sql_statement, vars=(args,))
+    res = cursor.fetchone()
+    if res is None:
+        return None
+    else:
+        return res['portal_type']
+
+
+def get_books_containing_page(uuid, version,
+                              context_uuid=None, context_version=None):
     """Return a list of book names and UUIDs
     that contain a given module UUID."""
-
     with db_connect() as db_connection:
+        # Uses a RealDictCursor instead of the regular cursor
         with db_connection.cursor(
                 cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute(SQL['get-books-containing-page'],
-                           {'document_uuid': uuid,
-                            'document_version': version})
-            results = cursor.fetchall()
-    return results
+            # In the future the books-containing-page SQL might handle
+            # all of these cases. For now we branch the code out in here.
+            if context_uuid and context_version:
+                # NOTE: Currently does not check that
+                # the page is actually in the book
+                return [get_module_info(cursor, context_uuid, context_version)]
+            else:
+                portal_type = get_portal_type(cursor, uuid, version)
+                if portal_type == 'Module':
+                    cursor.execute(SQL['get-books-containing-page'],
+                                   {'document_uuid': uuid,
+                                    'document_version': version})
+                    return cursor.fetchall()
+                else:
+                    # Books are currently not in any other book
+                    return []
 
 # ######### #
 #   Views   #
@@ -287,8 +348,8 @@ def get_extra(request):
     settings = get_current_registry().settings
     exports_dirs = settings['exports-directories'].split()
     args = request.matchdict
-    is_contextual = bool(args['page_ident_hash'])
-    if is_contextual:
+    if args['page_ident_hash']:
+        context_id, context_version = split_ident_hash(args['ident_hash'])
         try:
             id, version = split_ident_hash(args['page_ident_hash'])
         except IdentHashShortId as e:
@@ -300,6 +361,7 @@ def get_extra(request):
             id = e.id
             version = get_latest_version(e.id)
     else:
+        context_id = context_version = None
         id, version = split_ident_hash(args['ident_hash'])
     results = {}
     with db_connect() as db_connection:
@@ -312,10 +374,10 @@ def get_extra(request):
             results['headVersion'] = get_head_version(id)
             results['canPublish'] = get_module_can_publish(cursor, id)
             results['state'] = get_state(cursor, id, version)
-
-            if not is_contextual:
-                results['books'] = get_books_containing_page(id, version)
-                formatAuthors(results['books'])
+            results['books'] = get_books_containing_page(id, version,
+                                                         context_id,
+                                                         context_version)
+            formatAuthors(results['books'])
 
     resp = request.response
     resp.content_type = 'application/json'

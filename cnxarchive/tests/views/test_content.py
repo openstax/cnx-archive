@@ -1123,7 +1123,30 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         with self.assertRaises(IdentHashShortId) as raiser:
             get_extra(self.request)
 
-    def test_get_extra_contextual_url(self):
+    def test_get_extra_book(self):
+        book_id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
+        book_version = '7.1'
+
+        # Build the request
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(book_id, book_version),
+            'page_ident_hash': '',
+            'separator': ':'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
+
+        from ...views.content import get_extra
+        output = get_extra(self.request).json_body
+
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(set(output.keys()), set([
+            'books', 'canPublish', 'downloads', 'headVersion',
+            'isLatest', 'latestVersion', 'state']))
+        self.assertEqual(output['books'], [])
+
+    def test_get_extra_page_contextual_url(self):
         book_id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         book_version = '7.1'
         page_id = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
@@ -1143,9 +1166,64 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.status, '200 OK')
         self.assertEqual(self.request.response.content_type,
                          'application/json')
-        self.assertEqual(
-            set(output.keys()), set(['canPublish', 'downloads', 'headVersion',
-                                     'isLatest', 'latestVersion', 'state']))
+        self.assertEqual(set(output.keys()), set([
+            'books', 'canPublish', 'downloads', 'headVersion',
+            'isLatest', 'latestVersion', 'state']))
+        self.assertEqual(output['books'], [
+            {u'authors': [{u'username': u'OpenStaxCollege',
+                           u'fullname': u'OpenStax College',
+                           u'suffix': None,
+                           u'title': None,
+                           u'surname': None,
+                           u'firstname': u'OpenStax College'}],
+             u'title': u'College Physics',
+             u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+             u'revised': u'2013-08-31T12:07:20.342798-07:00',
+             u'shortid': u'55_943-0@7.1'}])
+
+    def test_get_extra_page_non_contextual_url(self):
+        page_id = '209deb1f-1a46-4369-9e0d-18674cf58a3e'
+        page_version = '7'
+
+        # Build the request
+        self.request.matchdict = {
+            'ident_hash': '{}@{}'.format(page_id, page_version),
+            'page_ident_hash': '',
+            'separator': ':'}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content-extras'
+
+        from ...views.content import get_extra
+        output = get_extra(self.request).json_body
+
+        self.assertEqual(self.request.response.status, '200 OK')
+        self.assertEqual(self.request.response.content_type,
+                         'application/json')
+        self.assertEqual(set(output.keys()), set([
+            'books', 'canPublish', 'downloads', 'headVersion',
+            'isLatest', 'latestVersion', 'state']))
+        output['books'].sort()
+        self.assertEqual(output['books'], [
+            {u'authors': [{u'username': u'OpenStaxCollege',
+                           u'fullname': u'OpenStax College',
+                           u'suffix': None,
+                           u'title': None,
+                           u'surname': None,
+                           u'firstname': u'OpenStax College'}],
+             u'title': u'<span style="color:red;">Derived</span> Copy of College <i>Physics</i>',
+             u'ident_hash': u'a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1',
+             u'revised': u'2013-08-31T12:07:20.342798-07:00',
+             u'shortid': u'pzPQ0t6b@1.1'},
+            {u'authors': [{u'username': u'OpenStaxCollege',
+                           u'fullname': u'OpenStax College',
+                           u'suffix': None,
+                           u'title': None,
+                           u'surname': None,
+                           u'firstname': u'OpenStax College'}],
+             u'title': u'College Physics',
+             u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+             u'revised': u'2013-08-31T12:07:20.342798-07:00',
+             u'shortid': u'55_943-0@7.1'}])
 
     def test_extra_w_utf8_characters(self):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
@@ -1166,18 +1244,9 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(self.request.response.content_type,
                          'application/json')
         output['canPublish'].sort()
+        output['books'].sort()
         self.assertEqual(output, {
             u'books': [
-                {u'authors': [{u'username': u'OpenStaxCollege',
-                               u'fullname': u'OpenStax College',
-                               u'suffix': None,
-                               u'title': None,
-                               u'surname': None,
-                               u'firstname': u'OpenStax College'}],
-                 u'title': u'College Physics',
-                 u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
-                 u'revised': u'2013-08-31T12:07:20.342798-07:00',
-                 u'shortid': u'55_943-0@7.1'},
                 {u'authors': [{u'username': u'OpenStaxCollege',
                                u'fullname': u'OpenStax College',
                                u'suffix': None,
@@ -1188,6 +1257,16 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                  u'ident_hash': u'a733d0d2-de9b-43f9-8aa9-f0895036899e@1.1',
                  u'revised': u'2013-08-31T12:07:20.342798-07:00',
                  u'shortid': u'pzPQ0t6b@1.1'},
+                {u'authors': [{u'username': u'OpenStaxCollege',
+                               u'fullname': u'OpenStax College',
+                               u'suffix': None,
+                               u'title': None,
+                               u'surname': None,
+                               u'firstname': u'OpenStax College'}],
+                 u'title': u'College Physics',
+                 u'ident_hash': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
+                 u'revised': u'2013-08-31T12:07:20.342798-07:00',
+                 u'shortid': u'55_943-0@7.1'}
                 ],
             u'state': u'current',
             u'canPublish': [
