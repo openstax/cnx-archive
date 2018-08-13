@@ -234,7 +234,8 @@ def do_ListRecords(request):
 
 
 @view_config(route_name='oai', request_method='GET',
-             renderer='templates/oai_verbs.xml')
+             renderer='templates/oai_verbs.xml',
+             http_cache=(60, {'public': True}))
 def oai(request):
     request.response.headers = {'Content-Type': 'text/xml; charset=UTF-8'}
 

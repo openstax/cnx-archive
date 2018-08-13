@@ -27,7 +27,8 @@ logger = logging.getLogger('cnxarchive')
 # ######### #
 
 
-@view_config(route_name='resource', request_method='GET')
+@view_config(route_name='resource', request_method='GET',
+             http_cache=(31536000, {'public': True}))
 def get_resource(request):
     """Retrieve a file's data."""
     hash = request.matchdict['hash']

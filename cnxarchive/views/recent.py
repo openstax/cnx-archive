@@ -55,7 +55,8 @@ def html_rss_date(datetime):
 
 
 @view_config(route_name='recent', request_method='GET',
-             renderer='templates/recent.rss')
+             renderer='templates/recent.rss',
+             http_cache=(60, {'public': True}))
 def recent(request):
     # setting the query variables
     num_entries = request.GET.get('number', 10)

@@ -149,8 +149,10 @@ def execute_xpath(xpath_string, sql_function, uuid, version):
 # #################### #
 
 
-@view_config(route_name='xpath', request_method='GET')
-@view_config(route_name='xpath-json', request_method='GET')
+@view_config(route_name='xpath', request_method='GET',
+             http_cache=(60, {'public': True}))
+@view_config(route_name='xpath-json', request_method='GET',
+             http_cache=(60, {'public': True}))
 def xpath(request):
     """View for the route. Determines UUID and version from input request
     and determines the type of UUID (collection or module) and executes

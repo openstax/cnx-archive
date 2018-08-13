@@ -45,7 +45,8 @@ class ExportError(Exception):
 # ######### #
 
 
-@view_config(route_name='export', request_method='GET')
+@view_config(route_name='export', request_method='GET',
+             http_cache=(31536000, {'public': True}))
 def get_export(request):
     """Retrieve an export file."""
     settings = get_current_registry().settings

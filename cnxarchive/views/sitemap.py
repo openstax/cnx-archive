@@ -49,7 +49,8 @@ def notblocked(page):
 #   Views   #
 # ######### #
 
-@view_config(route_name='sitemap', request_method='GET')
+@view_config(route_name='sitemap', request_method='GET',
+             http_cache=(60, {'public': True}))
 def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
@@ -86,7 +87,8 @@ def sitemap(request):
     return resp
 
 
-@view_config(route_name='sitemap-index', request_method='GET')
+@view_config(route_name='sitemap-index', request_method='GET',
+             http_cache=(60, {'public': True}))
 def sitemap_index(request):
     """Return a sitemap index xml file for search engines."""
     sitemaps = []
