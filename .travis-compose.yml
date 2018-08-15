@@ -13,7 +13,7 @@ services:
       - db
       - memcached
   db:
-    image: openstax/cnx-db:1.5.1
+    image: openstax/cnx-db:2.3.0
     ports:
       - "5433:5432"
     environment:
