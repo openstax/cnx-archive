@@ -73,10 +73,12 @@ def get_export(request):
     resp.content_type = mimetype
     #  Need both filename and filename* below for various browsers
     #  See: https://fastmail.blog/2011/06/24/download-non-english-filenames/
-    resp.content_disposition = "attached; filename={fname};" \
+    resp.content_disposition = "attachment; filename={fname};" \
                                " filename*=UTF-8''{fname}".format(
                                        fname=encoded_filename)
     resp.body = file_content
+    resp.headerlist.append(('Link',
+        '<https://{}/contents/{}/{}> ;rel="Canonical"'.format(request.host, ident_hash, encoded_filename[:-4])))
     return resp
 
 
