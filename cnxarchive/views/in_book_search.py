@@ -29,7 +29,8 @@ logger = logging.getLogger('cnxarchive')
 # ######### #
 
 
-@view_config(route_name='in-book-search', request_method='GET')
+@view_config(route_name='in-book-search', request_method='GET',
+             http_cache=(31536000, {'public': True}))
 def in_book_search(request):
     """Full text, in-book search."""
     results = {}
@@ -83,7 +84,8 @@ def in_book_search(request):
     return resp
 
 
-@view_config(route_name='in-book-search-page', request_method='GET')
+@view_config(route_name='in-book-search-page', request_method='GET',
+             http_cache=(31536000, {'public': True}))
 def in_book_search_highlighted_results(request):
     """In-book search - returns a highlighted version of the HTML."""
     results = {}

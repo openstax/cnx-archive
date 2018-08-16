@@ -63,9 +63,12 @@ def _convert_legacy_id(objid, objver=None):
 # ######### #
 
 
-@view_config(route_name='legacy-redirect', request_method='GET')
-@view_config(route_name='legacy-redirect-latest', request_method='GET')
-@view_config(route_name='legacy-redirect-w-version', request_method='GET')
+@view_config(route_name='legacy-redirect', request_method='GET',
+             http_cache=(60, {'public': True}))
+@view_config(route_name='legacy-redirect-latest', request_method='GET',
+             http_cache=(60, {'public': True}))
+@view_config(route_name='legacy-redirect-w-version', request_method='GET',
+             http_cache=(31536000, {'public': True}))
 def redirect_legacy_content(request):
     """Redirect from legacy /content/id/version to new /contents/uuid@version.
 

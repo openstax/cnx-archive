@@ -35,7 +35,8 @@ PAGES_TO_BLOCK = [
 # ######### #
 
 
-@view_config(route_name='search', request_method='GET')
+@view_config(route_name='search', request_method='GET',
+             http_cache=(60, {'public': True}))
 def search(request):
     """Search API."""
     empty_response = json.dumps({

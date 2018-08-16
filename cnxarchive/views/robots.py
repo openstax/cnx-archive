@@ -9,7 +9,8 @@
 from pyramid.view import view_config
 
 
-@view_config(route_name='robots', request_method='GET')
+@view_config(route_name='robots', request_method='GET',
+             http_cache=(86400, {'public': True}))
 def robots(request):
     """Return a simple "don't index me" robots.txt file."""
 

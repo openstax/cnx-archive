@@ -81,7 +81,8 @@ def _get_licenses(cursor):
 # ######### #
 
 
-@view_config(route_name='extras', request_method='GET')
+@view_config(route_name='extras', request_method='GET',
+             http_cache=(60, {'public': True}))
 def extras(request):
     """Return a dict with archive metadata for webview."""
     key = request.matchdict.get('key', '').lstrip('/')

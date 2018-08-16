@@ -318,7 +318,7 @@ def get_books_containing_page(cursor, uuid, version,
 
 
 @view_config(route_name='content', request_method='GET',
-             http_cache=(3600000, {'public': True}))
+             http_cache=(31536000, {'public': True}))
 def get_content(request):
     """Retrieve content using the ident-hash (uuid@version).
 
@@ -351,7 +351,8 @@ def get_content(request):
     return resp
 
 
-@view_config(route_name='content-extras', request_method='GET')
+@view_config(route_name='content-extras', request_method='GET',
+             http_cache=(60, {'public': True}))
 def get_extra(request):
     """Return information about a module / collection that cannot be cached."""
     settings = get_current_registry().settings
