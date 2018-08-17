@@ -6,6 +6,16 @@
 
    - feature message
 
+4.2.0
+-----
+- Set Cache-Control headers in archive (#580)
+- search speed ups, using fulltext - supports all the filters in advanced search
+- Contextual page extras check that the page is in the book (#577)
+- Build sitemap without stripping special chars to match Webview url (#556)
+- Faster book extras and more accurate contextual page extras (#575)
+- Update README, install docker, correct test config file
+
+
 4.1.0
 -----
 
