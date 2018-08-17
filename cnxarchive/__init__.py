@@ -117,4 +117,6 @@ def main(global_config, **settings):
     config.scan(ignore='.tests')
     config.include('cnxarchive.events.main')
 
+    config.add_tween('cnxarchive.tweens.conditional_http_tween_factory')
+
     return config.make_wsgi_app()
