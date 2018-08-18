@@ -211,6 +211,32 @@ class MiscellaneousFunctionsTestCase(unittest.TestCase):
         self.assertEqual(html_abstract,
                          'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce">interal document</a>.</div>')
 
+
+    @testing.db_connect
+    def test_html_abstract_trigger(self, cursor):
+        # insert test data
+        cursor.execute('''\
+        INSERT INTO abstracts VALUES
+        (4, 'A link to an <link document="m42092">interal document</link>.', NULL);
+        ''')
+        cursor.execute("""\
+        INSERT INTO document_controls (uuid) VALUES ('d395b566-5fe3-4428-bcb2-19016e3aa3ce');""")
+        cursor.execute('''\
+        INSERT INTO modules VALUES
+        (4, 'Module', 'm42092', 'd395b566-5fe3-4428-bcb2-19016e3aa3ce', '1.4',
+        'Physics: An Introduction', '2013-07-31 14:07:20.75499-05', '2013-07-31
+        14:07:20.75499-05', 4, 11, '', '46cf263d-2eef-42f1-8523-1b650006868a',
+        '', DEFAULT, NULL, 'en', '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8}',
+        '{e5a07af6-09b9-4b74-aa7a-b7510bee90b8,1df3bab1-1dc7-4017-9b3a-960a87e706b1}',
+        '{9366c786-e3c8-4960-83d4-aec1269ac5e5}', NULL, NULL, NULL, 4, NULL);''')
+        cursor.execute('SELECT html FROM abstracts WHERE abstractid = 4')
+
+        # check that the abstracts have been transformed
+        html_abstract = cursor.fetchone()[0]
+        html_abstract = html_abstract[html_abstract.index('>') + 1:]  # strip the div tag
+        self.assertEqual(html_abstract,
+                         'A link to an <a href="/contents/d395b566-5fe3-4428-bcb2-19016e3aa3ce">interal document</a>.</div>')
+
     @testing.db_connect
     def test_cnxml_abstract(self, cursor):
         # insert test data
