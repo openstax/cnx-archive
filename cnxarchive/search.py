@@ -84,7 +84,7 @@ class Query(Sequence):
 
     def __init__(self, query):
         """Create a query object."""
-        self.filters = [q for q in query if q[0] != 'text']
+        self.filters = [q for q in query if q[0] not in ('text', 'sort')]
         self.sorts = [q[1] for q in query if q[0] == 'sort']
         self.terms = [q for q in query
                       if q not in self.filters and q[0] != 'sort']
