@@ -6,8 +6,14 @@
 
    - feature message
 
+4.2.1
+-----
+
+- Remove sort from search filter list (#586) 
+
 4.2.0
 -----
+
 - Set Cache-Control headers in archive (#580)
 - search speed ups, using fulltext - supports all the filters in advanced search
 - Contextual page extras check that the page is in the book (#577)
