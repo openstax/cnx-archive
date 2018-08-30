@@ -77,8 +77,9 @@ def get_export(request):
                                " filename*=UTF-8''{fname}".format(
                                        fname=encoded_filename)
     resp.body = file_content
-    resp.headerlist.append(('Link',
-        '<https://{}/contents/{}/{}> ;rel="Canonical"'.format(request.host, ident_hash, encoded_filename[:-4])))
+    resp.headerlist.append(
+            ('Link', '<https://{}/contents/{}/{}> ;rel="Canonical"'.format(
+                            request.host, ident_hash, encoded_filename[:-4])))
     return resp
 
 
