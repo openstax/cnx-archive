@@ -317,6 +317,11 @@ class ExportsViewsTestCase(unittest.TestCase):
                          "attachment; filename=college-physics-{ver}.pdf;"
                          " filename*=UTF-8''college-physics-{ver}.pdf"
                          .format(ver=version))
+        self.assertEqual(self.request.response.headers['Link'],
+                         '<https://example.com:80/contents/{id}'
+                         '/college-physics-{ver}> ;rel="Canonical"'
+                         .format(id=ident_hash, ver=version))
+
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
         with open(expected_file, 'r') as file:
