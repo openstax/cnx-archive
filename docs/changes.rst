@@ -6,6 +6,11 @@
 
    - feature message
 
+4.3.0
+-----
+
+- add canonical link to HTTP header of PDF download urls
+
 4.2.1
 -----
 
