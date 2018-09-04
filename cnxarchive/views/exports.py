@@ -77,9 +77,11 @@ def get_export(request):
                                " filename*=UTF-8''{fname}".format(
                                        fname=encoded_filename)
     resp.body = file_content
+    #  Remove version and extension from filename, to recover title slug
+    slug_title = '-'.join(encoded_filename.split('-')[:-1])
     resp.headerlist.append(
             ('Link', '<https://{}/contents/{}/{}> ;rel="Canonical"'.format(
-                            request.host, ident_hash, encoded_filename[:-4])))
+                           request.host, id, slug_title)))
     return resp
 
 

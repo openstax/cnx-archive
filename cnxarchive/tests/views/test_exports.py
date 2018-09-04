@@ -319,8 +319,8 @@ class ExportsViewsTestCase(unittest.TestCase):
                          .format(ver=version))
         self.assertEqual(self.request.response.headers['Link'],
                          '<https://example.com:80/contents/{id}'
-                         '/college-physics-{ver}> ;rel="Canonical"'
-                         .format(id=ident_hash, ver=version))
+                         '/college-physics> ;rel="Canonical"'
+                         .format(id=id))
 
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports',
                                      filename)
