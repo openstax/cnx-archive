@@ -6,6 +6,11 @@
 
    - feature message
 
+4.3.2
+-----
+
+- Correct canonical URL (remove versions)
+
 4.3.1
 -----
 
