@@ -34,10 +34,14 @@ def get_uuid(shortid):
                 raise httpexceptions.HTTPNotFound()
 
 
-def get_latest_version(uuid_):
+def get_latest_version(uuid_, containing=None):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-module-latest-version'], {'id': uuid_})
+            if containing is None:
+                cursor.execute(SQL['get-module-latest-version'], {'id': uuid_})
+            else:
+                cursor.execute(SQL['get-book-latest-version-with-page'],
+                               {'id': uuid_, 'p_id': containing})
             try:
                 return cursor.fetchone()[0]
             except (TypeError, IndexError,):  # None returned

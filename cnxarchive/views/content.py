@@ -17,7 +17,6 @@ from pyramid import httpexceptions
 from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
-from pyramid.httpexceptions import HTTPNotFound
 
 from ..database import (
     SQL, get_tree, get_collated_content, get_module_can_publish, db_connect)
@@ -58,10 +57,10 @@ def _get_content_json(ident_hash=None):
     routing_args = request and request.matchdict or {}
     if not ident_hash:
         ident_hash = routing_args['ident_hash']
-    id, version = split_ident_hash(ident_hash)
 
     as_collated = asbool(request.GET.get('as_collated', True))
     page_ident_hash = routing_args.get('page_ident_hash', '')
+    p_id, p_version = (None, None)
     if page_ident_hash:
         try:
             p_id, p_version = split_ident_hash(page_ident_hash)
@@ -72,6 +71,8 @@ def _get_content_json(ident_hash=None):
             # page ident hash doesn't need a version
             p_id = e.id
             p_version = None
+
+    id, version = split_ident_hash(ident_hash, containing=p_id)
 
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:

@@ -53,7 +53,7 @@ def ident_hash_short_id(exc, request):
         return e
     if not exc.version:
         return ident_hash_missing_version(
-            IdentHashMissingVersion(uuid_), request)
+            IdentHashMissingVersion(uuid_, exc.containing), request)
     route_name = request.matched_route.name
     route_args = request.matchdict.copy()
     route_args['ident_hash'] = join_ident_hash(uuid_, exc.version)
@@ -65,7 +65,7 @@ def ident_hash_short_id(exc, request):
 @view_config(context=IdentHashMissingVersion)
 def ident_hash_missing_version(exc, request):
     try:
-        version = get_latest_version(exc.id)
+        version = get_latest_version(exc.id, exc.containing)
     except httpexceptions.HTTPNotFound as e:
         return e
     route_name = request.matched_route.name
