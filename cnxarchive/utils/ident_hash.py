@@ -43,17 +43,23 @@ class IdentHashSyntaxError(IdentHashError):
 
 class IdentHashShortId(IdentHashError):
     """Raised when the ident-hash id is not a uuid"""
-    def __init__(self, id, version):
+    def __init__(self, id, version, containing):
         self.id = id
         self.version = version
+        self.containing = containing
         self.msg = 'id={} version={}'.format(id, version)
+        if containing:
+            self.msg += ' containing={}'.format(containing)
 
 
 class IdentHashMissingVersion(IdentHashError):
     """Raised when the ident-hash does not have a version"""
-    def __init__(self, id):
+    def __init__(self, id, containing):
         self.id = id
+        self.containing = containing
         self.msg = 'id={}'.format(id)
+        if containing:
+            self.msg += ' containing={}'.format(containing)
 
 
 def split_legacy_hash(legacy_hash):
@@ -66,7 +72,7 @@ def split_legacy_hash(legacy_hash):
     return id, version
 
 
-def split_ident_hash(ident_hash, split_version=False):
+def split_ident_hash(ident_hash, split_version=False, containing=None):
     """Returns a valid id and version from the <id>@<version> hash syntax."""
     split_value = ident_hash.split(HASH_CHAR)
 
@@ -82,10 +88,10 @@ def split_ident_hash(ident_hash, split_version=False):
     id_type = CNXHash.validate(id)
 
     if id_type == CNXHash.SHORTID:
-        raise IdentHashShortId(id, version)
+        raise IdentHashShortId(id, version, containing=containing)
 
     if not version:
-        raise IdentHashMissingVersion(id)
+        raise IdentHashMissingVersion(id, containing=containing)
 
     version = split_value[1]
 
