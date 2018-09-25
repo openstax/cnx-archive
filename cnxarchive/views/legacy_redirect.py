@@ -95,7 +95,9 @@ def redirect_legacy_content(request):
                     raise httpexceptions.HTTPMovedPermanently(
                          request.route_path(
                             'resource', hash=resourceid,
-                            ignore=u'/{}'.format(filename)))
+                            ignore=u'/{}'.format(filename)),
+                         headers=[("Cache-Control",
+                                   "max-age=31536000, public")])
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
@@ -109,4 +111,5 @@ def redirect_legacy_content(request):
                 _get_page_in_book(id, version, book_uuid, book_version)
 
     raise httpexceptions.HTTPMovedPermanently(
-        request.route_path('content', ident_hash=ident_hash))
+        request.route_path('content', ident_hash=ident_hash),
+        headers=[("Cache-Control", "max-age=31536000, public")])
