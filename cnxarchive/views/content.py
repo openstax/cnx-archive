@@ -352,7 +352,7 @@ def get_content(request):
 
 
 @view_config(route_name='content-extras', request_method='GET',
-             http_cache=(60, {'public': True}))
+             http_cache=(600, {'public': True}))
 def get_extra(request):
     """Return information about a module / collection that cannot be cached."""
     settings = get_current_registry().settings
