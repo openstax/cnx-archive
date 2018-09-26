@@ -8,6 +8,7 @@
 """Content Views."""
 import json
 import logging
+import re
 
 import psycopg2.extras
 
@@ -77,6 +78,9 @@ def _get_content_json(ident_hash=None):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             result = get_content_metadata(id, version, cursor)
+            # Build url for canonical link header
+            result['canon_url'] = get_canonical_url(result, request)
+
             if result['mediaType'] == COLLECTION_MIMETYPE:
                 # Grab the collection tree.
                 result['tree'] = get_tree(ident_hash, cursor,
@@ -100,6 +104,8 @@ def _get_content_json(ident_hash=None):
                             if content:
                                 result = get_content_metadata(
                                     id, version, cursor)
+                                # Build url for canonical link header
+                                result['canon_url'] = get_canonical_url(result, request)
                                 result['content'] = content[:]
                                 return result
                             # 302 'cause lack of baked content may be temporary
@@ -110,6 +116,9 @@ def _get_content_json(ident_hash=None):
                                 ext=routing_args['ext']))
                     raise httpexceptions.HTTPNotFound()
             else:
+                result = get_content_metadata(id, version, cursor)
+                # Build url for canonical link header
+                result['canon_url'] = get_canonical_url(result, request)
                 # Grab the html content.
                 args = dict(id=id, version=result['version'],
                             filename='index.cnxml.html')
@@ -313,6 +322,29 @@ def get_books_containing_page(cursor, uuid, version,
                     # Books are currently not in any other book
                     return []
 
+
+def get_canonical_url(metadata, request):
+    """Builds canonical in book url from a pages metadata."""
+    slug_title = '/{}'.format('-'.join(metadata['title'].split()))
+    settings = get_current_registry().settings
+
+    canon_host = settings.get('canonical-hostname',
+                              re.sub('archive.', '', request.host))
+    if metadata['canonical'] is None:
+        canon_url = request.route_url(
+                'content',
+                ident_hash=metadata['id'],
+                ignore=slug_title)
+    else:
+        canon_url = request.route_url(
+                'content',
+                ident_hash=metadata['canonical'],
+                separator=':',
+                page_ident_hash=metadata['id'],
+                ignore=slug_title)
+
+    return re.sub(request.host, canon_host, canon_url)
+
 # ######### #
 #   Views   #
 # ######### #
@@ -348,6 +380,10 @@ def get_content(request):
         cc.must_revalidate = True
     else:
         resp.cache_control.public = True
+
+    # Build the canonical link
+    resp.headerlist.append(
+            ('Link', '<{}> ;rel="Canonical"'.format(result['canon_url'])))
 
     return resp
 
