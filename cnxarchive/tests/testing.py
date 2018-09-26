@@ -17,6 +17,7 @@ import memcache
 import pytz
 import psycopg2
 import psycopg2.extras
+from psycopg2.extras import DictCursor
 from pyramid.paster import get_appsettings
 
 from .. import config
@@ -52,7 +53,7 @@ def db_connection_factory(connection_string=None):
         connection_string = settings[config.CONNECTION_STRING]
 
     def db_connect():
-        return psycopg2.connect(connection_string)
+        return psycopg2.connect(connection_string, cursor_factory=DictCursor)
 
     return db_connect
 
