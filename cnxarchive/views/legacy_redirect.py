@@ -68,7 +68,7 @@ def _convert_legacy_id(objid, objver=None):
 @view_config(route_name='legacy-redirect-latest', request_method='GET',
              http_cache=(60, {'public': True}))
 @view_config(route_name='legacy-redirect-w-version', request_method='GET',
-             http_cache=(31536000, {'public': True}))
+             http_cache=(60, {'public': True}))
 def redirect_legacy_content(request):
     """Redirect from legacy /content/id/version to new /contents/uuid@version.
 
@@ -84,6 +84,11 @@ def redirect_legacy_content(request):
     if not id:
         raise httpexceptions.HTTPNotFound()
 
+    # We always use 301 redirects (HTTPMovedPermanently) here
+    # because we want search engines to move to the newer links
+    # We cache these redirects only briefly because, even when versioned,
+    # legacy collection versions don't include the minor version,
+    # so the latest archive url could change
     if filename:
         with db_connect() as db_connection:
             with db_connection.cursor() as cursor:
@@ -92,12 +97,11 @@ def redirect_legacy_content(request):
                 try:
                     res = cursor.fetchone()
                     resourceid = res[0]
+
                     raise httpexceptions.HTTPMovedPermanently(
-                         request.route_path(
-                            'resource', hash=resourceid,
-                            ignore=u'/{}'.format(filename)),
-                         headers=[("Cache-Control",
-                                   "max-age=31536000, public")])
+                         request.route_path('resource', hash=resourceid,
+                                            ignore=u'/{}'.format(filename)),
+                         headers=[("Cache-Control", "max-age=60, public")])
                 except TypeError:  # None returned
                     raise httpexceptions.HTTPNotFound()
 
@@ -112,4 +116,4 @@ def redirect_legacy_content(request):
 
     raise httpexceptions.HTTPMovedPermanently(
         request.route_path('content', ident_hash=ident_hash),
-        headers=[("Cache-Control", "max-age=31536000, public")])
+        headers=[("Cache-Control", "max-age=60, public")])

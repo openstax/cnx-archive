@@ -58,7 +58,8 @@ def ident_hash_short_id(exc, request):
     route_args = request.matchdict.copy()
     route_args['ident_hash'] = join_ident_hash(uuid_, exc.version)
     return httpexceptions.HTTPMovedPermanently(request.route_path(
-        route_name, _query=request.params, **route_args))
+        route_name, _query=request.params, **route_args),
+        headers=[("Cache-Control", "max-age=31536000, public")])
 
 
 @view_config(context=IdentHashMissingVersion)
