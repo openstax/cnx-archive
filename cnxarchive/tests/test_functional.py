@@ -383,3 +383,57 @@ class IdentHashMissingVersionTestCase(testing.FunctionalTestCase):
 
         resp = resp.follow()
         self.assertEqual(resp.status, '200 OK')
+
+
+class SlugTestCase(testing.FunctionalTestCase):
+    fixture = testing.data_fixture
+
+    contents_extensions = ['', '.json', '.html']
+
+    def setUp(self):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test_contents_uuid_version_slug(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        slug = 'test-slug'
+
+        for ext in self.contents_extensions:
+            resp = self.testapp.get(
+                '/contents/{}@8/{}{}'.format(uuid, slug, ext))
+            self.assertEqual(resp.status, '200 OK')
+
+    def test_contents_shortid_version_slug(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        short_id = CNXHash(uuid).get_shortid()
+        slug = 'TëSt_SlÜg'
+
+        for ext in self.contents_extensions:
+            resp = self.testapp.get(
+                '/contents/{}@8/{}{}'.format(short_id, slug, ext))
+            self.assertEqual(resp.status, '301 Moved Permanently')
+            self.assertEqual(
+                unquote(resp.location),
+                'http://localhost/contents/{}@8/{}{}'.format(uuid, slug, ext))
+
+            resp = resp.follow()
+            self.assertEqual(resp.status, '200 OK')
+
+    def test_contents_uuid_version_invalid_slug(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        slug = 'test/slug'
+
+        for ext in self.contents_extensions:
+            self.testapp.get('/contents/{}@8/{}{}'.format(uuid, slug, ext),
+                             status=404)
+
+    def test_contents_shortid_version_invalid_slug(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        short_id = CNXHash(uuid).get_shortid()
+        slug = 'file.png'
+
+        for ext in self.contents_extensions:
+            self.testapp.get('/contents/{}@8/{}{}'.format(short_id, slug, ext),
+                             status=404)
