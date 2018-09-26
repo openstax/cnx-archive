@@ -1178,7 +1178,7 @@ INSERT INTO trees (parent_id, documentid, is_collated)
 
         self.assertEqual(results['portal_type'], 'Collection')
         self.assertEqual(results['name'], '<span style="color:red;">Derived</span>'
-                                     ' Copy of College <i>Physics</i>')
+                                          ' Copy of College <i>Physics</i>')
         self.assertEqual(results['submitter'], 'reedstrm')
         self.assertEqual(results['submitlog'], 'I did not change something')
         self.assertEqual(results['major_version'], 1)
@@ -1210,13 +1210,13 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         results = cursor.fetchone()
         new_subcollection_2_id = results['module_ident']
 
-        self.assertEqual(results['portal_type'], 'SubCollection')  
-        self.assertEqual(results['name'], 'Introduction: The Nature of Science and Physics')  
-        self.assertEqual(results['submitter'], 'reedstrm')  
-        self.assertEqual(results['submitlog'], 'I did not change something')  
-        self.assertEqual(results['major_version'], 1)  
-        self.assertEqual(results['minor_version'], 2)  
-        self.assertEqual(results['print_style'], None)  
+        self.assertEqual(results['portal_type'], 'SubCollection')
+        self.assertEqual(results['name'], 'Introduction: The Nature of Science and Physics')
+        self.assertEqual(results['submitter'], 'reedstrm')
+        self.assertEqual(results['submitlog'], 'I did not change something')
+        self.assertEqual(results['major_version'], 1)
+        self.assertEqual(results['minor_version'], 2)
+        self.assertEqual(results['print_style'], None)
 
         cursor.execute("UPDATE modules SET print_style = '*NEW PRINT STYLE*'"
                        " WHERE abstractid = 1")
