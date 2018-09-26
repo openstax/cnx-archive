@@ -30,7 +30,7 @@ from ..utils import (
 from .helpers import (
     get_uuid, get_latest_version, get_head_version, get_content_metadata
     )
-from .exports import get_export_file, ExportError
+from .exports import get_export_files
 
 HTML_WRAPPER = """\
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -211,25 +211,28 @@ def get_state(cursor, id, version):
 def get_export_allowable_types(cursor, exports_dirs, id, version):
     """Return export types."""
     request = get_current_request()
-
-    for type_name, type_info in request.registry.settings['_type_info']:
-        try:
-            (filename, mimetype, file_size, file_created, state, file_content
-             ) = get_export_file(cursor, id, version, type_name, exports_dirs)
-            yield {
-                'format': type_info['user_friendly_name'],
-                'filename': filename,
-                'size': file_size,
-                'created': file_created and file_created.isoformat() or None,
-                'state': state,
-                'details': type_info['description'],
-                'path': request.route_path(
-                    'export', ident_hash=join_ident_hash(id, version),
-                    type=type_name, ignore=u'/{}'.format(filename))
-                }
-        except ExportError as e:  # noqa
-            # Some other problem, skip it
-            pass
+    type_settings = request.registry.settings['_type_info']
+    type_names = [k for k, v in type_settings]
+    type_infos = [v for k, v in type_settings]
+    # We took the type_names directly from the setting this function uses to
+    # check for valid types, so it should never raise an ExportError here
+    file_tuples = get_export_files(cursor, id, version, type_names,
+                                   exports_dirs, read_file=False)
+    zipped_list = zip(file_tuples, type_names, type_infos)
+    for file_tuple, type_name, type_info in zipped_list:
+        (filename, mimetype, file_size, file_created, state, file_content
+         ) = file_tuple
+        yield {
+            'format': type_info['user_friendly_name'],
+            'filename': filename,
+            'size': file_size,
+            'created': file_created and file_created.isoformat() or None,
+            'state': state,
+            'details': type_info['description'],
+            'path': request.route_path(
+                'export', ident_hash=join_ident_hash(id, version),
+                type=type_name, ignore=u'/{}'.format(filename))
+            }
 
 
 # NOTE: Expects both a normal cursor and a RealDictCursor

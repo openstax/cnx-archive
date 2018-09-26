@@ -44,10 +44,10 @@ TYPE_INFO = [
 
 class GetExportFileTestCase(unittest.TestCase):
 
-    @property
-    def target(self):
-        from cnxarchive.views.exports import get_export_file
-        return get_export_file
+    def target(self, cursor, id, version, type, exports_dirs, read_file=True):
+        from cnxarchive.views.exports import get_export_files
+        return get_export_files(cursor, id, version, [type],
+                                exports_dirs, read_file)[0]
 
     def setUp(self):
         self._mock_get_content_metadata()
