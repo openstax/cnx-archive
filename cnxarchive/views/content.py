@@ -104,8 +104,6 @@ def _get_content_json(ident_hash=None):
                             # 302 'cause lack of baked content may be temporary
                             raise httpexceptions.HTTPFound(request.route_path(
                                 request.matched_route.name,
-                                headers=[("Cache-Control",
-                                          "max-age=60, public")],
                                 _query=request.params,
                                 ident_hash=join_ident_hash(id, version),
                                 ext=routing_args['ext']))
