@@ -105,7 +105,8 @@ def _get_content_json(ident_hash=None):
                                 result = get_content_metadata(
                                     id, version, cursor)
                                 # Build url for canonical link header
-                                result['canon_url'] = get_canonical_url(result, request)
+                                result['canon_url'] = (
+                                        get_canonical_url(result, request))
                                 result['content'] = content[:]
                                 return result
                             # 302 'cause lack of baked content may be temporary

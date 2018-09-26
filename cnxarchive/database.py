@@ -42,6 +42,7 @@ def _read_sql_file(name):
     with open(path, 'r') as fp:
         return fp.read()
 
+
 SQL = {
     'get-available-languages-and-count': _read_sql_file(
         'get-available-languages-and-count'),
@@ -75,7 +76,8 @@ SQL = {
     'xpath': _read_sql_file('xpath'),
     'xpath-module': _read_sql_file('xpath-module'),
     'get-books-containing-page': _read_sql_file('get-books-containing-page'),
-    'get-book-latest-version-with-page': _read_sql_file('get-book-latest-version-with-page'),
+    'get-book-latest-version-with-page': _read_sql_file(
+        'get-book-latest-version-with-page'),
     }
 
 
