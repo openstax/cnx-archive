@@ -71,5 +71,4 @@ def ident_hash_missing_version(exc, request):
     route_args = request.matchdict.copy()
     route_args['ident_hash'] = join_ident_hash(exc.id, version)
     return httpexceptions.HTTPFound(request.route_path(
-        route_name, _query=request.params, **route_args),
-        headers=[("Cache-Control", "max-age=60, public")])
+        route_name, _query=request.params, **route_args))
