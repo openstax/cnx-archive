@@ -1174,49 +1174,49 @@ INSERT INTO trees (parent_id, documentid, is_collated)
         # version
         cursor.execute('SELECT * FROM modules m ORDER BY module_ident DESC')
         results = cursor.fetchone()
-        new_collection_id = results[0]
+        new_collection_id = results['module_ident']
 
-        self.assertEqual(results[1], 'Collection')  # portal_type
-        self.assertEqual(results[5], '<span style="color:red;">Derived</span>'
-                                     ' Copy of College <i>Physics</i>')  # name
-        self.assertEqual(results[11], 'reedstrm')  # submitter
-        self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-5], 1)  # major_version
-        self.assertEqual(results[-4], 2)  # minor_version
-        self.assertEqual(results[-3], None)  # print_style
-
-        results = cursor.fetchone()
-        new_collection_2_id = results[0]
-
-        self.assertEqual(results[1], 'Collection')  # portal_type
-        self.assertEqual(results[5], 'College Physics')  # name
-        self.assertEqual(results[11], 'reedstrm')  # submitter
-        self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-5], 7)  # major_version
-        self.assertEqual(results[-4], 2)  # minor_version
-        self.assertEqual(results[-3], None)  # print_style
+        self.assertEqual(results['portal_type'], 'Collection')
+        self.assertEqual(results['name'], '<span style="color:red;">Derived</span>'
+                                     ' Copy of College <i>Physics</i>')
+        self.assertEqual(results['submitter'], 'reedstrm')
+        self.assertEqual(results['submitlog'], 'I did not change something')
+        self.assertEqual(results['major_version'], 1)
+        self.assertEqual(results['minor_version'], 2)
+        self.assertEqual(results['print_style'], None)
 
         results = cursor.fetchone()
-        new_subcollection_id = results[0]
+        new_collection_2_id = results['module_ident']
 
-        self.assertEqual(results[1], 'SubCollection')  # portal_type
-        self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
-        self.assertEqual(results[11], 'reedstrm')  # submitter
-        self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-5], 7)  # major_version
-        self.assertEqual(results[-4], 2)  # minor_version
-        self.assertEqual(results[-3], None)  # print_style
+        self.assertEqual(results['portal_type'], 'Collection')
+        self.assertEqual(results['name'], 'College Physics')
+        self.assertEqual(results['submitter'], 'reedstrm')
+        self.assertEqual(results['submitlog'], 'I did not change something')
+        self.assertEqual(results['major_version'], 7)
+        self.assertEqual(results['minor_version'], 2)
+        self.assertEqual(results['print_style'], None)
 
         results = cursor.fetchone()
-        new_subcollection_2_id = results[0]
+        new_subcollection_id = results['module_ident']
 
-        self.assertEqual(results[1], 'SubCollection')  # portal_type
-        self.assertEqual(results[5], 'Introduction: The Nature of Science and Physics')  # name
-        self.assertEqual(results[11], 'reedstrm')  # submitter
-        self.assertEqual(results[12], 'I did not change something')  # submitlog
-        self.assertEqual(results[-5], 1)  # major_version
-        self.assertEqual(results[-4], 2)  # minor_version
-        self.assertEqual(results[-3], None)  # print_style
+        self.assertEqual(results['portal_type'], 'SubCollection')
+        self.assertEqual(results['name'], 'Introduction: The Nature of Science and Physics')
+        self.assertEqual(results['submitter'], 'reedstrm')
+        self.assertEqual(results['submitlog'], 'I did not change something')
+        self.assertEqual(results['major_version'], 7)
+        self.assertEqual(results['minor_version'], 2)
+        self.assertEqual(results['print_style'], None)
+
+        results = cursor.fetchone()
+        new_subcollection_2_id = results['module_ident']
+
+        self.assertEqual(results['portal_type'], 'SubCollection')  
+        self.assertEqual(results['name'], 'Introduction: The Nature of Science and Physics')  
+        self.assertEqual(results['submitter'], 'reedstrm')  
+        self.assertEqual(results['submitlog'], 'I did not change something')  
+        self.assertEqual(results['major_version'], 1)  
+        self.assertEqual(results['minor_version'], 2)  
+        self.assertEqual(results['print_style'], None)  
 
         cursor.execute("UPDATE modules SET print_style = '*NEW PRINT STYLE*'"
                        " WHERE abstractid = 1")

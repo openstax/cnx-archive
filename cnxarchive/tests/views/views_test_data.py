@@ -163,6 +163,8 @@ COLLECTION_METADATA = {
         ],
     u'collated': False,
     u'baked': None,
+    u'canonical': None,
+    u'canon_url': u'http://cnx.org/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597/College-Physics'
     }
 COLLECTION_JSON_TREE = {
     u'id': u'e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1',
@@ -374,4 +376,6 @@ MODULE_METADATA = {
              u'media_type': u'image/jpg'}
             ],
     u'baked': None,
+    u'canonical': None,
+    u'canon_url': u'http://cnx.org/contents/56f1c5c1-4014-450d-a477-2121e276beca/Elasticity:-Stress-and-Strain'
     }
