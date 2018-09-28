@@ -6,6 +6,28 @@
 
    - feature message
 
+4.5.0
+-----
+
+- canonical URL support
+
+4.4.2
+-----
+
+- disallow '.' and '/' in trailing slug for content urls
+
+- speed up extras - reduced stat calls for files
+
+4.4.1
+-----
+
+- Caching - redirects, and extend extras to 10 min
+
+4.4.0
+-----
+
+- Caching improvements - etags and exports
+
 4.3.2
 -----
 
