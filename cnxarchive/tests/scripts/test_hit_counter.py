@@ -51,7 +51,7 @@ class HitsCounterTestCase(unittest.TestCase):
         return_code = main(args)
         self.assertEqual(return_code, 0)
 
-        expectations = [(1, 3), (2, 1), (3, 4), (4, 1)]
+        expectations = [[1, 3], [2, 1], [3, 4], [4, 1]]
         # Check for the insertion of data.
         cursor.execute("SELECT documentid, hits "
                        "  FROM document_hits;")

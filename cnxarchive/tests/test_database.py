@@ -771,8 +771,8 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
         )
         SELECT document FROM t
         ''', [new_collection_ident])
-        self.assertEqual(cursor.fetchall(), [(new_collection_ident,),
-                         (new_module_ident,), (module2_ident,)])
+        self.assertEqual(cursor.fetchall(), [[new_collection_ident],
+                         [new_module_ident], [module2_ident]])
 
     @testing.db_connect
     def test_republish_collection(self, cursor):
@@ -912,7 +912,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         inserted_files = cursor.fetchall()
         self.assertEqual(sorted(inserted_files),
-                         sorted([(fileid, 'ruleset.css')]))
+                         sorted([[fileid, 'ruleset.css']]))
 
     @testing.db_connect
     def test_republish_collection_w_subjects(self, cursor):
@@ -1081,7 +1081,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         FROM modules
         WHERE portal_type = 'Collection'
         ORDER BY revised DESC, uuid LIMIT 2""")
-        self.assertEqual(cursor.fetchall(), [('1.2',), ('7.2',)])
+        self.assertEqual(cursor.fetchall(), [['1.2'], ['7.2']])
 
         # Insert a new version of another existing module
         cursor.execute('''\
@@ -1109,7 +1109,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         WHERE portal_type IN ('Collection', 'SubCollection')
         ORDER BY revised DESC, uuid LIMIT 4""")
 
-        self.assertEqual(cursor.fetchall(), [('1.2',), ('1.3',), ('7.2',), ('7.3',)])
+        self.assertEqual(cursor.fetchall(), [['1.2'], ['1.3'], ['7.2'], ['7.3']])
 
         # Check that new versions of both pages are in the collection tree
         cursor.execute("SELECT tree_to_json(%s, '7.3', FALSE)::JSON",
@@ -1584,7 +1584,7 @@ INSERT INTO trees (parent_id, documentid, is_collated)
                        "WHERE context = 18 AND item = 19')")
         words = cursor.fetchall()
         self.assertEqual(len(words), 55)
-        self.assertIn(('følger',), words)
+        self.assertIn(['følger'], words)
 
     @testing.db_connect
     def test_tree_to_json(self, cursor):
@@ -2197,9 +2197,9 @@ ORDER BY username
 
         # Check for the upsert.
         self.assertEqual(user_records[0],
-                         ('legacy', 'Legacy', 'User', 'Legacy User',))
+                         ['legacy', 'Legacy', 'User', 'Legacy User'])
         self.assertEqual(user_records[1],
-                         ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+                         ['ruins', 'Legacy', 'Ruins', 'Legacy Ruins'])
 
     @testing.db_connect
     def test_update_user_update(self, cursor):
@@ -2238,7 +2238,7 @@ ORDER BY username
         rewrite_user_record = cursor.fetchone()
 
         # Check for the update.
-        self.assertEqual(rewrite_user_record, ('cnxcap', 'Univeristy', 'Maths', 'OSC Maths Maintainer'))
+        self.assertEqual(rewrite_user_record, ['cnxcap', 'Univeristy', 'Maths', 'OSC Maths Maintainer'])
 
     @testing.db_connect
     def test_new_moduleoptionalroles_user_insert(self, cursor):
@@ -2307,13 +2307,13 @@ ORDER BY username
                          ['cnxcap', 'legacy', 'ruins'])
         self.assertEqual(
             user_records[0],
-            ('cnxcap', 'College', 'Physics', 'OSC Physics Maintainer',))
+            ['cnxcap', 'College', 'Physics', 'OSC Physics Maintainer'])
         self.assertEqual(user_records[1],
-                         ('legacy', 'Legacy', 'User', 'Legacy User',))
+                         ['legacy', 'Legacy', 'User', 'Legacy User'])
         # The ruins user will be a newly inserted record, copied from
         #   the persons record.
         self.assertEqual(user_records[2],
-                         ('ruins', 'Legacy', 'Ruins', 'Legacy Ruins',))
+                         ['ruins', 'Legacy', 'Ruins', 'Legacy Ruins'])
 
 
 SQL_FOR_HIT_DOCUMENTS = """
@@ -2507,9 +2507,9 @@ class DocumentHitsTestCase(unittest.TestCase):
         hit_ranks = cursor.fetchall()
 
         self.assertEqual(hit_ranks[1],
-                         ('c8ee8dc5-bb73-47c8-b10f-3f37123cf607', 9, 3, 2))
+                         ['c8ee8dc5-bb73-47c8-b10f-3f37123cf607', 9, 3, 2])
         self.assertEqual(hit_ranks[3],  # row that combines two idents.
-                         ('88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4))
+                         ['88cd206d-66d2-48f9-86bb-75d5366582ee', 54, 9, 4])
 
     @testing.db_connect
     def test_update_overall_hits_function(self, cursor):
@@ -2525,8 +2525,8 @@ class DocumentHitsTestCase(unittest.TestCase):
         hit_ranks = cursor.fetchall()
 
         self.assertEqual(hit_ranks[2],  # row that combines two idents.
-                         ('88cd206d-66d2-48f9-86bb-75d5366582ee', 67, 6.7, 3))
+                         ['88cd206d-66d2-48f9-86bb-75d5366582ee', 67, 6.7, 3])
         # Note, this module has fewer hits in total, but more on average,
         #   which expectedly boosts its rank.
         self.assertEqual(hit_ranks[3],
-                         ('dd7b92c2-e82e-43bb-b224-accbc3cd395a', 39, 7.8, 4))
+                         ['dd7b92c2-e82e-43bb-b224-accbc3cd395a', 39, 7.8, 4])
