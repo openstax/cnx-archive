@@ -132,6 +132,7 @@ def get_export_files(cursor, id, version, types, exports_dirs, read_file=True):
             # Let's see if the legacy file's there and make the new link
             legacy_file_found = False
             for dir in reachable_dirs:
+                filepath = os.path.join(dir, filename)
                 legacy_filepaths = [os.path.join(dir, fn)
                                     for fn in legacy_filenames]
                 for legacy_filepath in legacy_filepaths:
