@@ -331,7 +331,7 @@ def get_books_containing_page(cursor, uuid, version,
 
 def get_canonical_url(metadata, request):
     """Builds canonical in book url from a pages metadata."""
-    slug_title = '/{}'.format('-'.join(metadata['title'].split()))
+    slug_title = u'/{}'.format('-'.join(metadata['title'].split()))
     settings = get_current_registry().settings
 
     canon_host = settings.get('canonical-hostname',
