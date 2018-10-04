@@ -6,6 +6,16 @@
 
    - feature message
 
+4.5.2
+-----
+
+- allow for unicode titles for slug in canonical URL
+
+4.5.1
+-----
+
+- correct export file hardlink target
+
 4.5.0
 -----
 
