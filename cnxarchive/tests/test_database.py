@@ -1085,9 +1085,9 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
 
         cursor.execute("""\
         SELECT count(*)
-        FROM module_files 
+        FROM module_files
         WHERE filename = 'collection.xml'""")
-        self.assertEqual(cursor.fetchall(), [[1,]])
+        self.assertEqual(cursor.fetchall(), [[1]])
 
         # Fetch it
         filepath = os.path.join(testing.DATA_DIRECTORY, 'collection.xml')
@@ -1095,7 +1095,7 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
             expected_collxml = f.read()
         cursor.execute("""\
         SELECT convert_from(file, 'utf-8')
-        FROM module_files natural join files 
+        FROM module_files natural join files
         WHERE filename = 'collection.xml'""")
 
         result = cursor.fetchall()[0][0]
