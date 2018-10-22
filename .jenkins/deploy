@@ -1,0 +1,41 @@
+pipeline {
+  agent { label 'docker' }
+  stages {
+    stage('Build') {
+      steps {
+        sh "docker build -t openstax/cnx-archive:dev ."
+      }
+    }
+    stage('Publish Dev Container') {
+      steps {
+        // 'docker-registry' is defined in Jenkins under credentials
+        withDockerRegistry([credentialsId: 'docker-registry', url: '']) {
+          sh "docker push openstax/cnx-archive:dev"
+        }
+      }
+    }
+    stage('Publish Release') {
+      when { buildingTag() }
+      environment {
+        TWINE_CREDS = credentials('pypi-openstax-creds')
+        TWINE_USERNAME = "${TWINE_CREDS_USR}"
+        TWINE_PASSWORD = "${TWINE_CREDS_PSW}"
+        release = """${sh(
+          returnStdout: true,
+          // Strip the `v` prefix
+          script: 'bash -c \'echo ${TAG_NAME#v*}\''
+        ).trim()}"""
+      }
+      steps {
+        withDockerRegistry([credentialsId: 'docker-registry', url: '']) {
+          sh "docker tag openstax/cnx-archive:dev openstax/cnx-archive:${release}"
+          sh "docker tag openstax/cnx-archive:dev openstax/cnx-archive:latest"
+          sh "docker push openstax/cnx-archive:${release}"
+          sh "docker push openstax/cnx-archive:latest"
+        }
+        // Note, '.git' is a volume, because versioneer needs it to resolve the python distribution's version. 
+        sh "docker run --rm -e TWINE_USERNAME -e TWINE_PASSWORD -v ${WORKSPACE}/.git:/src/.git:ro openstax/cnx-archive:latest /bin/bash -c \"pip install -q twine && python2 setup.py bdist_wheel && twine upload dist/*\""
+      }
+    }
+  }
+}
