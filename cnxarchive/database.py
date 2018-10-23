@@ -308,12 +308,17 @@ def build_collxml(coll_ident, plpy):
     Assumes the trees table entry is completed - will not overwrite existing
     collection.xml file
     """
-    exists = plpy.prepare("SELECT fileid FROM Module_files"
+    exists = plpy.prepare("SELECT fileid FROM module_files"
                           " WHERE module_ident = $1 and"
                           " filename = 'collection.xml'", ('integer',))
 
-    if plpy.execute(exists, (coll_ident,)) is None:
-        from plpy import spiexceptions
+    if not plpy.execute(exists, (coll_ident,)):
+        try:
+            from plpy import spiexceptions
+            unique_except = spiexceptions.UniqueViolation
+        except ImportError:
+            unique_except = psycopg2.IntegrityError
+
         insert_collxml = plpy.prepare(
                 'INSERT INTO files (file)'
                 ' SELECT pretty_print(legacy_collxml($1, True))::text::bytea'
@@ -323,7 +328,7 @@ def build_collxml(coll_ident, plpy):
                 " VALUES ($1, $2, 'collection.xml')", ('integer', 'integer'))
         try:
             results = plpy.execute(insert_collxml, (coll_ident,))
-        except spiexceptions.UniqueViolation:  # sha1 collision
+        except unique_except:  # sha1 collision
             fetch_collxml_id = plpy.prepare(
                     'SELECT fileid FROM files '
                     'WHERE sha1 = sha1(pretty_print('
