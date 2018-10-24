@@ -1083,6 +1083,24 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         ORDER BY revised DESC, uuid LIMIT 2""")
         self.assertEqual(cursor.fetchall(), [['1.2'], ['7.2']])
 
+        cursor.execute("""\
+        SELECT count(*)
+        FROM module_files
+        WHERE filename = 'collection.xml'""")
+        self.assertEqual(cursor.fetchall(), [[1]])
+
+        # Fetch it
+        filepath = os.path.join(testing.DATA_DIRECTORY, 'collection.xml')
+        with open(filepath) as f:
+            expected_collxml = f.read()
+        cursor.execute("""\
+        SELECT convert_from(file, 'utf-8')
+        FROM module_files natural join files
+        WHERE filename = 'collection.xml'""")
+
+        result = cursor.fetchall()[0][0]
+        self.assertEqual(result, expected_collxml)
+
         # Insert a new version of another existing module
         cursor.execute('''\
         INSERT INTO modules

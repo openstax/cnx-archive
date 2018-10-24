@@ -302,6 +302,40 @@ def rebuild_collection_tree(old_collection_ident, new_document_id_map, plpy):
     build_tree(root_node, None)
 
 
+def build_collxml(coll_ident, plpy):
+    """Builds and inserts a collection.xml for a newly inserted collection
+
+    Assumes the trees table entry is completed - will not overwrite existing
+    collection.xml file
+    """
+    exists = plpy.prepare("SELECT fileid FROM Module_files"
+                          " WHERE module_ident = $1 and"
+                          " filename = 'collection.xml'", ('integer',))
+
+    if plpy.execute(exists, (coll_ident,)) is None:
+        from plpy import spiexceptions
+        insert_collxml = plpy.prepare(
+                'INSERT INTO files (file)'
+                ' SELECT pretty_print(legacy_collxml($1, True))::text::bytea'
+                ' RETURNING fileid', ('integer',))
+        insert_file_link = plpy.prepare(
+                "INSERT INTO module_files (module_ident, fileid, filename)"
+                " VALUES ($1, $2, 'collection.xml')", ('integer', 'integer'))
+        try:
+            results = plpy.execute(insert_collxml, (coll_ident,))
+        except spiexceptions.UniqueViolation:  # sha1 collision
+            fetch_collxml_id = plpy.prepare(
+                    'SELECT fileid FROM files '
+                    'WHERE sha1 = sha1(pretty_print('
+                    'legacy_collxml($1, True))::text::bytea)',
+                    ('integer',))
+            results = plpy.execute(fetch_collxml_id, (coll_ident,))
+
+        collxml_id = results[0]['fileid']
+
+        results = plpy.execute(insert_file_link, (coll_ident, collxml_id))
+
+
 def republish_collection(submitter, submitlog, next_minor_version,
                          collection_ident, plpy, revised=None):
     """Insert a new row for collection_ident with a new version.
@@ -442,6 +476,7 @@ def republish_module(td, plpy):
                                          collection_id, plpy)
         replace_map[collection_id] = new_ident
         rebuild_collection_tree(collection_id, replace_map, plpy)
+        build_collxml(new_ident, plpy)
 
     return modified
 
