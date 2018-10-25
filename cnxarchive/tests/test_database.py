@@ -1059,12 +1059,14 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         INSERT INTO modules
         (moduleid, portal_type, version, name,
          created, revised,
-         authors, maintainers, licensors, abstractid, stateid, licenseid, doctype, submitter, submitlog,
+         authors, maintainers, licensors,
+         abstractid, stateid, licenseid, doctype, submitter, submitlog,
          language, parent)
         VALUES ('m42955', 'Module', '1.8',
         'New Preface to College Physics',
         '2013-07-31 14:07:20.590652-05' , '2013-07-31 15:07:20.590652-05',
-        NULL, NULL, NULL, 1, NULL, 1, '', 'reedstrm', 'I did not change something',
+        '{OpenStaxCollege,cnxcap}', '{OpenStaxCollege,cnxcap}', '{OSCRiceUniversity}',
+        2, 1, 12, '', 'reedstrm', 'I did not change something',
         'en', NULL) RETURNING module_ident''')
 
         cursor.connection.commit()
@@ -1083,23 +1085,33 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         ORDER BY revised DESC, uuid LIMIT 2""")
         self.assertEqual(cursor.fetchall(), [['1.2'], ['7.2']])
 
+        # new collxml for minor versions as well
         cursor.execute("""\
         SELECT count(*)
         FROM module_files
         WHERE filename = 'collection.xml'""")
-        self.assertEqual(cursor.fetchall(), [[1]])
+        self.assertEqual(cursor.fetchall(), [[3]])
 
-        # Fetch it
-        filepath = os.path.join(testing.DATA_DIRECTORY, 'collection.xml')
-        with open(filepath) as f:
-            expected_collxml = f.read()
+        # Compare them
         cursor.execute("""\
         SELECT convert_from(file, 'utf-8')
         FROM module_files natural join files
-        WHERE filename = 'collection.xml'""")
+        WHERE filename = 'collection.xml'
+        ORDER BY fileid""")
 
-        result = cursor.fetchall()[0][0]
-        self.assertEqual(result, expected_collxml)
+        for fname in ('collection.xml',
+                      'collection_minor_2.xml',
+                      'collection_minor_3.xml'):
+            filepath = os.path.join(testing.DATA_DIRECTORY, fname)
+            with open(filepath) as f:
+                expected = f.read()
+
+            result = cursor.fetchone()[0]
+            rev_offset = result.find('<md:revised>')
+            rev_start = rev_offset + 12  # len('<md:revised>')
+            rev_end = rev_start + 32  # len(timestamp)
+            self.assertEqual(result[:rev_start]+result[rev_end:],
+                             expected[:rev_start]+expected[rev_end:])
 
         # Insert a new version of another existing module
         cursor.execute('''\
