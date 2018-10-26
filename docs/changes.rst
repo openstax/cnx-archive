@@ -6,6 +6,12 @@
 
    - feature message
 
+4.6.0
+-----
+
+- Jenkins CI integration
+- collxml trigger test updates
+
 4.5.2
 -----
 
