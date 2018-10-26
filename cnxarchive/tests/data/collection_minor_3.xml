@@ -1,0 +1,199 @@
+<col:collection xmlns="http://cnx.rice.edu/collxml" xmlns:cnx="http://cnx.rice.edu/cnxml" xmlns:cnxorg="http://cnx.rice.edu/system-info" xmlns:md="http://cnx.rice.edu/mdml" xmlns:col="http://cnx.rice.edu/collxml" xml:lang="en">
+  <metadata xmlns:md="http://cnx.rice.edu/mdml" mdml-version="0.5">
+    <!-- WARNING! The 'metadata' section is read only. Do not edit below. Changes to the metadata section in the source will not be saved. -->
+    <md:repository>https://legacy.cnx.org/content</md:repository>
+    <md:content-url>https://legacy.cnx.org/content/col15533/1.1</md:content-url>
+    <md:content-id>col15533</md:content-id>
+    <md:title>&lt;span style="color:red;"&gt;Derived&lt;/span&gt; Copy of College &lt;i&gt;Physics&lt;/i&gt;</md:title>
+    <md:version>1.1</md:version>
+    <md:created>2013-07-31T12:07:20.342798-07:00</md:created>
+    <md:revised>2018-10-25T13:07:40.438045-07:00</md:revised>
+    <md:language>en</md:language>
+    <md:license url="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution License</md:license>
+    <!-- For information on license requirements for use or modification, see license url in the above <md:license> element.
+           For information on formatting required attribution, see the URL:
+             CONTENT_URL/content_info#cnx_cite_header
+           where CONTENT_URL is the value provided above in the <md:content-url> element.
+      -->
+    <md:actors>
+      <md:person userid="OSCRiceUniversity">
+        <md:firstname>Rice</md:firstname>
+        <md:surname>University</md:surname>
+        <md:fullname>Rice University</md:fullname>
+        <md:email/>
+      </md:person>
+      <md:person userid="OpenStaxCollege">
+        <md:firstname>OpenStax C&#246;llege</md:firstname>
+        <md:surname/>
+        <md:fullname>OpenStax C&#246;llege</md:fullname>
+        <md:email/>
+      </md:person>
+      <md:person userid="cnxcap">
+        <md:firstname>College</md:firstname>
+        <md:surname>Physics</md:surname>
+        <md:fullname>OSC Physics Maintainer</md:fullname>
+        <md:email/>
+      </md:person>
+    </md:actors>
+    <md:roles>
+      <md:role type="authors">OpenStaxCollege</md:role>
+      <md:role type="maintainers">OpenStaxCollege cnxcap</md:role>
+      <md:role type="licensors">OSCRiceUniversity</md:role>
+    </md:roles>
+    <md:abstract>This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</md:abstract>
+    <md:derived-from url="https://legacy.cnx.org/content/col11406/1.7">
+      <!-- WARNING! The 'metadata' section is read only. Do not edit below. Changes to the metadata section in the source will not be saved. -->
+      <md:repository>https://legacy.cnx.org/content</md:repository>
+      <md:content-url>https://legacy.cnx.org/content/col11406/1.7</md:content-url>
+      <md:content-id>col11406</md:content-id>
+      <md:title>College Physics</md:title>
+      <md:version>1.7</md:version>
+      <md:created>2013-07-31T12:07:20.342798-07:00</md:created>
+      <md:revised>2013-08-31T12:07:20.342798-07:00</md:revised>
+      <md:language>en</md:language>
+      <md:license url="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution License</md:license>
+      <!-- For information on license requirements for use or modification, see license url in the above <md:license> element.
+           For information on formatting required attribution, see the URL:
+             CONTENT_URL/content_info#cnx_cite_header
+           where CONTENT_URL is the value provided above in the <md:content-url> element.
+      -->
+      <md:actors>
+        <md:person userid="OSCRiceUniversity">
+          <md:firstname>Rice</md:firstname>
+          <md:surname>University</md:surname>
+          <md:fullname>Rice University</md:fullname>
+          <md:email/>
+        </md:person>
+        <md:person userid="OpenStaxCollege">
+          <md:firstname>OpenStax C&#246;llege</md:firstname>
+          <md:surname/>
+          <md:fullname>OpenStax C&#246;llege</md:fullname>
+          <md:email/>
+        </md:person>
+        <md:person userid="cnxcap">
+          <md:firstname>College</md:firstname>
+          <md:surname>Physics</md:surname>
+          <md:fullname>OSC Physics Maintainer</md:fullname>
+          <md:email/>
+        </md:person>
+      </md:actors>
+      <md:roles>
+        <md:role type="authors">OpenStaxCollege</md:role>
+        <md:role type="maintainers">OpenStaxCollege cnxcap</md:role>
+        <md:role type="licensors">OSCRiceUniversity</md:role>
+      </md:roles>
+      <md:abstract>This introductory, algebra-based, two-semester college physics book is grounded with real-world examples, illustrations, and explanations to help students grasp key, fundamental physics concepts. This online, fully editable and customizable title includes learning objectives, concept questions, links to labs and simulations, and ample practice opportunities to solve traditional physics application problems.</md:abstract>
+      <md:subjectlist>
+        <md:subject>Mathematics and Statistics</md:subject>
+        <md:subject>Science and Technology</md:subject>
+      </md:subjectlist>
+      <md:keywordlist>
+        <md:keyword>college physics</md:keyword>
+        <md:keyword>physics</md:keyword>
+        <md:keyword>friction</md:keyword>
+        <md:keyword>ac circuits</md:keyword>
+        <md:keyword>atomic physics</md:keyword>
+        <md:keyword>bioelectricity</md:keyword>
+        <md:keyword>biological and medical applications</md:keyword>
+        <md:keyword>circuits</md:keyword>
+        <md:keyword>collisions</md:keyword>
+        <md:keyword>dc instruments</md:keyword>
+        <md:keyword>drag</md:keyword>
+        <md:keyword>elasticity</md:keyword>
+        <md:keyword>electric charge and electric field</md:keyword>
+        <md:keyword>electric current</md:keyword>
+        <md:keyword>electric potential</md:keyword>
+        <md:keyword>electrical technologies</md:keyword>
+        <md:keyword>electromagnetic induction</md:keyword>
+        <md:keyword>electromagnetic waves</md:keyword>
+        <md:keyword>energy</md:keyword>
+        <md:keyword>fluid dynamics</md:keyword>
+        <md:keyword>fluid statics</md:keyword>
+        <md:keyword>forces</md:keyword>
+        <md:keyword>frontiers of physics</md:keyword>
+        <md:keyword>gas laws</md:keyword>
+        <md:keyword>geometric optics</md:keyword>
+        <md:keyword>heat and transfer methods</md:keyword>
+        <md:keyword>kinematics</md:keyword>
+        <md:keyword>kinetic theory</md:keyword>
+        <md:keyword>linear momentum</md:keyword>
+        <md:keyword>magnetism</md:keyword>
+        <md:keyword>medical applications of nuclear physics</md:keyword>
+        <md:keyword>Newton&#8217;s Laws of Motion</md:keyword>
+        <md:keyword>Ohm&#8217;s Law</md:keyword>
+        <md:keyword>oscillatory motion and waves</md:keyword>
+        <md:keyword>particle physics</md:keyword>
+        <md:keyword>physics of hearing</md:keyword>
+        <md:keyword>quantum physics</md:keyword>
+        <md:keyword>radioactivity and nuclear physics</md:keyword>
+        <md:keyword>resistance</md:keyword>
+        <md:keyword>rotational motion and angular momentum</md:keyword>
+        <md:keyword>special relativity</md:keyword>
+        <md:keyword>statics and torque</md:keyword>
+        <md:keyword>temperature</md:keyword>
+        <md:keyword>thermodynamics</md:keyword>
+        <md:keyword>uniform circular motion and gravitation</md:keyword>
+        <md:keyword>vision and optical instruments</md:keyword>
+        <md:keyword>wave optics</md:keyword>
+        <md:keyword>work</md:keyword>
+      </md:keywordlist>
+    </md:derived-from>
+  </metadata>
+  <col:parameters>
+    <col:param name="print-style" value=""/>
+  </col:parameters>
+  <col:content>
+    <col:module document="m42699" version="1.3" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+      <md:title>Atomic Masses</md:title>
+    </col:module>
+    <col:module document="m42702" version="1.2" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.2">
+      <md:title>Selected Radioactive Isotopes</md:title>
+    </col:module>
+    <col:module document="m42720" version="1.5" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.5">
+      <md:title>Useful Inf&#248;rmation</md:title>
+    </col:module>
+    <col:module document="m42709" version="1.4" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.4">
+      <md:title>Glossary of Key Symbols and Notation</md:title>
+    </col:module>
+    <col:subcollection>
+      <md:title>Introduction: The Nature of Science and Physics</md:title>
+      <col:content>
+        <col:module document="m42119" version="1.3" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.3">
+          <md:title>Introduction to Science and the Realm of Physics, Physical Quantities, and Units</md:title>
+        </col:module>
+        <col:module document="m42092" version="1.4" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.4">
+          <md:title>Physics: An Introduction</md:title>
+        </col:module>
+        <col:module document="m42091" version="1.6" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.6">
+          <md:title>Physical Quantities and Units</md:title>
+        </col:module>
+        <col:module document="m42120" version="1.7" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.7">
+          <md:title>Accuracy, Precision, and Significant Figures</md:title>
+        </col:module>
+        <col:module document="m42121" version="1.5" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.5">
+          <md:title>Approximation</md:title>
+        </col:module>
+      </col:content>
+    </col:subcollection>
+    <col:subcollection>
+      <md:title>Further Applications of Newton's Laws: Friction, Drag, and Elasticity</md:title>
+      <col:content>
+        <col:module document="m42138" version="1.2" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.2">
+          <md:title>Introduction: Further Applications of Newton&#8217;s Laws</md:title>
+        </col:module>
+        <col:module document="m42139" version="1.5" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.5">
+          <md:title>Friction</md:title>
+        </col:module>
+        <col:module document="m42080" version="1.6" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.6">
+          <md:title>Drag Forces</md:title>
+        </col:module>
+        <col:module document="m42081" version="1.8" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.8">
+          <md:title>Elasticity: Stress and Strain</md:title>
+        </col:module>
+      </col:content>
+    </col:subcollection>
+    <col:module document="m42955" version="1.8" repository="https://legacy.cnx.org/content" cnxorg:version-at-this-collection-version="1.8">
+      <md:title>Preface</md:title>
+    </col:module>
+  </col:content>
+</col:collection>
