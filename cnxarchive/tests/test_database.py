@@ -615,6 +615,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
 
     @testing.db_connect
     def test_next_version(self, cursor):
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER collection_minor_ver_collxml')
         from ..database import next_version
 
         # Insert collection version 2.1
@@ -777,6 +778,7 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
     @testing.db_connect
     def test_republish_collection(self, cursor):
         cursor.execute('ALTER TABLE modules DISABLE TRIGGER module_published')
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER collection_minor_ver_collxml')
 
         from ..database import republish_collection
 
@@ -830,8 +832,9 @@ class ModulePublishTriggerTestCase(unittest.TestCase):
     def test_republish_collection_w_keywords(self, cursor):
         # Ensure association of the new collection with existing keywords.
         settings = testing.integration_test_settings()
-        cursor.execute("""\
-ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.execute("ALTER TABLE modules DISABLE TRIGGER module_published")
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER collection_minor_ver_collxml')
+
         cursor.connection.commit()
 
         cursor.execute("""INSERT INTO document_controls (uuid)
@@ -875,6 +878,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         settings = testing.integration_test_settings()
         cursor.execute("""\
 ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER collection_minor_ver_collxml')
+
         cursor.connection.commit()
 
         cursor.execute("""INSERT INTO document_controls (uuid)
@@ -920,6 +925,8 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
         settings = testing.integration_test_settings()
         cursor.execute("""\
 ALTER TABLE modules DISABLE TRIGGER module_published""")
+        cursor.execute('ALTER TABLE modules DISABLE TRIGGER collection_minor_ver_collxml')
+
         cursor.connection.commit()
 
         cursor.execute("""INSERT INTO document_controls (uuid)
