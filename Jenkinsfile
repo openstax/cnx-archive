@@ -20,6 +20,7 @@ pipeline {
       }
     }
     stage('Deploy to the Staging stack') {
+      when { branch 'master' }
       steps {
         // Requires DOCKER_HOST be set in the Jenkins Configuration.
         // Using the environment variable enables this file to be
@@ -28,6 +29,7 @@ pipeline {
       }
     }
     stage('Run Functional Tests'){
+      when { branch 'master' }
       steps {
           runCnxFunctionalTests(testingDomain: "${env.CNX_STAGING_DOCKER_HOST}")
       }
@@ -38,11 +40,7 @@ pipeline {
         TWINE_CREDS = credentials('pypi-openstax-creds')
         TWINE_USERNAME = "${TWINE_CREDS_USR}"
         TWINE_PASSWORD = "${TWINE_CREDS_PSW}"
-        release = """${sh(
-          returnStdout: true,
-          // Strip the `v` prefix
-          script: 'bash -c \'echo ${TAG_NAME#v*}\''
-        ).trim()}"""
+        release = meta.version()
       }
       steps {
         withDockerRegistry([credentialsId: 'docker-registry', url: '']) {
