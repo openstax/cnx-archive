@@ -6,11 +6,11 @@ pipeline {
     TESTING_CONTAINER_NAME = "archive-testing-${env.BUILD_ID}"
   }
   stages {
-    stage('Build') {
-      steps {
-        sh "docker build -t openstax/cnx-archive:dev ."
-      }
-    }
+    // stage('Build') {
+    //   steps {
+    //     sh "docker build -t openstax/cnx-archive:dev ."
+    //   }
+    // }
     stage('Publish Dev Container') {
       steps {
         // 'docker-registry' is defined in Jenkins under credentials
