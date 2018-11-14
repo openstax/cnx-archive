@@ -29,7 +29,7 @@ pipeline {
       }
     }
     stage('Run Functional Tests'){
-      when { branch 'master' }
+      // when { branch 'master' }
       steps {
           runCnxFunctionalTests(testingDomain: "${env.CNX_STAGING_DOCKER_HOST}")
       }
