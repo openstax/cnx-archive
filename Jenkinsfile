@@ -12,6 +12,12 @@ pipeline {
     //   }
     // }
     stage('Publish Dev Container') {
+      when {
+        anyOf {
+          branch 'master'
+          buildingTag()
+        }
+      }
       steps {
         // 'docker-registry' is defined in Jenkins under credentials
         withDockerRegistry([credentialsId: 'docker-registry', url: '']) {
@@ -20,7 +26,12 @@ pipeline {
       }
     }
     stage('Deploy to the Staging stack') {
-      when { branch 'master' }
+      when {
+        anyOf {
+          branch 'master'
+          buildingTag()
+        }
+      }
       steps {
         // Requires DOCKER_HOST be set in the Jenkins Configuration.
         // Using the environment variable enables this file to be
