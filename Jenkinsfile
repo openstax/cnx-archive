@@ -1,4 +1,4 @@
-@Library('pipeline-library') _
+@Library('pipeline-library@drop-varnish-marker') _
 
 pipeline {
   agent { label 'docker' }
@@ -31,7 +31,7 @@ pipeline {
     stage('Run Functional Tests'){
       // when { branch 'master' }
       steps {
-          runCnxFunctionalTests(testingDomain: "${env.CNX_STAGING_DOCKER_HOST}")
+          runCnxFunctionalTests(dockerHost: "${env.CNX_STAGING_DOCKER_HOST}")
       }
     }
     stage('Publish Release') {
