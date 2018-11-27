@@ -28,11 +28,6 @@ TYPE_INFO = [
       'file_extension': 'pdf',
       'mimetype': 'application/pdf',
       'user_friendly_name': 'PDF'}),
-    ('epub',
-     {'description': 'Electronic book format file, for viewing on mobile devices.',
-      'file_extension': 'epub',
-      'mimetype': 'application/epub+zip',
-      'user_friendly_name': 'EPUB'}),
     ('zip',
      {'description': 'An offline HTML copy of the content.  Also includes XML, '
       'included media files, and other support files.',
