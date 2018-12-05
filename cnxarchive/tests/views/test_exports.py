@@ -326,7 +326,7 @@ class ExportsViewsTestCase(unittest.TestCase):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = '5'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}@{}.pdf'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         self.request.matchdict = {'ident_hash': ident_hash,
                                   'type': 'zip'
                                   }
