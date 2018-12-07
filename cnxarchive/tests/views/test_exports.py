@@ -326,16 +326,16 @@ class ExportsViewsTestCase(unittest.TestCase):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = '5'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}@{}.zip'.format(id, version)
+        filename = '{}@{}.txt'.format(id, version)
         self.request.matchdict = {'ident_hash': ident_hash,
-                                  'type': 'zip'
+                                  'type': 'txt'
                                   }
 
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attachment; filename=useful-inf%C3%B8rmation-{ver}.zip;"
-            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.zip"
+            "attachment; filename=useful-inf%C3%B8rmation-{ver}.txt;"
+            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.txt"
             .format(ver=version))
 
         self.assertEqual(export, '')

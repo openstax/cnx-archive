@@ -990,15 +990,6 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                          'application/json')
         self.assertEqual(output['downloads'], [
             {
-                u'path': u'/exports/{}@{}.pdf/preface-to-college-physics-7.pdf'.format(id, version),
-                u'format': u'PDF',
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'state': u'good',
-                u'size': 15,
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'filename': u'preface-to-college-physics-7.pdf',
-            },
-            {
                 u'path': u'/exports/{}@{}.epub/preface-to-college-physics-7.epub'.format(id, version),
                 u'format': u'EPUB',
                 u'created': u'2015-03-04T10:03:29-08:00',
