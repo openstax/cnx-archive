@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY . /src/
 WORKDIR /src/
-RUN chown -R archive:archive /src/
 
 RUN python -m pip install --no-cache-dir -e .
+RUN chown -R archive:archive /src/
 
 
 ARG PORT
