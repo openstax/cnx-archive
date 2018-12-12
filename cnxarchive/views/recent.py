@@ -67,7 +67,8 @@ def recent(request):
     # search the database
     settings = request.registry.settings
     statement = """
-                SELECT name, revised, authors, abstract, uuid
+                SELECT name, revised, authors, abstract,
+                ident_hash(uuid, major_version, minor_version)as ident_hash
                 FROM latest_modules
                 JOIN abstracts
                 ON latest_modules.abstractid = abstracts.abstractid
@@ -79,13 +80,16 @@ def recent(request):
             with db_c.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(statement,
                             vars=(portal_type, num_entries, start_entry))
-                latest_modules = cur.fetchall()
-    for module in latest_modules:
-        module['revised'] = html_rss_date(module['revised'])
-        module['authors'] = format_author(module['authors'], settings)
-        module['abstract'] = module['abstract'].decode('utf-8')
-        module['name'] = module['name'].decode('utf-8')
-        module['uuid'] = request.route_url('content',
-                                           ident_hash=module['uuid'])
+                latest_module_results = cur.fetchall()
+    modules = []
+    for module in latest_module_results:
+        modules.append({
+            'name': module['name'].decode('utf-8'),
+            'revised': html_rss_date(module['revised']),
+            'authors': format_author(module['authors'], settings),
+            'abstract': module['abstract'].decode('utf-8'),
+            'url': request.route_url('content',
+                                     ident_hash=module['ident_hash']),
+        })
     request.response.content_type = 'application/rss+xml'
-    return {"latest_modules": latest_modules}
+    return {"latest_modules": modules}

@@ -8,8 +8,10 @@
 
       {% for module in latest_modules %}
         <item>
-          <title>{{module.name}}</title>
-          <link>{{module.uuid}}</link>
+          <title>{{ module.name }}</title>
+          <link>{{ module.url }}</link>
+          <pubDate>{{ module.revised }}</pubDate>
+          <guid>{{ module.url }}</guid>
           <description>
           &lt;h3&gt;
             &lt;div class="lastUpdated"&gt;
@@ -32,5 +34,5 @@
         </item>
       {% endfor %}
 
-</rss>
 </channel>
+</rss>
