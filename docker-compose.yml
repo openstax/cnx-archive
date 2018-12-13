@@ -1,19 +1,28 @@
-version: "2"
+version: "3"
 services:
+
   archive:
     build: .
+    volumes:
+      # This mounts this project into the container for development use.
+      - ./:/src/:z
     ports:
+      # Allows you to access the application at http://localhost:6543.
       - "6543:6543"
-    links:
-      - db
-      - memcached
+    environment:
+      # Use the docker aware version of the testing configuration file
+      - TESTING_CONFIG=docker-testing.ini
+
   db:
-    image: openstax/cnx-db:2.3.0
+    image: openstax/cnx-db:2.7.0
     ports:
+      # Exposes the port to a random external port number.
+      # Use `docker ps` to find the external port mapping.
       - "5432"
-#    volumes:
-      # https://github.com/Connexions/devops/wiki/How-To%3A-Get-a-Slim-Database-Dump
+    # If you'd like to load the database with data, have a look at:
+    # https://github.com/Connexions/devops/wiki/How-To%3A-Get-a-Slim-Database-Dump
+    # But do keep in mind that it will be wiped away if you are
+    # also running the unit tests
+
   memcached:
     image: memcached:1.5
-    ports:
-      - "11211"
