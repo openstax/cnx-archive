@@ -87,8 +87,8 @@ class RecentViewsTestCase(unittest.TestCase):
             dates.append(module["revised"].split(',')[1])
             keys = module.keys()
             keys.sort()
-            self.assertEqual(keys, ["abstract", "authors", "name",
-                                    "revised", "uuid"])
+            self.assertEqual(keys, [u"abstract", u"authors", u"name",
+                                    u"revised", u"url"])
         dates_sorted = list(dates)
         dates_sorted.sort(reverse=True)
         self.assertEqual(dates_sorted, dates)
