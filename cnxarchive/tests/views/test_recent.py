@@ -72,7 +72,7 @@ class RecentRssViewTestCase(unittest.TestCase):
         # Stub the database interaction
         # FIXME: test for None abstract value
         row_info = [
-            ('intro', '<feb>', 'john, wanda', '<abstract>', 'id@1'),
+            ('intro', '<feb>', 'john, wanda', None, 'id@1'),
             ('book', '<mar>', 'jen, sal, harry', '<abstract>', 'id@5.1'),
         ]
         row_keys = ['name', 'revised', 'authors', 'abstract', 'ident_hash']
