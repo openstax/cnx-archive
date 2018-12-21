@@ -52,6 +52,14 @@ def stub_db_connect_database_interaction(results=[]):
     return db_connect
 
 
+def monkeypatch_local_db_connect(test_case, new_func):
+    # Monkeypatch the db_connect function
+    from ...views import recent
+    original_func = getattr(recent, 'db_connect')
+    test_case.addCleanup(setattr, recent, 'db_connect', original_func)
+    setattr(recent, 'db_connect', new_func)
+
+
 class AuthorFormatTestCase(unittest.TestCase):
 
     def test(self):
@@ -66,10 +74,7 @@ class AuthorFormatTestCase(unittest.TestCase):
         db_connect = stub_db_connect_database_interaction(db_results)
 
         # Monkeypatch the db_connect function
-        from ...views import recent
-        original_func = getattr(recent, 'db_connect')
-        self.addCleanup(setattr, recent, 'db_connect', original_func)
-        setattr(recent, 'db_connect', db_connect)
+        monkeypatch_local_db_connect(self, db_connect)
 
         # Call the target
         from ...views.recent import format_author
