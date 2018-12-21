@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ###
-# Copyright (c) 2013, Rice University
+# Copyright (c) 2013-2018, Rice University
 # This software is subject to the provisions of the GNU Affero General
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
@@ -59,28 +59,6 @@ def monkeypatch_local_db_connect(test_case, new_func):
     test_case.addCleanup(setattr, recent, 'db_connect', original_func)
     setattr(recent, 'db_connect', new_func)
 
-
-class AuthorFormatTestCase(unittest.TestCase):
-
-    def test(self):
-        from cnxarchive import config
-        settings = {
-            config.CONNECTION_STRING: '<connection-string>'
-        }
-        authors = ['cnxcap', 'OpenStaxCollege']
-
-        # Stub the database interaction
-        db_results = [('OSC Physics Maintainer',), ('OpenStax College',)]
-        db_connect = stub_db_connect_database_interaction(db_results)
-
-        # Monkeypatch the db_connect function
-        monkeypatch_local_db_connect(self, db_connect)
-
-        # Call the target
-        from ...views.recent import format_author
-        formated = format_author(authors, settings)
-
-        self.assertEqual(formated, 'OSC Physics Maintainer, OpenStax College')
 
 
 class RecentViewsTestCase(unittest.TestCase):

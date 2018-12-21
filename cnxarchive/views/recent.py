@@ -15,34 +15,8 @@ from .. import config
 from ..database import db_connect
 from ..utils import rfc822
 
+
 logger = logging.getLogger('cnxarchive')
-
-
-# #################### #
-#   Helper functions   #
-# #################### #
-
-
-def format_author(personids, settings):
-    """
-    Takes a list of personid's and searches in the persons table to get their
-    full names and returns a list of the full names as a string.
-    """
-    statement = """
-                SELECT fullname
-                FROM persons
-                WHERE personid = ANY (%s);
-                """
-    with db_connect() as db_connection:
-            with db_connection.cursor() as cursor:
-                cursor.execute(statement, vars=(personids,))
-                authors_list = cursor.fetchall()
-    return ', '.join([author[0] for author in authors_list]).decode('utf-8')
-
-
-# #################### #
-#         Views        #
-# #################### #
 
 
 @view_config(route_name='recent', request_method='GET',
@@ -57,16 +31,26 @@ def recent(request):
         portal_type = [portal_type]
     # search the database
     settings = request.registry.settings
-    statement = """
-                SELECT name, revised, authors, abstract,
-                ident_hash(uuid, major_version, minor_version)as ident_hash
-                FROM latest_modules
-                JOIN abstracts
-                ON latest_modules.abstractid = abstracts.abstractid
-                WHERE portal_type = ANY (%s)
-                ORDER BY revised DESC
-                LIMIT (%s) OFFSET (%s);
-                """
+    statement = """\
+WITH recent_modules AS (
+    SELECT
+        name, revised, authors , abstract,
+        ident_hash(uuid, major_version, minor_version) AS ident_hash
+    FROM latest_modules NATURAL JOIN abstracts
+    WHERE portal_type = ANY(%s)
+    ORDER BY revised DESC
+    LIMIT (%s)
+    OFFSET (%s)
+)
+SELECT
+    name,
+    revised,
+    (SELECT string_agg(u.full_name, ', ')
+     FROM (SELECT unnest(authors) AS author) AS _authors
+     JOIN users AS u ON (u.username = _authors.author)) as authors,
+    abstract,
+    ident_hash
+FROM recent_modules;"""
     with db_connect() as db_c:
             with db_c.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
                 cur.execute(statement,
@@ -77,7 +61,7 @@ def recent(request):
         modules.append({
             'name': module['name'].decode('utf-8'),
             'revised': rfc822(module['revised']),
-            'authors': format_author(module['authors'], settings),
+            'authors': module['authors'].decode('utf-8'),
             'abstract': module['abstract'].decode('utf-8'),
             'url': request.route_url('content',
                                      ident_hash=module['ident_hash']),
