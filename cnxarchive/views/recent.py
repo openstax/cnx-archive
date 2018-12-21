@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ###
-# Copyright (c) 2013, Rice University
+# Copyright (c) 2013-2018, Rice University
 # This software is subject to the provisions of the GNU Affero General
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
@@ -13,6 +13,7 @@ from pyramid.view import view_config
 
 from .. import config
 from ..database import db_connect
+from ..utils import rfc822
 
 logger = logging.getLogger('cnxarchive')
 
@@ -37,16 +38,6 @@ def format_author(personids, settings):
                 cursor.execute(statement, vars=(personids,))
                 authors_list = cursor.fetchall()
     return ', '.join([author[0] for author in authors_list]).decode('utf-8')
-
-
-def html_rss_date(datetime):
-    """
-    Return the HTTP-date format of python's datetime time.
-
-    Based on:
-    https://legacy.cnx.org/content/recent.rss
-    """
-    return datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
 
 
 # #################### #
@@ -85,7 +76,7 @@ def recent(request):
     for module in latest_module_results:
         modules.append({
             'name': module['name'].decode('utf-8'),
-            'revised': html_rss_date(module['revised']),
+            'revised': rfc822(module['revised']),
             'authors': format_author(module['authors'], settings),
             'abstract': module['abstract'].decode('utf-8'),
             'url': request.route_url('content',
