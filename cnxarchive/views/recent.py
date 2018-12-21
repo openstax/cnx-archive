@@ -6,17 +6,12 @@
 # See LICENCE.txt for details.
 # ###
 """Recent RSS feed View."""
-import logging
-
 import psycopg2.extras
 from pyramid.view import view_config
 
 from .. import config
 from ..database import db_connect
 from ..utils import rfc822
-
-
-logger = logging.getLogger('cnxarchive')
 
 
 @view_config(route_name='recent', request_method='GET',
