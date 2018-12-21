@@ -19,7 +19,8 @@ install_requires = (
     'waitress',  # wsgi server
     )
 tests_require = [
-    'webtest<=2.0.27'
+    'webtest<=2.0.27',
+    'pretend',
     ]
 description = "An archive for Connexions documents."
 

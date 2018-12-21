@@ -14,9 +14,51 @@ try:
 except ImportError:
     import mock
 
+import pretend
 from pyramid import testing as pyramid_testing
 
 from .. import testing
+
+
+class AuthorFormatTestCase(unittest.TestCase):
+
+    def test(self):
+        from cnxarchive import config
+        settings = {
+            config.CONNECTION_STRING: '<connection-string>'
+        }
+        authors = ['cnxcap', 'OpenStaxCollege']
+
+        # Stub the database interaction
+        db_results = [('OSC Physics Maintainer',), ('OpenStax College',)]
+        cursor = pretend.stub(
+            execute=lambda *a, **kw: None,
+            fetchall=lambda: db_results,
+        )
+        cursor_contextmanager = pretend.stub(
+            __enter__=lambda *a: cursor,
+            __exit__=lambda a, b, c: None,
+        )
+        db_conn = pretend.stub(cursor=lambda: cursor_contextmanager)
+        db_connect_contextmanager = pretend.stub(
+            __enter__=lambda: db_conn,
+            __exit__=lambda a, b, c: None,
+        )
+        db_connect = pretend.stub(
+            __call__=lambda: db_connect_contextmanager,
+        )
+
+        # Monkeypatch the db_connect function
+        from ...views import recent
+        original_func = getattr(recent, 'db_connect')
+        self.addCleanup(setattr, recent, 'db_connect', original_func)
+        setattr(recent, 'db_connect', db_connect)
+
+        # Call the target
+        from ...views.recent import format_author
+        formated = format_author(authors, settings)
+
+        self.assertEqual(formated, 'OSC Physics Maintainer, OpenStax College')
 
 
 class RecentViewsTestCase(unittest.TestCase):
@@ -47,12 +89,6 @@ class RecentViewsTestCase(unittest.TestCase):
     def tearDown(self):
         pyramid_testing.tearDown()
         self.fixture.tearDown()
-
-    def test_format_author(self):
-        from ...views.recent import format_author
-        self.assertEqual(
-            format_author(['cnxcap', 'OpenStaxCollege'], self.settings),
-            'OSC Physics Maintainer, OpenStax Cöllege')
 
     def test_recent_rss(self):
         self.request.matched_route = mock.Mock()
