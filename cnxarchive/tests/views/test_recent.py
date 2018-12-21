@@ -20,6 +20,38 @@ from pyramid import testing as pyramid_testing
 from .. import testing
 
 
+def stub_db_connect_database_interaction(results=[]):
+    """Stub out the ``cnxarchive.database.db_connect`` function
+    and child functions for simple interactions.
+
+    The interactions look something like::
+
+        >>> with db_connect() as db_conn:
+        ...     with db_conn.cursor() as cursor:
+        ...         cursor.execute(...)
+        ...         results = cursor.fetchall()
+
+    """
+    # Stub the database interaction
+    cursor = pretend.stub(
+        execute=lambda *a, **kw: None,
+        fetchall=lambda: results,
+    )
+    cursor_contextmanager = pretend.stub(
+        __enter__=lambda *a: cursor,
+        __exit__=lambda a, b, c: None,
+    )
+    db_conn = pretend.stub(cursor=lambda: cursor_contextmanager)
+    db_connect_contextmanager = pretend.stub(
+        __enter__=lambda: db_conn,
+        __exit__=lambda a, b, c: None,
+    )
+    db_connect = pretend.stub(
+        __call__=lambda: db_connect_contextmanager,
+    )
+    return db_connect
+
+
 class AuthorFormatTestCase(unittest.TestCase):
 
     def test(self):
@@ -31,22 +63,7 @@ class AuthorFormatTestCase(unittest.TestCase):
 
         # Stub the database interaction
         db_results = [('OSC Physics Maintainer',), ('OpenStax College',)]
-        cursor = pretend.stub(
-            execute=lambda *a, **kw: None,
-            fetchall=lambda: db_results,
-        )
-        cursor_contextmanager = pretend.stub(
-            __enter__=lambda *a: cursor,
-            __exit__=lambda a, b, c: None,
-        )
-        db_conn = pretend.stub(cursor=lambda: cursor_contextmanager)
-        db_connect_contextmanager = pretend.stub(
-            __enter__=lambda: db_conn,
-            __exit__=lambda a, b, c: None,
-        )
-        db_connect = pretend.stub(
-            __call__=lambda: db_connect_contextmanager,
-        )
+        db_connect = stub_db_connect_database_interaction(db_results)
 
         # Monkeypatch the db_connect function
         from ...views import recent
