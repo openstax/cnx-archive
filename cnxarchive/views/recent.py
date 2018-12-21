@@ -39,9 +39,9 @@ WITH recent_modules AS (
 SELECT
     name,
     revised,
-    (SELECT string_agg(u.full_name, ', ')
+    (SELECT string_agg(p.fullname, ', ')
      FROM (SELECT unnest(authors) AS author) AS _authors
-     JOIN users AS u ON (u.username = _authors.author)) as authors,
+     JOIN persons AS p ON (p.personid = _authors.author)) as authors,
     abstract,
     ident_hash
 FROM recent_modules;"""
