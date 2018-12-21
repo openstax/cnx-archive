@@ -25,7 +25,6 @@ def recent(request):
     if portal_type != ['Collection', 'Module']:
         portal_type = [portal_type]
     # search the database
-    settings = request.registry.settings
     statement = """\
 WITH recent_modules AS (
     SELECT

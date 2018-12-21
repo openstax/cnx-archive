@@ -9,13 +9,8 @@ from __future__ import unicode_literals
 import os
 import unittest
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
 import pretend
-from pyramid import testing as pyramid_testing
+import pyramid.testing as pyramid_testing
 
 from .. import testing
 
@@ -41,7 +36,7 @@ def stub_db_connect_database_interaction(results=[]):
         __enter__=lambda *a: cursor,
         __exit__=lambda a, b, c: None,
     )
-    db_conn = pretend.stub(cursor=lambda: cursor_contextmanager)
+    db_conn = pretend.stub(cursor=lambda **kw: cursor_contextmanager)
     db_connect_contextmanager = pretend.stub(
         __enter__=lambda: db_conn,
         __exit__=lambda a, b, c: None,
@@ -52,63 +47,61 @@ def stub_db_connect_database_interaction(results=[]):
     return db_connect
 
 
+def monkeypatch(test_case, obj, attr, new):
+    original = getattr(obj, attr)
+    test_case.addCleanup(setattr, obj, attr, original)
+    setattr(obj, attr, new)
+
+
 def monkeypatch_local_db_connect(test_case, new_func):
     # Monkeypatch the db_connect function
     from ...views import recent
-    original_func = getattr(recent, 'db_connect')
-    test_case.addCleanup(setattr, recent, 'db_connect', original_func)
-    setattr(recent, 'db_connect', new_func)
+    monkeypatch(test_case, recent, 'db_connect', new_func)
 
 
+class RecentRssViewTestCase(unittest.TestCase):
 
-class RecentViewsTestCase(unittest.TestCase):
-    fixture = testing.data_fixture
-    maxDiff = 10000
+    def test(self):
+        request = pyramid_testing.DummyRequest()
+        request.matched_route = pretend.stub(name='recent')
+        request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
+        request.response = pretend.stub()
+        request.route_url = pretend.call_recorder(
+            lambda n, ident_hash: n + ':' + ident_hash)
 
-    @classmethod
-    def setUpClass(cls):
-        cls.settings = testing.integration_test_settings()
+        # Stub the database interaction
+        # FIXME: test for None abstract value
+        row_info = [
+            ('intro', '<feb>', 'john, wanda', '<abstract>', 'id@1'),
+            ('book', '<mar>', 'jen, sal, harry', '<abstract>', 'id@5.1'),
+        ]
+        row_keys = ['name', 'revised', 'authors', 'abstract', 'ident_hash']
+        db_results = map(lambda x: dict(zip(row_keys, x)), row_info)
+        db_connect = stub_db_connect_database_interaction(db_results)
 
-    @testing.db_connect
-    def setUp(self, cursor):
-        self.fixture.setUp()
-        self.request = pyramid_testing.DummyRequest()
-        self.request.headers['HOST'] = 'cnx.org'
-        self.request.application_url = 'http://cnx.org'
-        config = pyramid_testing.setUp(settings=self.settings,
-                                       request=self.request)
+        # Monkeypatch the dependency functions
+        from ...views import recent
+        monkeypatch(self, recent, 'db_connect', db_connect)
+        monkeypatch(self, recent, 'rfc822', lambda x: 'rfc822:' + x)
 
-        # Set up routes
-        from ... import declare_api_routes
-        declare_api_routes(config)
-
-        # Set up type info
-        from ... import declare_type_info
-        declare_type_info(config)
-
-    def tearDown(self):
-        pyramid_testing.tearDown()
-        self.fixture.tearDown()
-
-    def test_recent_rss(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
-
+        # Call the target
         from ...views.recent import recent
-        recent = recent(self.request)
-        self.assertEqual(len(recent['latest_modules']), 5)
-        # check that they are in correct order
-        dates = []
-        for module in recent['latest_modules']:
-            dates.append(module["revised"].split(',')[1])
+        recent = recent(request)
+
+        self.assertEqual(len(recent['latest_modules']), 2)
+        for i, module in enumerate(recent['latest_modules']):
             keys = module.keys()
             keys.sort()
             self.assertEqual(keys, [u"abstract", u"authors", u"name",
                                     u"revised", u"url"])
-        dates_sorted = list(dates)
-        dates_sorted.sort(reverse=True)
-        self.assertEqual(dates_sorted, dates)
+            expected = {
+                u'name': row_info[i][0],
+                u'revised': 'rfc822:' + row_info[i][1],
+                u'authors': row_info[i][2],
+                u'abstract': row_info[i][3],
+                u'url': 'content:' + row_info[i][4],
+            }
+            self.assertEqual(expected, module)
 
 
 class RecentRssTestCase(testing.FunctionalTestCase):
