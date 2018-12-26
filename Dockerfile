@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
       tzdata \
     && rm -rf /var/lib/apt/lists/*
 
+# Optional dependency for Sentry integration
+RUN python -m pip install --no-cache-dir sentry_sdk
+
 COPY . /src/
 WORKDIR /src/
 

@@ -7,6 +7,8 @@
 # ###
 """Document and collection archive web application."""
 import os
+import warnings
+
 from pyramid.config import Configurator
 
 from ._version import get_versions
@@ -98,8 +100,43 @@ def declare_type_info(config):
             }))
 
 
+def initialize_sentry_integration():  # pragma: no cover
+    """\
+    Used to optionally initialize the Sentry service with this app.
+    See https://docs.sentry.io/platforms/python/pyramid/
+
+    """
+    # This function is not under coverage because it is boilerplate
+    # from the Sentry documentation.
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.pyramid import PyramidIntegration
+    except ImportError:
+        warnings.warn(
+            "Sentry is not configured because the Sentry SDK "
+            "(sentry_sdk package) is not installed",
+            UserWarning,
+        )
+        return  # bail out early
+
+    try:
+        dsn = os.environ['SENTRY_DSN']
+    except KeyError:
+        warnings.warn(
+            "Sentry is not configured because SENTRY_DSN "
+            "was not supplied.",
+            UserWarning,
+        )
+    else:
+        sentry_sdk.init(
+            dsn=dsn,
+            integrations=[PyramidIntegration()],
+        )
+
+
 def main(global_config, **settings):
     """Main WSGI application factory."""
+    initialize_sentry_integration()
     config = Configurator(settings=settings)
     declare_api_routes(config)
     declare_type_info(config)
