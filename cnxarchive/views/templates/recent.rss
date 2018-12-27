@@ -19,9 +19,11 @@
             &lt;/div&gt;
           &lt;/h3&gt;
           &lt;div class="feedEntryContent"&gt;
+            {%- if module.authors %}
             &lt;b&gt;
-                  {{module.authors}}
+               {{ module.authors }}
             &lt;/b&gt;
+            {%- endif %}
             {%- if module.abstract %}
             &lt;br&gt;&lt;/br&gt;
                {{ module.abstract }}

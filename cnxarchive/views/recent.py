@@ -53,12 +53,15 @@ FROM recent_modules;"""
     modules = []
     for module in latest_module_results:
         abstract = module['abstract']
+        authors = module['authors']
         if abstract is not None:
             abstract = abstract.decode('utf-8')
+        if authors is not None:
+            authors = authors.decode('utf-8')
         modules.append({
             'name': module['name'].decode('utf-8'),
             'revised': rfc822(module['revised']),
-            'authors': module['authors'].decode('utf-8'),
+            'authors': authors,
             'abstract': abstract,
             'url': request.route_url('content',
                                      ident_hash=module['ident_hash']),
