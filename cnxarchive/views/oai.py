@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ###
-# Copyright (c) 2013, Rice University
+# Copyright (c) 2013-2018, Rice University
 # This software is subject to the provisions of the GNU Affero General
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
@@ -13,12 +13,12 @@ from pyramid.view import view_config
 
 from .. import config
 from ..database import db_connect
-from .recent import html_rss_date
+from ..utils import rfc822
+
 
 # ################### #
 #     OAI HELPERS     #
 # ################### #
-
 
 def _setFromUntil(request):
     arguments = []
@@ -240,7 +240,7 @@ def oai(request):
     request.response.headers = {'Content-Type': 'text/xml; charset=UTF-8'}
 
     return_vars = {}
-    return_vars['dateTime'] = html_rss_date(datetime.now().time())
+    return_vars['dateTime'] = rfc822(datetime.now().time())
     return_vars['baseURL'] = request.path_url
     return_vars['host'] = request.host
     return_vars['query_request'] = []

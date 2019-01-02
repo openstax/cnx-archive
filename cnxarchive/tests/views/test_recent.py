@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # ###
-# Copyright (c) 2013, Rice University
+# Copyright (c) 2013-2018, Rice University
 # This software is subject to the provisions of the GNU Affero General
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
@@ -9,89 +9,99 @@ from __future__ import unicode_literals
 import os
 import unittest
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
-from pyramid import testing as pyramid_testing
+import pretend
+import pyramid.testing as pyramid_testing
 
 from .. import testing
 
 
-class RecentViewsTestCase(unittest.TestCase):
-    fixture = testing.data_fixture
-    maxDiff = 10000
+def stub_db_connect_database_interaction(results=[]):
+    """Stub out the ``cnxarchive.database.db_connect`` function
+    and child functions for simple interactions.
 
-    @classmethod
-    def setUpClass(cls):
-        cls.settings = testing.integration_test_settings()
+    The interactions look something like::
 
-    @testing.db_connect
-    def setUp(self, cursor):
-        self.fixture.setUp()
-        self.request = pyramid_testing.DummyRequest()
-        self.request.headers['HOST'] = 'cnx.org'
-        self.request.application_url = 'http://cnx.org'
-        config = pyramid_testing.setUp(settings=self.settings,
-                                       request=self.request)
+        >>> with db_connect() as db_conn:
+        ...     with db_conn.cursor() as cursor:
+        ...         cursor.execute(...)
+        ...         results = cursor.fetchall()
 
-        # Set up routes
-        from ... import declare_api_routes
-        declare_api_routes(config)
+    """
+    # Stub the database interaction
+    cursor = pretend.stub(
+        execute=lambda *a, **kw: None,
+        fetchall=lambda: results,
+    )
+    cursor_contextmanager = pretend.stub(
+        __enter__=lambda *a: cursor,
+        __exit__=lambda a, b, c: None,
+    )
+    db_conn = pretend.stub(cursor=lambda **kw: cursor_contextmanager)
+    db_connect_contextmanager = pretend.stub(
+        __enter__=lambda: db_conn,
+        __exit__=lambda a, b, c: None,
+    )
+    db_connect = pretend.stub(
+        __call__=lambda: db_connect_contextmanager,
+    )
+    return db_connect
 
-        # Set up type info
-        from ... import declare_type_info
-        declare_type_info(config)
 
-        # Clear all cached searches
-        import memcache
-        mc_servers = self.settings['memcache-servers'].split()
-        mc = memcache.Client(mc_servers, debug=0)
-        mc.flush_all()
-        mc.disconnect_all()
+def monkeypatch(test_case, obj, attr, new):
+    original = getattr(obj, attr)
+    test_case.addCleanup(setattr, obj, attr, original)
+    setattr(obj, attr, new)
 
-        # Patch database search so that it's possible to assert call counts
-        # later
-        from ... import cache
-        original_search = cache.database_search
-        self.db_search_call_count = 0
 
-        def patched_search(*args, **kwargs):
-            self.db_search_call_count += 1
-            return original_search(*args, **kwargs)
-        cache.database_search = patched_search
-        self.addCleanup(setattr, cache, 'database_search', original_search)
+def monkeypatch_local_db_connect(test_case, new_func):
+    # Monkeypatch the db_connect function
+    from ...views import recent
+    monkeypatch(test_case, recent, 'db_connect', new_func)
 
-    def tearDown(self):
-        pyramid_testing.tearDown()
-        self.fixture.tearDown()
 
-    def test_format_author(self):
-        from ...views.recent import format_author
-        self.assertEqual(
-            format_author(['cnxcap', 'OpenStaxCollege'], self.settings),
-            'OSC Physics Maintainer, OpenStax Cöllege')
+class RecentRssViewTestCase(unittest.TestCase):
 
-    def test_recent_rss(self):
-        self.request.matched_route = mock.Mock()
-        self.request.matched_route.name = 'recent'
-        self.request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
+    def test(self):
+        request = pyramid_testing.DummyRequest()
+        request.matched_route = pretend.stub(name='recent')
+        request.GET = {'number': 5, 'start': 3, 'type': 'Module'}
+        request.response = pretend.stub()
+        request.route_url = pretend.call_recorder(
+            lambda n, ident_hash: n + ':' + ident_hash)
 
+        # Stub the database interaction
+        # FIXME: test for None abstract value
+        row_info = [
+            ('intro', '<feb>', 'john, wanda', None, 'id@1'),
+            ('book', '<mar>', 'jen, sal, harry', '<abstract>', 'id@5.1'),
+        ]
+        row_keys = ['name', 'revised', 'authors', 'abstract', 'ident_hash']
+        db_results = map(lambda x: dict(zip(row_keys, x)), row_info)
+        db_connect = stub_db_connect_database_interaction(db_results)
+
+        # Monkeypatch the dependency functions
+        from ...views import recent
+        monkeypatch(self, recent, 'db_connect', db_connect)
+        monkeypatch(self, recent, 'rfc822', lambda x: 'rfc822:' + x)
+
+        # Call the target
         from ...views.recent import recent
-        recent = recent(self.request)
-        self.assertEqual(len(recent['latest_modules']), 5)
-        # check that they are in correct order
-        dates = []
-        for module in recent['latest_modules']:
-            dates.append(module["revised"].split(',')[1])
+        recent = recent(request)
+
+        self.assertEqual(len(recent['latest_modules']), 2)
+        for i, module in enumerate(recent['latest_modules']):
             keys = module.keys()
             keys.sort()
             self.assertEqual(keys, [u"abstract", u"authors", u"name",
                                     u"revised", u"url"])
-        dates_sorted = list(dates)
-        dates_sorted.sort(reverse=True)
-        self.assertEqual(dates_sorted, dates)
+            expected = {
+                u'name': row_info[i][0],
+                u'revised': 'rfc822:' + row_info[i][1],
+                u'authors': row_info[i][2],
+                u'abstract': row_info[i][3],
+                u'url': 'content:' + row_info[i][4],
+            }
+            self.assertEqual(expected, module)
 
 
 class RecentRssTestCase(testing.FunctionalTestCase):
