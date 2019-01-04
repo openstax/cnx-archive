@@ -6,6 +6,11 @@
 
    - feature message
 
+4.7.0
+-----
+
+- Remove EPUB files from the available exports list
+     
 4.6.0
 -----
 
