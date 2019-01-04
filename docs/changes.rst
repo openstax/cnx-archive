@@ -6,6 +6,14 @@
 
    - feature message
 
+4.8.0
+-----
+
+- Rewrite portions of the recent.rss view and fix an error with the view (#621)
+- Add Sentry integration (#622)
+- Fix the recent.rss feed (#617)
+- Adjust the container build steps (#616)
+
 4.7.0
 -----
 
