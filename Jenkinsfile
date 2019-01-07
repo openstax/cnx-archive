@@ -49,8 +49,8 @@ pipeline {
           sh "docker push openstax/cnx-archive:${release}"
           sh "docker push openstax/cnx-archive:latest"
         }
-        // Note, '.git' is a volume, because versioneer needs it to resolve the python distribution's version. 
-        sh "docker run --rm -e TWINE_USERNAME -e TWINE_PASSWORD -v ${WORKSPACE}/.git:/src/.git:ro openstax/cnx-archive:latest /bin/bash -c \"pip install -q twine && python2 setup.py bdist_wheel && twine upload dist/*\""
+        // Release the Python package to the package index
+        sh "docker run --rm -e TWINE_USERNAME -e TWINE_PASSWORD --volume ${WORKSPACE}:/usr/src/:rw --workdir /usr/src/ python:2.7 /bin/bash -c \"pip install -q twine && python2 setup.py bdist_wheel && twine upload dist/*\""
       }
     }
   }
