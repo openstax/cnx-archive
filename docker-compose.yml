@@ -11,7 +11,7 @@ services:
       - "6543:6543"
     environment:
       # Use the docker aware version of the testing configuration file
-      - TESTING_CONFIG=docker-testing.ini
+      - TESTING_CONFIG=cnxarchive/tests/docker-testing.ini
 
   db:
     image: openstax/cnx-db:2.7.0

@@ -7,7 +7,6 @@
 !README.rst
 !cnxarchive/
 !docker.ini
-!docker-testing.ini
 !docker-compose.yml
 !docs/
 !setup.cfg
