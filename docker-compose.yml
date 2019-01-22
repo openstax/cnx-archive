@@ -5,7 +5,15 @@ services:
     build: .
     volumes:
       # This mounts this project into the container for development use.
-      - ./:/src/:z
+      - ./cnxarchive:/src/cnxarchive:z
+      - ./development.ini:/src/development.ini
+      - ./docs:/src/docs
+      - ./LICENSE.txt:/src/LICENSE.txt
+      - ./MANIFEST.in:/src/MANIFEST.in
+      - ./README.rst:/src/README.rst
+      - ./setup.cfg:/src/setup.cfg
+      - ./setup.py:/src/setup.py
+      - ./versioneer.py:/src/versioneer.py
     ports:
       # Allows you to access the application at http://localhost:6543.
       - "6543:6543"
