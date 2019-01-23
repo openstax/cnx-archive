@@ -1297,8 +1297,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             u'isLatest': True,
             u'latestVersion': u'5',
             u'headVersion': u'5',
-            u'downloads': [
-                {
+            u'downloads': [{
                 u'created': None,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
                 u'filename': u'useful-inf\xf8rmation-5.epub',
