@@ -1297,15 +1297,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
             u'isLatest': True,
             u'latestVersion': u'5',
             u'headVersion': u'5',
-            u'downloads': [{
-                u'created': u'2015-03-04T10:03:29-08:00',
-                u'path': quote('/exports/{}@{}.pdf/useful-inførmation-5.pdf'
-                               .format(id, version)).decode('utf-8'),
-                u'format': u'PDF',
-                u'details': u'PDF file, for viewing content offline and printing.',
-                u'filename': u'useful-inførmation-5.pdf',
-                u'size': 0,
-                u'state': u'good'},
+            u'downloads': [
                 {
                 u'created': None,
                 u'details': u'Electronic book format file, for viewing on mobile devices.',
@@ -1316,14 +1308,14 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 u'size': 0,
                 u'state': u'missing'},
                 {
-                u'created': None,
+                u'created': u'2015-03-04T10:03:29-08:00',
                 u'details': u'An offline HTML copy of the content.  Also includes XML, included media files, and other support files.',
                 u'filename': u'useful-inf\xf8rmation-5.zip',
                 u'format': u'Offline ZIP',
                 u'path': quote('/exports/{}@{}.zip/useful-inførmation-5.zip'
                                .format(id, version)).decode('utf-8'),
-                u'size': 0,
-                u'state': u'missing'}],
+                u'size': 208003,
+                u'state': u'good'}],
             })
 
     def test_extra_state(self):
