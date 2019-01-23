@@ -58,12 +58,12 @@ def get_export(request):
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
             try:
-                results = get_export_files(cursor, id, version, [type], \
-                exports_dirs, read_file=True)
+                results = get_export_files(cursor, id, version, [type],
+                                           exports_dirs, read_file=True)
                 if not results:
                     raise httpexceptions.HTTPNotFound()
                 filename, mimetype, size, modtime, state, file_content \
-                = results[0]
+                    = results[0]
             except ExportError as e:
                 logger.debug(str(e))
                 raise httpexceptions.HTTPNotFound()

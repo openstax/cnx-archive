@@ -231,7 +231,7 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
                                    exports_dirs, read_file=False)
     type_settings = dict(type_settings)
     for filename, mimetype, file_size, file_created, state, file_content \
-    in file_tuples:
+            in file_tuples:
         type_name = filename.rsplit('.', 1)[-1]
         type_info = type_settings[type_name]
         yield {
