@@ -115,7 +115,7 @@ class GetExportFileTestCase(unittest.TestCase):
     def test_found_export(self):
         # Create the export file
         id, version = '<id>', '<version>'
-        filename = '{}@{}.pdf'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         filepath = os.path.join(self.export_dirs[-1], filename)
         file_content = 'mittens'
         with open(filepath, 'w') as fb:
@@ -126,7 +126,7 @@ class GetExportFileTestCase(unittest.TestCase):
             self.cursor,
             id,
             version,
-            'pdf',
+            'zip',
             self.export_dirs,
         )
 
@@ -134,8 +134,8 @@ class GetExportFileTestCase(unittest.TestCase):
         title, mimetype, size, time, state, content = export_file_info
         self.assertEqual(
             title,
-            u'the-kittens-and-their-mittens-<version>.pdf')
-        self.assertEqual(mimetype, 'application/pdf')
+            u'the-kittens-and-their-mittens-<version>.zip')
+        self.assertEqual(mimetype, 'application/zip')
         self.assertEqual(size, 7)
         self.assertEqual(time, '<datetime>')
         self.assertEqual(state, 'good')
@@ -326,19 +326,17 @@ class ExportsViewsTestCase(unittest.TestCase):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = '5'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}@{}.txt'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         self.request.matchdict = {'ident_hash': ident_hash,
-                                  'type': 'txt'
+                                  'type': 'zip'
                                   }
 
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attachment; filename=useful-inf%C3%B8rmation-{ver}.txt;"
-            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.txt"
+            "attachment; filename=useful-inf%C3%B8rmation-{ver}.zip;"
+            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.zip"
             .format(ver=version))
-
-        self.assertEqual(export, '')
 
         # Test exports can access the other exports directory
         id = '56f1c5c1-4014-450d-a477-2121e276beca'

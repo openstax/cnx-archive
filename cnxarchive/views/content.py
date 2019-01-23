@@ -229,10 +229,10 @@ def get_export_allowable_types(cursor, exports_dirs, id, version):
     # check for valid types, so it should never raise an ExportError here
     file_tuples = get_export_files(cursor, id, version, type_names,
                                    exports_dirs, read_file=False)
-    zipped_list = zip(file_tuples, type_names, type_infos)
-    for file_tuple, type_name, type_info in zipped_list:
-        (filename, mimetype, file_size, file_created, state, file_content
-         ) = file_tuple
+    type_settings = dict(type_settings)
+    for filename, mimetype, file_size, file_created, state, file_content in file_tuples:
+        type_name = filename.rsplit('.', 1)[-1]
+        type_info = type_settings[type_name]
         yield {
             'format': type_info['user_friendly_name'],
             'filename': filename,
