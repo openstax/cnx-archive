@@ -115,7 +115,7 @@ class GetExportFileTestCase(unittest.TestCase):
     def test_found_export(self):
         # Create the export file
         id, version = '<id>', '<version>'
-        filename = '{}@{}.pdf'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         filepath = os.path.join(self.export_dirs[-1], filename)
         file_content = 'mittens'
         with open(filepath, 'w') as fb:
@@ -126,7 +126,7 @@ class GetExportFileTestCase(unittest.TestCase):
             self.cursor,
             id,
             version,
-            'pdf',
+            'zip',
             self.export_dirs,
         )
 
@@ -134,8 +134,8 @@ class GetExportFileTestCase(unittest.TestCase):
         title, mimetype, size, time, state, content = export_file_info
         self.assertEqual(
             title,
-            u'the-kittens-and-their-mittens-<version>.pdf')
-        self.assertEqual(mimetype, 'application/pdf')
+            u'the-kittens-and-their-mittens-<version>.zip')
+        self.assertEqual(mimetype, 'application/zip')
         self.assertEqual(size, 7)
         self.assertEqual(time, '<datetime>')
         self.assertEqual(state, 'good')
@@ -294,7 +294,7 @@ class ExportsViewsTestCase(unittest.TestCase):
         # Test for the retrieval of exports (e.g. pdf files).
         id = 'e79ffde3-7fb4-4af3-9ec8-df648b391597'
         version = '7.1'
-        type = 'pdf'
+        type = 'zip'
         ident_hash = '{}@{}'.format(id, version)
         filename = "{}@{}.{}".format(id, version, type)
 
@@ -309,8 +309,8 @@ class ExportsViewsTestCase(unittest.TestCase):
         export = get_export(self.request).body
 
         self.assertEqual(self.request.response.content_disposition,
-                         "attachment; filename=college-physics-{ver}.pdf;"
-                         " filename*=UTF-8''college-physics-{ver}.pdf"
+                         "attachment; filename=college-physics-{ver}.zip;"
+                         " filename*=UTF-8''college-physics-{ver}.zip"
                          .format(ver=version))
         self.assertEqual(self.request.response.headers['Link'],
                          '<https://example.com:80/contents/{id}'
@@ -326,34 +326,32 @@ class ExportsViewsTestCase(unittest.TestCase):
         id = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = '5'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}@{}.pdf'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         self.request.matchdict = {'ident_hash': ident_hash,
-                                  'type': 'pdf'
+                                  'type': 'zip'
                                   }
 
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attachment; filename=useful-inf%C3%B8rmation-{ver}.pdf;"
-            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.pdf"
+            "attachment; filename=useful-inf%C3%B8rmation-{ver}.zip;"
+            " filename*=UTF-8''useful-inf%C3%B8rmation-{ver}.zip"
             .format(ver=version))
-
-        self.assertEqual(export, '')
 
         # Test exports can access the other exports directory
         id = '56f1c5c1-4014-450d-a477-2121e276beca'
         version = '8'
         ident_hash = '{}@{}'.format(id, version)
-        filename = '{}@{}.pdf'.format(id, version)
+        filename = '{}@{}.zip'.format(id, version)
         self.request.matchdict = {'ident_hash': ident_hash,
-                                  'type': 'pdf'
+                                  'type': 'zip'
                                   }
 
         export = get_export(self.request).body
         self.assertEqual(
             self.request.response.content_disposition,
-            "attachment; filename=elasticity-stress-and-strain-{ver}.pdf;"
-            " filename*=UTF-8''elasticity-stress-and-strain-{ver}.pdf"
+            "attachment; filename=elasticity-stress-and-strain-{ver}.zip;"
+            " filename*=UTF-8''elasticity-stress-and-strain-{ver}.zip"
             .format(ver=version))
 
         expected_file = os.path.join(testing.DATA_DIRECTORY, 'exports2',
@@ -378,7 +376,7 @@ class ExportsViewsTestCase(unittest.TestCase):
         # Build the request
         self.request.matchdict = {
                 'ident_hash': '24184288-14b9-11e3-86ac-207c8f4fa432@0',
-                'type': 'pdf'
+                'type': 'zip'
                 }
         self.request.matched_route = mock.Mock()
         self.request.matched_route.name = 'export'

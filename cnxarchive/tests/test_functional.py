@@ -320,11 +320,11 @@ class IdentHashMissingVersionTestCase(testing.FunctionalTestCase):
         uuid = 'c0a76659-c311-405f-9a99-15c71af39325'
         version = 5
 
-        resp = self.testapp.get('/exports/{}.pdf'.format(uuid))
+        resp = self.testapp.get('/exports/{}.zip'.format(uuid))
         self.assertEqual(resp.status, '302 Found')
         self.assertEqual(
             unquote(resp.location),
-            'http://localhost/exports/{}@{}.pdf'.format(uuid, version))
+            'http://localhost/exports/{}@{}.zip'.format(uuid, version))
 
         resp = resp.follow()
         self.assertEqual(resp.status, '200 OK')
@@ -333,11 +333,11 @@ class IdentHashMissingVersionTestCase(testing.FunctionalTestCase):
         uuid = 'ae3e18de-638d-4738-b804-dc69cd4db3a3'
         version = 5
 
-        resp = self.testapp.get('/exports/{}.pdf'.format(uuid))
+        resp = self.testapp.get('/exports/{}.zip'.format(uuid))
         self.assertEqual(resp.status, '302 Found')
         self.assertEqual(
             unquote(resp.location),
-            'http://localhost/exports/{}@{}.pdf'.format(uuid, version))
+            'http://localhost/exports/{}@{}.zip'.format(uuid, version))
 
         resp.follow(status=404)
 
