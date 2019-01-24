@@ -16,8 +16,6 @@ services:
     # image: openstax/cnx-db:2.3.0
     build:
       context: https://github.com/Connexions/cnx-db.git
-      args:
-          gitcommithash: 97eb81
     ports:
       - "5433:5432"
     environment:
