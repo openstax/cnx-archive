@@ -9,6 +9,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import sys
 import time
 import unittest
@@ -1015,11 +1016,13 @@ ALTER TABLE modules DISABLE TRIGGER module_published""")
                 expected = f.read()
 
             result = cursor.fetchone()[0]
-            rev_offset = result.find('<md:revised>')
-            rev_start = rev_offset + 12  # len('<md:revised>')
-            rev_end = rev_start + 32  # len(timestamp)
-            self.assertEqual(result[:rev_start]+result[rev_end:],
-                             expected[:rev_start]+expected[rev_end:])
+            # Remove the revised timestamp from the xml as the dates are going
+            # to be different
+            result = re.sub('<md:revised>[^<]*</md:revised>',
+                            '<md:revised></md:revised>', result)
+            expected = re.sub('<md:revised>[^<]*</md:revised>',
+                              '<md:revised></md:revised>', expected)
+            self.assertEqual(result, expected)
 
         # Insert a new version of another existing module
         cursor.execute('''\
