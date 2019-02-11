@@ -320,7 +320,7 @@ def get_books_containing_page(cursor, uuid, version,
                                       context_version, uuid, version)]
             else:
                 portal_type = get_portal_type(cursor, uuid, version)
-                if portal_type == 'Module':
+                if portal_type in ('Module', 'CompositeModule'):
                     real_dict_cursor.execute(SQL['get-books-containing-page'],
                                              {'document_uuid': uuid,
                                               'document_version': version})
