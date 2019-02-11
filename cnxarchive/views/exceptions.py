@@ -33,6 +33,7 @@ logger = logging.getLogger('cnxarchive')
 
 @view_config(context=IdentHashSyntaxError)
 def ident_hash_syntax_error(exc, request):
+    print '***ident_hash_syntax_error called***'
     if exc.ident_hash.endswith('@'):
         try:
             split_ident_hash(exc.ident_hash[:-1])
@@ -47,6 +48,7 @@ def ident_hash_syntax_error(exc, request):
 
 @view_config(context=IdentHashShortId)
 def ident_hash_short_id(exc, request):
+    print '***ident_hash_short_id called***'
     try:
         uuid_ = get_uuid(exc.id)
     except httpexceptions.HTTPNotFound as e:

@@ -1403,3 +1403,60 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(resp.cache_control.no_cache, "*")
         self.assertEqual(resp.cache_control.no_store, True)
         self.assertEqual(resp.cache_control.must_revalidate, True)
+
+    def test_short_id_cache_control(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = 8
+        from ...utils import CNXHash
+        cnxhash = CNXHash(uuid)
+        short_id = cnxhash.get_shortid()
+
+        self.request.matchdict = {'ident_hash': "{}@{}".format(short_id, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
+
+        # Build the request environment.
+        #self.request.matchdict = {
+        #    'ident_hash': "{}@{}".format(short_id, version)
+        #}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ...views.content import get_content
+
+        req = get_content(self.request)
+        print str(req)
+
+        # Check that the view redirects to the latest version
+        #with self.assertRaises(IdentHashShortId) as cm:
+        #    get_content(self.request)
+
+    def test_uuid_cache_control(self):
+        uuid = '56f1c5c1-4014-450d-a477-2121e276beca'
+        version = 8
+        from ...utils import CNXHash
+        cnxhash = CNXHash(uuid)
+        #short_id = cnxhash.get_shortid()
+
+        self.request.matchdict = {'ident_hash': "{}@{}".format(uuid, version),
+                                  'page_ident_hash': '',
+                                  'separator': ''}
+
+        # Build the request environment.
+        #self.request.matchdict = {
+        #    'ident_hash': "{}@{}".format(short_id, version)
+        #}
+        self.request.matched_route = mock.Mock()
+        self.request.matched_route.name = 'content'
+
+        # Call the view.
+        from ...views.content import get_content
+
+        res = get_content(self.request)
+        print str(res.cache_control)
+
+        # Check that the view redirects to the latest version
+        #with self.assertRaises(IdentHashShortId) as cm:
+        #    get_content(self.request)
+        
