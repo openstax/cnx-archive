@@ -74,11 +74,13 @@ class GetExportFileTestCase(unittest.TestCase):
         self.legacy_id = 'm55321'
         self.legacy_version = '1.4'
         self.legacy_title = 'The kittens and their mittens'
+        self.mediaType = 'application/vnd.org.cnx.module'
 
         metadata = {
             'legacy_id': self.legacy_id,
             'legacy_version': self.legacy_version,
             'title': self.legacy_title,
+            'mediaType': self.mediaType,
         }
 
         def get_content_metadata(id, version, cursor):
