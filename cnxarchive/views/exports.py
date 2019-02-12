@@ -108,7 +108,8 @@ def get_export_files(cursor, id, version, types, exports_dirs, read_file=True):
         file_extension = type_info[type]['file_extension']
 
         # skip module PDFs
-        if metadata['mediaType'] == MODULE_MIMETYPE and file_extension == 'pdf':
+        if metadata['mediaType'] == MODULE_MIMETYPE and \
+                file_extension == 'pdf':
             continue
 
         mimetype = type_info[type]['mimetype']
