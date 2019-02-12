@@ -106,12 +106,12 @@ def get_export_files(cursor, id, version, types, exports_dirs, read_file=True):
         if type not in type_info:
             raise ExportError("invalid type '{}' requested.".format(type))
         file_extension = type_info[type]['file_extension']
-        mimetype = type_info[type]['mimetype']
 
         # skip module PDFs
-        if mimetype == MODULE_MIMETYPE and file_extension == 'pdf':
+        if metadata['mediaType'] == MODULE_MIMETYPE and file_extension == 'pdf':
             continue
 
+        mimetype = type_info[type]['mimetype']
         filename = '{}@{}.{}'.format(id, version, file_extension)
         legacy_filenames = [
             '{}-{}.{}'.format(legacy_id, legacy_version, ext)
