@@ -6,6 +6,14 @@
 
    - feature message
 
+4.9.0
+-----
+
+- Move ident hash code to cnx-db (#625)
+- Remove module PDFs from results (#615)
+- Resolve docker container runtime issues
+- Fix the package release stage using generic container (#623)
+
 4.8.0
 -----
 
