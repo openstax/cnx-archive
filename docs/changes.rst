@@ -6,6 +6,11 @@
 
    - feature message
 
+4.10.0
+------
+
+- Checking mimetype to block module PDFs (#629)
+
 4.9.0
 -----
 
