@@ -14,7 +14,7 @@ import logging
 
 import cnxdb
 from pyramid.threadlocal import get_current_registry
-from cnxdb.triggers.transforms import (
+from cnxtransforms import (
     produce_cnxml_for_module,
     produce_html_for_module,
     transform_abstract_to_cnxml,

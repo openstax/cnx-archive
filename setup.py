@@ -8,6 +8,7 @@ IS_PY3 = sys.version_info > (3,)
 install_requires = (
     'cnx-db>=1.0.0',
     'cnx-epub',
+    'cnx-transforms',
     'cnx-query-grammar',
     'lxml',
     'python-memcached',
