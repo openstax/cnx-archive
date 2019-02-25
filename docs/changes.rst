@@ -6,6 +6,13 @@
 
    - feature message
 
+4.11.0
+------
+
+- The transforms (cnxml->html,html->cnxml) code was split out of
+  cnx-db into a new package, cnx-transforms. The cnx-transforms package is
+  now a dependency of this project. (#632)
+
 4.10.0
 ------
 
