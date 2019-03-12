@@ -30,7 +30,7 @@ Running the tests can be achived with the following command::
     docker-compose exec archive python setup.py test
 
 Install the PostgreSQL database
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 This will require a ``PostgreSQL`` install
 that is greater than or equal to version **9.3**,
@@ -38,13 +38,11 @@ Note that this is likely to increase to 9.5 soon, for better json support.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
 
-On a Mac, use the `PostgresApp <http://postgresapp.com/>`_ (currently using version 9.4).  See Documentation for installing Command Line Tools.
+### Mac
 
-On Debian (and Ubuntu), issue the following command::
+Use the `PostgresApp <http://postgresapp.com/>`_ (currently using version 9.4).  See Documentation for installing Command Line Tools.
 
-    apt-get install postgresql-9.3 postgresql-server-dev-9.3 postgresql-client-9.3 postgresql-contrib-9.3 postgresql-plpython-9.3
-
-Verify the install and port by using ``pg_lsclusters``. If the 9.3
+Verify the install and port by using ``pg_lsclusters``. If the 9.4
 cluster is not the first one installed (which it likely is not), note
 the port and cluster name. For example, the second cluster installed
 will end up by default with port 5433, and a cluster named ``main``.
@@ -53,18 +51,10 @@ Set the ``PGCLUSTER`` environment variable to make psql and other
 postgresql command line tools connect to the appropriate server. For
 the example above, use::
 
-    export PGCLUSTER=9.3/main
+    export PGCLUSTER=9.4/main
 
-Installing the PostgreSQL plpythonu extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#### Installing the PostgreSQL plxslt extension
 
-The ``plpythonu`` extension comes with the `PostgresApp`,
-which you don't have to install this one manuallly.
-We've included the ``postgresql-plpython`` package
-in the previous installation command, for Debian and Ubuntu.
-
-Installing the PostgreSQL plxslt extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``plxslt`` package can be found on github at
 `petere/plxslt <https://github.com/petere/plxslt>`_).
@@ -87,16 +77,8 @@ Make sure that ``pkg-config`` is properly install by typing ``pkg-config --versi
     make && make install
     cd ..
 
-On a Debian based system, the installation is as follows::
+#### Installing the PostgresSQL session_exec extension
 
-    apt-get install libxml2-dev libxslt-dev
-    git clone https://github.com/petere/plxslt
-    cd plxslt
-    make && make install
-    cd ..
-
-Installing the PostgresSQL session_exec extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This is optional, but required if you choose to install the python packages
 into a virtualenv.
@@ -107,14 +89,11 @@ into a virtualenv.
     cd session_exec
     make USE_PGXS=1 && make USE_PGXS=1 install
 
-If you are using PostgreSQL 9.3 rather than >= 9.4, clone `reedstrm/session_exec <https://github.com/reedstrm/session_exec>`_ instead.
-
 This Postgres Extension is used to activate the virtualenv site-packages on
 any successful connection to the database, which then allows for importing
 packages that are only installed in the virtualenv.
 
-Set up the database and user
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#### Set up the database and user
 
 The default settings
 for the database are setup to use the following credentials:
@@ -133,7 +112,7 @@ which is discussed later in this instructions.
 To set up the database, issue the following commands (these will use
 the default cluster, as defined above)
 
-**OSX Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
+**Note:** You may need to create the ``postgres`` user: ``psql -d postgres -c "CREATE USER postgres WITH SUPERUSER;"``
 ::
 
 
@@ -141,46 +120,35 @@ the default cluster, as defined above)
     psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
     createdb -U postgres -O cnxarchive cnxarchive
 
+#### Install memcached (optional)
 
-Install memcached (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to use memcached, you can install memcached and configure the
 memcached servers in development.ini::
 
     apt-get install memcached
 
-Installing the application
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Before installing cnx-archive, you need to first install the
-dependencies that have not been released to the public package repositories::
-
-    git clone https://github.com/Connexions/cnx-query-grammar.git
-    cd cnx-query-grammar
-    python setup.py install
-    cd ..
-
-    git clone https://github.com/Connexions/rhaptos.cnxmlutils.git
-    cd rhaptos.cnxmlutils
-    python setup.py install
-    cd ..
+#### Installing the application
 
 To install the application itself::
 
     python setup.py install
 
-**OSX Note** Make sure that XCode command line tools is installed by typing in::
+**Note** Make sure that XCode command line tools is installed by typing in::
 
     xcode-select --install
 
 This will install the package and a few application specific
-scripts. One of these scripts is used to initialize the database with
-the applications schema.
-::
+scripts. 
 
-    cnx-db init -d cnxarchive -U cnxarchive
-    psql cnxarchive #to confirm the the table has been created.
+Run cnx-db with environment variable
+
+    DB_URL=postgresql://cnxarchive@/cnxarchive cnx-db init
+    DB_URL=postgresql://cnxarchive@/cnxarchive cnx-db venv
+
+Confirm the table has been created
+
+    psql cnxarchive
 
 You can populate the database with a small set of content with the following
 command::
@@ -197,10 +165,141 @@ change them in the configuration file.::
 
     paster serve development.ini
 
-You can then surf to the address printed out by the above command.
+You can also start the server using pserve
+
+    pserve development.ini
+
+You can then surf to the address printed out by the above commands.
+
+### Linux
+
+On Debian (and Ubuntu), issue the following command to installthe default Debian package (PostgreSQL 9.5)::
+
+    sudo apt-get install postgresql postgresql-server-dev-9.5 postgresql-client postgresql-contrib postgresql-plpython
+
+Verify the install and port by using ``pg_lsclusters``. If the 9.5
+cluster is not the first one installed (which it likely is not), note
+the port and cluster name. For example, the second cluster installed
+will end up by default with port 5433, and a cluster named ``main``.
+
+Set the ``PGCLUSTER`` environment variable to make psql and other
+postgresql command line tools connect to the appropriate server. For
+the example above, use::
+
+    export PGCLUSTER=9.5/main
+
+
+#### Installing the PostgreSQL plxslt extension
+
+The ``plxslt`` package can be found on github at
+`petere/plxslt <https://github.com/petere/plxslt>`_).
+You'll need to build and install this package manually.
+
+On a Debian based system, the installation is as follows::
+
+    apt-get install libxml2-dev libxslt-dev
+    git clone https://github.com/petere/plxslt
+    cd plxslt
+    make && sudo make install
+    cd ..
+
+#### Installing the PostgresSQL session_exec extension
+
+
+This is optional, but required if you choose to install the python packages
+into a virtualenv.
+
+::
+
+    git clone https://github.com/okbob/session_exec
+    cd session_exec
+    make USE_PGXS=1 && sudo make USE_PGXS=1 install
+
+This Postgres Extension is used to activate the virtualenv site-packages on
+any successful connection to the database, which then allows for importing
+packages that are only installed in the virtualenv.
+
+#### Set up the database and user
+
+The default settings
+for the database are setup to use the following credentials:
+
+:database-name: cnxarchive
+:database-user: cnxarchive
+:database-password: cnxarchive
+
+.. note:: Not that it needs to be said, but just in case...
+   In a production setting, you should change these values.
+
+If you decided to change any of these default values,
+please ensure you also change them in the application's configuration file,
+which is discussed later in this instructions.
+
+To set up the database, issue the following commands (these will use
+the default cluster, as defined above)
+
+::
+
+
+
+    psql -U postgres -d postgres -c "CREATE USER cnxarchive WITH SUPERUSER PASSWORD 'cnxarchive';"
+    createdb -U postgres -O cnxarchive cnxarchive
+
+
+#### Install memcached (optional)
+
+
+If you want to use memcached, you can install memcached and configure the
+memcached servers in development.ini::
+
+    apt-get install memcached
+
+#### Installing the application
+
+To install the application itself::
+
+    python setup.py install
+
+
+This will install the package and a few application specific
+scripts. 
+
+Run cnx-db with environment variable
+
+    DB_URL=postgresql://cnxarchive@/cnxarchive cnx-db init
+    DB_URL=postgresql://cnxarchive@/cnxarchive cnx-db venv
+
+Confirm the table has been created
+
+    psql cnxarchive
+
+You can populate the database with a small set of content with the following
+command::
+
+    psql -U cnxarchive cnxarchive <cnxarchive/tests/data/data.sql
+
+To run the application, use the ``paste`` script with the ``serve`` command.
+(The paste script and serve command come from ``PasteScript`` and
+``PasteDeploy``, respectively.)
+
+This example uses the ``development.ini``, which has been supplied with the
+package.  If you changed any of the database setup values, you'll also need to
+change them in the configuration file.::
+
+    paster serve development.ini
+
+You can also start the server using pserve
+
+    pserve development.ini
+
+You can then surf to the address printed out by the above commands.
 
 Running tests
 -------------
+
+## Create the test database
+
+    createdb -U postgres -O cnxarchive cnxarchive-testing
 
 .. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master
    :target: https://travis-ci.org/Connexions/cnx-archive
@@ -234,4 +333,4 @@ License
 
 This software is subject to the provisions of the GNU Affero General
 Public License Version 3.0 (AGPL). See license.txt for details.
-Copyright (c) 2013 Rice University
+Copyright (c) 2019 Rice University
