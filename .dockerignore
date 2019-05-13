@@ -9,6 +9,7 @@
 !docker.ini
 !docker-compose.yml
 !docs/
+!requirements/
 !setup.cfg
 !setup.py
 !versioneer.py

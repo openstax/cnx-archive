@@ -21,10 +21,15 @@ RUN python -m pip install --no-cache-dir sentry_sdk
 
 COPY . /src/
 WORKDIR /src/
-
-RUN python -m pip install --no-cache-dir -e .
 RUN chown -R archive:archive /src/
 
+RUN set -x \
+    && python -m pip install \
+       -r requirements/main.txt \
+       -r requirements/test.txt \
+       -r requirements/docs.txt \
+       -r requirements/lint.txt \
+    && python -m pip install --no-cache-dir -e .
 
 ARG PORT
 ENV PORT ${PORT:-6543}
