@@ -1,0 +1,11 @@
+cnx-db>=1.0.0
+cnx-epub
+cnx-transforms
+cnx-query-grammar
+lxml
+python-memcached
+psycopg2>=2.5
+pyramid
+pyramid_jinja2
+rhaptos.cnxmlutils
+tzlocal

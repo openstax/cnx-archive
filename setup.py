@@ -1,32 +1,35 @@
 # -*- coding: utf-8 -*-
-import sys
+import os
 import versioneer
 from setuptools import setup, find_packages
 
-IS_PY3 = sys.version_info > (3,)
 
-install_requires = (
-    'cnx-db>=1.0.0',
-    'cnx-epub',
-    'cnx-transforms',
-    'cnx-query-grammar',
-    'lxml',
-    'python-memcached',
-    'psycopg2>=2.5',
-    'pyramid',
-    'pyramid_jinja2',
-    'rhaptos.cnxmlutils',
-    'tzlocal',
-    'waitress',  # wsgi server
-    )
-tests_require = [
-    'webtest<=2.0.27',
-    'pretend',
-    ]
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def _filter_requirement(req):
+    req = req.strip()
+    # skip comments and dash options (e.g. `-e` & `-r`)
+    return bool(req and req[0] not in '#-')
+
+
+def read_from_requirements_txt(filepath):
+    f = os.path.join(here, filepath)
+    with open(f) as fb:
+        return tuple([
+            x.strip()
+            for x in fb
+            if _filter_requirement(x)
+        ])
+
+
+install_requires = read_from_requirements_txt('requirements/main.txt')
+tests_require = read_from_requirements_txt('requirements/test.txt')
+extras_require = {
+    'test': tests_require,
+}
 description = "An archive for Connexions documents."
 
-if not IS_PY3:
-    tests_require.append('mock==1.0.1')
 
 setup(
     name='cnx-archive',
