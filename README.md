@@ -27,7 +27,7 @@ To run cnx-archive locally using docker, first install `Docker <https://www.dock
 
 Running the tests can be achived with the following command::
 
-    docker-compose exec archive python setup.py test
+    docker-compose exec archive python -m pytest -vv
 
 Install the PostgreSQL database
 --------------------------------
