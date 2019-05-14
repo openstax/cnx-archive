@@ -6,6 +6,11 @@
 
    - feature message
 
+4.12.0
+------
+
+- Update content view tests to correctly display the tree (#633)
+
 4.11.0
 ------
 
