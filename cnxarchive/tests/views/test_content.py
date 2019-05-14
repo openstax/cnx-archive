@@ -151,13 +151,16 @@ class ContentViewsTestCase(unittest.TestCase):
         self.assertEqual({
             u'id': u'{}@{}'.format(uuid, version),
             u'shortId': u'55_943-0@6.1',
+            u'slug': u'college-physics',
             u'title': u'College Physics',
             u'contents': [
                 {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  u'shortId': u'IJ3rHxpG@7',
+                 u'slug': u'preface',
                  u'title': u'Preface'},
                 {u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
                  u'shortId': u'F0xAaSdD@1',
+                 u'slug': u'collated-page',
                  u'title': u'Collated page'},
             ],
         }, content['tree'])
@@ -180,10 +183,12 @@ class ContentViewsTestCase(unittest.TestCase):
         self.assertEqual({
             u'id': u'{}@{}'.format(uuid, version),
             u'shortId': u'55_943-0@6.1',
+            u'slug': None,
             u'title': u'College Physics',
             u'contents': [
                 {u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                  u'shortId': u'IJ3rHxpG@7',
+                 u'slug': None,
                  u'title': u'Preface'},
             ],
         }, content['tree'])
@@ -191,14 +196,14 @@ class ContentViewsTestCase(unittest.TestCase):
     @testing.db_connect
     def _create_empty_subcollections(self, cursor):
         cursor.execute("""\
-INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
-    VALUES (9100, 91, 'Empty Subcollections', 1, true);
-INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
-    VALUES (9200, 9100, 'empty 1', 1, true);
-INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
-    VALUES (9300, 9100, 'empty 2', 2, true);
-INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
-    VALUES (9400, 91, 'Empty Subcollection', 4, true);
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
+    VALUES (9100, 91, 'Empty Subcollections', 1, true, 'empty-subcollection');
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
+    VALUES (9200, 9100, 'empty 1', 1, true, 'empty-1');
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
+    VALUES (9300, 9100, 'empty 2', 2, true, 'empty-2');
+INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
+    VALUES (9400, 91, 'Empty Subcollection', 4, true, 'empty-subcollection');
 """)
 
     def test_empty_subcollection_content(self):
@@ -224,22 +229,26 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
         self.assertEqual(content_tree, {
             u'id': u'{}@{}'.format(uuid, version),
             u'shortId': u'{}@{}'.format(short_id, version),
+            u'slug': u'college-physics',
             u'title': u'College Physics',
             u'contents': [
                 {
                     u'id': u'subcol',
                     u'shortId': u'subcol',
+                    u'slug': u'empty-subcollection',
                     u'title': u'Empty Subcollections',
                     u'contents': [
                         {
                             u'id': u'subcol',
                             u'shortId': u'subcol',
+                            u'slug': u'empty-1',
                             u'title': u'empty 1',
                             u'contents': [],
                         },
                         {
                             u'id': u'subcol',
                             u'shortId': u'subcol',
+                            u'slug': u'empty-2',
                             u'title': u'empty 2',
                             u'contents': [],
                         },
@@ -249,16 +258,19 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated)
                 {
                     u'id': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
                     u'shortId': u'IJ3rHxpG@7',
+                    u'slug': u'preface',
                     u'title': u'Preface',
                 },
                 {
                     u'id': u'174c4069-2743-42e9-adfe-4c7084f81fc5@1',
                     u'shortId': u'F0xAaSdD@1',
+                    u'slug': u'collated-page',
                     u'title': u'Collated page',
                 },
                 {
                     u'id': u'subcol',
                     u'shortId': u'subcol',
+                    u'slug': u'empty-subcollection',
                     u'title': u'Empty Subcollection',
                     u'contents': [],
                 },
