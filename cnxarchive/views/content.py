@@ -158,6 +158,15 @@ def get_content_html(request):
     else:
         content = result['content']
 
+    if '<head>' in content:
+        content = content.replace(
+            '</head>',
+            '<meta name="robots" content="noindex"/></head>', 1)
+    else:
+        content = content.replace(
+            '<body',
+            '<head><meta name="robots" content="noindex"/></head><body', 1)
+
     resp = request.response
     resp.body = content
     resp.status = "200 OK"
