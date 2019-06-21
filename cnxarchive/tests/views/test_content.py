@@ -714,7 +714,7 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
         version = '7.1'
 
         expected = (u"""<html xmlns="http://www.w3.org/1999/xhtml">\n"""
-                    u"""  <body>"""
+                    u"""  <head><meta name="robots" content="noindex"/></head><body>"""
                     u"""<ul>"""
                     u"""<li>"""
                     u"""<a href="/contents/e79ffde3-7fb4-4af3-9ec8-df648b391597@7.1.html">College Physics</a>"""
@@ -792,6 +792,35 @@ INSERT INTO trees (nodeid, parent_id, title, childorder, is_collated, slug)
         # Check that the view returns the expected html
         p = HTMLParser.HTMLParser()
         self.assertMultiLineEqual(p.unescape(resp.body), expected)
+
+    def test_get_content_html(self):
+        from cnxarchive.views.content import get_content_html
+
+        with mock.patch('cnxarchive.views.content._get_content_json') \
+                as mock_get_content_json:
+            # with a <head> tag
+            mock_get_content_json.return_value = {
+                'mediaType': 'application/vnd.org.cnx.module',
+                'content': ('<html><head><style>body { color: white }</style>'
+                            '</head><body>body text</body></html>'),
+            }
+            _, resp = get_content_html(mock.Mock())
+            self.assertEqual(
+                resp.body,
+                '<html><head><style>body { color: white }</style>'
+                '<meta name="robots" content="noindex"/>'
+                '</head><body>body text</body></html>')
+
+            # without a <head> tag
+            mock_get_content_json.return_value = {
+                'mediaType': 'application/vnd.org.cnx.module',
+                'content': ('<html><body>body text</body></html>'),
+            }
+            _, resp = get_content_html(mock.Mock())
+            self.assertEqual(
+                resp.body,
+                '<html><head><meta name="robots" content="noindex"/></head>'
+                '<body>body text</body></html>')
 
     def test_content_module_as_html(self):
         uuid = 'd395b566-5fe3-4428-bcb2-19016e3aa3ce'
