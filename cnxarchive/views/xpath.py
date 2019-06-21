@@ -1,6 +1,7 @@
 import json
 import re
 from urllib import urlencode
+from functools import wraps
 
 import psycopg2
 from pyramid import httpexceptions
@@ -149,21 +150,38 @@ def execute_xpath(xpath_string, sql_function, uuid, version):
 # #################### #
 
 
+def extract_params_as_args(f):
+    """extracts the query parameters as arguments to the view function"""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        request = args[0]
+        id = request.params.get('id')
+        q = request.params.get('q')
+
+        if not id or not q:
+            raise httpexceptions.HTTPBadRequest(
+                'You must supply both a UUID and an xpath'
+            )
+
+        kwargs['id'] = id
+        kwargs['q'] = q
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
 @view_config(route_name='xpath', request_method='GET',
              http_cache=(60, {'public': True}))
 @view_config(route_name='xpath-json', request_method='GET',
              http_cache=(60, {'public': True}))
-def xpath(request):
+@extract_params_as_args
+def xpath(request, id, q):
     """View for the route. Determines UUID and version from input request
     and determines the type of UUID (collection or module) and executes
     the corresponding method."""
-    ident_hash = request.params.get('id')
-    xpath_string = request.params.get('q')
-
-    if not ident_hash or not xpath_string:
-        exc = httpexceptions.HTTPBadRequest
-        exc.explanation = 'You must supply both a UUID and an xpath'
-        raise exc
+    ident_hash = id
+    xpath_string = q
 
     try:
         uuid, version = split_ident_hash(ident_hash)
