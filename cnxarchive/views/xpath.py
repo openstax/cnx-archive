@@ -32,7 +32,13 @@ WITH RECURSIVE t(node, title, path, value, is_collated) AS (
 
   UNION ALL
 
-    SELECT c1.nodeid, c1.title, t.path || ARRAY [c1.nodeid], c1.documentid, c1.is_collated /* Recursion */
+    /* Recursion */
+    SELECT
+      c1.nodeid,
+      c1.title,
+      t.path || ARRAY [c1.nodeid],
+      c1.documentid,
+      c1.is_collated
     FROM trees AS c1
     JOIN t ON (c1.parent_id = t.node)
     WHERE NOT nodeid = ANY (t.path) AND t.is_collated = c1.is_collated
@@ -56,21 +62,23 @@ SELECT module_ident, array_agg(matches)
 FROM (
 SELECT
   module_ident,
-  unnest(xpath(e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
-              ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
-                    ARRAY['c', 'http://cnx.rice.edu/cnxml'],
-                    ARRAY['system', 'http://cnx.rice.edu/system-info'],
-                    ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['md', 'http://cnx.rice.edu/mdml'],
-                    ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
-                    ARRAY['bib', 'http://bibtexml.sf.net/'],
-                    ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
-                    ARRAY['h', 'http://www.w3.org/1999/xhtml'],
-                    ARRAY['data', 'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
-                    ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
-        ))::TEXT AS matches
+  unnest(xpath(
+    e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
+    ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
+      ARRAY['c', 'http://cnx.rice.edu/cnxml'],
+      ARRAY['system', 'http://cnx.rice.edu/system-info'],
+      ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['md', 'http://cnx.rice.edu/mdml'],
+      ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
+      ARRAY['bib', 'http://bibtexml.sf.net/'],
+      ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
+      ARRAY['h', 'http://www.w3.org/1999/xhtml'],
+      ARRAY['data',
+            'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
+      ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
+  ))::TEXT AS matches
 FROM modules AS m
 NATURAL JOIN module_files
 NATURAL JOIN files
@@ -84,21 +92,23 @@ SELECT item, array_agg(matches)
 FROM (
 SELECT
   item,
-  unnest(xpath(e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
-              ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
-                    ARRAY['c', 'http://cnx.rice.edu/cnxml'],
-                    ARRAY['system', 'http://cnx.rice.edu/system-info'],
-                    ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
-                    ARRAY['md', 'http://cnx.rice.edu/mdml'],
-                    ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
-                    ARRAY['bib', 'http://bibtexml.sf.net/'],
-                    ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
-                    ARRAY['h', 'http://www.w3.org/1999/xhtml'],
-                    ARRAY['data', 'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
-                    ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
-        ))::TEXT AS matches
+  unnest(xpath(
+    e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
+    ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
+      ARRAY['c', 'http://cnx.rice.edu/cnxml'],
+      ARRAY['system', 'http://cnx.rice.edu/system-info'],
+      ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
+      ARRAY['md', 'http://cnx.rice.edu/mdml'],
+      ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
+      ARRAY['bib', 'http://bibtexml.sf.net/'],
+      ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
+      ARRAY['h', 'http://www.w3.org/1999/xhtml'],
+      ARRAY['data',
+            'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
+      ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
+  ))::TEXT AS matches
 FROM collated_file_associations AS cfa
 NATURAL JOIN files
 WHERE cfa.item = any(%(idents)s)
@@ -158,7 +168,10 @@ def lookup_documents_to_query(ident_hash, as_collated=False):
             elif type_ == 'Module':
                 results = [dict(row.items())]
             else:
-                cursor.execute(SQL['contextual-uuid-to-key-data-lookup'], params)
+                cursor.execute(
+                    SQL['contextual-uuid-to-key-data-lookup'],
+                    params,
+                )
                 results = [dict(row.items()) for row in cursor]
 
     return results
@@ -271,7 +284,10 @@ class XPathView(object):
 
         # Query Documents
         docs_map = dict([(x['module_ident'], x,) for x in docs])
-        query_results = query_documents_by_xpath(docs_map.keys(), self.xpath_query)
+        query_results = query_documents_by_xpath(
+            docs_map.keys(),
+            self.xpath_query,
+        )
 
         # Combined the query results with the mapping
         for ident, matches in query_results:
@@ -279,8 +295,7 @@ class XPathView(object):
             docs_map[ident]['ident_hash'] = join_ident_hash(
                 docs_map[ident]['uuid'],
                 (docs_map[ident]['major_version'],
-                 docs_map[ident]['minor_version'],
-                ),
+                 docs_map[ident]['minor_version']),
             )
             docs_map[ident]['uri'] = self.request.route_path(
                 'content',

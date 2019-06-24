@@ -57,7 +57,7 @@ class LookupDocumentsToQueryTestCase(unittest.TestCase):
              'module_ident': 2,
              'minor_version': None,
              'uuid': '209deb1f-1a46-4369-9e0d-18674cf58a3e',
-            },
+             },
         ]
         self.assertEqual(results, expected)
 
@@ -74,14 +74,14 @@ class LookupDocumentsToQueryTestCase(unittest.TestCase):
              'module_ident': 17,
              'minor_version': 1,
              'uuid': 'e79ffde3-7fb4-4af3-9ec8-df648b391597',
-            },
+             },
             {'major_version': 7,
              'name': 'Preface',
              'portal_type': 'Module',
              'module_ident': 2,
              'minor_version': None,
              'uuid': '209deb1f-1a46-4369-9e0d-18674cf58a3e',
-            },
+             },
         ]
         self.assertEqual(results, expected)
 
@@ -140,7 +140,7 @@ class QueryDocumentsByXPathTestCase(unittest.TestCase):
     ###############
 
     def test_invalid_type(self):
-        self.assertRaises(TypeError, self.target, (1,2,3,), '//foo-elm', 'bar-type')
+        self.assertRaises(TypeError, self.target, (1, 2, 3,), '//foo-elm', 'bar-type')
 
     # Page tests
     ##############
@@ -191,7 +191,7 @@ class QueryDocumentsByXPathTestCase(unittest.TestCase):
               '<strong xmlns="http://www.w3.org/1999/xhtml">Strategy</strong>',
               '<strong xmlns="http://www.w3.org/1999/xhtml">Solution</strong>',
               '<strong xmlns="http://www.w3.org/1999/xhtml">Discussion</strong>',
-             ]),
+              ]),
         ]
         self.assertEqual(results, expected)
 
@@ -256,8 +256,8 @@ class QueryDocumentsByXPathTestCase(unittest.TestCase):
             (2,
              ['<emphasis xmlns="http://cnx.rice.edu/cnxml" effect="italics">College Physics</emphasis>',
               '<emphasis xmlns="http://cnx.rice.edu/cnxml" effect="italics">College Physics</emphasis>',
-             ],
-            ),
+              ],
+             ),
         ]
         self.assertEqual(results, expected)
 
@@ -272,7 +272,7 @@ class QueryDocumentsByXPathTestCase(unittest.TestCase):
             (2,
              ['<em xmlns="http://www.w3.org/1999/xhtml" data-effect="italics">College Physics</em>',
               '<em xmlns="http://www.w3.org/1999/xhtml" data-effect="italics">College Physics</em>'],
-            ),
+             ),
         ]
         self.assertEqual(results, expected)
 
@@ -346,13 +346,13 @@ class XPathViewTestCase(unittest.TestCase):
                  ('<definition xmlns="http://cnx.rice.edu/cnxml" id="import-auto-id2912380">\n  '
                   '<term>approximation</term>\n  <meaning id="fs-id1363258"> '
                   'an estimated value based on prior experience and reasoning</meaning>\n</definition>'
-                 )],
+                  )],
              'minor_version': None,
              'name': 'Approximation',
              'portal_type': 'Module',
              'uri': '/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5',
              'uuid': '5838b105-41cd-4c3d-a957-3ac004a48af3',
-            },
+             },
         ]
         self.assertEqual(matches, expected)
 
@@ -417,7 +417,7 @@ class XPathSearchTestCase(testing.FunctionalTestCase):
              u'minor_version': None,
              u'uri': u'/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
              u'uuid': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
-            },
+             },
         ]
         self.assertEqual(resp.json, expected)
 
