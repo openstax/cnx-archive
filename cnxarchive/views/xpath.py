@@ -133,11 +133,6 @@ NAMESPACES = {
 }
 
 
-# #################### #
-#        Helpers       #
-# #################### #
-
-
 def lookup_documents_to_query(ident_hash, as_collated=False):
     """Looks up key information about documents to query including:
     title, uuid, version and module_ident.
@@ -237,75 +232,80 @@ def query_documents_by_xpath(docs, xpath, type_=DEFAULT_DOC_TYPE,
     return querier(docs, xpath)
 
 
-# #################### #
-#     Route method     #
-# #################### #
+class XPathView(object):
 
+    def __init__(self, request):
+        self.request = request
+        self.extract_params()
 
-def extract_params_as_args(f):
-    """extracts the query parameters as arguments to the view function"""
-
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        request = args[0]
-        id = request.params.get('id')
-        q = request.params.get('q')
+    def extract_params(self):
+        id = self.request.params.get('id')
+        q = self.request.params.get('q')
 
         if not id or not q:
             raise httpexceptions.HTTPBadRequest(
-                'You must supply both a UUID and an xpath'
+                'You must supply both a UUID and an XPath'
             )
 
-        kwargs['id'] = id
-        kwargs['q'] = q
-        return f(*args, **kwargs)
+        # FIXME This looks like a copy&paste that should be refactored
+        #       to a single function that gets us the correct info.
+        try:
+            uuid, version = split_ident_hash(id)
+        except IdentHashShortId as e:
+            uuid = get_uuid(e.id)
+            version = e.version
+        except IdentHashMissingVersion as e:
+            uuid = e.id
+            version = get_latest_version(e.id)
+        except IdentHashSyntaxError:
+            raise httpexceptions.HTTPBadRequest('invalid id supplied')
+        ident_hash = join_ident_hash(uuid, version)
 
-    return wrapper
+        self.ident_hash = ident_hash
+        self.xpath_query = q
 
+    @property
+    def match_data(self):
+        # Lookup documents to query
+        docs = lookup_documents_to_query(self.ident_hash)
 
-@view_config(route_name='xpath', request_method='GET',
-             http_cache=(60, {'public': True}))
-@view_config(route_name='xpath-json', request_method='GET',
-             http_cache=(60, {'public': True}))
-@extract_params_as_args
-def xpath(request, id, q):
-    """View for the route. Determines UUID and version from input request
-    and determines the type of UUID (collection or module) and executes
-    the corresponding method."""
-    ident_hash = id
-    xpath_string = q
+        # Query Documents
+        docs_map = dict([(x['module_ident'], x,) for x in docs])
+        query_results = query_documents_by_xpath(docs_map.keys(), self.xpath_query)
 
-    # FIXME This looks like a copy&paste that should be refactored
-    #       to a single function that gets us the correct info.
-    try:
-        uuid, version = split_ident_hash(ident_hash)
-    except IdentHashShortId as e:
-        uuid = get_uuid(e.id)
-        version = e.version
-    except IdentHashMissingVersion as e:
-        uuid = e.id
-        version = get_latest_version(e.id)
-    except IdentHashSyntaxError:
-        raise httpexceptions.HTTPBadRequest('invalid id supplied')
-    ident_hash = join_ident_hash(uuid, version)
+        # Combined the query results with the mapping
+        for ident, matches in query_results:
+            docs_map[ident]['matches'] = matches
+            docs_map[ident]['ident_hash'] = join_ident_hash(
+                docs_map[ident]['uuid'],
+                (docs_map[ident]['major_version'],
+                 docs_map[ident]['minor_version'],
+                ),
+            )
+            docs_map[ident]['uri'] = self.request.route_path(
+                'content',
+                ident_hash=docs_map[ident]['ident_hash'],
+            )
+            del docs_map[ident]['module_ident']
 
-    # Lookup documents to query
-    docs = lookup_documents_to_query(ident_hash)
+        return list([x for x in docs_map.values() if 'matches' in x])
 
-    # Query Documents
-    docs_map = dict([(x['module_ident'], x,) for x in docs])
-    query_results = query_documents_by_xpath(docs_map.keys(), q)
+    @view_config(route_name='xpath-json', request_method='GET',
+                 renderer='json',
+                 http_cache=(60, {'public': True}))
+    def json(self):
+        """Produces the data used to render the HTML view"""
+        return self.match_data
 
-    # Combined the query results with the mapping
-    for ident, matches in query_results:
-        docs_map[ident]['matches'] = matches
-        docs_map[ident]['ident_hash'] = join_ident_hash(
-            docs_map[ident]['uuid'],
-            (docs_map[ident]['major_version'],
-             docs_map[ident]['minor_version'],
-            ),
-        )
-        del docs_map[ident]['module_ident']
-        
-
-    return [x for x in docs_map.values() if 'matches' in x]
+    @view_config(route_name='xpath', request_method='GET',
+                 renderer='templates/xpath.html',
+                 http_cache=(60, {'public': True}))
+    def html(self):
+        """Produces the data used to render the HTML view"""
+        return {
+            'identifier': self.ident_hash,
+            'uri': self.request.route_path('content', self.ident_hash),
+            'query': self.xpath_query,
+            'request': self.request,
+            'results': self.match_data,
+        }

@@ -315,14 +315,17 @@ class XPathViewTestCase(unittest.TestCase):
         self.request.application_url = 'http://cnx.org'
         config = pyramid_testing.setUp(settings=self.settings,
                                        request=self.request)
+        # Set up routes
+        from ... import declare_api_routes
+        declare_api_routes(config)
 
     def tearDown(self):
         pyramid_testing.tearDown()
 
     @property
     def target(self):
-        from ...views.xpath import xpath
-        return xpath
+        from ...views.xpath import XPathView
+        return XPathView
 
     def test_matching(self):
         # Test that the returned results from the xpath are correct.
@@ -334,7 +337,7 @@ class XPathViewTestCase(unittest.TestCase):
         self.request.matched_route.name = 'xpath'
 
         # TARGET
-        matches = self.target(self.request)
+        matches = self.target(self.request).match_data
 
         expected = [
             {'ident_hash': '5838b105-41cd-4c3d-a957-3ac004a48af3@5',
@@ -347,6 +350,7 @@ class XPathViewTestCase(unittest.TestCase):
              'minor_version': None,
              'name': 'Approximation',
              'portal_type': 'Module',
+             'uri': '/contents/5838b105-41cd-4c3d-a957-3ac004a48af3@5',
              'uuid': '5838b105-41cd-4c3d-a957-3ac004a48af3',
             },
         ]
@@ -378,3 +382,74 @@ class XPathViewTestCase(unittest.TestCase):
 
         # TARGET
         self.assertRaises(httpexceptions.HTTPBadRequest, self.target, self.request)
+
+
+class XPathSearchTestCase(testing.FunctionalTestCase):
+    fixture = testing.data_fixture
+
+    @classmethod
+    def setUpClass(cls):
+        super(XPathSearchTestCase, cls).setUpClass()
+        cls.fixture.setUp()
+
+    @classmethod
+    def tearDownClass(cls):
+        pyramid_testing.tearDown()
+        cls.fixture.tearDown()
+
+    def test_json(self):
+        params = {
+            'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1',
+            'q': '//c:emphasis',
+        }
+        resp = self.testapp.get('/xpath.json', params)
+
+        self.assertEqual(resp.status, '200 OK')
+        expected = [
+            {u'name': u'Preface',
+             u'ident_hash': u'209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+             u'matches': [
+                 u'<emphasis xmlns="http://cnx.rice.edu/cnxml" effect="italics">College Physics</emphasis>',
+                 u'<emphasis xmlns="http://cnx.rice.edu/cnxml" effect="italics">College Physics</emphasis>',
+             ],
+             u'portal_type': u'Module',
+             u'major_version': 7,
+             u'minor_version': None,
+             u'uri': u'/contents/209deb1f-1a46-4369-9e0d-18674cf58a3e@7',
+             u'uuid': u'209deb1f-1a46-4369-9e0d-18674cf58a3e',
+            },
+        ]
+        self.assertEqual(resp.json, expected)
+
+    def test_json_wo_matches(self):
+        params = {
+            'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1',
+            'q': '//c:figure',
+        }
+        resp = self.testapp.get('/xpath.json', params)
+
+        self.assertEqual(resp.status, '200 OK')
+        expected = []
+        self.assertEqual(resp.json, expected)
+
+    def test_html(self):
+        params = {
+            'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1',
+            'q': '//c:emphasis',
+        }
+        resp = self.testapp.get('/xpath.html', params)
+
+        self.assertEqual(resp.status, '200 OK')
+        with open(os.path.join(testing.here, 'data/xpath.html')) as f:
+            expected = f.read().strip()
+        self.assertEqual(resp.body, expected)
+
+    def test_html_wo_matches(self):
+        params = {
+            'id': 'e79ffde3-7fb4-4af3-9ec8-df648b391597@6.1',
+            'q': '//c:figure',
+        }
+        resp = self.testapp.get('/xpath.html', params)
+
+        self.assertEqual(resp.status, '200 OK')
+        self.assertIn('<span>No matches</span>', resp.body)
