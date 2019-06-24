@@ -286,17 +286,26 @@ def xpath(request, id, q):
         uuid = e.id
         version = get_latest_version(e.id)
     except IdentHashSyntaxError:
-        raise httpexceptions.HTTPBadRequest
+        raise httpexceptions.HTTPBadRequest('invalid id supplied')
+    ident_hash = join_ident_hash(uuid, version)
 
     # Lookup documents to query
     docs = lookup_documents_to_query(ident_hash)
 
     # Query Documents
     docs_map = dict([(x['module_ident'], x,) for x in docs])
-    query_results = query_documents_by_xpath(doc_map.keys(), xpath)
+    query_results = query_documents_by_xpath(docs_map.keys(), q)
 
     # Combined the query results with the mapping
-    for module_ident, matches in query_results:
-        docs_map[module_ident]['matches'] = matches
+    for ident, matches in query_results:
+        docs_map[ident]['matches'] = matches
+        docs_map[ident]['ident_hash'] = join_ident_hash(
+            docs_map[ident]['uuid'],
+            (docs_map[ident]['major_version'],
+             docs_map[ident]['minor_version'],
+            ),
+        )
+        del docs_map[ident]['module_ident']
+        
 
-    return results
+    return [x for x in docs_map.values() if 'matches' in x]
