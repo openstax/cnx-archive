@@ -10,10 +10,10 @@ from pyramid.view import view_config
 
 from ..database import SQL, db_connect
 from ..utils import (
-    IdentHashShortId, IdentHashMissingVersion, IdentHashSyntaxError,
-    split_ident_hash, COLLECTION_MIMETYPE, join_ident_hash
+    IdentHashSyntaxError,
+    join_ident_hash,
+    magically_split_ident_hash,
 )
-from .helpers import get_uuid, get_latest_version
 
 
 # XXX for development
@@ -44,16 +44,18 @@ WITH RECURSIVE t(node, title, path, value, is_collated) AS (
     WHERE NOT nodeid = ANY (t.path) AND t.is_collated = c1.is_collated
 )
 SELECT DISTINCT
-  m.module_ident as module_ident,
-  m.portal_type as portal_type,
-  coalesce(t.title, m.name) AS name,
+  m.module_ident AS module_ident,
+  m.portal_type AS type,
+  coalesce(t.title, m.name) AS title,
   m.uuid AS uuid,
-  m.major_version AS major_version,
-  m.minor_version AS minor_version
+  module_version(m.major_version, m.minor_version) AS version,
+  ident_hash(m.uuid, m.major_version, m.minor_version) as ident_hash
 FROM t JOIN modules m ON t.value = m.module_ident;
 """
 SQL['get-core-info'] = """\
-SELECT 	module_ident, portal_type, name, uuid, major_version, minor_version
+SELECT module_ident, portal_type AS type, name AS title, uuid,
+       module_version(major_version, minor_version) AS version,
+       ident_hash(uuid, major_version, minor_version) AS ident_hash
 FROM modules
 WHERE ident_hash(uuid, major_version, minor_version) = %(ident_hash)s;
 """
@@ -161,11 +163,9 @@ def lookup_documents_to_query(ident_hash, as_collated=False):
             cursor.execute(SQL['get-core-info'], params)
             row = cursor.fetchone()
 
-            type_ = row['portal_type']
+            type_ = row['type']
 
-            if 'Composite' in type_:
-                raise TypeError("Can't process composite content")
-            elif type_ == 'Module':
+            if 'Module' in type_:
                 results = [dict(row.items())]
             else:
                 cursor.execute(
@@ -254,49 +254,104 @@ class XPathView(object):
     def extract_params(self):
         id = self.request.params.get('id')
         q = self.request.params.get('q')
+        doc_type = self.request.params.get('type', DEFAULT_DOC_TYPE)
+
+        if doc_type not in DOC_TYPES:
+            raise httpexceptions.HTTPBadRequest('Invalid `type` specified')
 
         if not id or not q:
             raise httpexceptions.HTTPBadRequest(
                 'You must supply both a UUID and an XPath'
             )
 
-        # FIXME This looks like a copy&paste that should be refactored
-        #       to a single function that gets us the correct info.
         try:
-            uuid, version = split_ident_hash(id)
-        except IdentHashShortId as e:
-            uuid = get_uuid(e.id)
-            version = e.version
-        except IdentHashMissingVersion as e:
-            uuid = e.id
-            version = get_latest_version(e.id)
+            book_context, page_context = magically_split_ident_hash(id)
         except IdentHashSyntaxError:
             raise httpexceptions.HTTPBadRequest('invalid id supplied')
-        ident_hash = join_ident_hash(uuid, version)
+        self.ident_hash = join_ident_hash(*page_context)
 
-        self.ident_hash = ident_hash
+        if book_context:
+            self.book_context = join_ident_hash(*book_context)
+        else:
+            self.book_context = None
         self.xpath_query = q
+        self.doc_type = doc_type
+
+    def find_book_context_ident(self, contextual_doc):
+        """Given the request's knowledge and information about the
+        contextual document (given as `contextual_doc`), this attempts to
+        find the book's ident if the search needs it. The book context
+        is required when searching for 'baked-html'
+        (the value of `doc_type`), because the data is stored in relation
+        to the book.
+
+        """
+        is_baked_html_book_search = (
+            self.doc_type == DOC_TYPES[2] and
+            contextual_doc['type'] == 'Collection'
+        )
+        is_baked_html_page_without_book_context_search = (
+            self.doc_type == DOC_TYPES[2] and
+            self.book_context is None
+        )
+        is_baked_html_page_with_book_context_search = (
+            self.doc_type == DOC_TYPES[2] and
+            self.book_context is not None
+        )
+
+        if is_baked_html_book_search:
+            # If requesting to search baked-html without the book context,
+            # the context is therefore a book itself.
+            context = contextual_doc['module_ident']
+        elif is_baked_html_page_without_book_context_search:
+            # If requesting to search baked-html without a book context.
+            raise httpexceptions.HTTPBadRequest(
+                "searching by 'baked-html' without the `id` within a book "
+                "context is invalid. Use `{book-id}:{page-id}` for "
+                "the `id` parameter."
+            )
+        elif is_baked_html_page_with_book_context_search:
+            context = [
+                doc
+                for doc in lookup_documents_to_query(
+                    self.book_context,
+                    as_collated=(self.doc_type == DOC_TYPES[2]),
+                )
+                if doc['ident_hash'] == self.book_context
+            ][0]['module_ident']
+        else:
+            context = None
+        return context
 
     @property
     def match_data(self):
         # Lookup documents to query
-        docs = lookup_documents_to_query(self.ident_hash)
+        docs = lookup_documents_to_query(
+            self.ident_hash,
+            as_collated=(self.doc_type == DOC_TYPES[2]),
+        )
+
+        # Assemble the data for results and intermediary use
+        docs_map = dict([(x['module_ident'], x,) for x in docs])
+
+        # Find the context ... aka page within a book
+        contextual_doc = [
+            doc for doc in docs
+            if join_ident_hash(doc['uuid'], doc['version']) == self.ident_hash
+        ][0]
+        book_context_ident = self.find_book_context_ident(contextual_doc)
 
         # Query Documents
-        docs_map = dict([(x['module_ident'], x,) for x in docs])
         query_results = query_documents_by_xpath(
             docs_map.keys(),
             self.xpath_query,
+            self.doc_type,
+            book_context_ident,
         )
 
         # Combined the query results with the mapping
         for ident, matches in query_results:
             docs_map[ident]['matches'] = matches
-            docs_map[ident]['ident_hash'] = join_ident_hash(
-                docs_map[ident]['uuid'],
-                (docs_map[ident]['major_version'],
-                 docs_map[ident]['minor_version']),
-            )
             docs_map[ident]['uri'] = self.request.route_path(
                 'content',
                 ident_hash=docs_map[ident]['ident_hash'],
