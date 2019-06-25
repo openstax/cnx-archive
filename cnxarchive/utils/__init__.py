@@ -7,9 +7,10 @@
 # ###
 """Various utility methods for various data types."""
 
-from cnxdb.ident_hash import *  # noqa
+from cnxcommon.ident_hash import *  # noqa
 
 from .date import *  # noqa
+from .magic_ident_hash import *  # noqa
 from .mimetype import *  # noqa
 from .text import *  # noqa
 from .json import *  # noqa

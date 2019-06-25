@@ -6,6 +6,7 @@ from setuptools import setup, find_packages
 IS_PY3 = sys.version_info > (3,)
 
 install_requires = (
+    'cnx-common>=1.1.0',
     'cnx-db>=1.0.0',
     'cnx-epub',
     'cnx-transforms',
