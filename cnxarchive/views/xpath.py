@@ -1,9 +1,6 @@
-import json
-import re
-from urllib import urlencode
+# -*- coding: utf-8 -*-
 from functools import partial, wraps
 
-import psycopg2
 from psycopg2.extras import RealDictCursor
 from pyramid import httpexceptions
 from pyramid.view import view_config
@@ -15,109 +12,6 @@ from ..utils import (
     magically_split_ident_hash,
 )
 
-
-# XXX for development
-SQL['contextual-uuid-to-key-data-lookup'] = """\
-WITH RECURSIVE t(node, title, path, value, is_collated) AS (
-    SELECT
-      nodeid,
-      title,
-      ARRAY [nodeid],
-      documentid,
-      is_collated
-    FROM trees AS tr, modules AS m
-    WHERE ident_hash(m.uuid, m.major_version, m.minor_version) = %(ident_hash)s
-     AND tr.documentid = m.module_ident
-     AND tr.is_collated = %(is_collated)s
-
-  UNION ALL
-
-    /* Recursion */
-    SELECT
-      c1.nodeid,
-      c1.title,
-      t.path || ARRAY [c1.nodeid],
-      c1.documentid,
-      c1.is_collated
-    FROM trees AS c1
-    JOIN t ON (c1.parent_id = t.node)
-    WHERE NOT nodeid = ANY (t.path) AND t.is_collated = c1.is_collated
-)
-SELECT DISTINCT
-  m.module_ident AS module_ident,
-  m.portal_type AS type,
-  coalesce(t.title, m.name) AS title,
-  m.uuid AS uuid,
-  module_version(m.major_version, m.minor_version) AS version,
-  ident_hash(m.uuid, m.major_version, m.minor_version) as ident_hash
-FROM t JOIN modules m ON t.value = m.module_ident;
-"""
-SQL['get-core-info'] = """\
-SELECT module_ident, portal_type AS type, name AS title, uuid,
-       module_version(major_version, minor_version) AS version,
-       ident_hash(uuid, major_version, minor_version) AS ident_hash
-FROM modules
-WHERE ident_hash(uuid, major_version, minor_version) = %(ident_hash)s;
-"""
-SQL['query-module_files-by-xpath'] = """\
-SELECT module_ident, array_agg(matches)
-FROM (
-SELECT
-  module_ident,
-  unnest(xpath(
-    e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
-    ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
-      ARRAY['c', 'http://cnx.rice.edu/cnxml'],
-      ARRAY['system', 'http://cnx.rice.edu/system-info'],
-      ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['md', 'http://cnx.rice.edu/mdml'],
-      ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
-      ARRAY['bib', 'http://bibtexml.sf.net/'],
-      ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
-      ARRAY['h', 'http://www.w3.org/1999/xhtml'],
-      ARRAY['data',
-            'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
-      ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
-  ))::TEXT AS matches
-FROM modules AS m
-NATURAL JOIN module_files
-NATURAL JOIN files
-WHERE m.module_ident = any(%(idents)s)
-AND filename = %(filename)s
-) AS results
-GROUP BY module_ident
-"""
-SQL['query-collated_file_associations-by-xpath'] = """\
-SELECT item, array_agg(matches)
-FROM (
-SELECT
-  item,
-  unnest(xpath(
-    e%(xpath)s, CAST(convert_from(file, 'UTF-8') AS XML),
-    ARRAY[ARRAY['cnx', 'http://cnx.rice.edu/cnxml'],
-      ARRAY['c', 'http://cnx.rice.edu/cnxml'],
-      ARRAY['system', 'http://cnx.rice.edu/system-info'],
-      ARRAY['math', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['mml', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['m', 'http://www.w3.org/1998/Math/MathML'],
-      ARRAY['md', 'http://cnx.rice.edu/mdml'],
-      ARRAY['qml', 'http://cnx.rice.edu/qml/1.0'],
-      ARRAY['bib', 'http://bibtexml.sf.net/'],
-      ARRAY['xhtml', 'http://www.w3.org/1999/xhtml'],
-      ARRAY['h', 'http://www.w3.org/1999/xhtml'],
-      ARRAY['data',
-            'http://www.w3.org/TR/html5/dom.html#custom-data-attribute'],
-      ARRAY['cmlnle', 'http://katalysteducation.org/cmlnle/1.0']]
-  ))::TEXT AS matches
-FROM collated_file_associations AS cfa
-NATURAL JOIN files
-WHERE cfa.item = any(%(idents)s)
-AND cfa.context = %(context)s -- book context
-) AS results
-GROUP BY item;
-"""
 
 # These represent the acceptable document types the xpath search can query
 DOC_TYPES = (
@@ -169,7 +63,7 @@ def lookup_documents_to_query(ident_hash, as_collated=False):
                 results = [dict(row.items())]
             else:
                 cursor.execute(
-                    SQL['contextual-uuid-to-key-data-lookup'],
+                    SQL['get-book-core-info'],
                     params,
                 )
                 results = [dict(row.items()) for row in cursor]

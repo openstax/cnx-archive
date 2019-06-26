@@ -73,8 +73,12 @@ SQL = {
         'get-in-collated-book-search-full-page'),
     'get-collated-content': _read_sql_file('get-collated-content'),
     'get-collated-state': _read_sql_file('get-collated-state'),
-    'xpath': _read_sql_file('xpath'),
-    'xpath-module': _read_sql_file('xpath-module'),
+    'get-core-info': _read_sql_file('get-core-info'),
+    'get-book-core-info': _read_sql_file('get-book-core-info'),
+    'query-module_files-by-xpath': _read_sql_file(
+        'query-module_files-by-xpath'),
+    'query-collated_file_associations-by-xpath': _read_sql_file(
+        'query-collated_file_associations-by-xpath'),
     'get-books-containing-page': _read_sql_file('get-books-containing-page'),
     'get-book-latest-version-with-page': _read_sql_file(
         'get-book-latest-version-with-page'),
