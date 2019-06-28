@@ -6,6 +6,15 @@
 
    - feature message
 
+4.13.0
+------
+
+- Add meta noindex tag to archive html pages
+- Use cnx-common >=1.1.0 for ident-hash support
+- Add utility for magically doing the ident-hash dance
+- XPath search with support for searching CNXML, HTML and Baked HTML
+  content (#635)
+
 4.12.0
 ------
 
