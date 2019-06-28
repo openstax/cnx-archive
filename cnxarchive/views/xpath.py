@@ -245,7 +245,7 @@ class XPathView(object):
 
         # Combined the query results with the mapping
         for ident, matches in query_results:
-            docs_map[ident]['matches'] = matches
+            docs_map[ident]['matches'] = [x.decode('utf-8') for x in matches]
             docs_map[ident]['uri'] = self.request.route_path(
                 'content',
                 ident_hash=docs_map[ident]['ident_hash'],
