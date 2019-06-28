@@ -143,6 +143,7 @@ def main(global_config, **settings):
 
     # allowing the pyramid templates to render rss and xml
     config.include('pyramid_jinja2')
+    config.add_jinja2_renderer('.html')
     config.add_jinja2_renderer('.rss')
     config.add_jinja2_renderer('.xml')
 

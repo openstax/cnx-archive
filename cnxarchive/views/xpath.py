@@ -1,29 +1,27 @@
-import json
-import re
-from urllib import urlencode
+# -*- coding: utf-8 -*-
+from functools import partial, wraps
 
-import psycopg2
+from psycopg2.extras import RealDictCursor
 from pyramid import httpexceptions
-from lxml import etree
-from pyramid.settings import asbool
-from pyramid.threadlocal import get_current_registry, get_current_request
 from pyramid.view import view_config
 
-from .. import config
-from ..database import SQL, get_tree, db_connect
+from ..database import SQL, db_connect
 from ..utils import (
-    IdentHashShortId, IdentHashMissingVersion, IdentHashSyntaxError,
-    split_ident_hash, COLLECTION_MIMETYPE, join_ident_hash
-    )
-from .content import HTML_WRAPPER
-from .helpers import get_content_metadata, get_uuid, get_latest_version
+    IdentHashSyntaxError,
+    join_ident_hash,
+    magically_split_ident_hash,
+)
 
 
-# #################### #
-#        Helpers       #
-# #################### #
+# These represent the acceptable document types the xpath search can query
+DOC_TYPES = (
+    'cnxml',
+    'html',
+    'baked-html',
+)
+DEFAULT_DOC_TYPE = DOC_TYPES[0]
 
-
+# XXX Can't these be imported from somewhere?
 NAMESPACES = {
     'cnx': 'http://cnx.rice.edu/cnxml',
     'c': 'http://cnx.rice.edu/cnxml',
@@ -41,163 +39,237 @@ NAMESPACES = {
 }
 
 
-def xpath_book(request, uuid, version, return_json=True):
+def lookup_documents_to_query(ident_hash, as_collated=False):
+    """Looks up key information about documents to query including:
+    title, uuid, version and module_ident.
+    A list of documents will be returned, for a book this will be
+    a list of documents in that book. For a page it will be a list
+    containing only that page.
+
     """
-    Given a request, book UUID and version:
+    params = {
+        'ident_hash': ident_hash,
+        'is_collated': as_collated,
+    }
+    with db_connect() as db_conn:
+        with db_conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Lookup base information about the module
+            cursor.execute(SQL['get-core-info'], params)
+            row = cursor.fetchone()
 
-    returns a JSON object or HTML list of results, each result containing:
-    module_name,
-    module_uuid,
-    xpath_results, an array of strings, each an individual xpath result.
-    """
+            type_ = row['type']
 
-    xpath_string = request.params.get('q')
-    results = execute_xpath(xpath_string, 'xpath', uuid, version)
-    if return_json:
-        return results
-    else:
-        return xpath_book_html(request, results)
-
-
-def get_page_content(uuid, version, filename='index.cnxml'):
-    settings = get_current_registry().settings
-    with db_connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            cursor.execute(SQL['get-resource-by-filename'],
-                           {'id': uuid, 'version': version,
-                            'filename': filename})
-            return cursor.fetchone()[0][:]
-
-
-def xpath_book_html(request, results):
-    def remove_ns(text):
-        return re.sub(' xmlns:?[a-z]*="[^"]*"', '', text)
-
-    q = request.params.get('q', '')
-    ul = etree.Element('ul')
-    for item in results:
-        li = etree.SubElement(ul, 'li')
-        a = etree.SubElement(etree.SubElement(li, 'p'), 'a')
-        a.set('href', '{}?{}'.format(
-            request.route_path('xpath'),
-            urlencode({'q': q, 'id': item['uuid']})))
-        a.set('target', '_blank')
-        a.text = item['name'].decode('utf-8')
-
-        # XXX we are not using item['xpath_results'] because we need to do some
-        # xpath here
-        xpath_list = etree.SubElement(li, 'ul')
-        content = get_page_content(item['uuid'], item['version'])
-        root = etree.fromstring(content)
-
-        for xpath_result in root.xpath(q, namespaces=NAMESPACES):
-            li = etree.SubElement(xpath_list, 'li')
-            a = etree.SubElement(li, 'a')
-
-            ancestor = xpath_result.xpath('./ancestor-or-self::*[@id][1]',
-                                          namespaces=NAMESPACES)
-            if not ancestor:
-                ancestor_id = ''
+            if 'Module' in type_:
+                results = [dict(row.items())]
             else:
-                ancestor_id = '#{}'.format(ancestor[0].get('id'))
+                cursor.execute(
+                    SQL['get-book-core-info'],
+                    params,
+                )
+                results = [dict(row.items()) for row in cursor]
 
-            # link to the closest ancestor id
-            a.set('href', '{}.html{}'.format(
-                request.route_path('content', ident_hash=item['uuid']),
-                ancestor_id))
-            a.set('target', '_blank')
-            a.text = remove_ns(
-                etree.tostring(xpath_result, with_tail=False)
-                .decode('utf-8'))
-
-    return HTML_WRAPPER.format(etree.tostring(ul))
+    return results
 
 
-def xpath_page(request, uuid, version):
-    """Given a page UUID (and optional version), returns a JSON object of
-    results, as in xpath_book()"""
-    xpath_string = request.params.get('q')
-    return execute_xpath(xpath_string, 'xpath-module', uuid, version)
+def _xpath_query(docs, xpath, extension):
+    """\
+    Does a `xpath` query on the database for the given `docs` against
+    the content files. The given `docs` is a sequence of integers representing
+    `module_ident`s of the content to query.
+
+    The type of content file to query is specified by extentions.
+
+    """
+    params = {
+        'filename': 'index{}'.format(extension),
+        'idents': list(docs),
+        'xpath': xpath,
+    }
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            cursor.execute(SQL['query-module_files-by-xpath'], params)
+            return cursor.fetchall()
 
 
-def execute_xpath(xpath_string, sql_function, uuid, version):
-    """Executes either xpath or xpath-module SQL function with given input
-    params."""
-    settings = get_current_registry().settings
-    with db_connect() as db_connection:
-        with db_connection.cursor() as cursor:
+def _collated_xpath_query(docs, xpath, context):
+    """\
+    Does a `xpath` query on the database for the given `docs` against
+    the content files. The given `docs` is a sequence of integers representing
+    `module_ident`s of the content to query.
 
-            try:
-                cursor.execute(SQL[sql_function],
-                               {'document_uuid': uuid,
-                                'document_version': version,
-                                'xpath_string': xpath_string})
-            except psycopg2.Error as e:
-                exc = httpexceptions.HTTPBadRequest()
-                exc.explanation = e.pgerror
-                raise exc
+    The type of content file to query is specified by extentions.
 
-            for res in cursor.fetchall():
-                yield {'name': res[0],
-                       'uuid': res[1],
-                       'version': res[2],
-                       'xpath_results': res[3]}
+    """
+    params = {
+        'context': context,
+        'idents': list(docs),
+        'xpath': xpath,
+    }
+    with db_connect() as db_conn:
+        with db_conn.cursor() as cursor:
+            sql = SQL['query-collated_file_associations-by-xpath']
+            cursor.execute(sql, params)
+            return cursor.fetchall()
 
 
-# #################### #
-#     Route method     #
-# #################### #
+def query_documents_by_xpath(docs, xpath, type_=DEFAULT_DOC_TYPE,
+                             context_doc=None):
+    """\
+    Query the given set of `docs` using the given `xpath` within by the
+    requested `type_`.
+
+    `docs` is a sequence of module_ident values.
+    `xpath` is a string containing the xpath query
+    `type_` is the type of content to query (i.e. cnxml, html, baked-html)
+
+    """
+    if type_ not in DOC_TYPES:
+        raise TypeError('Invalid document type specified: {}'.format(type_))
+    elif type_ == DOC_TYPES[2] and context_doc is None:
+        raise ValueError('Cannot query a book without the book context')
+
+    querier = {
+        # cnxml
+        DOC_TYPES[0]: partial(_xpath_query, extension='.cnxml'),
+        # html
+        DOC_TYPES[1]: partial(_xpath_query, extension='.cnxml.html'),
+        # baked-html
+        DOC_TYPES[2]: partial(_collated_xpath_query, context=context_doc),
+    }[type_]  # psuedo-switch-statement
+    return querier(docs, xpath)
 
 
-@view_config(route_name='xpath', request_method='GET',
-             http_cache=(60, {'public': True}))
-@view_config(route_name='xpath-json', request_method='GET',
-             http_cache=(60, {'public': True}))
-def xpath(request):
-    """View for the route. Determines UUID and version from input request
-    and determines the type of UUID (collection or module) and executes
-    the corresponding method."""
-    ident_hash = request.params.get('id')
-    xpath_string = request.params.get('q')
+class XPathView(object):
 
-    if not ident_hash or not xpath_string:
-        exc = httpexceptions.HTTPBadRequest
-        exc.explanation = 'You must supply both a UUID and an xpath'
-        raise exc
+    def __init__(self, request):
+        self.request = request
+        self.extract_params()
 
-    try:
-        uuid, version = split_ident_hash(ident_hash)
-    except IdentHashShortId as e:
-        uuid = get_uuid(e.id)
-        version = e.version
-    except IdentHashMissingVersion as e:
-        uuid = e.id
-        version = get_latest_version(e.id)
-    except IdentHashSyntaxError:
-        raise httpexceptions.HTTPBadRequest
+    def extract_params(self):
+        id = self.request.params.get('id')
+        q = self.request.params.get('q')
+        doc_type = self.request.params.get('type', DEFAULT_DOC_TYPE)
 
-    settings = get_current_registry().settings
-    with db_connect() as db_connection:
-        with db_connection.cursor() as cursor:
-            result = get_content_metadata(uuid, version, cursor)
+        if doc_type not in DOC_TYPES:
+            raise httpexceptions.HTTPBadRequest('Invalid `type` specified')
 
-    resp = request.response
+        if not id or not q:
+            raise httpexceptions.HTTPBadRequest(
+                'You must supply both a UUID and an XPath'
+            )
 
-    if result['mediaType'] == COLLECTION_MIMETYPE:
-        matched_route = request.matched_route.name
-        results = xpath_book(request, uuid, version,
-                             return_json=matched_route.endswith('json'))
-        if matched_route.endswith('json'):
-            results = {'results': list(results)}
-            resp.body = json.dumps(results)
-            resp.content_type = 'application/json'
+        try:
+            book_context, page_context = magically_split_ident_hash(id)
+        except IdentHashSyntaxError:
+            raise httpexceptions.HTTPBadRequest('invalid id supplied')
+        self.ident_hash = join_ident_hash(*page_context)
+
+        if book_context:
+            self.book_context = join_ident_hash(*book_context)
         else:
-            resp.body = results
-            resp.content_type = 'application/xhtml+xml'
-    else:
-        results = {'results': list(xpath_page(request, uuid, version))}
-        resp.body = json.dumps(results)
-        resp.content_type = 'application/json'
+            self.book_context = None
+        self.xpath_query = q
+        self.doc_type = doc_type
 
-    resp.status = "200 OK"
-    return resp
+    def find_book_context_ident(self, contextual_doc):
+        """Given the request's knowledge and information about the
+        contextual document (given as `contextual_doc`), this attempts to
+        find the book's ident if the search needs it. The book context
+        is required when searching for 'baked-html'
+        (the value of `doc_type`), because the data is stored in relation
+        to the book.
+
+        """
+        is_baked_html_book_search = (
+            self.doc_type == DOC_TYPES[2] and
+            contextual_doc['type'] == 'Collection'
+        )
+        is_baked_html_page_without_book_context_search = (
+            self.doc_type == DOC_TYPES[2] and
+            self.book_context is None
+        )
+        is_baked_html_page_with_book_context_search = (
+            self.doc_type == DOC_TYPES[2] and
+            self.book_context is not None
+        )
+
+        if is_baked_html_book_search:
+            # If requesting to search baked-html without the book context,
+            # the context is therefore a book itself.
+            context = contextual_doc['module_ident']
+        elif is_baked_html_page_without_book_context_search:
+            # If requesting to search baked-html without a book context.
+            raise httpexceptions.HTTPBadRequest(
+                "searching by 'baked-html' without the `id` within a book "
+                "context is invalid. Use `{book-id}:{page-id}` for "
+                "the `id` parameter."
+            )
+        elif is_baked_html_page_with_book_context_search:
+            context = [
+                doc
+                for doc in lookup_documents_to_query(
+                    self.book_context,
+                    as_collated=(self.doc_type == DOC_TYPES[2]),
+                )
+                if doc['ident_hash'] == self.book_context
+            ][0]['module_ident']
+        else:
+            context = None
+        return context
+
+    @property
+    def match_data(self):
+        # Lookup documents to query
+        docs = lookup_documents_to_query(
+            self.ident_hash,
+            as_collated=(self.doc_type == DOC_TYPES[2]),
+        )
+
+        # Assemble the data for results and intermediary use
+        docs_map = dict([(x['module_ident'], x,) for x in docs])
+
+        # Find the context ... aka page within a book
+        contextual_doc = [
+            doc for doc in docs
+            if join_ident_hash(doc['uuid'], doc['version']) == self.ident_hash
+        ][0]
+        book_context_ident = self.find_book_context_ident(contextual_doc)
+
+        # Query Documents
+        query_results = query_documents_by_xpath(
+            docs_map.keys(),
+            self.xpath_query,
+            self.doc_type,
+            book_context_ident,
+        )
+
+        # Combined the query results with the mapping
+        for ident, matches in query_results:
+            docs_map[ident]['matches'] = [x.decode('utf-8') for x in matches]
+            docs_map[ident]['uri'] = self.request.route_path(
+                'content',
+                ident_hash=docs_map[ident]['ident_hash'],
+            )
+            del docs_map[ident]['module_ident']
+
+        return list([x for x in docs_map.values() if 'matches' in x])
+
+    @view_config(route_name='xpath-json', request_method='GET',
+                 renderer='json',
+                 http_cache=(60, {'public': True}))
+    def json(self):
+        """Produces the data used to render the HTML view"""
+        return self.match_data
+
+    @view_config(route_name='xpath', request_method='GET',
+                 renderer='templates/xpath.html',
+                 http_cache=(60, {'public': True}))
+    def html(self):
+        """Produces the data used to render the HTML view"""
+        return {
+            'identifier': self.ident_hash,
+            'uri': self.request.route_path('content', self.ident_hash),
+            'query': self.xpath_query,
+            'request': self.request,
+            'results': self.match_data,
+        }

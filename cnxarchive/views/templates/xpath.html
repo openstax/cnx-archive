@@ -1,0 +1,22 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>XPath Search results</title>
+  </head>
+  <body>
+    {% if not results %}
+    <span>No matches</span>
+    {% else %}
+    <ul>
+      {% for result in results %}
+      <li>
+        <a href="{{ result.uri }}">{{ result.title }}</a>
+        <ul>
+          {% for match in result.matches %}
+          <li><pre>{{ match|e }}</pre></li>
+          {% endfor %}
+        </ul>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </body>
+</html>
