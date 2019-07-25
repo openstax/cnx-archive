@@ -437,3 +437,27 @@ class SlugTestCase(testing.FunctionalTestCase):
         for ext in self.contents_extensions:
             self.testapp.get('/contents/{}@8/{}{}'.format(short_id, slug, ext),
                              status=404)
+
+
+class XPathTestCase(testing.FunctionalTestCase):
+    fixture = testing.data_fixture
+
+    def setUp(self):
+        self.fixture.setUp()
+
+    def tearDown(self):
+        self.fixture.tearDown()
+
+    def test_xpath_utf8(self):
+        resp = self.testapp.get(
+            '/xpath.json?id=kctfKCuK@1&q=//h:p[@id="para1"]&type=html')
+        self.assertEqual(resp.status, '200 OK')
+        self.assertEqual(resp.json[0]["title"], u"Indkøb")
+
+        resp = self.testapp.get(
+            '/xpath.html?id=kctfKCuK@1&q=//h:p[@id="para1"]&type=html')
+        self.assertEqual(resp.status, '200 OK')
+        self.assertIn(
+            '<a href="/contents/91cb5f28-2b8a-4324-9373-dac1d617bc24@1">'
+            'Indkøb</a>',
+            resp.body)

@@ -250,6 +250,7 @@ class XPathView(object):
                 'content',
                 ident_hash=docs_map[ident]['ident_hash'],
             )
+            docs_map[ident]['title'] = docs_map[ident]['title'].decode('utf-8')
             del docs_map[ident]['module_ident']
 
         return list([x for x in docs_map.values() if 'matches' in x])
