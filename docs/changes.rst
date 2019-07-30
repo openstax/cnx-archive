@@ -6,6 +6,11 @@
 
    - feature message
 
+4.13.1
+------
+
+- Fix xpath.html template error when title isn't ascii (#637)
+
 4.13.0
 ------
 
