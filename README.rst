@@ -1,5 +1,6 @@
+#############################
 Connexions Archive Repository
-=============================
+#############################
 
 This is an archive for Connexions documents. It holds published
 documents and collections of documents and is designed to work together with `webview <https://github.com/Connexions/webview>`_.
@@ -38,7 +39,8 @@ Note that this is likely to increase to 9.5 soon, for better json support.
 We have two postgres extension dependencies:
 ``plpythonu`` and ``plxslt``.
 
-### Mac
+Mac
+===
 
 Use the `PostgresApp <http://postgresapp.com/>`_ (currently using version 9.4).  See Documentation for installing Command Line Tools.
 
@@ -53,7 +55,8 @@ the example above, use::
 
     export PGCLUSTER=9.4/main
 
-#### Installing the PostgreSQL plxslt extension
+Installing the PostgreSQL plxslt extension
+==========================================
 
 
 The ``plxslt`` package can be found on github at
@@ -77,7 +80,8 @@ Make sure that ``pkg-config`` is properly install by typing ``pkg-config --versi
     make && make install
     cd ..
 
-#### Installing the PostgresSQL session_exec extension
+Installing the PostgresSQL session_exec extension
+=================================================
 
 
 This is optional, but required if you choose to install the python packages
@@ -93,7 +97,8 @@ This Postgres Extension is used to activate the virtualenv site-packages on
 any successful connection to the database, which then allows for importing
 packages that are only installed in the virtualenv.
 
-#### Set up the database and user
+Set up the database and user
+============================
 
 The default settings
 for the database are setup to use the following credentials:
@@ -128,7 +133,8 @@ memcached servers in development.ini::
 
     apt-get install memcached
 
-#### Installing the application
+Installing the application
+--------------------------
 
 To install the application itself::
 
@@ -171,7 +177,8 @@ You can also start the server using pserve
 
 You can then surf to the address printed out by the above commands.
 
-### Linux
+Linux
+-----
 
 On Debian (and Ubuntu), issue the following command to installthe default Debian package (PostgreSQL 9.5)::
 
@@ -189,7 +196,8 @@ the example above, use::
     export PGCLUSTER=9.5/main
 
 
-#### Installing the PostgreSQL plxslt extension
+Installing the PostgreSQL plxslt extension
+==========================================
 
 The ``plxslt`` package can be found on github at
 `petere/plxslt <https://github.com/petere/plxslt>`_).
@@ -203,7 +211,8 @@ On a Debian based system, the installation is as follows::
     make && sudo make install
     cd ..
 
-#### Installing the PostgresSQL session_exec extension
+Installing the PostgresSQL session_exec extension
+=================================================
 
 
 This is optional, but required if you choose to install the python packages
@@ -219,7 +228,8 @@ This Postgres Extension is used to activate the virtualenv site-packages on
 any successful connection to the database, which then allows for importing
 packages that are only installed in the virtualenv.
 
-#### Set up the database and user
+Set up the database and user
+============================
 
 The default settings
 for the database are setup to use the following credentials:
@@ -246,7 +256,8 @@ the default cluster, as defined above)
     createdb -U postgres -O cnxarchive cnxarchive
 
 
-#### Install memcached (optional)
+Install memcached (optional)
+============================
 
 
 If you want to use memcached, you can install memcached and configure the
@@ -254,7 +265,8 @@ memcached servers in development.ini::
 
     apt-get install memcached
 
-#### Installing the application
+Installing the application
+==========================
 
 To install the application itself::
 
@@ -297,7 +309,8 @@ You can then surf to the address printed out by the above commands.
 Running tests
 -------------
 
-## Create the test database
+Create the test database
+========================
 
     createdb -U postgres -O cnxarchive cnxarchive-testing
 
