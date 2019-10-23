@@ -49,6 +49,7 @@ class SitemapViewsTestCase(unittest.TestCase):
         self.fixture.tearDown()
 
     def test_sitemap(self):
+        self.request.matchdict = {'from_id': 'OpenStaxCollege'}
         # Call the view
         from ...views.sitemap import sitemap
         this_sitemap = sitemap(self.request).body

@@ -30,6 +30,34 @@ SITEMAP_LIMIT = 1000
 
 logger = logging.getLogger('cnxarchive')
 
+SITEMAP_BY_AUTHOR_QUERY = """\
+SELECT
+  ident_hash(uuid, major_version, minor_version)
+    AS idver,
+  name,
+  revised
+FROM latest_modules
+WHERE
+  (
+    -- by this author
+    %(author)s = authors[1]
+    AND
+    -- not one of these types
+    portal_type NOT IN ('CompositeModule', 'SubCollection', 'Collection')
+  )
+  OR
+  (
+    -- by this author
+    %(author)s = authors[1]
+    AND
+    -- don't result in a derived book, unless OpenStax is the author
+    (portal_type = 'Collection'
+     AND
+     (parent is null OR 'OpenStaxCollege' = any(authors))
+     )
+  )
+ORDER BY module_ident DESC"""
+
 
 # #################### #
 #   Helper functions   #
@@ -56,18 +84,10 @@ def notblocked(page):
 def sitemap(request):
     """Return a sitemap xml file for search engines."""
     xml = Sitemap()
-    author = request.matchdict.get('from_id')
+    author = request.matchdict['from_id']
     with db_connect() as db_connection:
         with db_connection.cursor() as cursor:
-            cursor.execute("""SELECT
-                    ident_hash(uuid, major_version, minor_version)
-                        AS idver,
-                    name,
-                    revised
-                FROM latest_modules
-                WHERE portal_type NOT IN ('CompositeModule', 'SubCollection')
-                AND %s = authors[1]
-                ORDER BY module_ident DESC""", (author,))
+            cursor.execute(SITEMAP_BY_AUTHOR_QUERY, {'author': author})
             res = cursor.fetchall()
             for ident_hash, page_name, revised in res:
                 #  replace punctuation with whitespace
