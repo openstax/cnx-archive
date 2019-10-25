@@ -6,6 +6,13 @@
 
    - feature message
 
+4.14.0
+------
+
+- README fixes (#638)
+- Travis twine checks (#639)
+- Change the sitemap to only deliver original and openstax books (#640)
+
 4.13.1
 ------
 
