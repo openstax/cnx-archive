@@ -6,6 +6,14 @@
 
    - feature message
 
+4.14.1
+------
+
+- Added requirements files main.txt and test.txt for standardization and pyup
+  support (#643)
+- Added pyup.yml to project root to enable updates on thursdays (#642)
+- Remove upload pypi from Jenkinsfile (#641)
+
 4.14.0
 ------
 
