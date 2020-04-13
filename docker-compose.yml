@@ -22,7 +22,7 @@ services:
       - TESTING_CONFIG=cnxarchive/tests/docker-testing.ini
 
   db:
-    image: openstax/cnx-db:3.2.0
+    image: openstax/cnx-db:3.5.3
     ports:
       # Exposes the port to a random external port number.
       # Use `docker ps` to find the external port mapping.
