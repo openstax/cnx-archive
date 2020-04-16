@@ -18,7 +18,7 @@ psycopg2==2.8.5
 pyramid-jinja2==2.8
 pyramid==1.10.4
 python-memcached==1.59
-python-slugify==3.0.2
+python-slugify==4.0.0
 pytz==2019.3
 requests==2.23.0
 rhaptos.cnxmlutils==1.7.3
