@@ -6,6 +6,11 @@
 
    - feature message
 
+4.14.2
+------
+
+- Dependency updates (#646)
+
 4.14.1
 ------
 
