@@ -40,6 +40,7 @@ description = "An archive for Connexions documents."
 
 setup(
     name='cnx-archive',
+    python_requires='>=2.7,>=3.5',
     version=versioneer.get_version(),
     author='Connexions team',
     author_email='info@cnx.org',
