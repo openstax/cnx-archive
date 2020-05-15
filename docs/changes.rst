@@ -6,6 +6,21 @@
 
    - feature message
 
+4.15.2
+------
+
+- Update cnx-common from 1.3.4 to 1.3.5 (#654)
+
+4.15.1
+------
+
+- Update cnx-common from 1.3.3 to 1.3.4 (#652)
+
+4.15.0
+------
+
+- Update cnx-common and cnx-epub (#649)
+
 4.14.2
 ------
 
