@@ -21,7 +21,7 @@ python-memcached==1.59
 python-slugify==4.0.0
 pytz==2019.3
 requests==2.23.0
-rhaptos.cnxmlutils==1.7.3
+rhaptos.cnxmlutils==2.0.0
 six==1.14.0 
 sqlalchemy==1.3.16
 text-unidecode==1.3 
