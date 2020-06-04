@@ -1,4 +1,4 @@
-beautifulsoup4==4.9.0
+beautifulsoup4==4.9.1
 pretend==1.0.9
 six==1.15.0
 soupsieve==1.9.5 # pyup: update no, causes version conflict in python 2.7
