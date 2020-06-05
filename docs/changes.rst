@@ -6,6 +6,21 @@
 
    - feature message
 
+4.15.5
+------
+
+- Update external dependencies
+
+4.15.4
+------
+
+- Update cnx-epub
+
+4.15.3
+------
+
+- Update cnxmlutils to 2.0
+
 4.15.2
 ------
 
