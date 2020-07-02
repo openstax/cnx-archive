@@ -6,7 +6,7 @@ cnx-epub==0.22.0
 cnx-query-grammar==0.2.2
 cnx-transforms==1.2.0
 hupper==1.10.2
-idna==2.9
+idna==2.10
 jinja2==2.11.2
 lxml==4.4.3
 markupsafe==1.1.1
