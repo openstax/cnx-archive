@@ -8,7 +8,7 @@ cnx-transforms==1.2.0
 hupper==1.10.2
 idna==2.10
 jinja2==2.11.2
-lxml==4.5.1
+lxml==4.4.3 # pyup: update no, Unicode problem in lxml 4.5.0 cnx#924
 markupsafe==1.1.1
 parsimonious==0.8.1
 pastedeploy==2.1.0
