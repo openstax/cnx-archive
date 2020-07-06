@@ -6,6 +6,12 @@
 
    - feature message
 
+4.15.6
+------
+
+- Update external dependencies
+
+
 4.15.5
 ------
 
