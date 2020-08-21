@@ -6,6 +6,24 @@
 
    - feature message
 
+4.15.9
+------
+
+- Update sqlalchemy from 1.3.18 to 1.3.19 (#668)
+
+
+4.15.8
+------
+
+- Update cnxmlutils from 2.0.0 to 2.1.0 (#667)
+
+
+4.15.7
+------
+
+- Update external dependencies (#666)
+
+
 4.15.6
 ------
 
