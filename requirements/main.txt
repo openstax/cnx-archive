@@ -14,7 +14,7 @@ parsimonious==0.8.1
 pastedeploy==2.1.0
 plaster-pastedeploy==0.7
 plaster==1.0
-psycopg2==2.8.5
+psycopg2==2.8.6
 pyramid-jinja2==2.8
 pyramid==1.10.4
 python-memcached==1.59
