@@ -6,6 +6,26 @@
 
    - feature message
 
+4.15.13
+------
+
+- Update external dependencies (#675)
+
+4.15.12
+------
+
+- Update external dependencies (#674)
+
+4.15.11
+------
+
+- Update external dependencies (#672)
+
+4.15.10
+------
+
+- Update psycopg2 from 2.8.5 to 2.8.6 (#670)
+
 4.15.9
 ------
 
@@ -131,7 +151,7 @@
 -----
 
 - Remove EPUB files from the available exports list
-     
+
 4.6.0
 -----
 
@@ -188,7 +208,7 @@
 4.2.1
 -----
 
-- Remove sort from search filter list (#586) 
+- Remove sort from search filter list (#586)
 
 4.2.0
 -----
