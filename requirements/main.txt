@@ -19,7 +19,7 @@ pyramid-jinja2==2.8
 pyramid==1.10.5
 python-memcached==1.59
 python-slugify==4.0.1
-pytz==2020.4
+pytz==2020.5
 requests==2.25.0
 rhaptos.cnxmlutils==2.1.0
 six==1.15.0
