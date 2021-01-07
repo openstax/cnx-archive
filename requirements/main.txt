@@ -20,7 +20,7 @@ pyramid==1.10.5
 python-memcached==1.59
 python-slugify==4.0.1
 pytz==2020.5
-requests==2.25.0
+requests==2.25.1
 rhaptos.cnxmlutils==2.1.0
 six==1.15.0
 sqlalchemy==1.3.20
