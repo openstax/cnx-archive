@@ -314,9 +314,6 @@ Create the test database
 
     createdb -U postgres -O cnxarchive cnxarchive-testing
 
-.. image:: https://travis-ci.org/Connexions/cnx-archive.png?branch=master
-   :target: https://travis-ci.org/Connexions/cnx-archive
-
 .. image:: https://img.shields.io/codecov/c/github/Connexions/cnx-archive.svg
    :target: https://codecov.io/gh/Connexions/cnx-archive
 
