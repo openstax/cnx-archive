@@ -38,4 +38,5 @@ jobs:
           pip install twine wheel
           python setup.py bdist_wheel
           twine check dist/*
-          docker-compose -f .ci-compose.yml exec -T archive /bin/bash -c "codecov"
+          ci_env=`bash <(curl -s https://codecov.io/env)`
+          docker-compose -f .ci-compose.yml exec -T $ci_env archive /bin/bash -c "codecov"
