@@ -36,7 +36,7 @@ jobs:
           docker-compose -f .ci-compose.yml exec -T --user root archive /bin/bash -c "pip install coverage codecov"
           docker-compose -f .ci-compose.yml exec -T archive /bin/bash -c "cd /src; TESTING_CONFIG=cnxarchive/tests/.ci-testing.ini coverage run --source=cnxarchive setup.py test"
           docker-compose -f .ci-compose.yml down
-          pip install twine
+          pip install twine wheel
           python setup.py bdist_wheel
           twine check dist/*
           docker-compose -f .ci-compose.yml exec -T archive /bin/bash -c "codecov"
