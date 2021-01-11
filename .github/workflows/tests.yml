@@ -35,7 +35,6 @@ jobs:
           while sleep 5; do docker ps -a; if [[ -n "`docker ps | grep cnx-archive_archive_1 | grep ' Up '`" ]]; then break; elif [[ -n "`docker ps -a | grep cnx-archive_archive_1 | grep ' Exited'`" ]]; then docker logs cnx-archive_archive_1; exit 1;  fi; done
           docker-compose -f .ci-compose.yml exec -T --user root archive /bin/bash -c "pip install coverage codecov"
           docker-compose -f .ci-compose.yml exec -T archive /bin/bash -c "cd /src; TESTING_CONFIG=cnxarchive/tests/.ci-testing.ini coverage run --source=cnxarchive setup.py test"
-          docker-compose -f .ci-compose.yml down
           pip install twine wheel
           python setup.py bdist_wheel
           twine check dist/*
