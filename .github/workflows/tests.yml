@@ -39,4 +39,4 @@ jobs:
           python setup.py bdist_wheel
           twine check dist/*
           ci_env=`bash <(curl -s https://codecov.io/env)`
-          docker-compose -f .ci-compose.yml exec -T $ci_env archive /bin/bash -c "codecov"
+          docker-compose -f .ci-compose.yml exec -T $ci_env archive /bin/bash -c "bash <(curl -s https://codecov.io/bash)"
