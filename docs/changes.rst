@@ -6,6 +6,12 @@
 
    - feature message
 
+4.15.16
+-------
+
+- Update external dependencies (`#684 <https://github.com/openstax/cnx-archive/pull/684>`_)
+
+
 4.15.15
 -------
 
