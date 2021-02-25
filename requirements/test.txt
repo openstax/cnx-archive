@@ -3,5 +3,5 @@ pretend==1.0.9
 six==1.15.0
 soupsieve==1.9.5 # pyup: update no, causes version conflict in python 2.7
 waitress==1.4.4
-webob==1.8.6
+webob==1.8.7
 webtest==2.0.35
