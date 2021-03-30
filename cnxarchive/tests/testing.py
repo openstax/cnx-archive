@@ -226,7 +226,7 @@ def _dsn_to_args(dsn):
     args = {'query': {}}
     import inspect
     from sqlalchemy.engine.url import URL
-    url_args = inspect.getargspec(URL.__init__).args
+    url_args = inspect.getargspec(URL.create).args
     for item in dsn.split():
         name, value = item.split('=')
         if name == 'user':
