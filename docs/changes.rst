@@ -6,6 +6,12 @@
 
    - feature message
 
+4.15.19
+-------
+
+- Update external dependencies (`#697 <https://github.com/openstax/cnx-archive/pull/697>`_)
+- Comment changes for pyup to not upgrade pyramid and waitress.
+
 4.15.18
 -------
 
