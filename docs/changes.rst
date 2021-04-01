@@ -6,6 +6,11 @@
 
    - feature message
 
+4.15.20
+-------
+
+- Update SQLAlchemy from 1.4.2 to 1.4.4 (`#700 <https://github.com/openstax/cnx-archive/pull/700>`_)
+
 4.15.19
 -------
 
