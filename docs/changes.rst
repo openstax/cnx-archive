@@ -6,6 +6,18 @@
 
    - feature message
 
+4.15.21
+-------
+
+- Add exception for updating python-slugify b/c of python support
+- Add exception for updating markupsafe b/c of python support
+- Add exception for updating Jinja2 b/c of python support
+- Update zope.interface from 5.3.0 to 5.4.0
+- Update sqlalchemy from 1.4.4 to 1.4.15
+- Update six from 1.15.0 to 1.16.0
+- Update six from 1.15.0 to 1.16.0
+- Update hupper from 1.10.2 to 1.10.3
+
 4.15.20
 -------
 
