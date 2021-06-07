@@ -6,6 +6,14 @@
 
    - feature message
 
+
+4.15.22
+-------
+
+- Update urllib3 from 1.26.4 to 1.26.5
+- Update sqlalchemy from 1.4.15 to 1.4.17
+- Update certifi from 2020.12.5 to 2021.5.30
+
 4.15.21
 -------
 
