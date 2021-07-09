@@ -6,6 +6,11 @@
 
    - feature message
 
+4.15.23
+-------
+- Add pyup exception for psycopg==2.8.6 as newer versions have dropped 2.7 support
+- Update urllib3 from 1.26.5 to 1.26.6
+- Update sqlalchemy from 1.4.17 to 1.4.20
 
 4.15.22
 -------
