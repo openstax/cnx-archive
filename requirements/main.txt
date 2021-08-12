@@ -4,7 +4,7 @@ cnx-common==1.3.6
 cnx-db==3.5.3
 cnx-epub==0.29.0
 cnx-query-grammar==0.2.2
-cnx-transforms==1.2.2
+cnx-transforms==1.2.3
 hupper==1.10.3
 idna==2.10 # pyup: update no, dropped support for python 2.7
 jinja2==2.11.3 # pyup: update no, dropped support for python 2.7
