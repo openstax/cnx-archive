@@ -10,7 +10,7 @@ idna==2.10 # pyup: update no, dropped support for python 2.7
 jinja2==2.11.3 # pyup: update no, dropped support for python 2.7
 lxml==4.4.3 # pyup: update no, Unicode problem in lxml 4.5.0 cnx#924
 markupsafe==1.1.1 #pyup: update no, dropped support for python 2.7
-parsimonious==0.8.1
+parsimonious==0.9.0
 pastedeploy==2.1.1
 plaster-pastedeploy==0.7
 plaster==1.0
