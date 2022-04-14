@@ -1,7 +1,7 @@
-beautifulsoup4==4.9.3
+beautifulsoup4==4.11.1
 pretend==1.0.9
 six==1.16.0
 soupsieve==1.9.5 # pyup: update no, causes version conflict in python 2.7
 waitress==1.4.4 # pyup: update no, dropped support for python 2.7
 webob==1.8.7
-webtest==2.0.35
+webtest==3.0.0
